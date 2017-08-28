@@ -14,23 +14,13 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let nodeId = ctx.request.nodeId = 1
+            let nodeId = ctx.checkQuery("nodeId").exist().isInt().value
 
-            await ctx.validate().service.presentableService.getPresentableList({nodeId, status: 0}).then().map(data => {
-                return {
-                    presentableId: data._id,
-                    name: data.name,
-                    resourceId: data.resourceId,
-                    contractId: data.contractId,
-                    userId: data.userId,
-                    nodeId: data.nodeId,
-                    createDate: data.createDate,
-                    expireDate: data.expireDate,
-                    viewingPolicy: data.viewingPolicy
-                }
-            }).bind(ctx).then(ctx.success).catch(ctx.error)
+            await ctx.validate().service.presentableService.getPresentableList({
+                nodeId,
+                status: 0
+            }).bind(ctx).map(buildReturnPresentable).then(ctx.success).catch(ctx.error)
         }
-
 
         /**
          * 展示消费策略
@@ -38,22 +28,11 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async show(ctx) {
-            let presentableId = ctx.checkParams("id").notEmpty().value
+            let presentableId = ctx.checkParams("id").isMongoObjectId().value
 
-
-            await ctx.validate().service.presentableService.getPresentable({_id: presentableId}).then(data => {
-                return data ? {
-                    presentableId: data._id,
-                    name: data.name,
-                    resourceId: data.resourceId,
-                    contractId: data.contractId,
-                    userId: data.userId,
-                    nodeId: data.nodeId,
-                    createDate: data.createDate,
-                    expireDate: data.expireDate,
-                    viewingPolicy: data.viewingPolicy,
-                    status: data.status
-                } : null
+            await ctx.validate().service.presentableService.getPresentable({
+                _id: presentableId,
+                status: 0
             }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
 
@@ -65,21 +44,33 @@ module.exports = app => {
         async create(ctx) {
             let name = ctx.checkBody('name').notBlank().len(2, 50).type('string').value
             let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
-            let resourceId = ctx.checkBody("resourceId").match(/^[0-9a-zA-Z]{40}$/, 'resourceId格式错误').value
-            let viewingPolicy = ctx.checkBody('viewingPolicy').exist().type('object').value
             let contractId = ctx.checkBody('contractId').notEmpty().value
             let expireDate = ctx.checkBody('expireDate').isDate().toDate().value
-            if (!this.app.type.object(viewingPolicy)) {
-                ctx.errors.push({viewingPolicy: "viewingPolicy must be object"})
-            }
+            let languageType = ctx.checkBody('languageType').default('yaml').in(['yaml']).value
+            let viewingPolicyText = ctx.checkBody('viewingPolicyText').exist().isBase64().decodeBase64().value
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            await ctx.service.presentableService.createPresentable({
-                name, nodeId, resourceId, viewingPolicy, contractId, userId: ctx.request.userId, expireDate
-            }).bind(ctx).then(data => {
-                ctx.success({presentableId: data._id, resourceId, contractId})
-            }).catch(ctx.error)
+            let contractInfo = await ctx.curlIntranetApi(`http://192.168.0.3:1201/api/v1/contracts/${contractId}`)
+
+            if (!contractInfo || contractInfo.partyTwo !== nodeId || contractInfo.contractType !== 2) {
+                ctx.error({msg: 'contract信息错误'})
+            }
+            if (expireDate > new Date(contractInfo.expireDate)) {
+                ctx.error({msg: 'expireDate大于合约的有效期'})
+            }
+
+            let presentable = {
+                name, nodeId,
+                resourceId: contractInfo.targetId,
+                viewingPolicyText, languageType,
+                contractId,
+                userId: 1,
+                expireDate
+            }
+
+            await ctx.service.presentableService.createPresentable(presentable)
+                .bind(ctx).then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -89,10 +80,19 @@ module.exports = app => {
          */
         async destroy(ctx) {
 
-            let presentableId = ctx.checkParams("id").notEmpty().value
+            let presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
 
-            await ctx.service.presentableService.updatePresentable({status: 1}, {_id: presentableId}).then().bind(ctx)
+            await ctx.service.presentableService.updatePresentable({status: 1}, {_id: presentableId}).bind(ctx)
                 .then(data => ctx.success(data ? data.ok > 0 : false)).catch(ctx.error)
         }
     }
+}
+
+const buildReturnPresentable = (data) => {
+    if (data) {
+        data = data.toObject()
+        Reflect.deleteProperty(data, 'languageType')
+        Reflect.deleteProperty(data, 'viewingPolicyText')
+    }
+    return data
 }

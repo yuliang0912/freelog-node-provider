@@ -3,6 +3,7 @@
  */
 
 const mongoModels = require('../models/index')
+const yaml = require('js-yaml')
 
 module.exports = app => {
     return class PresentableService extends app.Service {
@@ -10,7 +11,7 @@ module.exports = app => {
         /**
          * 创建presentable
          * @param model
-         * @returns {*}
+         * @returns {Promise}
          */
         createPresentable(model) {
 
@@ -18,13 +19,20 @@ module.exports = app => {
                 return Promise.reject(new Error("model must be object"))
             }
 
-            return mongoModels.presentable.create(model).then()
+            if (model.languageType === 'yaml') {
+                model.viewingPolicy = yaml.safeLoad(model.viewingPolicyText)
+            }
+
+            model.serialNumber = mongoModels.ObjectId
+
+            return mongoModels.presentable.create(model)
         }
 
         /**
          * 更新消费策略
          * @param model
          * @param condition
+         * @returns {Promise}
          */
         updatePresentable(model, condition) {
 
@@ -36,14 +44,18 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return mongoModels.presentable.update(condition, model)
+            if (model.viewingPolicyText) {
+                model.serialNumber = mongoModels.ObjectId
+            }
+
+            return mongoModels.presentable.update(condition, model).exec()
         }
 
 
         /**
          * 查找单个消费策略
          * @param condtion
-         * @returns {Query|*}
+         * @returns {Promise}
          */
         getPresentable(condition) {
 
@@ -51,13 +63,13 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return mongoModels.presentable.findOne(condition)
+            return mongoModels.presentable.findOne(condition).exec()
         }
 
         /**
-         * 查找单个消费策略
+         * 查找多个消费策略
          * @param condtion
-         * @returns {Query|*}
+         * @returns {Promise}
          */
         getPresentableList(condition) {
 
@@ -65,7 +77,7 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return mongoModels.presentable.find(condition)
+            return mongoModels.presentable.find(condition).exec()
         }
     }
 }

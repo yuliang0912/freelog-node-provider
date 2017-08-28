@@ -6,8 +6,10 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "egg": "^1.7.0",
-    "egg-freelog-base": "^1.0.12",
-    "mongoose": "^4.11.7"
+    "egg-freelog-base": "^1.0.16",
+    "js-yaml": "^3.9.1",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.11.9"
   },
   "engines": {
     "node": ">=6.0.0"
