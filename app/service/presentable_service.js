@@ -19,10 +19,7 @@ module.exports = app => {
                 return Promise.reject(new Error("model must be object"))
             }
 
-            if (model.languageType === 'yaml') {
-                model.viewingPolicy = yaml.safeLoad(model.viewingPolicyText)
-            }
-
+            model.policy = this.ctx.helper.policyParse(model.policyText, model.languageType)
             model.serialNumber = mongoModels.ObjectId
 
             return mongoModels.presentable.create(model)
@@ -44,7 +41,9 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            if (model.viewingPolicyText) {
+            if (model.languageType === 'yaml' && model.policyText) {
+                model.policy = yaml.safeLoad(model.policyText)
+                model.policy = this.ctx.helper.policySegmentIdGenerator(model.policy)
                 model.serialNumber = mongoModels.ObjectId
             }
 
@@ -77,7 +76,27 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return mongoModels.presentable.find(condition).exec()
+            let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status tagInfo'
+
+            return mongoModels.presentable.find(condition, projection).exec()
+        }
+
+        /**
+         * 根据合同ID批量获取presentables
+         */
+        getPresentablesByContractIds(nodeId, contractIds) {
+
+            if (!Array.isArray(contractIds)) {
+                return Promise.reject(new Error("contractIds must be array"))
+            }
+
+            if (contractIds.length < 1) {
+                return Promise.resolve([])
+            }
+
+            let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status'
+
+            return mongoModels.presentable.find({nodeId, contractId: {$in: contractIds}}, projection).exec()
         }
     }
 }

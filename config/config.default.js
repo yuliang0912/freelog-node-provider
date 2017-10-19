@@ -1,5 +1,7 @@
 'use strict';
 
+const dbConfig = require('./db_config/dbconfig_local')
+
 module.exports = appInfo => {
 
     const config = {
@@ -12,6 +14,11 @@ module.exports = appInfo => {
 
         middleware: ['errorHandler', 'freelogServerAuth'],
 
+        /**
+         * DB-mysql相关配置
+         */
+        dbConfig: dbConfig,
+        
         security: {
             xframe: {
                 enable: false,
@@ -20,6 +27,8 @@ module.exports = appInfo => {
                 enable: false,
             }
         },
+
+        gatewayUrl: "http://192.168.0.3:1201"
     };
 
     // should change to your own

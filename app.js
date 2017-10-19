@@ -6,7 +6,6 @@
 
 const mongoDb = require('./app/models/db_start')
 
-
 module.exports = async (app) => {
 
     app.on('error', (err, ctx) => {
@@ -19,9 +18,6 @@ module.exports = async (app) => {
             err.message || err.toString())
     })
 
-
-    global.Promise = require('bluebird')
-
-
     await mongoDb.connect(app)
 }
+
