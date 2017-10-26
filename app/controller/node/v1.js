@@ -19,7 +19,7 @@ module.exports = app => {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
             let status = ctx.checkQuery("status").default(0).in([0, 1, 2]).toInt().value
-            let ownerUserId = ctx.checkQuery("ownerUserId").default(0).gt(-1).toInt().value
+            let ownerUserId = ctx.checkQuery("ownerUserId").exist().gt(1).toInt().value
 
             ctx.validate()
 

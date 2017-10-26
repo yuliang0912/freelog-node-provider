@@ -126,22 +126,6 @@ module.exports = app => {
             await ctx.validate().service.presentableService.updatePresentable({status: 1}, {_id: presentableId}).bind(ctx)
                 .then(data => ctx.success(data ? data.ok > 0 : false)).catch(ctx.error)
         }
-
-        /**
-         * 根据合同ID批量获取presentables
-         * @returns {Promise.<void>}
-         */
-        async getPresentablesByContractIds(ctx) {
-
-            let nodeId = ctx.checkBody("nodeId").toInt().gt(0).value
-            //match(/^[0-9a-f]{24}(,[0-9a-f]{24})*$/)
-            let contractIds = ctx.checkBody('contractIds').exist().notEmpty().value
-
-            ctx.allowContentType({type: 'json'}).validate()
-
-            await ctx.service.presentableService.getPresentablesByContractIds(nodeId, contractIds).bind(ctx)
-                .then(ctx.success).catch(ctx.error)
-        }
     }
 }
 

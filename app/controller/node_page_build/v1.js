@@ -52,6 +52,7 @@ module.exports = app => {
                 } else if (presentable.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
                     ctx.errors.push({presentableId: 'presentable的资源类型必须是pageBuild'})
                 } else {
+                    model.resourceId = presentable.resourceId
                     model.presentableName = presentable.name
                 }
                 ctx.validate()

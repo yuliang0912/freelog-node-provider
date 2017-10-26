@@ -2,6 +2,8 @@
  * Created by yuliang on 2017/7/21.
  */
 
+'use strict'
+
 module.exports = () => async (ctx, next) => {
 
     let {retCodeEnum, errCodeEnum} = ctx.app
