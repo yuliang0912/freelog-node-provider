@@ -1,19 +1,21 @@
 /**
- * Created by yuliang on 2017/10/17.
+ * Created by yuliang on 2017/10/31.
  */
+
+'use strict'
 
 const moment = require('moment')
 
 module.exports = app => {
-    return class NodePageBuildService extends app.Service {
 
+    const {knex, type} = app
+
+    return {
         /**
          * 节点设置自己的pb文件
          * @param model
          */
         createNodePageBuild(model) {
-            let {type, knex} = this.app
-
             if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
             }
@@ -21,7 +23,7 @@ module.exports = app => {
             model.createDate = moment().toDate()
 
             return knex.node('nodepagebuild').insert(model)
-        }
+        },
 
         /**
          * 更新节点pb
@@ -29,8 +31,6 @@ module.exports = app => {
          * @returns {Promise|Promise.<*>}
          */
         updateNodePageBuild(model, condition) {
-
-            let {type, knex} = this.app
 
             if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
@@ -41,7 +41,7 @@ module.exports = app => {
             }
 
             return knex.node('nodepagebuild').update(model).where(condition)
-        }
+        },
 
         /**
          * 查询nodePageBuild
@@ -50,14 +50,12 @@ module.exports = app => {
          */
         getNodePageBuild(condition) {
 
-            let {type, knex} = this.app
-
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return knex.node('nodepagebuild').where(condition).first()
-        }
+        },
 
         /**
          * 查询nodePageBuild
@@ -66,14 +64,12 @@ module.exports = app => {
          */
         getNodePageBuildList(condition) {
 
-            let {type, knex} = this.app
-
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return knex.node('nodepagebuild').where(condition).select()
-        }
+        },
 
         /**
          * 更新状态
@@ -83,8 +79,6 @@ module.exports = app => {
          * @returns {*}
          */
         updateNodePageBuildStatus(nodeId, id, status) {
-
-            let {type, knex} = this.app
 
             return knex.node.transaction(trans => {
                 let task1 = knex.node('nodepagebuild').update({status}).where({nodeId, id})

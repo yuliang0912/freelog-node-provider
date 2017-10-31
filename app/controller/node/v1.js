@@ -8,6 +8,9 @@ const Promise = require('bluebird')
 'use strict'
 
 module.exports = app => {
+
+    const dataProvider = app.dataProvider
+
     return class NodeController extends app.Controller {
 
         /**
@@ -21,7 +24,7 @@ module.exports = app => {
             let status = ctx.checkQuery("status").default(0).in([0, 1, 2]).toInt().value
             let ownerUserId = ctx.checkQuery("ownerUserId").exist().gt(1).toInt().value
 
-            ctx.validate()
+            ctx.validate(false)
 
             let condition = {status}
             if (ownerUserId > 0) {
@@ -29,12 +32,12 @@ module.exports = app => {
             }
 
             let nodeList = []
-            let totalItem = await ctx.service.nodeService.getCount(condition).then(data => parseInt(data.count)).catch(err => {
+            let totalItem = await dataProvider.nodeProvider.getCount(condition).then(data => parseInt(data.count)).catch(err => {
                 console.log(err.code)
             })
 
             if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-                nodeList = await ctx.service.nodeService.getNodeList(condition, page, pageSize)
+                nodeList = await dataProvider.nodeProvider.getNodeList(condition, page, pageSize)
             }
 
             ctx.success({page, pageSize, totalItem, dataList: nodeList})
@@ -48,7 +51,9 @@ module.exports = app => {
         async show(ctx) {
             let nodeId = ctx.checkParams('id').isInt().gt(0).value
 
-            await ctx.validate().service.nodeService.getNodeInfo({nodeId}).bind(ctx).then(ctx.success)
+            ctx.validate()
+
+            await dataProvider.nodeProvider.getNodeInfo({nodeId}).bind(ctx).then(ctx.success)
         }
 
         /**
@@ -58,7 +63,7 @@ module.exports = app => {
          */
         async create(ctx) {
             let nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).value
-            let nodeDomain = ctx.checkBody('nodeDomain').notBlank().len(4, 20).type('string').trim().value
+            let nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().value
 
             let checkResult = ctx.helper.nodeDomain.checkNodeDomain(nodeDomain)
             if (checkResult !== true) {
@@ -67,8 +72,8 @@ module.exports = app => {
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            let checkNodeName = ctx.service.nodeService.getNodeInfo({nodeName})
-            let checkNodeDomain = ctx.service.nodeService.getNodeInfo({nodeDomain})
+            let checkNodeName = dataProvider.nodeProvider.getNodeInfo({nodeName})
+            let checkNodeDomain = dataProvider.nodeProvider.getNodeInfo({nodeDomain})
 
             await Promise.all([checkNodeName, checkNodeDomain]).spread((nodeNameResult, nodeDomainResult) => {
                 if (nodeNameResult) {
@@ -85,9 +90,9 @@ module.exports = app => {
                 ownerUserId: ctx.request.userId
             }
 
-            await ctx.service.nodeService.createNode(nodeModel).bind(ctx).then(result => {
+            await dataProvider.nodeProvider.createNode(nodeModel).bind(ctx).then(result => {
                 if (result.length > 0) {
-                    return ctx.service.nodeService.getNodeInfo({nodeId: result[0]})
+                    return dataProvider.nodeProvider.getNodeInfo({nodeId: result[0]})
                 }
             }).then(ctx.success)
         }

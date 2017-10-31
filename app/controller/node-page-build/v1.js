@@ -7,6 +7,9 @@ const Promise = require('bluebird')
 'use strict'
 
 module.exports = app => {
+
+    const dataProvider = app.dataProvider
+
     return class NodePageBuildController extends app.Controller {
 
         /**
@@ -17,8 +20,10 @@ module.exports = app => {
         async index(ctx) {
             let nodeId = ctx.checkQuery('nodeId').isInt().gt(0).value
 
-            await ctx.validate().service.nodePageBuildService.getNodePageBuildList({nodeId}).whereIn('status', [1, 2]).bind(ctx)
-                .then(ctx.success).catch(ctx.error)
+            ctx.validate()
+
+            await dataProvider.nodePageBuildProvider.getNodePageBuildList({nodeId}).whereIn('status', [1, 2])
+                .bind(ctx).then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -29,16 +34,16 @@ module.exports = app => {
         async create(ctx) {
             let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
             let presentableId = ctx.checkBody('presentableId').exist().isMongoObjectId().value
-            let status = ctx.checkBody('status').exist().isInt().in([0, 1]).value
+            let status = ctx.checkBody('status').exist().isInt().in([1, 2]).value
 
             ctx.allowContentType({type: 'json'}).validate()
 
             let model = {
                 nodeId, presentableId, status, userId: ctx.request.userId
             }
-            let nodeInfoTask = ctx.service.nodeService.getNodeInfo({nodeId, ownerUserId: ctx.request.userId})
-            let nodePageBuildTask = ctx.service.nodePageBuildService.getNodePageBuild({nodeId, presentableId})
-            let presentableTask = ctx.service.presentableService.getPresentable({_id: presentableId})
+            let nodeInfoTask = dataProvider.nodeProvider.getNodeInfo({nodeId, ownerUserId: ctx.request.userId})
+            let nodePageBuildTask = dataProvider.nodePageBuildProvider.getNodePageBuild({nodeId, presentableId})
+            let presentableTask = dataProvider.presentableProvider.getPresentable({_id: presentableId})
 
             await Promise.all([nodeInfoTask, nodePageBuildTask, presentableTask]).spread((nodeInfo, pageBuild, presentable) => {
                 if (nodeInfo) {
@@ -58,13 +63,13 @@ module.exports = app => {
                 ctx.validate()
             })
 
-            await ctx.service.nodePageBuildService.createNodePageBuild(model).then(data => {
+            await dataProvider.nodePageBuildProvider.createNodePageBuild(model).then(data => {
                 Reflect.set(model, 'id', data[0])
                 return model
             }).bind(ctx).then(ctx.success).catch(ctx.error)
 
             if (model.status === 1) {
-                ctx.service.nodePageBuildService.updateNodePageBuildStatus(nodeId, model.id, model.status).catch(console.error)
+                dataProvider.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, model.id, model.status).catch(console.error)
             }
         }
     }

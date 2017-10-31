@@ -12,13 +12,13 @@ module.exports = appInfo => {
             uri: "mongodb://192.168.0.3:27017/node"
         },
 
-        middleware: ['errorHandler', 'freelogServerAuth'],
+        middleware: ['errorHandler', 'identiyAuthentication'],
 
         /**
          * DB-mysql相关配置
          */
         dbConfig: dbConfig,
-        
+
         security: {
             xframe: {
                 enable: false,

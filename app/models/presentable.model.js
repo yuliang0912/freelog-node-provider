@@ -9,7 +9,7 @@ const mongoose = require('mongoose')
 const toObjectOptions = {
     transform: function (doc, ret, options) {
         return {
-            presentableId: ret._id,
+            presentableId: ret._id.toString(),
             name: ret.name,
             resourceId: ret.resourceId,
             contractId: ret.contractId,

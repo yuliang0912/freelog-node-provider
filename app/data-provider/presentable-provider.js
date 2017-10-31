@@ -1,13 +1,20 @@
 /**
- * Created by yuliang on 2017/8/15.
+ * Created by yuliang on 2017/10/31.
  */
 
+
+'use strict'
+
+
+const moment = require('moment')
 const mongoModels = require('../models/index')
-const yaml = require('js-yaml')
+const policyParse = require('../extend/helper/policy_parse_factory')
 
 module.exports = app => {
-    return class PresentableService extends app.Service {
 
+    const type = app.type
+
+    return {
         /**
          * 创建presentable
          * @param model
@@ -15,15 +22,15 @@ module.exports = app => {
          */
         createPresentable(model) {
 
-            if (!this.app.type.object(model)) {
+            if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
             }
 
-            model.policy = this.ctx.helper.policyParse(model.policyText, model.languageType)
+            model.policy = policyParse.parse(model.policyText, model.languageType)
             model.serialNumber = mongoModels.ObjectId
 
             return mongoModels.presentable.create(model)
-        }
+        },
 
         /**
          * 更新消费策略
@@ -33,22 +40,21 @@ module.exports = app => {
          */
         updatePresentable(model, condition) {
 
-            if (!this.app.type.object(model)) {
+            if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
             }
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            if (model.languageType === 'yaml' && model.policyText) {
-                model.policy = yaml.safeLoad(model.policyText)
-                model.policy = this.ctx.helper.policySegmentIdGenerator(model.policy)
+            if (model.policyText && model.languageType) {
+                model.policy = policyParse.parse(model.policyText, model.languageType)
                 model.serialNumber = mongoModels.ObjectId
             }
 
             return mongoModels.presentable.update(condition, model).exec()
-        }
+        },
 
 
         /**
@@ -58,12 +64,12 @@ module.exports = app => {
          */
         getPresentable(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return mongoModels.presentable.findOne(condition).exec()
-        }
+        },
 
         /**
          * 查找多个消费策略
@@ -72,14 +78,14 @@ module.exports = app => {
          */
         getPresentableList(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status tagInfo'
 
             return mongoModels.presentable.find(condition, projection).exec()
-        }
+        },
 
         /**
          * 根据合同ID批量获取presentables

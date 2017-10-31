@@ -6,6 +6,9 @@
 'use strict'
 
 module.exports = app => {
+
+    const dataProvider = app.dataProvider
+
     return class PresentableController extends app.Controller {
 
         /**
@@ -15,13 +18,14 @@ module.exports = app => {
          */
         async index(ctx) {
             let nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
-            let contractIds = ctx.checkQuery('contractIds').default('').value
-            let resourceType = ctx.checkQuery('resourceType').default('').value
+            let contractIds = ctx.checkQuery('contractIds').value
+            let resourceType = ctx.checkQuery('resourceType').value
 
-            if (contractIds !== '') {
-                if (!/^[0-9a-f]{24}(,[0-9a-f]{24})*$/.test(contractIds)) {
-                    ctx.errors.push({contractIds: 'contractIds格式错误'})
-                }
+            if (contractIds && !ctx.helper.commonRegex.splitMongoObjectId.test(contractIds)) {
+                ctx.errors.push({contractIds: 'contractIds格式错误'})
+            }
+            if (resourceType && !ctx.helper.commonRegex.resourceType.test(resourceType)) {
+                ctx.errors.push({resourceType: 'resourceType is error format'})
             }
 
             ctx.validate()
@@ -36,7 +40,7 @@ module.exports = app => {
                 condition['tagInfo.resourceInfo.resourceType'] = resourceType
             }
 
-            await ctx.service.presentableService.getPresentableList(condition)
+            await dataProvider.presentableProvider.getPresentableList(condition)
                 .bind(ctx).map(buildReturnPresentable).then(ctx.success).catch(ctx.error)
         }
 
@@ -48,7 +52,9 @@ module.exports = app => {
         async show(ctx) {
             let presentableId = ctx.checkParams("id").isMongoObjectId().value
 
-            await ctx.validate().service.presentableService.getPresentable({
+            ctx.validate()
+
+            await dataProvider.presentableProvider.getPresentable({
                 _id: presentableId,
                 status: 0
             }).bind(ctx).then(ctx.success).catch(ctx.error)
@@ -73,7 +79,7 @@ module.exports = app => {
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            await ctx.service.presentableService.getPresentable({nodeId, contractId}).then(presentable => {
+            await dataProvider.presentableProvider.getPresentable({nodeId, contractId}).then(presentable => {
                 presentable && ctx.error({msg: "同一个合同只能创建一次presentable"})
             })
 
@@ -110,8 +116,10 @@ module.exports = app => {
                 presentable.tagInfo.userDefined = userDefinedTags.split(',')
             }
 
-            await ctx.service.presentableService.createPresentable(presentable)
-                .bind(ctx).then(ctx.success).catch(ctx.error)
+            await dataProvider.presentableProvider.createPresentable(presentable).bind(ctx).then(data => {
+                app.emit(app.event.presentableEvent.createPresentableEvent, data.toObject())
+                ctx.success(data)
+            }).catch(ctx.error)
         }
 
         /**
@@ -123,7 +131,9 @@ module.exports = app => {
 
             let presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
 
-            await ctx.validate().service.presentableService.updatePresentable({status: 1}, {_id: presentableId}).bind(ctx)
+            ctx.validate()
+
+            await dataProvider.presentableProvider.updatePresentable({status: 1}, {_id: presentableId}).bind(ctx)
                 .then(data => ctx.success(data ? data.ok > 0 : false)).catch(ctx.error)
         }
     }

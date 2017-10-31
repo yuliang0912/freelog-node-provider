@@ -24,6 +24,10 @@ module.exports = app => {
      */
     app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
 
+    /**
+     * index
+     */
+    app.redirect('/', '/public/index.html', 404);
 }
 
 

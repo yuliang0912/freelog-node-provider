@@ -5,6 +5,8 @@
 'use strict'
 
 module.exports = app => {
+    const dataProvider = app.dataProvider
+
     return class HomeController extends app.Controller {
 
         /**
@@ -14,25 +16,19 @@ module.exports = app => {
          */
         async index(ctx) {
 
+            ctx.validateNodeInfo()
+
             let {nodeInfo} = ctx.request
-            let pageBuilds = await ctx.service.nodePageBuildService.getNodePageBuildList({nodeId: nodeInfo.nodeId})
+            let pageBuilds = await dataProvider.nodePageBuildProvider.getNodePageBuildList({nodeId: nodeInfo.nodeId})
 
             if (!pageBuilds.length) {
-                ctx.errors({msg: '当前节点暂未设置PageBuild资源'})
+                ctx.error({msg: '当前节点暂未设置PageBuild资源'})
             }
 
             let defaultPageBuild = pageBuilds.find(item => item.status === 1)
             if (!defaultPageBuild) {
                 defaultPageBuild = pageBuilds[0]
             }
-
-            //let presentableTask = await ctx.service.presentableService.getPresentable({_id: defaultPageBuild.presentableId})
-            let resourceInfo = await ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/resources/${presentable.resourceId}`)
-
-
-            resourceInfo.systemMeta
-
-
 
             ctx.success(nodeInfo)
         }

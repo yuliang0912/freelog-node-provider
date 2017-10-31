@@ -5,19 +5,18 @@
 'use strict'
 
 const mongoDb = require('./app/models/db_start')
+const eventListen = require('./app/event-handler/event-listen-index')
 
 module.exports = async (app) => {
 
-    app.on('error', (err, ctx) => {
-        if (!err || !ctx) {
-            return
-        }
+    /**
+     * 监听app事件,主要是一些内部业务事件目前也挂在app上
+     */
+    eventListen.listenEvents(app)
 
-        ctx.body = ctx.buildReturnObject(app.retCodeEnum.serverError,
-            app.errCodeEnum.autoSnapError,
-            err.message || err.toString())
-    })
-
+    /**
+     * 连接mongodb
+     */
     await mongoDb.connect(app)
 }
 

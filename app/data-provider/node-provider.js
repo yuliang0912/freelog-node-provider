@@ -1,19 +1,22 @@
 /**
- * Created by yuliang on 2017/10/16.
+ * Created by yuliang on 2017/10/31.
  */
+
+'use strict'
 
 const moment = require('moment')
 
 module.exports = app => {
-    return class PresentableService extends app.Service {
 
+    const {knex, type} = app
+
+    return {
         /**
          * 创建节点
          * @param model
          * @returns {Promise|Promise.<*>}
          */
         createNode(model) {
-            let {type, knex} = this.app
 
             if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
@@ -23,21 +26,20 @@ module.exports = app => {
             model.status = 0 //开发阶段先不审核
 
             return knex.node('nodeinfo').insert(model)
-        }
+        },
 
         /**
          * 查询单个节点
          * @param condition
          */
         getNodeInfo(condition) {
-            let {type, knex} = this.app
 
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return knex.node('nodeinfo').where(condition).first()
-        }
+        },
 
 
         /**
@@ -46,7 +48,6 @@ module.exports = app => {
          * @returns {Promise.<*>}
          */
         getNodeList(condition, page, pageSize) {
-            let {type, knex} = this.app
 
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
@@ -56,7 +57,7 @@ module.exports = app => {
                 .limit(pageSize).offset((page - 1) * pageSize)
                 .orderBy('nodeId', 'desc')
                 .select()
-        }
+        },
 
         /**
          * 获取数量
@@ -64,7 +65,6 @@ module.exports = app => {
          * @returns {*}
          */
         getCount(condition) {
-            let {type, knex} = this.app
 
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
