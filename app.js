@@ -18,5 +18,7 @@ module.exports = async (app) => {
      * 连接mongodb
      */
     await mongoDb.connect(app)
+
+    console.log(app.config.env)
 }
 

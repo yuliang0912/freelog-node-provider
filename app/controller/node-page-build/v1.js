@@ -32,6 +32,9 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async create(ctx) {
+
+            ctx.error({msg: '接口已经停用'})
+
             let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
             let presentableId = ctx.checkBody('presentableId').exist().isMongoObjectId().value
             let status = ctx.checkBody('status').exist().isInt().in([1, 2]).value
@@ -71,6 +74,34 @@ module.exports = app => {
             if (model.status === 1) {
                 dataProvider.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, model.id, model.status).catch(console.error)
             }
+        }
+
+
+        /**
+         * 更新node-page-build
+         * @returns {Promise.<void>}
+         */
+        async update(ctx) {
+
+            let id = ctx.checkParams('id').toInt().gt(0).value
+            let status = ctx.checkBody('status').exist().isInt().in([1, 2]).value
+            let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
+
+            ctx.validate()
+
+            let nodePageBuild = await dataProvider.nodePageBuildProvider.getNodePageBuild({
+                id, nodeId,
+                userId: ctx.request.userId
+            }).catch(ctx.error)
+
+            if (!nodePageBuild) {
+                ctx.error({msg: "未找到有效的nodePageBuild"})
+            }
+
+            //如果是显示状态,则其他的全部设置为隐藏
+            await dataProvider.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).bind(ctx).then(data => {
+                ctx.success(true)
+            }).catch(ctx.error)
         }
     }
 }

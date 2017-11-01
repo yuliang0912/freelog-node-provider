@@ -81,13 +81,12 @@ module.exports = app => {
         updateNodePageBuildStatus(nodeId, id, status) {
 
             return knex.node.transaction(trans => {
-                let task1 = knex.node('nodepagebuild').update({status}).where({nodeId, id})
+                let task1 = knex.node('nodepagebuild').transacting(trans).update({status}).where({nodeId, id})
                 let task2 = status === 1
-                    ? knex.node('nodepagebuild').update({status: 0}).where('id', '<>', id).where({nodeId})
+                    ? knex.node('nodepagebuild').transacting(trans).update({status: 2}).where({nodeId}).where('id', '<>', id)
                     : undefined
 
-                return Promise.all([task1, task2]).then(trans.commit).catch(err => {
-                    trans.rollback()
+                return Promise.all([task1, task2]).then(trans.commit).catch(trans.rollback).catch(err => {
                     return err
                 })
             })
