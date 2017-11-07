@@ -6,7 +6,7 @@ global.Promise = require('bluebird')
 
 require('egg').startCluster({
     baseDir: __dirname,
-    port: process.env.PORT || 7005, // default to 7001
+    port: process.env.PORT || 7005,
     workers: 2
 });
 

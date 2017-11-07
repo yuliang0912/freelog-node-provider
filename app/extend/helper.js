@@ -5,6 +5,7 @@
 'use strict'
 
 const nodeDomainCheck = require('./helper/nodeDomainCheck')
+const nodeTemplateHelper = require('./helper/node-template-helper')
 const polifyParseFactory = require('./helper/policy_parse_factory')
 
 module.exports = {
@@ -18,5 +19,12 @@ module.exports = {
     /**
      * 授权语言转换
      */
-    policyParse: polifyParseFactory.parse
+    policyParse: polifyParseFactory.parse,
+
+    /**
+     * node pb生成
+     */
+    nodeTemplateHelper,
+
+    jsonSchema: require('./json-schema/index')
 }

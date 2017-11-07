@@ -5,16 +5,19 @@
   "private": true,
   "dependencies": {
     "bluebird": "^3.5.1",
+    "cheerio": "^1.0.0-rc.2",
     "crypto": "^1.0.1",
     "egg": "^1.9.0",
-    "egg-freelog-base": "^1.1.4",
+    "egg-freelog-base": "^1.1.8",
     "freelog_policy_compiler": "0.0.12",
     "js-yaml": "^3.10.0",
+    "jsonschema": "^1.2.0",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
-    "mongoose": "^4.12.5",
+    "mongoose": "^4.13.0",
     "mysql2": "^1.4.2",
-    "node-uuid": "^1.4.8"
+    "node-uuid": "^1.4.8",
+    "validator": "^9.1.1"
   },
   "engines": {
     "node": ">=6.0.0"

@@ -21,7 +21,6 @@ module.exports = {
             timezone: '+08:00',
             bigNumberStrings: true,
             supportBigNumbers: true,
-            //dateStrings: true,
             connectTimeout: 10000,
             Promise: Promise
         },

@@ -28,7 +28,7 @@ module.exports = appInfo => {
             }
         },
 
-        gatewayUrl: "http://192.168.0.3:1201"
+        gatewayUrl: "http://api.freelog.com"
     };
 
     // should change to your own

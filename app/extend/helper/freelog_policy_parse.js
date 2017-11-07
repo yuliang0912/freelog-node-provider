@@ -8,6 +8,7 @@ const uuid = require('node-uuid')
 const freelogPolicyCompiler = require('freelog_policy_compiler')
 
 module.exports = (policyText) => {
+
     let policySegment = freelogPolicyCompiler.compile(policyText.toString())
 
     if (policySegment.errorMsg) {

@@ -72,6 +72,20 @@ module.exports = app => {
         },
 
         /**
+         * 查找单个消费策略
+         * @param condtion
+         * @returns {Promise}
+         */
+        getPresentableById(presentableId) {
+
+            if (!presentableId) {
+                return Promise.reject(new Error("presentableId must be mongodbObjectId"))
+            }
+
+            return mongoModels.presentable.findOne({_id: presentableId}).exec()
+        },
+
+        /**
          * 查找多个消费策略
          * @param condtion
          * @returns {Promise}
@@ -103,6 +117,34 @@ module.exports = app => {
             let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status'
 
             return mongoModels.presentable.find({nodeId, contractId: {$in: contractIds}}, projection).exec()
+        },
+
+        /**
+         * 批量新增presentables
+         * @param presentables
+         */
+        createPageBuildPresentable(presentables){
+
+            if (!Array.isArray(presentables)) {
+                return Promise.reject(new Error("presentables must be array"))
+            }
+
+            if (!presentables.length) {
+                return Promise.resolve([])
+            }
+
+            let pbPresentable = presentables.find(x => x.tagInfo.resourceInfo.resourceType === 'page_build')
+
+            presentables.forEach(model => {
+                model._id = mongoModels.ObjectId
+                model.policy = policyParse.parse(model.policyText, model.languageType)
+                model.serialNumber = mongoModels.ObjectId
+                if (model.tagInfo.resourceInfo.resourceType === 'widget') {
+                    pbPresentable.widgetPresentables.push(model._id.toString())
+                }
+            })
+
+            return mongoModels.presentable.insertMany(presentables)
         }
     }
 }

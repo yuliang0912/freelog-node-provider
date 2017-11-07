@@ -30,7 +30,17 @@ module.exports = app => {
                 defaultPageBuild = pageBuilds[0]
             }
 
-            ctx.success(nodeInfo)
+            let pbResource = await ctx.curlIntranetApi(`http://127.0.0.1:7005/v1/node/${defaultPageBuild.nodeId}/presentables/${defaultPageBuild.presentableId}.data`, {dataType: 'original'})
+
+            console.log(pbResource.headers['freelog-meta'], pbResource.headers['freelog-system-meta'])
+
+            let nodeTemplate = await ctx.curl('http://static.freelog.com/web-components/index.html').then(data => {
+                return data.data.toString().replace(/(href|src)=\".\//g, 'href="http://static.freelog.com/web-components/')
+            })
+
+            ctx.body = ctx.helper.nodeTemplateHelper.convertNodePageBuild(nodeTemplate, pbResource.data.toString())
+            ctx.allowCors()
+            ctx.type = "text/html"
         }
     }
 }

@@ -17,23 +17,17 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
-            let contractIds = ctx.checkQuery('contractIds').value
-            let resourceType = ctx.checkQuery('resourceType').value
 
-            if (contractIds && !ctx.helper.commonRegex.splitMongoObjectId.test(contractIds)) {
-                ctx.errors.push({contractIds: 'contractIds格式错误'})
-            }
-            if (resourceType && !ctx.helper.commonRegex.resourceType.test(resourceType)) {
-                ctx.errors.push({resourceType: 'resourceType is error format'})
-            }
+            let nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
+            let contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().value
+            let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
 
             ctx.validate()
 
             let condition = {nodeId, status: 0}
             if (contractIds) {
                 condition.contractId = {
-                    $in: contractIds.split(',')
+                    $in: contractIds
                 }
             }
             if (resourceType) {
@@ -135,6 +129,118 @@ module.exports = app => {
 
             await dataProvider.presentableProvider.updatePresentable({status: 1}, {_id: presentableId}).bind(ctx)
                 .then(data => ctx.success(data ? data.ok > 0 : false)).catch(ctx.error)
+        }
+
+
+        /**
+         * 创建pb的presentable(同时创建pb中的widgets的presentable)
+         * @param ctx
+         * @returns {Promise.<void>}
+         */
+        async createPageBuildPresentable(ctx) {
+
+            let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
+            let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
+            let presentableList = ctx.checkBody('presentables').exist().isArray().len(2, 999).value
+
+            ctx.allowContentType({type: 'json'}).validate().validatePresentableList(presentableList)
+
+            let presentableIds = []
+            let contractIds = [...new Set(presentableList.map(item => item.contractId))]
+
+            let existPresentableTask = dataProvider.presentableProvider.getPresentablesByContractIds(nodeId, contractIds)
+            let contractInfoTask = ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/contracts/contractRecords?contractIds=${contractIds.toString()}`)
+
+            await Promise.all([existPresentableTask, contractInfoTask]).then(([presentables, contractInfos]) => {
+
+                contractInfos = contractInfos.filter(t => t.partyTwo === nodeId && t.contractType === ctx.app.contractType.ResourceToNode)
+
+                if (contractInfos.length !== contractIds.length) {
+                    let errorContractIds = presentableList.filter(item => !contractInfos.some(t => t.contractId === item.contractId))
+                        .map(item => item.contractId)
+                    return Promise.reject(`contractId:[${errorContractIds.toString()}]有误,请检查合同ID`)
+                }
+
+                presentableList.forEach(item => {
+                    item.presentableInfo = presentables.find(x => x.contractId === item.contractId)
+                    item.contractInfo = contractInfos.find(x => x.contractId === item.contractId)
+                    if (item.presentableInfo) {
+                        item.presentableInfo = item.presentableInfo.toObject()
+                    }
+                })
+
+                presentableIds = presentables.map(x => x.toObject().presentableId)
+
+            }).catch(err => ctx.error(err))
+
+            let resourceIds = [...new Set(presentableList.map(item => item.contractInfo.resourceId))]
+
+            let errors = []
+            if (resourceIds.length) {
+                let resourceInfos = await ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/resources/list?resourceIds=${resourceIds.toString()}`)
+
+                if (resourceInfos.length !== resourceIds.length) {
+                    ctx.error({msg: '资源数据获取失败'})
+                }
+
+                presentableList.forEach(item => {
+                    item.resourceInfo = resourceInfos.find(x => x.resourceId === item.contractInfo.resourceId)
+
+                    //模拟测试数据
+                    // if (item.resourceInfo.resourceId === '85101f76c87a6b8c7f187fda8e5f885666b8e86f') {
+                    //     item.resourceInfo.resourceType = 'widget'
+                    // } else {
+                    //     item.resourceInfo.resourceType = 'page_build'
+                    // }
+
+                    if (item.resourceInfo.resourceType !== ctx.app.resourceType.WIDGET &&
+                        item.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
+                        errors.push(new Error(`合同(${item.contractId})对应的资源类型错误`))
+                    }
+                })
+            }
+            if (errors.length) {
+                ctx.error({msg: '数据校验失败', data: errors.map(t => t.message)})
+            }
+
+            let pageBuildPresentables = presentableList.filter(item => item.resourceInfo.resourceType === ctx.app.resourceType.PAGE_BUILD)
+            if (pageBuildPresentables.length !== 1) {
+                ctx.error({msg: 'presentables中有且只有一个page_build类型的资源合同'})
+            }
+
+            let pageBuildPresentable = pageBuildPresentables[0]
+            if (pageBuildPresentable.presentableInfo) {
+                ctx.error({msg: '同一个page_build类型的合同只能创建一次presentable'})
+            }
+
+            let awaitCreateWidgetPresentables = presentableList.filter(item => !item.presentableInfo).map(item => {
+                let model = {
+                    nodeId,
+                    name: item.name,
+                    resourceId: item.resourceInfo.resourceId,
+                    policyText: new Buffer(item.policyText, 'base64').toString(),
+                    languageType: languageType,
+                    contractId: item.contractId,
+                    userId: ctx.request.userId,
+                    tagInfo: {
+                        resourceInfo: {
+                            resourceId: item.resourceInfo.resourceId,
+                            resourceName: item.resourceInfo.resourceName,
+                            resourceType: item.resourceInfo.resourceType,
+                            mimeType: item.resourceInfo.mimeType
+                        },
+                        userDefined: []
+                    }
+                }
+                if (item.resourceInfo.resourceType === ctx.app.resourceType.PAGE_BUILD) {
+                    model.tagInfo.widgetPresentables = presentableIds
+                }
+                return model
+            })
+
+            await dataProvider.presentableProvider.createPageBuildPresentable(awaitCreateWidgetPresentables).bind(ctx).then(dataList => {
+                ctx.success(dataList.find(t => t.contractId === pageBuildPresentable.contractId))
+            }).catch(ctx.error)
         }
     }
 }
