@@ -26,5 +26,8 @@ module.exports = {
      */
     nodeTemplateHelper,
 
+    /**
+     * json格式校验
+     */
     jsonSchema: require('./json-schema/index')
 }

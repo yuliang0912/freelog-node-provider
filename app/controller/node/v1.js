@@ -39,7 +39,6 @@ module.exports = app => {
             if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
                 nodeList = await dataProvider.nodeProvider.getNodeList(condition, page, pageSize)
             }
-
             ctx.success({page, pageSize, totalItem, dataList: nodeList})
         }
 

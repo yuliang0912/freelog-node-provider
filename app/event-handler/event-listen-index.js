@@ -4,7 +4,9 @@
 
 'use strict'
 
+
 const presentableEventListen = require('./presentable-event-handler')
+const nodeTemplateUpdateEventListen = require('./node-template-update-handler')
 
 
 module.exports.listenEvents = app => {
@@ -14,4 +16,5 @@ module.exports.listenEvents = app => {
      */
     presentableEventListen.listen(app)
 
+    nodeTemplateUpdateEventListen.listen(app)
 }

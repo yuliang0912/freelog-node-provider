@@ -5,7 +5,7 @@
 'use strict'
 
 const uuid = require('node-uuid')
-const freelogPolicyCompiler = require('freelog_policy_compiler')
+const freelogPolicyCompiler = require('presentable_policy_compiler')
 
 module.exports = (policyText) => {
 
@@ -17,11 +17,12 @@ module.exports = (policyText) => {
     let policy = policySegment.policy_segments.map(item => {
         return {
             segmentId: '',
+            segmentText: item.segmentText,
             users: item.users,
             fsmDescription: item.state_transition_table,
             activatedStates: item.activatedStates,
             initialState: item.initialState,
-            teminateState: item.teminateState
+            terminateState: item.terminateState
         }
     })
 

@@ -21,17 +21,19 @@ module.exports = app => {
             let nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
             let contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().value
             let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
+            let tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
 
             ctx.validate()
 
             let condition = {nodeId, status: 0}
             if (contractIds) {
-                condition.contractId = {
-                    $in: contractIds
-                }
+                condition.contractId = {$in: contractIds}
             }
             if (resourceType) {
                 condition['tagInfo.resourceInfo.resourceType'] = resourceType
+            }
+            if (tags) {
+                condition['tagInfo.userDefined'] = {$in: tags}
             }
 
             await dataProvider.presentableProvider.getPresentableList(condition)
@@ -77,13 +79,13 @@ module.exports = app => {
                 presentable && ctx.error({msg: "同一个合同只能创建一次presentable"})
             })
 
-            let contractInfo = await ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/contracts/${contractId}`)
+            let contractInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/${contractId}`)
 
             if (!contractInfo || contractInfo.partyTwo !== nodeId || contractInfo.contractType !== 2) {
                 ctx.error({msg: 'contract信息错误'})
             }
 
-            let resourceInfo = await ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/resources/${contractInfo.resourceId}`)
+            let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${contractInfo.resourceId}`)
 
             if (!resourceInfo) {
                 ctx.error({msg: 'contract信息错误,未能索引到contract的资源'})
@@ -117,6 +119,47 @@ module.exports = app => {
         }
 
         /**
+         * 更新presentable
+         * @param ctx
+         * @returns {Promise<void>}
+         */
+        async update(ctx) {
+
+            let presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
+            let name = ctx.checkBody('name').optional().notBlank().len(2, 50).type('string').value
+            let policyText = ctx.checkBody('policyText').optional().isBase64().decodeBase64().value
+            let userDefinedTags = ctx.checkBody('userDefinedTags').optional().type('string').value
+
+            ctx.allowContentType({type: 'json'}).validate()
+
+            let presentableInfo = await dataProvider.presentableProvider.getPresentable({_id: presentableId})
+
+            if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
+                ctx.error({msg: '参数presentableId错误或者没有操作权限'})
+            }
+
+            let model = {}
+            if (policyText) {
+                model.policyText = policyText
+                model.languageType = presentableInfo.languageType
+            }
+            if (name) {
+                model.name = name
+            }
+            if (userDefinedTags) {
+                model['tagInfo.userDefined'] = userDefinedTags.split(',')
+            }
+
+            if (!Object.keys(model).length) {
+                ctx.error({msg: '没有需要修改的数据'})
+            }
+
+            await dataProvider.presentableProvider.updatePresentable(model, {_id: presentableId}).then(data => {
+                return dataProvider.presentableProvider.getPresentable({_id: presentableId})
+            }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }
+
+        /**
          * 删除节点消费方案
          * @param ctx
          * @returns {Promise.<void>}
@@ -139,6 +182,13 @@ module.exports = app => {
          */
         async createPageBuildPresentable(ctx) {
 
+            /**
+             * 暂时去掉这个接口,允许pb中的widget不创建presentable也可以使用.
+             * 在实际渲染PB的时候再去查看是否创建presentable
+             */
+
+            ctx.error({msg: '此接口暂时不提供'})
+
             let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
             let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
             let presentableList = ctx.checkBody('presentables').exist().isArray().len(2, 999).value
@@ -149,7 +199,7 @@ module.exports = app => {
             let contractIds = [...new Set(presentableList.map(item => item.contractId))]
 
             let existPresentableTask = dataProvider.presentableProvider.getPresentablesByContractIds(nodeId, contractIds)
-            let contractInfoTask = ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/contracts/contractRecords?contractIds=${contractIds.toString()}`)
+            let contractInfoTask = ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/contractRecords?contractIds=${contractIds.toString()}`)
 
             await Promise.all([existPresentableTask, contractInfoTask]).then(([presentables, contractInfos]) => {
 
@@ -177,7 +227,7 @@ module.exports = app => {
 
             let errors = []
             if (resourceIds.length) {
-                let resourceInfos = await ctx.curlIntranetApi(`${ctx.app.config.gatewayUrl}/api/v1/resources/list?resourceIds=${resourceIds.toString()}`)
+                let resourceInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/list?resourceIds=${resourceIds.toString()}`)
 
                 if (resourceInfos.length !== resourceIds.length) {
                     ctx.error({msg: '资源数据获取失败'})

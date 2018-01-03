@@ -25,16 +25,16 @@ module.exports = app => {
     app.post('/v1/presentables/createPageBuildPresentable', app.controller.presentable.v1.createPageBuildPresentable)
 
     /**
-     * node主页解析
+     * node主页相关路由
      */
-    app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
+    //app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
+    app.get('/node/:nodeDomain', app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
+    app.get('/node/:nodeDomain/presentable/:presentableId.:extName', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
+    app.get('/node/:nodeDomain/presentable/:presentableId', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
 
-    /**
-     * 请求获取presentable资源
-     */
-    app.get('/v1/node/:nodeId/presentables/:presentableId.:extName', app.controller.presentable.auth.resource)
-    app.get('/v1/node/:nodeId/presentables/:presentableId', app.controller.presentable.auth.resource)
-
+    //请求获取presentable资源
+    app.get('/v1/nodes/:nodeId/presentables/:presentableId.:extName', app.controller.presentable.auth.resource)
+    app.get('/v1/nodes/:nodeId/presentables/:presentableId', app.controller.presentable.auth.resource)
 
     /**
      * index

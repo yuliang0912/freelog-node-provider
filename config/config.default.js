@@ -1,15 +1,13 @@
 'use strict';
 
-const dbConfig = require('./db_config/dbconfig_local')
-
 module.exports = appInfo => {
-
+    
     const config = {
         /**
          * mongoDB配置
          */
         mongo: {
-            uri: "mongodb://192.168.0.3:27017/node"
+            uri: "mongodb://192.168.0.99:27017/node",
         },
 
         middleware: ['errorHandler', 'identiyAuthentication'],
@@ -17,7 +15,28 @@ module.exports = appInfo => {
         /**
          * DB-mysql相关配置
          */
-        dbConfig: dbConfig,
+        dbConfig: {
+            node: {
+                client: 'mysql2',
+                connection: {
+                    host: '192.168.0.99',
+                    user: 'root',
+                    password: 'yuliang@@',
+                    database: 'fr_node',
+                    charset: 'utf8',
+                    timezone: '+08:00',
+                    bigNumberStrings: true,
+                    supportBigNumbers: true,
+                    connectTimeout: 10000
+                },
+                pool: {
+                    maxConnections: 50,
+                    minConnections: 1,
+                },
+                acquireConnectionTimeout: 10000,
+                debug: false
+            },
+        },
 
         security: {
             xframe: {
@@ -28,7 +47,15 @@ module.exports = appInfo => {
             }
         },
 
-        gatewayUrl: "http://api.freelog.com"
+        /**
+         * API网关地址
+         */
+        gatewayUrl: "http://api.freelog.com",
+
+        /**
+         * 节点首页模板文件地址
+         */
+        nodeHomePageTemplateUrl: "http://static.freelog.com/web-components/index.html"
     };
 
     // should change to your own

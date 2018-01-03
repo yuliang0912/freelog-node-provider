@@ -9,13 +9,9 @@
  * @param app
  */
 module.exports = (app) => async (ctx, next) => {
-    if (!/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/.test(ctx.request.path)) {
-        ctx.error({msg: "url地址错误,nodeDomain不正确"})
-    }
 
-    let urlPaths = ctx.request.path.split('/').filter(item => item.length > 0)
-
-    let nodeDomain = urlPaths[1]
+    let nodeDomain = ctx.checkParams('nodeDomain').isNodeDomain().value
+    ctx.validate()
 
     let nodeInfo = await ctx.app.dataProvider.nodeProvider.getNodeInfo({nodeDomain})
 

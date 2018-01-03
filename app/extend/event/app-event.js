@@ -6,7 +6,7 @@ const Event = require('events')
 
 module.exports = class appEvent extends Event {
 
-    registerEvent
+
 
 }
 

@@ -14,6 +14,14 @@ module.exports = async (app) => {
      */
     eventListen.listenEvents(app)
 
+    app.beforeStart(async () => {
+        await app.runSchedule('update_node_template');
+    })
+
+    app.messenger.on('update-node-template', data => {
+        app.config.nodeTemplate = data
+    });
+
     /**
      * 连接mongodb
      */

@@ -123,7 +123,7 @@ module.exports = app => {
          * 批量新增presentables
          * @param presentables
          */
-        createPageBuildPresentable(presentables){
+        createPageBuildPresentable(presentables) {
 
             if (!Array.isArray(presentables)) {
                 return Promise.reject(new Error("presentables must be array"))

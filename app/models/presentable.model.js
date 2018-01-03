@@ -45,7 +45,6 @@ const PresentableSchema = new mongoose.Schema({
             resourceId: {type: String, default: '', required: true},
         },
         userDefined: {type: Array, default: []},//用户自定义tags
-        widgetPresentables: {type: Array, default: []} //pb资源的widget
     },
     status: {type: Number, default: 0, required: true} //状态
 }, {
