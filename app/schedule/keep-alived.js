@@ -6,8 +6,8 @@ module.exports = class UpdateNodeTemplate extends Subscription {
 
     static get schedule() {
         return {
-            cron: '*/5 * * * * * *',  //5秒定时检查一次是否有新的支付事件
-            type: 'all', // 指定一个 worker需要执行
+            cron: '0 */5 * * * * *',
+            type: 'worker', // 指定一个 worker需要执行
             immediate: false, //立即执行一次
         };
     }
