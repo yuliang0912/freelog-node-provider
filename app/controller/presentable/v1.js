@@ -5,6 +5,8 @@
 
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = app => {
 
     const dataProvider = app.dataProvider
@@ -332,18 +334,24 @@ module.exports = app => {
                 if (contractInfos.some(x => !resourceInfo.systemMeta.widgets.some(t => t.resourceId === x.resourceId))) {
                     ctx.error({msg: '参数increaseContractIds信息与pbPresentableId信息校验失败'})
                 }
+
+                increaseContractIds = contractInfos.map(item => {
+                    return {
+                        resourceId: item.resourceId,
+                        contractId: item.resourceId
+                    }
+                })
             }
 
-            let widgetRelation = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId: pbPresentableId})
-            if (!widgetRelation) {
-                widgetRelation = {
+            let widgetRelation = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId: pbPresentableId}).then(data => {
+                return data ? data : {
                     presentableId: pbPresentableId,
                     resourceId: presentableInfo.resourceId,
                     contractId: presentableInfo.contractId,
                     relevanceContractIds: [],
                     status: 0
                 }
-            }
+            })
 
             //合并需要新增的
             if (increaseContractIds) {
@@ -351,11 +359,51 @@ module.exports = app => {
             }
             //删除需要移除的
             if (removeContractIds) {
-                widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.filter(x => !removeContractIds.some(y => y === x))
+                widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.filter(x => !removeContractIds.some(y => y === x.contractId))
+            }
+
+            let contractGroup = lodash.groupBy(widgetRelation.relevanceContractIds, 'resourceId')
+            let errorContract = Object.keys(contractGroup).filter(item => contractGroup[item].length > 1)
+            if (errorContract.length) {
+                ctx.error({msg: '同一个资源只能关联一个合同,请检查参数', data: errorContract})
             }
 
             await dataProvider.pagebuildWidgetRelationProvider.createOrUpdate(widgetRelation).bind(ctx)
                 .then(ctx.success).catch(ctx.error)
+        }
+
+
+        /**
+         * 获取pb-presentable的插件合同
+         * @param ctx
+         * @returns {Promise<void>}
+         */
+        async pageBuildAssociateWidgetContract(ctx) {
+
+            let presentableId = ctx.checkQuery('presentableId').isMongoObjectId().value
+            ctx.validate()
+
+            let presentableInfo = await dataProvider.presentableProvider.getPresentable({_id: presentableId})
+
+            if (!presentableInfo || presentableInfo.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
+                ctx.error({msg: 'presentableId错误或者presentable的资源类型错误.'})
+            }
+
+            let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${presentableInfo.resourceId}`)
+            let relevanceContractIds = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId}).then(data => {
+                return data ? data.relevanceContractIds : []
+            })
+
+            let result = resourceInfo.systemMeta.widgets.map(item => {
+                let relevanceContract = relevanceContractIds.find(x => x.resourceId === item.resourceId)
+                return {
+                    resourceId: item.resourceId,
+                    resourceName: item.resourceName,
+                    contractId: relevanceContract ? relevanceContract.contractId : ''
+                }
+            })
+
+            ctx.success(result)
         }
     }
 }
