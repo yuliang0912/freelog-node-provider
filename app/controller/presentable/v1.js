@@ -301,10 +301,13 @@ module.exports = app => {
         async pageBuildAssociateWidget(ctx) {
 
             let pbPresentableId = ctx.checkBody('pbPresentableId').isMongoObjectId().value
-            let increaseContractIds = ctx.checkBody('increaseContractIds').isArray().len(0, 100).value
-            let removeContractIds = ctx.checkBody('removeContractIds').isArray().len(0, 100).value
-
+            let increaseContractIds = ctx.checkBody('increaseContractIds').optional().isArray().len(0, 100).value
+            let removeContractIds = ctx.checkBody('removeContractIds').optional().isArray().len(0, 100).value
             ctx.allowContentType({type: 'json'}).validate()
+
+            if (!increaseContractIds && !removeContractIds) {
+                ctx.error({msg: 'increaseContractIds与removeContractIds最少需要传入一个参数'})
+            }
 
             let presentableInfo = await dataProvider.presentableProvider.getPresentable({
                 _id: pbPresentableId,
@@ -319,7 +322,7 @@ module.exports = app => {
                 ctx.error({msg: 'presentable的资源类型错误'})
             }
 
-            if (increaseContractIds.length) {
+            if (increaseContractIds && increaseContractIds.length) {
                 let contractInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/list?contractIds=${increaseContractIds.toString()}`)
                 if (contractInfos.length !== increaseContractIds.length) {
                     ctx.error({msg: '参数increaseContractIds信息错误'})
@@ -343,9 +346,13 @@ module.exports = app => {
             }
 
             //合并需要新增的
-            widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.concat(increaseContractIds)
+            if (increaseContractIds) {
+                widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.concat(increaseContractIds)
+            }
             //删除需要移除的
-            widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.filter(x => !removeContractIds.some(y => y === x))
+            if (removeContractIds) {
+                widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.filter(x => !removeContractIds.some(y => y === x))
+            }
 
             await dataProvider.pagebuildWidgetRelationProvider.createOrUpdate(widgetRelation).bind(ctx)
                 .then(ctx.success).catch(ctx.error)

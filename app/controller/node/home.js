@@ -39,20 +39,16 @@ module.exports = app => {
             }).catch(err => ctx.error(err))
 
             if (!pbResource.res && !pbResource.status) {
-
                 ctx.body = ctx.helper.nodeTemplateHelper.convertErrorNodePageBuild(this.config.nodeTemplate, nodeInfo.nodeId, userId, pbResource)
                 ctx.allowCors()
                 ctx.type = "text/html"
                 return
             }
 
-            let contractId = pbResource.headers['freelog-contract-id']
+            let widgetRelation = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId: pageBuild.presentableId})
+            let relevanceContractIds = widgetRelation ? widgetRelation.relevanceContractIds : []
 
-            let contractInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/${contractId}`)
-
-            let relevanceContractIds = contractInfo.subsidiaryInfo.relevanceContractIds
             let pbWidgets = JSON.parse(pbResource.headers['freelog-system-meta']).widgets
-
             let widgetsPresentables = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/presentables?nodeId=${nodeInfo.nodeId}&contractIds=${relevanceContractIds.toString()}`)
 
             pbWidgets.forEach(item => {
