@@ -29,6 +29,8 @@ module.exports = app => {
      */
     app.post('/v1/presentables/pageBuildAssociateWidget', app.controller.presentable.v1.pageBuildAssociateWidget)
 
+    app.get('/v1/presentables/pageBuildAssociateWidgetContract', app.controller.presentable.v1.pageBuildAssociateWidgetContract)
+
     /**
      * node主页相关路由
      */
