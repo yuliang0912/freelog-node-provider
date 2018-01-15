@@ -292,6 +292,64 @@ module.exports = app => {
                 ctx.success(dataList.find(t => t.contractId === pageBuildPresentable.contractId))
             }).catch(ctx.error)
         }
+
+        /**
+         * pb关联widget
+         * @param ctx
+         * @returns {Promise<void>}
+         */
+        async pageBuildAssociateWidget(ctx) {
+
+            let pbPresentableId = ctx.checkBody('pbPresentableId').isMongoObjectId().value
+            let increaseContractIds = ctx.checkBody('increaseContractIds').isArray().len(0, 100).value
+            let removeContractIds = ctx.checkBody('removeContractIds').isArray().len(0, 100).value
+
+            ctx.allowContentType({type: 'json'}).validate()
+
+            let presentableInfo = await dataProvider.presentableProvider.getPresentable({
+                _id: pbPresentableId,
+                userId: ctx.request.userId
+            })
+
+            if (!presentableInfo) {
+                ctx.error({msg: 'presentableId错误.'})
+            }
+
+            if (presentableInfo.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
+                ctx.error({msg: 'presentable的资源类型错误'})
+            }
+
+            if (increaseContractIds.length) {
+                let contractInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/list?contractIds=${increaseContractIds.toString()}`)
+                if (contractInfos.length !== increaseContractIds.length) {
+                    ctx.error({msg: '参数increaseContractIds信息错误'})
+                }
+
+                let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${presentableInfo.resourceId}`)
+                if (contractInfos.some(x => !resourceInfo.systemMeta.widgets.some(t => t.resourceId === x.resourceId))) {
+                    ctx.error({msg: '参数increaseContractIds信息与pbPresentableId信息校验失败'})
+                }
+            }
+
+            let widgetRelation = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId: pbPresentableId})
+            if (!widgetRelation) {
+                widgetRelation = {
+                    presentableId: pbPresentableId,
+                    resourceId: presentableInfo.resourceId,
+                    contractId: presentableInfo.contractId,
+                    relevanceContractIds: [],
+                    status: 0
+                }
+            }
+
+            //合并需要新增的
+            widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.concat(increaseContractIds)
+            //删除需要移除的
+            widgetRelation.relevanceContractIds = widgetRelation.relevanceContractIds.filter(x => !removeContractIds.some(y => y === x))
+
+            await dataProvider.pagebuildWidgetRelationProvider.createOrUpdate(widgetRelation).bind(ctx)
+                .then(ctx.success).catch(ctx.error)
+        }
     }
 }
 

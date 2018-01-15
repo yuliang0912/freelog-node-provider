@@ -25,6 +25,11 @@ module.exports = app => {
     app.post('/v1/presentables/createPageBuildPresentable', app.controller.presentable.v1.createPageBuildPresentable)
 
     /**
+     * 关联pb-persentable对应的插件合同ID
+     */
+    app.post('/v1/presentables/pageBuildAssociateWidget', app.controller.presentable.v1.pageBuildAssociateWidget)
+
+    /**
      * node主页相关路由
      */
     //app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
