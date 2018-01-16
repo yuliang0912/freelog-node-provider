@@ -238,13 +238,6 @@ module.exports = app => {
                 presentableList.forEach(item => {
                     item.resourceInfo = resourceInfos.find(x => x.resourceId === item.contractInfo.resourceId)
 
-                    //模拟测试数据
-                    // if (item.resourceInfo.resourceId === '85101f76c87a6b8c7f187fda8e5f885666b8e86f') {
-                    //     item.resourceInfo.resourceType = 'widget'
-                    // } else {
-                    //     item.resourceInfo.resourceType = 'page_build'
-                    // }
-
                     if (item.resourceInfo.resourceType !== ctx.app.resourceType.WIDGET &&
                         item.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
                         errors.push(new Error(`合同(${item.contractId})对应的资源类型错误`))
@@ -325,7 +318,7 @@ module.exports = app => {
             }
 
             if (increaseContractIds && increaseContractIds.length) {
-                let contractInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/list?contractIds=${increaseContractIds.toString()}`)
+                let contractInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/list?contractIds=${[...new Set(increaseContractIds)].toString()}`)
                 if (contractInfos.length !== increaseContractIds.length) {
                     ctx.error({msg: '参数increaseContractIds信息错误'})
                 }

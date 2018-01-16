@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = appInfo => {
-    
+
     const config = {
         /**
          * mongoDB配置

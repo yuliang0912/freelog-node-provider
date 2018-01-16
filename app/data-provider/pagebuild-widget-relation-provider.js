@@ -27,13 +27,13 @@ module.exports = app => {
          * 获取pb对应的widget关系
          * @param condition
          */
-        getWidgetRelation(condition){
+        getWidgetRelation(condition) {
 
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return  mongoModels.pageBuildWidgetRelation.findOne(condition).exec()
+            return mongoModels.pageBuildWidgetRelation.findOne(condition).exec()
         }
     }
 }

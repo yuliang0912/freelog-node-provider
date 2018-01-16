@@ -46,7 +46,7 @@ module.exports = app => {
             }
 
             let widgetRelation = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId: pageBuild.presentableId})
-            let relevanceContractIds = widgetRelation ? widgetRelation.relevanceContractIds : []
+            let relevanceContractIds = widgetRelation ? widgetRelation.relevanceContractIds.map(t => t.contractId) : []
 
             let pbWidgets = JSON.parse(pbResource.headers['freelog-system-meta']).widgets
             let widgetsPresentables = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/presentables?nodeId=${nodeInfo.nodeId}&contractIds=${relevanceContractIds.toString()}`)
