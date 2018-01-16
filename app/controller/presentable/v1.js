@@ -403,7 +403,7 @@ module.exports = app => {
                 }
             })
 
-            ctx.success(result)
+            ctx.success({presentableInfo, resourceInfo, widgets: result})
         }
     }
 }
