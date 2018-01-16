@@ -331,7 +331,7 @@ module.exports = app => {
                 increaseContractIds = contractInfos.map(item => {
                     return {
                         resourceId: item.resourceId,
-                        contractId: item.resourceId
+                        contractId: item.contractId
                     }
                 })
             }
@@ -398,6 +398,75 @@ module.exports = app => {
 
             ctx.success({presentableInfo, resourceInfo, widgets: result})
         }
+
+        /**
+         * 获取pb-presentable的激活与关联激活状态
+         * @param ctx
+         * @returns {Promise<void>}
+         */
+        async pbPresentableStatistics(ctx) {
+
+            let presentableIds = ctx.checkQuery('presentableIds').isSplitMongoObjectId('参数presentableIds格式错误')
+                .toSplitArray().len(1, 20).value
+            ctx.validate()
+
+            let presentableInfos = await dataProvider.presentableProvider.getPresentableList({_id: {$in: presentableIds}})
+
+            if (presentableIds.length === 0) {
+                return ctx.success([])
+            }
+            if (presentableInfos.some(t => t.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD)) {
+                ctx.error({msg: 'presentable对应的资源主体必须是page_build类型的资源'})
+            }
+
+            let relevanceContractInfos = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelations({presentableId: {$in: presentableIds}})
+            let presentableResources = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/list?resourceIds=${presentableInfos.map(t => t.resourceId).toString()}`)
+            let pbContractIds = presentableInfos.map(x => x.contractId)
+            let widgetContractIds = []
+            relevanceContractInfos.forEach(item => {
+                widgetContractIds = widgetContractIds.concat(item.relevanceContractIds.map(x => x.contractId))
+            })
+            let allContractIds = [...new Set(pbContractIds.concat(widgetContractIds))]
+
+            let widgetPresentableInfos = await dataProvider.presentableProvider.getPresentableList({contractId: {$in: widgetContractIds}}).then(list => collectionToObject(list, 'contractId'))
+            let allContractInfos = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/list?contractIds=${allContractIds.toString()}`).then(list => collectionToObject(list, 'contractId'))
+
+            presentableInfos = presentableInfos.map(item => {
+                item = item.toObject()
+
+                let resource = presentableResources.find(t => t.resourceId === item.resourceId)
+                let widgetContractInfo = relevanceContractInfos.find(t => t.presentableId === item.presentableId)
+
+                item.resourceInfo = resource
+                item.contractInfo = allContractInfos[item.contractId] || null
+                item.resourceWidgets = resource ? resource.systemMeta.widgets.map(widget => {
+                    let relevanceContract = widgetContractInfo ?
+                        widgetContractInfo.relevanceContractIds.find(x => x.resourceId === widget.resourceId) : null
+                    return {
+                        resourceId: widget.resourceId,
+                        resourceName: widget.resourceId,
+                        contractId: relevanceContract ? relevanceContract.contractId : '',
+                        contractInfo: relevanceContract ? allContractInfos[relevanceContract.contractId] : null,
+                        presentableInfo: relevanceContract ? widgetPresentableInfos[relevanceContract.contractId] : null,
+                    }
+                }) : []
+
+                return item
+            })
+
+            let result = presentableInfos.map(item => {
+                return {
+                    presentableId: item.presentableId,
+                    isActivated: item.contractInfo.status === 3,
+                    widgetsCount: item.resourceWidgets.length,
+                    widgetContractCount: item.resourceWidgets.filter(x => x.contractInfo !== null).length,
+                    widgetContractActivatedCount: item.resourceWidgets.filter(x => x.contractInfo !== null && x.contractInfo.status === 3).length,
+                    widgetPresentableCount: item.resourceWidgets.filter(x => x.presentableInfo !== null).length
+                }
+            })
+
+            ctx.success(result)
+        }
     }
 }
 
@@ -408,4 +477,10 @@ const buildReturnPresentable = (data) => {
         Reflect.deleteProperty(data, 'policyText')
     }
     return data
+}
+
+const collectionToObject = (list, property) => {
+    let ret = {}
+    list.forEach(x => ret[x.contractId] = x)
+    return ret
 }

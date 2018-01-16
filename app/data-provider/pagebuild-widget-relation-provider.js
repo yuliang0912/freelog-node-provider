@@ -34,6 +34,19 @@ module.exports = app => {
             }
 
             return mongoModels.pageBuildWidgetRelation.findOne(condition).exec()
+        },
+
+        /**
+         * 获取pb对应的widget关系
+         * @param condition
+         */
+        getWidgetRelations(condition) {
+
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return mongoModels.pageBuildWidgetRelation.find(condition).exec()
         }
     }
 }

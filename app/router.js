@@ -31,6 +31,8 @@ module.exports = app => {
 
     app.get('/v1/presentables/pageBuildAssociateWidgetContract', app.controller.presentable.v1.pageBuildAssociateWidgetContract)
 
+    app.get('/v1/presentables/pbPresentableStatistics', app.controller.presentable.v1.pbPresentableStatistics)
+    
     /**
      * node主页相关路由
      */
