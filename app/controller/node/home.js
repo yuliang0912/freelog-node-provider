@@ -49,7 +49,9 @@ module.exports = app => {
             let relevanceContractIds = widgetRelation ? widgetRelation.relevanceContractIds.map(t => t.contractId) : []
 
             let pbWidgets = JSON.parse(pbResource.headers['freelog-system-meta']).widgets
-            let widgetsPresentables = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/presentables?nodeId=${nodeInfo.nodeId}&contractIds=${relevanceContractIds.toString()}`)
+
+            let widgetsPresentables = relevanceContractIds.length ?
+                await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/presentables?nodeId=${nodeInfo.nodeId}&contractIds=${relevanceContractIds.toString()}`) : []
 
             pbWidgets.forEach(item => {
                 let presentable = widgetsPresentables.find(t => t.resourceId === item.resourceId)

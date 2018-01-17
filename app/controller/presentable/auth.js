@@ -46,6 +46,7 @@ module.exports = app => {
                     ? {authorization: "bearer " + authToken.signature, response: JSON.stringify(response)}
                     : {authorization: "bearer " + authToken.signature}
             })
+
             ctx.set('freelog-contract-id', authToken.nodeContractId)
 
             if (!extName) {
@@ -55,20 +56,17 @@ module.exports = app => {
             }
 
             if (extName === 'data') {
-                await ctx.curl(resourceInfo.resourceUrl, {
-                    streaming: true,
-                }).then(result => {
-                    if (/^2[\d]{2}$/.test(result.status)) {
-                        ctx.body = result.res;
-                        ctx.set(result.headers)
-                        ctx.set('content-disposition', 'attachment;filename=' + presentableId)
-                        ctx.set('freelog-resource-type', resourceInfo.resourceType)
-                        ctx.set('freelog-meta', JSON.stringify(resourceInfo.meta))
-                        ctx.set('freelog-system-meta', JSON.stringify(resourceInfo.systemMeta))
-                    } else {
-                        ctx.error({msg: '文件丢失,未能获取到资源源文件信息', data: {['http-status']: result.status}})
-                    }
-                })
+                const result = await ctx.curl(resourceInfo.resourceUrl, {streaming: true})
+                if (!/^2[\d]{2}$/.test(result.status)) {
+                    ctx.error({msg: '文件丢失,未能获取到资源源文件信息', data: {['http-status']: result.status}})
+                }
+                //ctx.set(result.headers)
+                ctx.attachment(presentableId)
+                ctx.set('content-type', 'application/octet-stream')
+                ctx.set('freelog-resource-type', resourceInfo.resourceType)
+                ctx.set('freelog-meta', JSON.stringify(resourceInfo.meta))
+                ctx.set('freelog-system-meta', JSON.stringify(resourceInfo.systemMeta))
+                ctx.body = result.res
             } else if (resourceInfo.mimeType === 'application/json') {
                 await ctx.curl(resourceInfo.resourceUrl).then(res => {
                     return res.data.toString()

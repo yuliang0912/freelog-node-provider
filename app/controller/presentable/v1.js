@@ -65,7 +65,7 @@ module.exports = app => {
          */
         async create(ctx) {
             let name = ctx.checkBody('name').notBlank().len(2, 50).type('string').value
-            let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
+            let nodeId = ctx.checkBody('nodeId').toInt().gt(0).value
             let contractId = ctx.checkBody('contractId').notEmpty().value
             let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
             let policyText = ctx.checkBody('policyText').exist().isBase64().decodeBase64().value

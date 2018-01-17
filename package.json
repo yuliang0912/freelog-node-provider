@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "飞致网络节点服务",
   "private": true,
+  "egg": {
+    "framework": "egg-freelog-base"
+  },
   "dependencies": {
-    "ali-oss": "^4.11.3",
+    "ali-oss": "^4.11.4",
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "crypto": "^1.0.1",
@@ -15,7 +18,7 @@
     "jsonschema": "^1.2.2",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
-    "mongoose": "^4.13.8",
+    "mongoose": "^4.13.9",
     "mysql2": "^1.5.1",
     "node-uuid": "^1.4.8",
     "presentable_policy_compiler": "0.0.8",
