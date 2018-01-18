@@ -104,5 +104,9 @@ module.exports = app => {
             //     }
             // })
         }
+
+        async index1(ctx) {
+            ctx.success(ctx.request)
+        }
     }
 }

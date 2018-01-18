@@ -32,7 +32,7 @@ module.exports = app => {
     app.get('/v1/presentables/pageBuildAssociateWidgetContract', app.controller.presentable.v1.pageBuildAssociateWidgetContract)
 
     app.get('/v1/presentables/pbPresentableStatistics', app.controller.presentable.v1.pbPresentableStatistics)
-    
+
     /**
      * node主页相关路由
      */
@@ -44,6 +44,8 @@ module.exports = app => {
     //请求获取presentable资源
     app.get('/v1/nodes/:nodeId/presentables/:presentableId.:extName', app.controller.presentable.auth.resource)
     app.get('/v1/nodes/:nodeId/presentables/:presentableId', app.controller.presentable.auth.resource)
+
+    app.get('/node/home', app.controller.node.home.index1)
 
     /**
      * index
