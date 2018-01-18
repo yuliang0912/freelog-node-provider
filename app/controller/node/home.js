@@ -19,7 +19,7 @@ module.exports = app => {
         async index(ctx) {
 
             ctx.validateNodeInfo()
-
+            
             let userId = ctx.request.userId || 0
             let nodeInfo = ctx.request.nodeInfo
             let pageBuild = await dataProvider.nodePageBuildProvider.getNodePageBuild({
@@ -106,6 +106,7 @@ module.exports = app => {
         }
 
         async index1(ctx) {
+            console.log(ctx.request)
             ctx.success(ctx.request)
         }
     }

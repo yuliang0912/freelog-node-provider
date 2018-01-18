@@ -38,8 +38,9 @@ module.exports = app => {
      */
     //app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
     app.get('/node/:nodeDomain', app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
-    app.get('/node/:nodeDomain/presentable/:presentableId.:extName', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
-    app.get('/node/:nodeDomain/presentable/:presentableId', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
+    //暂时先不要 以后节点渲染站点单独独立出来
+    //app.get('/node/:nodeDomain/presentable/:presentableId.:extName', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
+    //app.get('/node/:nodeDomain/presentable/:presentableId', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
 
     //请求获取presentable资源
     app.get('/v1/nodes/:nodeId/presentables/:presentableId.:extName', app.controller.presentable.auth.resource)
