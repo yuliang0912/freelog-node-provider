@@ -377,12 +377,13 @@ module.exports = app => {
             ctx.validate()
 
             let presentableInfo = await dataProvider.presentableProvider.getPresentable({_id: presentableId})
-
+            console.log(presentableInfo)
             if (!presentableInfo || presentableInfo.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
                 ctx.error({msg: 'presentableId错误或者presentable的资源类型错误.'})
             }
 
             let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${presentableInfo.resourceId}`)
+
             let relevanceContractIds = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId}).then(data => {
                 return data ? data.relevanceContractIds : []
             })
@@ -397,6 +398,48 @@ module.exports = app => {
             })
 
             ctx.success({presentableInfo, resourceInfo, widgets: result})
+        }
+
+        /**
+         * pageBuild资源的presentable关联的插件presentable信息
+         * @param ctx
+         * @returns {Promise<void>}
+         */
+        async pageBuildAssociateWidgetPresentable(ctx) {
+            let presentableId = ctx.checkQuery('presentableId').isMongoObjectId().value
+            ctx.validate()
+
+            let presentableInfo = await dataProvider.presentableProvider.getPresentable({_id: presentableId})
+
+            if (!presentableInfo || presentableInfo.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD) {
+                ctx.error({msg: 'presentableId错误或者presentable的资源类型错误.'})
+            }
+
+            let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${presentableInfo.resourceId}`)
+            let relevanceContractIds = await dataProvider.pagebuildWidgetRelationProvider.getWidgetRelation({presentableId}).then(data => {
+                return data ? data.relevanceContractIds : []
+            })
+
+            let presentableRelevanceContractIds = relevanceContractIds.map(t => t.contractId)
+
+            let widgetPresentables = {}
+            if (presentableRelevanceContractIds.length) {
+                widgetPresentables = await dataProvider.presentableProvider.getPresentableList({contractId: {$in: presentableRelevanceContractIds}})
+                    .then(list => collectionToObject(list))
+            }
+
+            let result = resourceInfo.systemMeta.widgets.map(item => {
+                let relevanceContract = relevanceContractIds.find(x => x.resourceId === item.resourceId)
+                return {
+                    resourceId: item.resourceId,
+                    resourceName: item.resourceName,
+                    contractId: relevanceContract ? relevanceContract.contractId : '',
+                    presentableId: relevanceContract && widgetPresentables[relevanceContract.contractId] ?
+                        widgetPresentables[relevanceContract.contractId]._id.toString() : ''
+                }
+            })
+
+            ctx.success(result)
         }
 
         /**

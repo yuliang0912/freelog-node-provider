@@ -19,7 +19,7 @@ module.exports = app => {
         async index(ctx) {
 
             ctx.validateNodeInfo()
-            
+
             let userId = ctx.request.userId || 0
             let nodeInfo = ctx.request.nodeInfo
             let pageBuild = await dataProvider.nodePageBuildProvider.getNodePageBuild({
@@ -81,7 +81,7 @@ module.exports = app => {
             });
 
             var url = client.signatureUrl('/resources/image/bb8d7393f7ad47fdaa9f2036e4fda709', {expires: 1510802533});
-            console.log(url);
+
 
             ctx.success(url)
 

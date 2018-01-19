@@ -11,7 +11,8 @@
 module.exports = (app) => async (ctx, next) => {
 
     let nodeDomain = ctx.checkParams('nodeDomain').isNodeDomain().value
-    ctx.validate()
+
+    ctx.validate(false)
 
     let nodeInfo = await ctx.app.dataProvider.nodeProvider.getNodeInfo({nodeDomain})
 

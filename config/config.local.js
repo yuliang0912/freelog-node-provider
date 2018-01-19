@@ -10,7 +10,7 @@ module.exports = appInfo => {
 
     return {
 
-        middleware: ['errorHandler', 'localUserIdentity'],
+        middleware: ['errorHandler', 'localUserIdentity'], //,
 
         /**
          * 本地开发环境身份信息
