@@ -28,7 +28,7 @@ module.exports = (policyText) => {
 
     policy.forEach(subPolicy => {
         subPolicy.fsmDescription.forEach(item => {
-            setEventId(item.event)
+            item.event && setEventId(item.event)
         })
     })
 
