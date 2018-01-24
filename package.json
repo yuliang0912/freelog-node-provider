@@ -10,7 +10,7 @@
     "ali-oss": "^4.11.4",
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
-    "egg": "^2.2.0",
+    "egg": "^2.2.1",
     "egg-freelog-base": "^1.1.31",
     "js-yaml": "^3.10.0",
     "jsonschema": "^1.2.2",
