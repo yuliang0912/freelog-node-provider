@@ -23,7 +23,6 @@ module.exports = app => {
             let presentableId = ctx.checkParams('presentableId').isMongoObjectId('presentableId格式错误').value
             let extName = ctx.checkParams('extName').optional().in(ExtensionNames).value
             let userContractId = ctx.checkQuery('userContractId').optional().isMongoObjectId().value
-
             //请求响应设置:https://help.aliyun.com/document_detail/31980.html?spm=5176.doc31855.2.9.kpDwZN
             let response = ctx.checkHeader('response').optional().toJson().default({}).value
 
@@ -60,7 +59,7 @@ module.exports = app => {
                 if (!/^2[\d]{2}$/.test(result.status)) {
                     ctx.error({msg: '文件丢失,未能获取到资源源文件信息', data: {['http-status']: result.status}})
                 }
-                //ctx.set(result.headers)
+                ctx.set(result.headers)
                 ctx.attachment(presentableId)
                 ctx.set('content-type', 'application/octet-stream')
                 ctx.set('freelog-resource-type', resourceInfo.resourceType)

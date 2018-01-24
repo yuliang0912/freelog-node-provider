@@ -18,15 +18,6 @@ module.exports = app => {
     app.get('/v1/presentables/pageBuildAssociateWidgetPresentable', app.controller.presentable.v1.pageBuildAssociateWidgetPresentable)
     app.get('/v1/presentables/pbPresentableStatistics', app.controller.presentable.v1.pbPresentableStatistics)
 
-    /**
-     * node主页相关路由
-     */
-    //app.get(/^\/node\/([a-zA-Z0-9-]{4,24}[\/]?)$/, app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
-    //app.get('/node/:nodeDomain', app.middlewares.nodeDomainAuth(), app.controller.node.home.index)
-    //暂时先不要 以后节点渲染站点单独独立出来
-    //app.get('/node/:nodeDomain/presentable/:presentableId.:extName', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
-    //app.get('/node/:nodeDomain/presentable/:presentableId', app.middlewares.nodeDomainAuth(), app.controller.node.home.presentableResource)
-
     //请求获取presentable资源
     app.get('/v1/nodes/:nodeId/presentables/:presentableId.:extName', app.controller.presentable.auth.resource)
     app.get('/v1/nodes/:nodeId/presentables/:presentableId', app.controller.presentable.auth.resource)
