@@ -18,7 +18,7 @@ module.exports = class UpdateNodeTemplate extends Subscription {
 
 
     /**
-     * 保持rabbitMq连接
+     * 保持Mysql连接
      */
     keepAlivedMysql() {
         let {knex, logger} = this.app
