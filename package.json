@@ -18,7 +18,7 @@
     "lodash": "^4.17.4",
     "mongoose": "^4.13.9",
     "mysql2": "^1.5.1",
-    "presentable_policy_compiler": "^0.1.10",
+    "presentable_policy_compiler": "^0.1.11",
     "uuid": "^3.2.1",
     "validator": "^9.2.0"
   },
