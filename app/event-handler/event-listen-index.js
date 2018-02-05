@@ -6,8 +6,6 @@
 
 
 const presentableEventListen = require('./presentable-event-handler')
-const nodeTemplateUpdateEventListen = require('./node-template-update-handler')
-
 
 module.exports.listenEvents = app => {
 
@@ -15,6 +13,4 @@ module.exports.listenEvents = app => {
      * presentable事件监听与处理
      */
     presentableEventListen.listen(app)
-
-    nodeTemplateUpdateEventListen.listen(app)
 }

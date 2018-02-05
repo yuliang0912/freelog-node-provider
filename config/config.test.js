@@ -9,7 +9,7 @@ module.exports = appInfo => {
 
         gatewayUrl: "http://192.168.164.129",
 
-        mongo: {
+        mongoose: {
             uri: "mongodb://192.168.0.99:27017/node"
         },
     }

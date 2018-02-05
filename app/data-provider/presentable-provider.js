@@ -2,149 +2,128 @@
  * Created by yuliang on 2017/10/31.
  */
 
-
 'use strict'
 
-
-const moment = require('moment')
 const mongoModels = require('../models/index')
 const policyParse = require('../extend/helper/policy_parse_factory')
+const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
-module.exports = app => {
+module.exports = class PresentableProvider extends MongoBaseOperation {
+    constructor(app) {
+        super(app.model.Presentable)
+        this.app = app
+    }
 
-    const type = app.type
+    /**
+     * 创建presentable
+     * @param model
+     * @returns {Promise}
+     */
+    createPresentable(model) {
 
-    return {
-        /**
-         * 创建presentable
-         * @param model
-         * @returns {Promise}
-         */
-        createPresentable(model) {
+        if (!super.type.object(model)) {
+            return Promise.reject(new Error("model must be object"))
+        }
 
-            if (!type.object(model)) {
-                return Promise.reject(new Error("model must be object"))
-            }
+        model.policy = policyParse.parse(model.policyText, model.languageType)
+        model.serialNumber = mongoModels.ObjectId
 
+        return super.create(model)
+    }
+
+    /**
+     * 更新消费策略
+     * @param model
+     * @param condition
+     * @returns {Promise}
+     */
+    updatePresentable(model, condition) {
+
+        if (!super.type.object(model)) {
+            return Promise.reject(new Error("model must be object"))
+        }
+
+        if (model.policyText && model.languageType) {
+            model.policy = policyParse.parse(model.policyText, model.languageType)
+            model.serialNumber = this.app.mongoose.getNewObjectId()
+        }
+
+        return super.update(condition, model)
+    }
+
+
+    /**
+     * 查找单个消费策略
+     * @param condtion
+     * @returns {Promise}
+     */
+    getPresentable(condition) {
+        return super.findOne(condition)
+    }
+
+    /**
+     * 查找单个消费策略
+     * @param condtion
+     * @returns {Promise}
+     */
+    getPresentableById(presentableId) {
+        return super.findById(presentableId)
+    }
+
+    /**
+     * 查找多个消费策略
+     * @param condtion
+     * @returns {Promise}
+     */
+    getPresentableList(condition) {
+        let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status tagInfo'
+
+        return super.find(condition, projection)
+    }
+
+    /**
+     * 根据合同ID批量获取presentables
+     */
+    getPresentablesByContractIds(nodeId, contractIds) {
+
+        if (!Array.isArray(contractIds)) {
+            return Promise.reject(new Error("contractIds must be array"))
+        }
+
+        if (contractIds.length < 1) {
+            return Promise.resolve([])
+        }
+
+        let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status'
+
+        return super.find({nodeId, contractId: {$in: contractIds}}, projection)
+    }
+
+    /**
+     * 批量新增presentables
+     * @param presentables
+     */
+    createPageBuildPresentable(presentables) {
+
+        if (!Array.isArray(presentables)) {
+            return Promise.reject(new Error("presentables must be array"))
+        }
+
+        if (!presentables.length) {
+            return Promise.resolve([])
+        }
+
+        let pbPresentable = presentables.find(x => x.tagInfo.resourceInfo.resourceType === 'page_build')
+
+        presentables.forEach(model => {
+            model._id = mongoModels.ObjectId
             model.policy = policyParse.parse(model.policyText, model.languageType)
             model.serialNumber = mongoModels.ObjectId
-
-            return mongoModels.presentable.create(model)
-        },
-
-        /**
-         * 更新消费策略
-         * @param model
-         * @param condition
-         * @returns {Promise}
-         */
-        updatePresentable(model, condition) {
-
-            if (!type.object(model)) {
-                return Promise.reject(new Error("model must be object"))
+            if (model.tagInfo.resourceInfo.resourceType === 'widget') {
+                pbPresentable.widgetPresentables.push(model._id.toString())
             }
+        })
 
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
-
-            if (model.policyText && model.languageType) {
-                model.policy = policyParse.parse(model.policyText, model.languageType)
-                model.serialNumber = mongoModels.ObjectId
-            }
-
-            return mongoModels.presentable.update(condition, model).exec()
-        },
-
-
-        /**
-         * 查找单个消费策略
-         * @param condtion
-         * @returns {Promise}
-         */
-        getPresentable(condition) {
-
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
-
-            return mongoModels.presentable.findOne(condition).exec()
-        },
-
-        /**
-         * 查找单个消费策略
-         * @param condtion
-         * @returns {Promise}
-         */
-        getPresentableById(presentableId) {
-
-            if (!presentableId) {
-                return Promise.reject(new Error("presentableId must be mongodbObjectId"))
-            }
-
-            return mongoModels.presentable.findOne({_id: presentableId}).exec()
-        },
-
-        /**
-         * 查找多个消费策略
-         * @param condtion
-         * @returns {Promise}
-         */
-        getPresentableList(condition) {
-
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
-
-            let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status tagInfo'
-
-            return mongoModels.presentable.find(condition, projection).exec()
-        },
-
-        /**
-         * 根据合同ID批量获取presentables
-         */
-        getPresentablesByContractIds(nodeId, contractIds) {
-
-            if (!Array.isArray(contractIds)) {
-                return Promise.reject(new Error("contractIds must be array"))
-            }
-
-            if (contractIds.length < 1) {
-                return Promise.resolve([])
-            }
-
-            let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status'
-
-            return mongoModels.presentable.find({nodeId, contractId: {$in: contractIds}}, projection).exec()
-        },
-
-        /**
-         * 批量新增presentables
-         * @param presentables
-         */
-        createPageBuildPresentable(presentables) {
-
-            if (!Array.isArray(presentables)) {
-                return Promise.reject(new Error("presentables must be array"))
-            }
-
-            if (!presentables.length) {
-                return Promise.resolve([])
-            }
-
-            let pbPresentable = presentables.find(x => x.tagInfo.resourceInfo.resourceType === 'page_build')
-
-            presentables.forEach(model => {
-                model._id = mongoModels.ObjectId
-                model.policy = policyParse.parse(model.policyText, model.languageType)
-                model.serialNumber = mongoModels.ObjectId
-                if (model.tagInfo.resourceInfo.resourceType === 'widget') {
-                    pbPresentable.widgetPresentables.push(model._id.toString())
-                }
-            })
-
-            return mongoModels.presentable.insertMany(presentables)
-        }
+        return super.insertMany(presentables)
     }
 }

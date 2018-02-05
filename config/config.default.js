@@ -6,8 +6,8 @@ module.exports = appInfo => {
         /**
          * mongoDB配置
          */
-        mongo: {
-            uri: "mongodb://192.168.0.99:27017/node",
+        mongoose: {
+            url: "mongodb://192.168.0.99:27017/node",
         },
 
         middleware: ['errorHandler', 'identiyAuthentication'],
@@ -15,9 +15,9 @@ module.exports = appInfo => {
         /**
          * DB-mysql相关配置
          */
-        dbConfig: {
+        knex: {
             node: {
-                client: 'mysql2',
+                client: 'mysql',
                 connection: {
                     host: '192.168.0.99',
                     user: 'root',
@@ -30,10 +30,16 @@ module.exports = appInfo => {
                     connectTimeout: 10000
                 },
                 pool: {
-                    maxConnections: 50,
-                    minConnections: 1,
+                    max: 10, min: 2,
+                    afterCreate: (conn, done) => {
+                        conn.on('error', err => {
+                            console.log(`mysql connection error : ${err.toString()}`)
+                            err.fatal && globalInfo.app.knex.resource.client.pool.destroy(conn)
+                        })
+                        done()
+                    }
                 },
-                acquireConnectionTimeout: 10000,
+                acquireConnectionTimeout: 800,
                 debug: false
             },
         },
@@ -51,11 +57,6 @@ module.exports = appInfo => {
          * API网关地址
          */
         gatewayUrl: "http://api.freelog.com",
-
-        /**
-         * 节点首页模板文件地址
-         */
-        nodeHomePageTemplateUrl: "http://static.freelog.com/web-components/index.html"
     };
 
     // should change to your own
