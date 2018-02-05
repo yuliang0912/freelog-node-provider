@@ -12,7 +12,7 @@
     "cheerio": "^1.0.0-rc.2",
     "egg": "^2.3.0",
     "egg-freelog-base": "^1.1.33",
-    "egg-freelog-database": "^1.0.2",
+    "egg-freelog-database": "^1.0.3",
     "js-yaml": "^3.10.0",
     "jsonschema": "^1.2.2",
     "knex": "^0.14.2",

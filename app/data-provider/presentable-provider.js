@@ -4,7 +4,6 @@
 
 'use strict'
 
-const mongoModels = require('../models/index')
 const policyParse = require('../extend/helper/policy_parse_factory')
 const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
@@ -26,7 +25,7 @@ module.exports = class PresentableProvider extends MongoBaseOperation {
         }
 
         model.policy = policyParse.parse(model.policyText, model.languageType)
-        model.serialNumber = mongoModels.ObjectId
+        model.serialNumber = this.app.mongoose.getNewObjectId()
 
         return super.create(model)
     }
@@ -116,9 +115,9 @@ module.exports = class PresentableProvider extends MongoBaseOperation {
         let pbPresentable = presentables.find(x => x.tagInfo.resourceInfo.resourceType === 'page_build')
 
         presentables.forEach(model => {
-            model._id = mongoModels.ObjectId
+            model._id = this.app.mongoose.getNewObjectId()
             model.policy = policyParse.parse(model.policyText, model.languageType)
-            model.serialNumber = mongoModels.ObjectId
+            model.serialNumber = this.app.mongoose.getNewObjectId()
             if (model.tagInfo.resourceInfo.resourceType === 'widget') {
                 pbPresentable.widgetPresentables.push(model._id.toString())
             }

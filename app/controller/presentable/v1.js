@@ -111,9 +111,9 @@ module.exports = class PresentableController extends Controller {
         }
 
         await ctx.dal.presentableProvider.createPresentable(presentable).bind(ctx).then(data => {
-            app.emit(app.event.presentableEvent.createPresentableEvent, data.toObject())
+            ctx.app.emit(ctx.app.event.presentableEvent.createPresentableEvent, data.toObject())
             ctx.success(data)
-        }).catch(ctx.error)
+        })
     }
 
     /**
