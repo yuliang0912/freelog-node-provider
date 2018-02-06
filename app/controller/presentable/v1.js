@@ -450,8 +450,7 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         let presentableInfos = await ctx.dal.presentableProvider.getPresentableList({_id: {$in: presentableIds}})
-
-        if (presentableIds.length === 0) {
+        if (!presentableIds.length) {
             return ctx.success([])
         }
         if (presentableInfos.some(t => t.tagInfo.resourceInfo.resourceType !== ctx.app.resourceType.PAGE_BUILD)) {

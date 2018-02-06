@@ -8,12 +8,13 @@ module.exports = class UpdateNodeTemplate extends Subscription {
         return {
             cron: '0 */5 * * * * *', //5分钟执行一次
             type: 'worker', // 指定一个 worker需要执行
-            immediate: false, //立即执行一次
+            immediate: true, //立即执行一次
+            disable: true
         };
     }
 
     async subscribe() {
-        this.keepAlivedMysql()
+        //knex-connection-pool自动管理连接池
     }
 
 
@@ -22,8 +23,7 @@ module.exports = class UpdateNodeTemplate extends Subscription {
      */
     keepAlivedMysql() {
         let {knex, logger} = this.app
-
-        knex.node('nodeinfo').first().then(() => {
+        knex.node.raw("select 1").then(() => {
             logger.info('mysql keepalived')
         }).catch(err => {
             logger.error('mysql keepalived error:' + err.toString())

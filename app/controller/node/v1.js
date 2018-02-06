@@ -4,7 +4,6 @@
  */
 'use strict'
 
-const Promise = require('bluebird')
 const Controller = require('egg').Controller;
 
 module.exports = class NodeController extends Controller {

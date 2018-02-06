@@ -20,6 +20,7 @@ module.exports = class NodeProvider extends KnexBaseOperation {
      * @param model
      */
     createNodePageBuild(model) {
+
         if (!super.type.object(model)) {
             return Promise.reject(new Error("model must be object"))
         }

@@ -4,7 +4,6 @@
 
 'use strict'
 
-
 const presentableEventListen = require('./presentable-event-handler')
 
 module.exports.listenEvents = app => {
