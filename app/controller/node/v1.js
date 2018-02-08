@@ -66,7 +66,7 @@ module.exports = class NodeController extends Controller {
         let checkNodeName = ctx.dal.nodeProvider.getNodeInfo({nodeName})
         let checkNodeDomain = ctx.dal.nodeProvider.getNodeInfo({nodeDomain})
 
-        await Promise.all([checkNodeName, checkNodeDomain]).spread((nodeNameResult, nodeDomainResult) => {
+        await Promise.all([checkNodeName, checkNodeDomain]).then(([nodeNameResult, nodeDomainResult]) => {
             if (nodeNameResult) {
                 ctx.errors.push({nodeName: '节点名已经存在'})
             }
