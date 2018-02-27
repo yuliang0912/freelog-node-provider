@@ -20,6 +20,8 @@ module.exports = app => {
     router.get('/v1/presentables/pageBuildAssociateWidgetPresentable', controller.presentable.v1.pageBuildAssociateWidgetPresentable)
     router.get('/v1/presentables/pbPresentableStatistics', controller.presentable.v1.pbPresentableStatistics)
 
+    router.get('/v1/nodes/list', controller.node.v1.list)
+
     /**
      * index
      */

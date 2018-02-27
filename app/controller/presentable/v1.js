@@ -78,13 +78,13 @@ module.exports = class PresentableController extends Controller {
         })
 
         let contractInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/${contractId}`)
-
+        //debug let contractInfo = await ctx.curlIntranetApi(`http://127.0.0.1:7008/v1/contracts/${contractId}`)
         if (!contractInfo || contractInfo.partyTwo !== nodeId || contractInfo.contractType !== 2) {
             ctx.error({msg: 'contract信息错误'})
         }
 
         let resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${contractInfo.resourceId}`)
-
+        //debug let resourceInfo = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/${contractInfo.resourceId}`)
         if (!resourceInfo) {
             ctx.error({msg: 'contract信息错误,未能索引到contract的资源'})
         }
@@ -130,7 +130,7 @@ module.exports = class PresentableController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        let presentableInfo = await ctx.dal.presentableProvider.getPresentable({_id: presentableId})
+        let presentableInfo = await ctx.dal.presentableProvider.getPresentableById(presentableId)
 
         if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
             ctx.error({msg: '参数presentableId错误或者没有操作权限'})
@@ -153,8 +153,8 @@ module.exports = class PresentableController extends Controller {
         }
 
         await ctx.dal.presentableProvider.updatePresentable(model, {_id: presentableId}).then(data => {
-            return ctx.dal.presentableProvider.getPresentable({_id: presentableId})
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+            return ctx.dal.presentableProvider.getPresentableById(presentableId)
+        }).bind(ctx).then(ctx.success)
     }
 
     /**

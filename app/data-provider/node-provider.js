@@ -53,6 +53,20 @@ module.exports = class NodeProvider extends KnexBaseOperation {
     }
 
     /**
+     * 批量查询节点
+     * @param nodeIds
+     * @returns {Promise<Array>}
+     */
+    getNodeListByNodeIds(nodeIds) {
+
+        if (!Array.isArray(nodeIds) || !nodeIds.length) {
+            return Promise.resolve([])
+        }
+
+        return super.queryChain.whereIn('nodeId', nodeIds).select()
+    }
+
+    /**
      * 获取数量
      * @param condition
      * @returns {*}

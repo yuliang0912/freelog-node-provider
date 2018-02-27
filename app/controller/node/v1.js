@@ -87,4 +87,18 @@ module.exports = class NodeController extends Controller {
             }
         }).then(ctx.success)
     }
+
+    /**
+     * 获取节点列表
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async list(ctx) {
+
+        let nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, 'nodeIds格式错误').toSplitArray().len(1, 100).value
+
+        ctx.validate()
+
+        await ctx.dal.nodeProvider.getNodeListByNodeIds(nodeIds).bind(ctx).then(ctx.success).catch(ctx.error)
+    }
 }
