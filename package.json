@@ -11,17 +11,17 @@
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "egg": "^2.3.0",
-    "egg-freelog-base": "^1.1.33",
-    "egg-freelog-database": "^1.0.3",
+    "egg-freelog-base": "^1.1.37",
+    "egg-freelog-database": "^1.0.5",
     "js-yaml": "^3.10.0",
     "jsonschema": "^1.2.2",
-    "knex": "^0.14.2",
+    "knex": "^0.14.4",
     "lodash": "^4.17.5",
-    "mongoose": "^5.0.3",
+    "mongoose": "^5.0.7",
     "mysql": "^2.15.0",
-    "presentable_policy_compiler": "^0.1.12",
+    "presentable_policy_compiler": "^0.1.13",
     "uuid": "^3.2.1",
-    "validator": "^9.4.0"
+    "validator": "^9.4.1"
   },
   "engines": {
     "node": ">=8.0.0"

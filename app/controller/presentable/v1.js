@@ -144,7 +144,7 @@ module.exports = class PresentableController extends Controller {
         if (name) {
             model.name = name
         }
-        if (userDefinedTags) {
+        if (userDefinedTags !== undefined) {
             model['tagInfo.userDefined'] = userDefinedTags.split(',')
         }
 
