@@ -15,8 +15,8 @@ RUN npm install
 
 ENV NODE_ENV test
 ENV EGG_SERVER_ENV test
-ENV PORT 7005
+ENV PORT 5005
 
-EXPOSE 7005
+EXPOSE 5005
 
 CMD [ "npm", "start" ]
