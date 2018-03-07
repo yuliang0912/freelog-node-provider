@@ -10,7 +10,6 @@ COPY . /data/freelog-node-provider
 
 RUN npm install
 
-
 ENV NODE_ENV test
 ENV EGG_SERVER_ENV test
 ENV PORT 5005

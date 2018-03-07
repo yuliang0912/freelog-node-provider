@@ -7,6 +7,7 @@
     "framework": "egg-freelog-base"
   },
   "dependencies": {
+    "@freelog/presentable-policy-compiler": "0.0.10",
     "ali-oss": "^4.12.2",
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
@@ -19,7 +20,6 @@
     "lodash": "^4.17.5",
     "mongoose": "^5.0.7",
     "mysql": "^2.15.0",
-    "presentable_policy_compiler": "^0.1.13",
     "uuid": "^3.2.1",
     "validator": "^9.4.1"
   },
