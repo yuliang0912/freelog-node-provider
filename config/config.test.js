@@ -19,7 +19,11 @@ module.exports = {
             debug: false
         }
     },
+<<<<<<< .merge_file_a11872
     
+=======
+
+>>>>>>> .merge_file_a14852
     /**
      * mongodb连接
      */
