@@ -9,8 +9,8 @@ module.exports = {
     knex: {
         node: {
             connection: {
-                host: 'rm-wz9wj9435a0428942.mysql.rds.aliyuncs.com',
-                user: 'freelog',
+                host: 'rm-wz93t7g809kthrub7.mysql.rds.aliyuncs.com',
+                user: 'freelog_test',
                 password: 'Ff@233109',
                 database: 'fr_node'
             },
@@ -19,6 +19,6 @@ module.exports = {
     },
 
     mongoose: {
-        url: "mongodb://119.23.63.19:27017/node"
+        url: "mongodb://172.18.215.229/node"
     },
 }
