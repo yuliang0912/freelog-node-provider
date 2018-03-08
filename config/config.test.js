@@ -5,9 +5,7 @@
 'use strict'
 
 module.exports = {
-    /**
-     * DB-mysql相关配置
-     */
+
     knex: {
         node: {
             connection: {
@@ -20,10 +18,7 @@ module.exports = {
         }
     },
 
-    /**
-     * mongodb连接
-     */
     mongoose: {
-        url: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/node?replicaSet=mgset-5016983"
-    }
+        url: "mongodb://119.23.63.19:27017/node"
+    },
 }

@@ -27,6 +27,6 @@ module.exports = appInfo => {
             createDate: "2017-10-20T16:38:17.000Z",
             updateDate: "2017-11-01T15:53:29.000Z",
             tokenType: "local"
-        }
+        },
     }
 }
