@@ -24,7 +24,7 @@ module.exports = appInfo => {
         /**
          * api网关内网地址
          */
-        //gatewayUrl: "http://172.18.215.224:8895",
+        gatewayUrl: "http://172.18.215.224:8895",
 
         /**
          * mongodb连接
