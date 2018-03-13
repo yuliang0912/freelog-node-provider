@@ -36,6 +36,11 @@ module.exports = app => {
      * presentables restful api
      */
     router.resources('/v1/presentables', '/v1/presentables', controller.presentable.v1)
+
+    /**
+     * custom store restful api
+     */
+    router.resources('/v1/customStores', '/v1/customStores', controller.customDataStore.v1)
 }
 
 
