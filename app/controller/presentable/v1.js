@@ -22,7 +22,7 @@ module.exports = class PresentableController extends Controller {
         let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         let tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         let condition = {nodeId, status: 0}
         if (contractIds) {
