@@ -407,7 +407,7 @@ module.exports = class PresentableController extends Controller {
      */
     async pageBuildAssociateWidgetPresentable(ctx) {
         let presentableId = ctx.checkQuery('presentableId').isMongoObjectId().value
-        ctx.validate()
+        ctx.validate(false)
 
         let presentableInfo = await ctx.dal.presentableProvider.getPresentable({_id: presentableId})
 
