@@ -46,7 +46,7 @@ module.exports = class PresentableController extends Controller {
     async show(ctx) {
         let presentableId = ctx.checkParams("id").isMongoObjectId().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         await ctx.dal.presentableProvider.getPresentable({
             _id: presentableId,
