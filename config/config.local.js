@@ -28,5 +28,9 @@ module.exports = appInfo => {
             updateDate: "2017-11-01T15:53:29.000Z",
             tokenType: "local"
         },
+
+        mongoose: {
+            url: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/node?replicaSet=mgset-5016983"
+        }
     }
 }

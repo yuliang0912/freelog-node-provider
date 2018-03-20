@@ -4,7 +4,7 @@
 
 'use strict'
 
-const systemRetain = ['freelog', 'node']
+const systemRetain = ['freelog', 'node', 'nodes', 'admin']
 
 module.exports = {
 

@@ -27,19 +27,16 @@ module.exports = appInfo => {
                     timezone: '+08:00',
                     bigNumberStrings: true,
                     supportBigNumbers: true,
-                    connectTimeout: 10000
+                    connectTimeout: 1500,
+                    typeCast: (field, next) => {
+                        if (field.type === 'JSON') {
+                            return JSON.parse(field.string())
+                        }
+                        return next()
+                    },
                 },
-                pool: {
-                    max: 10, min: 2,
-                    afterCreate: (conn, done) => {
-                        conn.on('error', err => {
-                            console.log(`mysql connection error : ${err.toString()}`)
-                            err.fatal && globalInfo.app.knex.resource.client.pool.destroy(conn)
-                        })
-                        done()
-                    }
-                },
-                acquireConnectionTimeout: 800,
+                pool: {max: 10, min: 2},
+                acquireConnectionTimeout: 500,
                 debug: false
             },
         },
