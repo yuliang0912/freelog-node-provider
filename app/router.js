@@ -41,6 +41,11 @@ module.exports = app => {
      * custom store restful api
      */
     router.resources('/v1/customStores', '/v1/customStores', controller.customDataStore.v1)
+
+    /**
+     * policy template restful api
+     */
+    router.resources('/v1/policyTemplates', '/v1/policyTemplates', controller.policyTemplate.v1)
 }
 
 
