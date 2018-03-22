@@ -22,6 +22,10 @@ module.exports = class PolicyTemplateController extends Controller {
         if (isShare !== undefined) {
             condition.isShare = isShare
         }
+        if (isShare !== 1) {
+            condition.userId = ctx.request.userId
+        }
+
         let totalItem = await ctx.dal.policyTemplate.count(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
