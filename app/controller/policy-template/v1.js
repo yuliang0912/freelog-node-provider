@@ -14,16 +14,14 @@ module.exports = class PolicyTemplateController extends Controller {
         let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
         let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         let templateType = ctx.checkQuery("templateType").exist().toInt().in([1, 2]).value
-        let isShare = ctx.checkQuery('isShare').optional().toInt().in([0, 1]).value
+        let isShare = ctx.checkQuery('isShare').default(0).toInt().in([0, 1]).value
         ctx.validate()
 
         let templateList = []
-        let condition = {templateType, status: 0}
-        if (isShare !== undefined) {
-            condition.isShare = isShare
-        }
-        if (isShare !== 1) {
-            condition.userId = ctx.request.userId
+        let condition = {templateType, isShare, status: 0, userId: ctx.request.userId}
+
+        if (isShare === 1) {
+            Reflect.deleteProperty(condition, 'userId')
         }
 
         let totalItem = await ctx.dal.policyTemplate.count(condition)
