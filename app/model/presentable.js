@@ -35,7 +35,7 @@ module.exports = app => {
         languageType: {type: String, required: true}, //描述语言类型,yaml或者其他
         nodeId: {type: Number, required: true}, //节点ID
         userId: {type: Number, required: true}, //创建者ID
-        contractId: {type: String, required: true}, //合同ID
+        contractId: {type: String, unique: true, required: true}, //合同ID
         resourceId: {type: String, required: true}, //资源ID
         serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
         tagInfo: {

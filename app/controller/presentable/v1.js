@@ -22,7 +22,7 @@ module.exports = class PresentableController extends Controller {
         let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         let tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         let condition = {nodeId, status: 0}
         if (contractIds) {
@@ -46,7 +46,7 @@ module.exports = class PresentableController extends Controller {
     async show(ctx) {
         let presentableId = ctx.checkParams("id").isMongoObjectId().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         await ctx.dal.presentableProvider.getPresentable({
             _id: presentableId,
@@ -407,7 +407,7 @@ module.exports = class PresentableController extends Controller {
      */
     async pageBuildAssociateWidgetPresentable(ctx) {
         let presentableId = ctx.checkQuery('presentableId').isMongoObjectId().value
-        ctx.validate()
+        ctx.validate(false)
 
         let presentableInfo = await ctx.dal.presentableProvider.getPresentable({_id: presentableId})
 

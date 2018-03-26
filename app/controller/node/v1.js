@@ -42,7 +42,7 @@ module.exports = class NodeController extends Controller {
     async show(ctx) {
         let nodeId = ctx.checkParams('id').isInt().gt(0).value
 
-        ctx.validate()
+        ctx.validate(false)
 
         await ctx.dal.nodeProvider.getNodeInfo({nodeId}).bind(ctx).then(ctx.success)
     }
