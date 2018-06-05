@@ -66,8 +66,8 @@ module.exports = class PresentableController extends Controller {
         //const contracts = ctx.checkBody('contracts').optional().isArray().value
         ctx.allowContentType({type: 'json'}).validate()
 
-        const resourceInfo = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/${resourceId}`)
-        //const resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${resourceId}`)
+        //const resourceInfo = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/${resourceId}`)
+        const resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${resourceId}`)
         if (!resourceInfo || resourceInfo.status !== 2) {
             ctx.error({msg: '未能找到有效的资源', data: {resourceInfo}})
         }

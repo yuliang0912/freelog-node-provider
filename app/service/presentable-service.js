@@ -56,7 +56,7 @@ class PresentableSchemeService extends Service {
      */
     async _checkPresentableContracts({presentable, contracts}) {
 
-        const {ctx} = this
+        const {ctx, config} = this
         if (!contracts.length) {
             return
         }
@@ -73,9 +73,12 @@ class PresentableSchemeService extends Service {
         const contractResourceMap = new Map(contracts.map(x => [x.resourceId, x]))
         const contractIds = contracts.filter(x => x.contractId).map(x => x.contractId)
         if (contractIds.length) {
-            await ctx.curlIntranetApi(`http://127.0.0.1:7008/v1/contracts/list?contractIds=${contractIds.toString()}`).then(contractList => {
+            await ctx.curlIntranetApi(`${config.gatewayUrl}/v1/contracts/list?contractIds=${contractIds.toString()}`).then(contractList => {
                 contractList.forEach(x => contractMap.set(x.contractId, x))
             })
+            // await ctx.curlIntranetApi(`http://127.0.0.1:7008/v1/contracts/list?contractIds=${contractIds.toString()}`).then(contractList => {
+            //     contractList.forEach(x => contractMap.set(x.contractId, x))
+            // })
         }
         if (contractMap.size !== contractIds.length) {
             ctx.error({msg: 'contractId数据校验失败', data: {contractMap, contractIds}})
@@ -94,7 +97,8 @@ class PresentableSchemeService extends Service {
         })
 
         const allAuthSchemeIds = contracts.map(x => x.authSchemeId)
-        const authSchemeList = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/authSchemes?authSchemeIds=${allAuthSchemeIds.toString()}`)
+        const authSchemeList = await ctx.curlIntranetApi(`${config.gatewayUrl}/v1/resources/authSchemes?authSchemeIds=${allAuthSchemeIds.toString()}`)
+        //const authSchemeList = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/authSchemes?authSchemeIds=${allAuthSchemeIds.toString()}`)
 
         const allAuthSchemeBubbleResourceIds = authSchemeList.reduce((acc, current) => {
             if (current.status !== 1) {
@@ -154,10 +158,12 @@ class PresentableSchemeService extends Service {
             return []
         }
 
-        const {ctx} = this
+        const {ctx, config} = this
         const dataList = []
         const authSchemeIds = associatedContracts.map(x => x.authSchemeId)
-        const authSchemeMap = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/authSchemes?authSchemeIds=${authSchemeIds.toString()}`)
+        // const authSchemeMap = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/authSchemes?authSchemeIds=${authSchemeIds.toString()}`)
+        //     .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
+        const authSchemeMap = await ctx.curlIntranetApi(`${config.gatewayUrl}/api/v1/resources/authSchemes?authSchemeIds=${authSchemeIds.toString()}`)
             .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
 
         if (associatedContracts.length !== authSchemeMap.size) {
@@ -223,13 +229,20 @@ class PresentableSchemeService extends Service {
             return
         }
 
-        //ctx.curlIntranetApi(`${config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`,{
-        return ctx.curlIntranetApi(`http://127.0.0.1:7008/v1/contracts/batchCreateAuthSchemeContracts`, {
+
+        return ctx.curlIntranetApi(`${config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
             method: 'post',
             contentType: 'json',
             data: body,
             dataType: 'json'
         }).catch(ctx.error)
+        //
+        // return ctx.curlIntranetApi(`http://127.0.0.1:7008/v1/contracts/batchCreateAuthSchemeContracts`, {
+        //     method: 'post',
+        //     contentType: 'json',
+        //     data: body,
+        //     dataType: 'json'
+        // }).catch(ctx.error)
     }
 
     /**
