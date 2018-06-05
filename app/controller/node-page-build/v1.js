@@ -20,7 +20,7 @@ module.exports = class NodePageBuildController extends Controller {
         ctx.validate()
 
         await ctx.dal.nodePageBuildProvider.getNodePageBuildList({nodeId}).whereIn('status', [1, 2])
-            .bind(ctx).then(ctx.success).catch(ctx.error)
+            .then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -66,7 +66,7 @@ module.exports = class NodePageBuildController extends Controller {
         await ctx.dal.nodePageBuildProvider.createNodePageBuild(model).then(data => {
             Reflect.set(model, 'id', data[0])
             return model
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success).catch(ctx.error)
 
         if (model.status === 1) {
             ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, model.id, model.status).catch(console.error)
@@ -96,7 +96,7 @@ module.exports = class NodePageBuildController extends Controller {
         }
 
         //如果是显示状态,则其他的全部设置为隐藏
-        await ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).bind(ctx).then(data => {
+        await ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).then(data => {
             ctx.success(true)
         })
     }

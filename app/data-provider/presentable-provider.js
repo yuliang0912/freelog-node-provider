@@ -8,6 +8,7 @@ const policyParse = require('../extend/helper/policy_parse_factory')
 const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
 module.exports = class PresentableProvider extends MongoBaseOperation {
+
     constructor(app) {
         super(app.model.Presentable)
         this.app = app
@@ -24,10 +25,12 @@ module.exports = class PresentableProvider extends MongoBaseOperation {
             return Promise.reject(new Error("model must be object"))
         }
 
-        model.policy = policyParse.parse(model.policyText, model.languageType)
-        model.serialNumber = this.app.mongoose.getNewObjectId()
-
-        return super.create(model)
+        return super.findOneAndUpdate({
+            resourceId: model.resourceId,
+            nodeId: model.nodeId
+        }, model).then(oldInfo => {
+            return oldInfo ? super.findById(oldInfo._id) : super.create(model)
+        })
     }
 
     /**
@@ -75,9 +78,10 @@ module.exports = class PresentableProvider extends MongoBaseOperation {
      * @returns {Promise}
      */
     getPresentableList(condition) {
-        let projection = '_id createDate name resourceId contractId nodeId userId serialNumber status tagInfo'
 
-        return super.find(condition, projection)
+        //let projection = '_id presentableName userDefinedTags resourceId nodeId userId status createDate'
+
+        return super.find(condition)
     }
 
     /**

@@ -49,7 +49,7 @@ module.exports = class PolicyTemplateController extends Controller {
             name, template, templateType,
             isShare: 0,
             userId: ctx.request.userId
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -62,7 +62,7 @@ module.exports = class PolicyTemplateController extends Controller {
         let id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
         ctx.validate()
 
-        await ctx.dal.policyTemplate.findById(id).bind(ctx).then(ctx.success).catch(ctx.error)
+        await ctx.dal.policyTemplate.findById(id).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -95,6 +95,6 @@ module.exports = class PolicyTemplateController extends Controller {
         }
 
         await ctx.dal.policyTemplate.update({_id: id}, model)
-            .bind(ctx).then(() => ctx.success(policyTemplate)).catch(ctx.error)
+            .then(() => ctx.success(policyTemplate)).catch(ctx.error)
     }
 }

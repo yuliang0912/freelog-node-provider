@@ -7,19 +7,6 @@ module.exports = app => {
 
     const {router, controller} = app;
 
-    /**
-     * 创建pb的presentable
-     */
-    router.post('/v1/presentables/createPageBuildPresentable', controller.presentable.v1.createPageBuildPresentable)
-
-    /**
-     * 关联pb-persentable对应的插件合同ID
-     */
-    router.post('/v1/presentables/pageBuildAssociateWidget', controller.presentable.v1.pageBuildAssociateWidget)
-    router.get('/v1/presentables/pageBuildAssociateWidgetContract', controller.presentable.v1.pageBuildAssociateWidgetContract)
-    router.get('/v1/presentables/pageBuildAssociateWidgetPresentable', controller.presentable.v1.pageBuildAssociateWidgetPresentable)
-    router.get('/v1/presentables/pbPresentableStatistics', controller.presentable.v1.pbPresentableStatistics)
-
     router.get('/v1/nodes/list', controller.node.v1.list)
 
     /**

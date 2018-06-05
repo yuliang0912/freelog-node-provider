@@ -6,6 +6,7 @@
 
 const nodeDomainCheck = require('./helper/nodeDomainCheck')
 const polifyParseFactory = require('./helper/policy_parse_factory')
+const policyCompiler = new (require('./policy-compiler/index'))
 
 module.exports = {
 
@@ -21,7 +22,9 @@ module.exports = {
     policyParse: polifyParseFactory.parse,
 
     /**
-     * json格式校验
+     * 授权语言转换{policyText, languageType, policyName}
      */
-    jsonSchema: require('./json-schema/index')
+    policyCompiler(...args) {
+        return policyCompiler.compiler(...args)
+    }
 }

@@ -19,7 +19,7 @@ module.exports = appInfo => {
             node: {
                 client: 'mysql',
                 connection: {
-                    host: '192.168.0.99',
+                    host: '192.168.2.239',
                     user: 'root',
                     password: 'yuliang@@',
                     database: 'fr_node',

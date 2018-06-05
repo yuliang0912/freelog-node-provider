@@ -25,7 +25,7 @@ module.exports = class CustomDataStoreController extends Controller {
 
         await ctx.dal.customStoreProvider.createCustomStore({
             key, value, nodeId, userId: ctx.request.userId || 0
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -38,7 +38,7 @@ module.exports = class CustomDataStoreController extends Controller {
         ctx.validate()
 
         await ctx.dal.customStoreProvider.findOne({key})
-            .bind(ctx).then(ctx.success).catch(ctx.error)
+            .then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -56,6 +56,6 @@ module.exports = class CustomDataStoreController extends Controller {
         })
 
         await ctx.dal.customStoreProvider.update({key}, {value})
-            .then(data => ctx.success(true)).catch(err => ctx.error(err))
+            .then(data => ctx.success(true)).catch(ctx.error)
     }
 }

@@ -5,49 +5,51 @@
 'use strict'
 
 module.exports = app => {
+
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
-        transform: function (doc, ret, options) {
+        transform(doc, ret, options) {
             return {
                 presentableId: ret._id.toString(),
-                name: ret.name,
+                presentableName: ret.presentableName,
                 resourceId: ret.resourceId,
-                contractId: ret.contractId,
                 userId: ret.userId,
                 nodeId: ret.nodeId,
-                serialNumber: ret.serialNumber,
+                nodeName: ret.nodeName,
                 createDate: ret.createDate,
                 updateDate: ret.updateDate,
+                contracts: ret.contracts,
                 policy: ret.policy,
-                policyText: ret.policyText,
-                languageType: ret.languageType,
-                tagInfo: ret.tagInfo,
+                userDefinedTags: ret.userDefinedTags,
+                resourceInfo: ret.resourceInfo,
                 status: ret.status
             }
         }
     }
 
+    const AssociatedContractSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true},
+        authSchemeId: {type: String, required: true},
+        policySegmentId: {type: String, required: true},
+        contractId: {type: String, required: true},
+        status: {type: Number, required: true}
+    }, {_id: false})
+
     const PresentableSchema = new mongoose.Schema({
-        name: {type: String, required: true},
+        presentableName: {type: String, default: ''},
         policy: {type: Array, default: []}, //引用策略段
-        policyText: {type: String, default: []}, //引用策略描述语言原文
-        languageType: {type: String, required: true}, //描述语言类型,yaml或者其他
         nodeId: {type: Number, required: true}, //节点ID
+        nodeName: {type: String, required: true},//节点名称
         userId: {type: Number, required: true}, //创建者ID
-        contractId: {type: String, unique: true, required: true}, //合同ID
         resourceId: {type: String, required: true}, //资源ID
-        serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
-        tagInfo: {
-            resourceInfo: {
-                mimeType: {type: String, default: '', required: true},
-                resourceType: {type: String, default: '', required: true},
-                resourceName: {type: String, default: '', required: true},
-                resourceId: {type: String, default: '', required: true},
-            },
-            userDefined: {type: Array, default: []},//用户自定义tags
+        resourceInfo: {
+            resourceType: {type: String, required: true},
+            resourceName: {type: String, required: true},
         },
-        status: {type: Number, default: 0, required: true} //状态
+        contracts: {type: [AssociatedContractSchema], default: []},
+        userDefinedTags: {type: [String], default: []},//用户自定义tags
+        status: {type: Number, default: 0, required: true} //状态 0:初始态 1:合约已全部签订  2:上线
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
@@ -55,7 +57,7 @@ module.exports = app => {
         toObject: toObjectOptions
     })
 
-    PresentableSchema.index({nodeId: 1, userId: 1});
+    PresentableSchema.index({nodeId: 1, resourceId: 1});
 
     return mongoose.model('presentable', PresentableSchema)
 }

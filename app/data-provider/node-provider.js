@@ -8,6 +8,7 @@ const moment = require('moment')
 const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
 
 module.exports = class NodeProvider extends KnexBaseOperation {
+
     constructor(app) {
         super(app.knex.node("nodeinfo"))
         this.app = app

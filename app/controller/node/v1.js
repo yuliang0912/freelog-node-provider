@@ -44,7 +44,7 @@ module.exports = class NodeController extends Controller {
 
         ctx.validate(false)
 
-        await ctx.dal.nodeProvider.getNodeInfo({nodeId}).bind(ctx).then(ctx.success)
+        await ctx.dal.nodeProvider.getNodeInfo({nodeId}).then(ctx.success)
     }
 
     /**
@@ -81,7 +81,7 @@ module.exports = class NodeController extends Controller {
             ownerUserId: ctx.request.userId
         }
 
-        await ctx.dal.nodeProvider.createNode(nodeModel).bind(ctx).then(result => {
+        await ctx.dal.nodeProvider.createNode(nodeModel).then(result => {
             if (result.length > 0) {
                 return ctx.dal.nodeProvider.getNodeInfo({nodeId: result[0]})
             }
@@ -99,6 +99,6 @@ module.exports = class NodeController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.nodeProvider.getNodeListByNodeIds(nodeIds).bind(ctx).then(ctx.success).catch(ctx.error)
+        await ctx.dal.nodeProvider.getNodeListByNodeIds(nodeIds).then(ctx.success).catch(ctx.error)
     }
 }
