@@ -82,9 +82,9 @@ module.exports = class PresentableController extends Controller {
         //     result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
         // }
 
-        // await ctx.dal.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
-        //     oldInfo && ctx.error({msg: '不能重复添加'})
-        // })
+        await ctx.dal.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
+            oldInfo && ctx.error({msg: '不能重复添加'})
+        })
 
         const presentable = {
             nodeId, resourceId, resourceInfo, userId,
