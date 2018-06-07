@@ -9,7 +9,7 @@ module.exports = {
     /**
      * 允许跨域
      */
-    allowCors(credentials = 'true', methods = '*', origin = '*'){
+    allowCors(credentials = 'true', methods = '*', origin = '*') {
 
         this.set('Access-Control-Allow-credentials', credentials)
         this.set('Access-Control-Allow-Methods', methods)
@@ -23,7 +23,7 @@ module.exports = {
      * @param data
      * @returns {exports}
      */
-    validatePresentableList(data){
+    validatePresentableList(data) {
 
         let presentableSchemaValidate = this.helper.jsonSchema.presentableSchema
 
@@ -35,5 +35,9 @@ module.exports = {
         }
 
         return this
+    },
+
+    get webApi() {
+        return this.app.webApi
     }
 }

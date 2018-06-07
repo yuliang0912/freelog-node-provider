@@ -9,6 +9,9 @@ module.exports = app => {
 
     router.get('/v1/nodes/list', controller.node.v1.list)
 
+
+    router.get('/v1/presentables/presentableTree/:presentableId', controller.presentable.v1.presentableTree)
+
     /**
      * node-pb restful api
      */

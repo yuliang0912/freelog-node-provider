@@ -24,7 +24,7 @@ module.exports = class PresentableController extends Controller {
 
         ctx.validate(false)
 
-        let condition = {nodeId, status: 0}
+        let condition = {nodeId}
         if (resourceType) {
             condition['resourceInfo.resourceType'] = resourceType
         }
@@ -63,8 +63,7 @@ module.exports = class PresentableController extends Controller {
         //const contracts = ctx.checkBody('contracts').optional().isArray().value
         ctx.allowContentType({type: 'json'}).validate()
 
-        //const resourceInfo = await ctx.curlIntranetApi(`http://127.0.0.1:7001/v1/resources/${resourceId}`)
-        const resourceInfo = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/resources/${resourceId}`)
+        const resourceInfo = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${resourceId}`)
         if (!resourceInfo || resourceInfo.status !== 2) {
             ctx.error({msg: '未能找到有效的资源', data: {resourceInfo}})
         }
@@ -149,4 +148,19 @@ module.exports = class PresentableController extends Controller {
         await ctx.dal.presentableProvider.updatePresentable({status: 1}, {_id: presentableId})
             .then(data => ctx.success(data.nModified > 0)).catch(ctx.error)
     }
+
+    /**
+     * 获取presentbale授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async presentableTree(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+
+        ctx.validate()
+
+        await ctx.dal.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
+    }
+
 }
