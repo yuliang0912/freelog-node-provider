@@ -46,10 +46,7 @@ module.exports = class PresentableController extends Controller {
 
         ctx.validate(false)
 
-        await ctx.dal.presentableProvider.getPresentable({
-            _id: presentableId,
-            status: 0
-        }).then(ctx.success).catch(ctx.error)
+        await ctx.dal.presentableProvider.getPresentableById(presentableId).then(ctx.success).catch(ctx.error)
     }
 
     /**
