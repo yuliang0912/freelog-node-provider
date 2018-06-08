@@ -108,7 +108,7 @@ class PresentableSchemeService extends Service {
 
         const diffResources = lodash.difference(Array.from(contractResourceMap.keys()), allAuthSchemeBubbleResourceIds)
         if (diffResources.length) {
-            ctx.error({msg: '合同中存在无效的数据', data: {resourceIds: diffResources}})
+            ctx.error({msg: '合同中存在无效的资源数据', data: {resourceIds: diffResources}})
         }
 
         const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
