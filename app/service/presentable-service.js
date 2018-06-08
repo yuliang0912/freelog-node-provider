@@ -86,7 +86,7 @@ class PresentableSchemeService extends Service {
             if (!contractInfo) {
                 return
             }
-            if (contractInfo.resourceId !== item.contractId || contractInfo.partyTwo !== presentable.nodeId.toString()) {
+            if (contractInfo.resourceId !== item.resourceId || contractInfo.partyTwo !== presentable.nodeId.toString()) {
                 ctx.error({msg: '合同信息与资源信息或者节点信息不匹配', data: {contractInfo}})
             }
             item.policySegmentId = contractInfo.segmentId
