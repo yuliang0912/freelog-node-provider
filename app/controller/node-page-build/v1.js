@@ -15,6 +15,7 @@ module.exports = class NodePageBuildController extends Controller {
      * @returns {Promise.<void>}
      */
     async index(ctx) {
+
         let nodeId = ctx.checkQuery('nodeId').isInt().gt(0).value
 
         ctx.validate()

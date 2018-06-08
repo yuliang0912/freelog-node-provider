@@ -12,13 +12,16 @@ class PresentableSchemeService extends Service {
      */
     async createPresentable(presentable) {
 
-        const {ctx} = this
+        const {ctx, app} = this
 
         if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
             await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         }
 
-        return ctx.dal.presentableProvider.createPresentable(presentable)
+        return ctx.dal.presentableProvider.createPresentable(presentable).then(data => {
+            app.emit(app.event.presentableEvent.createPresentableEvent, data.toObject())
+            return data
+        })
     }
 
     /**
