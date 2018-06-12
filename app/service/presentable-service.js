@@ -59,10 +59,11 @@ class PresentableSchemeService extends Service {
      */
     async _checkPresentableContracts({presentable, contracts}) {
 
-        const {ctx, config} = this
+        const {ctx} = this
         if (!contracts.length) {
             return
         }
+
         if (!contracts.some(x => x.resourceId === presentable.resourceId)) {
             ctx.error({msg: '合同数据校验失败,缺失完整性', data: contracts})
         }

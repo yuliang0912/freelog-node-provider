@@ -5,6 +5,7 @@
 
 'use strict'
 
+const lodash = require('lodash')
 const Controller = require('egg').Controller
 const batchOperationPolicySchema = require('../../extend/json-schema/batch-operation-policy-schema')
 const presentableContractSchema = require('../../extend/json-schema/presentable-contracts-schema')
@@ -161,6 +162,30 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         await ctx.dal.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * presentable 所分布在的节点
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async resourceSubordinateNodes(ctx) {
+
+        const resourceId = ctx.checkQuery('resourceId').isResourceId().value
+        ctx.validate()
+
+        const condition = {
+            resourceId, userId: ctx.request.userId
+        }
+
+        await ctx.dal.presentableProvider.find(condition).map(x => new Object({
+            nodeId: x.nodeId,
+            resourceId: x.resourceId,
+            presentableId: x._id.toString(),
+            presentableName: x.presentableName,
+        })).then(nodeList => {
+            ctx.success(lodash.uniqBy(nodeList, 'nodeId'))
+        }).catch(ctx.error)
     }
 
 }
