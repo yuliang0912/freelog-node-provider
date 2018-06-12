@@ -13,24 +13,26 @@ module.exports = class NodeController extends Controller {
      * @returns {Promise.<void>}
      */
     async index(ctx) {
-        let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-        let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-        let status = ctx.checkQuery("status").default(0).in([0, 1, 2]).toInt().value
-        let ownerUserId = ctx.checkQuery("ownerUserId").exist().gt(1).toInt().value
+
+        const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
+        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+        const status = ctx.checkQuery("status").default(0).in([0, 1, 2]).toInt().value
+        const ownerUserId = ctx.checkQuery("ownerUserId").exist().gt(1).toInt().value
 
         ctx.validate(false)
 
-        let condition = {status}
+        const condition = {status}
         if (ownerUserId > 0) {
             condition.ownerUserId = ownerUserId
         }
 
-        let nodeList = []
-        let totalItem = await ctx.dal.nodeProvider.getCount(condition)
+        var nodeList = []
+        const totalItem = await ctx.dal.nodeProvider.getCount(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
             nodeList = await ctx.dal.nodeProvider.getNodeList(condition, page, pageSize)
         }
+
         ctx.success({page, pageSize, totalItem, dataList: nodeList})
     }
 
@@ -40,7 +42,8 @@ module.exports = class NodeController extends Controller {
      * @returns {Promise.<void>}
      */
     async show(ctx) {
-        let nodeId = ctx.checkParams('id').isInt().gt(0).value
+
+        const nodeId = ctx.checkParams('id').isInt().gt(0).value
 
         ctx.validate(false)
 
@@ -53,20 +56,21 @@ module.exports = class NodeController extends Controller {
      * @returns {Promise.<void>}
      */
     async create(ctx) {
-        let nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).value
-        let nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().value
 
-        let checkResult = ctx.helper.nodeDomain.checkNodeDomain(nodeDomain)
+        const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).value
+        const nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().value
+
+        const checkResult = ctx.helper.nodeDomain.checkNodeDomain(nodeDomain)
         if (checkResult !== true) {
             ctx.errors.push({nodeDomain: checkResult})
         }
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        let checkNodeName = ctx.dal.nodeProvider.getNodeInfo({nodeName})
-        let checkNodeDomain = ctx.dal.nodeProvider.getNodeInfo({nodeDomain})
+        const checkNodeNameTask = ctx.dal.nodeProvider.getNodeInfo({nodeName})
+        const checkNodeDomainTask = ctx.dal.nodeProvider.getNodeInfo({nodeDomain})
 
-        await Promise.all([checkNodeName, checkNodeDomain]).then(([nodeNameResult, nodeDomainResult]) => {
+        await Promise.all([checkNodeNameTask, checkNodeDomainTask]).then(([nodeNameResult, nodeDomainResult]) => {
             if (nodeNameResult) {
                 ctx.errors.push({nodeName: '节点名已经存在'})
             }
@@ -76,7 +80,7 @@ module.exports = class NodeController extends Controller {
             ctx.validate()
         })
 
-        let nodeModel = {
+        const nodeModel = {
             nodeName, nodeDomain,
             ownerUserId: ctx.request.userId
         }
@@ -89,13 +93,38 @@ module.exports = class NodeController extends Controller {
     }
 
     /**
+     * 更新节点信息
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async update(ctx) {
+
+        const nodeId = ctx.checkParams('id').isInt().gt(0).value
+        const status = ctx.checkBody('status').in([0, 1]).value
+        ctx.validate()
+
+        const nodeInfo = await ctx.dal.nodeProvider.getNodeInfo({nodeId})
+        if (!nodeInfo || nodeInfo.ownerUserId !== ctx.request.userId) {
+            ctx.error({msg: '节点信息未找到或者与身份信息不匹配'})
+        }
+
+        await ctx.dal.nodeProvider.update({status}, {nodeId}).then(isSuccess => {
+            if (isSuccess) {
+                nodeInfo.status = status
+            }
+            ctx.success(nodeInfo)
+        })
+    }
+
+
+    /**
      * 获取节点列表
      * @param ctx
      * @returns {Promise<void>}
      */
     async list(ctx) {
 
-        let nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, 'nodeIds格式错误').toSplitArray().len(1, 100).value
+        const nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, 'nodeIds格式错误').toSplitArray().len(1, 100).value
 
         ctx.validate()
 

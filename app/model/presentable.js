@@ -23,6 +23,7 @@ module.exports = app => {
                 policy: ret.policy,
                 userDefinedTags: ret.userDefinedTags,
                 resourceInfo: ret.resourceInfo,
+                isOnline: ret.isOnline,
                 status: ret.status
             }
         }
@@ -49,7 +50,8 @@ module.exports = app => {
         },
         contracts: {type: [AssociatedContractSchema], default: []},
         userDefinedTags: {type: [String], default: []},//用户自定义tags
-        status: {type: Number, default: 0, required: true} //状态 0:初始态 1:合约已全部签订  2:上线
+        isOnline: {type: Number, default: 0, required: true}, //是否上线 0:否 1:是
+        status: {type: Number, default: 0, required: true} //状态 0:初始态  1:合约已全部签订  2:策略已存在
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

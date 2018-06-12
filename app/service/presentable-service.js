@@ -14,9 +14,9 @@ class PresentableSchemeService extends Service {
 
         const {ctx, app} = this
 
-        if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
-            await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
-        }
+        // if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
+        //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
+        // }
 
         return ctx.dal.presentableProvider.createPresentable(presentable).then(data => {
             app.emit(app.event.presentableEvent.createPresentableEvent, data.toObject())
@@ -41,12 +41,11 @@ class PresentableSchemeService extends Service {
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
             model.contracts = presentable.contracts
-            model.status = presentable.status
         }
-        if (isOnline !== undefined) {
-            this._checkIsCanPublish({presentable, isOnline})
-            model.status = presentable.status
-        }
+
+        this._checkPublishStatus({presentable, isOnline})
+        model.status = presentable.status
+        model.isOnline = presentable.isOnline
 
         await this._updatePresentableAuthTree(presentable)
 
@@ -122,7 +121,9 @@ class PresentableSchemeService extends Service {
         })
 
         //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
-        presentable.status = allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x)) ? 1 : 0
+        if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
+            presentable.status = presentable.status | 1
+        }
         presentable.contracts = contracts
     }
 
@@ -236,34 +237,29 @@ class PresentableSchemeService extends Service {
         }).catch(ctx.error)
     }
 
+
     /**
      * 检查presentable是否达到可以上线的标准
      * @param presentable
      * @private
      */
-    _checkIsCanPublish({presentable, isOnline}) {
-        if (isOnline === undefined || (isOnline === 0 && presentable.status < 2)) {
+    _checkPublishStatus({presentable, isOnline}) {
+
+        if (isOnline === undefined || isOnline === presentable.isOnline) {
             return
-        }
-        if (isOnline === 0) {
-            presentable.status = 1
-            return
-        }
-        const {ctx} = this
-        if (!presentable.presentableName.length) {
-            ctx.error({msg: 'presentableName为空,不能设置为发布状态'})
-        }
-        if (!presentable.policy.length) {
-            ctx.error({msg: '策略段为空,不能设置为发布状态'})
-        }
-        if (presentable.status === 0) {
-            ctx.error({msg: '未解决全部上抛的资源,不能设置为发布状态'})
-        }
-        if (presentable.contracts.some(x => !commonRegex.mongoObjectId.test(x.contractId))) {
-            ctx.error({msg: '未签约全部上抛的资源,不能设置为发布状态'})
         }
 
-        presentable.status = 2
+        presentable.isOnline = isOnline
+        if (isOnline === 0) {
+            return
+        }
+
+        if ((presentable.status & 1) !== 1) {
+            this.ctx.error({msg: '未解决全部上抛的资源,不能设置为发布状态'})
+        }
+        if ((presentable.status & 1) !== 2) {
+            this.ctx.error({msg: '策略段为空,不能设置为发布状态'})
+        }
     }
 
     /**
@@ -275,9 +271,9 @@ class PresentableSchemeService extends Service {
      */
     _policiesHandler({presentable, policies}) {
 
-        let {ctx} = this
-        let {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
-        let oldPolicySegmentMap = new Map(presentable.policy.map(x => [x.segmentId, x]))
+        const {ctx} = this
+        const {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
+        const oldPolicySegmentMap = new Map(presentable.policy.map(x => [x.segmentId, x]))
 
         removePolicySegments && removePolicySegments.forEach(oldPolicySegmentMap.delete)
 
@@ -297,6 +293,10 @@ class PresentableSchemeService extends Service {
             }
             oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
         })
+
+        if (presentable.policy.some(x => x.status === 1)) { //如果存在有效的策略
+            presentable.status = presentable.status | 2
+        }
 
         return Array.from(oldPolicySegmentMap.values())
     }
