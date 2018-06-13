@@ -123,9 +123,10 @@ class PresentableSchemeService extends Service {
             contractInfo.contractId = item.contractId
         })
 
-
         //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
-        presentable.isCompletedContractSign = allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))
+        if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
+            presentable.status = presentable.status | 1
+        }
         presentable.contracts = contracts
     }
 
@@ -247,13 +248,14 @@ class PresentableSchemeService extends Service {
      */
     _setPresentableStatus(presentable) {
 
-        presentable.status = 0
-        if (presentable.isCompletedContractSign) {
-            presentable.status = presentable.status | 1
+        var status = 0
+        if ((presentable.status & 1) === 1) {
+            status = status | 1
         }
         if (presentable.policy.some(x => x.status === 1)) {
-            presentable.status = presentable.status | 2
+            status = status | 2
         }
+        presentable.status = status
         if (presentable.isOnline !== 1) {
             return true
         }
