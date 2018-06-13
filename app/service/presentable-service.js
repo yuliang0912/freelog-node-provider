@@ -46,7 +46,7 @@ class PresentableSchemeService extends Service {
             model.isOnline = presentable.isOnline = isOnline
         }
 
-        this._checkOnlineStatus(presentable)
+        this._setPresentableStatus(presentable)
 
         model.status = presentable.status
 
@@ -123,10 +123,9 @@ class PresentableSchemeService extends Service {
             contractInfo.contractId = item.contractId
         })
 
+
         //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
-        if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
-            presentable.status = presentable.status | 1
-        }
+        presentable.isCompletedContractSign = allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))
         presentable.contracts = contracts
     }
 
@@ -246,14 +245,22 @@ class PresentableSchemeService extends Service {
      * @param presentable
      * @private
      */
-    _checkOnlineStatus(presentable) {
+    _setPresentableStatus(presentable) {
+
+        presentable.status = 0
+        if (presentable.isCompletedContractSign) {
+            presentable.status = presentable.status | 1
+        }
+        if (presentable.policy.some(x => x.status === 1)) {
+            presentable.status = presentable.status | 2
+        }
         if (presentable.isOnline !== 1) {
             return true
         }
         if ((presentable.status & 1) !== 1) {
             this.ctx.error({msg: '未解决全部上抛的资源,不能设置为发布状态'})
         }
-        if ((presentable.status & 1) !== 2) {
+        if ((presentable.status & 2) !== 2) {
             this.ctx.error({msg: '策略段为空,不能设置为发布状态'})
         }
         return true
@@ -290,10 +297,6 @@ class PresentableSchemeService extends Service {
             }
             oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
         })
-
-        if (presentable.policy.some(x => x.status === 1)) { //如果存在有效的策略
-            presentable.status = presentable.status | 2
-        }
 
         return Array.from(oldPolicySegmentMap.values())
     }
