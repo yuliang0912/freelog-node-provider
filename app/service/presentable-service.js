@@ -42,10 +42,13 @@ class PresentableSchemeService extends Service {
             await this._checkPresentableContracts({presentable, contracts})
             model.contracts = presentable.contracts
         }
+        if (isOnline !== undefined) {
+            model.isOnline = presentable.isOnline = isOnline
+        }
 
-        this._checkPublishStatus({presentable, isOnline})
+        this._checkOnlineStatus(presentable)
+
         model.status = presentable.status
-        model.isOnline = presentable.isOnline
 
         await this._updatePresentableAuthTree(presentable)
 
@@ -243,23 +246,17 @@ class PresentableSchemeService extends Service {
      * @param presentable
      * @private
      */
-    _checkPublishStatus({presentable, isOnline}) {
-
-        if (isOnline === undefined || isOnline === presentable.isOnline) {
-            return
+    _checkOnlineStatus(presentable) {
+        if (presentable.isOnline !== 1) {
+            return true
         }
-
-        presentable.isOnline = isOnline
-        if (isOnline === 0) {
-            return
-        }
-
         if ((presentable.status & 1) !== 1) {
             this.ctx.error({msg: '未解决全部上抛的资源,不能设置为发布状态'})
         }
         if ((presentable.status & 1) !== 2) {
             this.ctx.error({msg: '策略段为空,不能设置为发布状态'})
         }
+        return true
     }
 
     /**
