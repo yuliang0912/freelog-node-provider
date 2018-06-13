@@ -188,4 +188,46 @@ module.exports = class PresentableController extends Controller {
         }).catch(ctx.error)
     }
 
+    /**
+     * presentable下的节点合同状况
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async contractInfos(ctx) {
+
+        const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(1).value
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        ctx.validate()
+
+        const presentableContractMap = new Map()
+        const presentableInfos = await ctx.dal.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
+
+        presentableInfos.forEach(item => item.contracts.forEach(contract => {
+            contract.contractId && presentableContractMap.set(contract.contractId, null)
+        }))
+
+        await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
+            contractInfos.forEach(item => presentableContractMap.set(item.contractId, item))
+        })
+
+        const result = presentableInfos.map(item => new Object({
+            presentableId: item._id.toString(),
+            presentableName: item.presentableName,
+            status: item.status,
+            isOnline: item.isOnline,
+            createDate: item.createDate,
+            contracts: item.contracts.map(x => {
+                let contractInfo = presentableContractMap.get(x.contractId)
+                return {
+                    contractId: contractInfo.contractId,
+                    resourceId: contractInfo.resourceId,
+                    contractStatus: contractInfo.status,
+                    createDate: contractInfo.createDate,
+                    isMasterContract: contractInfo.resourceId === item.resourceId
+                }
+            }).sort(x => !x.isMasterContract)
+        }))
+
+        ctx.success(result)
+    }
 }

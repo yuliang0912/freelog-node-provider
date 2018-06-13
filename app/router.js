@@ -5,13 +5,15 @@
  */
 module.exports = app => {
 
-    const {router, controller} = app;
+    const {router, controller} = app
 
     router.get('/v1/nodes/list', controller.node.v1.list)
 
     router.get('/v1/presentables/presentableTree/:presentableId', controller.presentable.v1.presentableTree)
 
     router.get('/v1/presentables/resourceSubordinateNodes', controller.presentable.v1.resourceSubordinateNodes)
+
+    router.get('/v1/presentables/contractInfos', controller.presentable.v1.contractInfos)
 
     /**
      * node-pb restful api
