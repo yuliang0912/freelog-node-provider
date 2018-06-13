@@ -126,6 +126,8 @@ class PresentableSchemeService extends Service {
         //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
         if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
             presentable.status = presentable.status | 1
+        } else if ((presentable.status & 1) === 1) {
+            presentable.status = presentable.status - 1
         }
         presentable.contracts = contracts
     }
@@ -248,24 +250,14 @@ class PresentableSchemeService extends Service {
      */
     _setPresentableStatus(presentable) {
 
-        var status = 0
-        if ((presentable.status & 1) === 1) {
-            status = status | 1
+        const isCompleteSignContracts = (presentable.status & 1) === 1
+        const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
+
+        if (presentable.isOnline === 1 && (!isCompleteSignContracts || !isExistEffectivePolicy)) {
+            this.ctx.error({msg: !isCompleteSignContracts ? '未解决全部上抛的资源,不能设置为发布状态' : '策略段为空,不能设置为发布状态'})
         }
-        if (presentable.policy.some(x => x.status === 1)) {
-            status = status | 2
-        }
-        presentable.status = status
-        if (presentable.isOnline !== 1) {
-            return true
-        }
-        if ((presentable.status & 1) !== 1) {
-            this.ctx.error({msg: '未解决全部上抛的资源,不能设置为发布状态'})
-        }
-        if ((presentable.status & 2) !== 2) {
-            this.ctx.error({msg: '策略段为空,不能设置为发布状态'})
-        }
-        return true
+
+        presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0)
     }
 
     /**
