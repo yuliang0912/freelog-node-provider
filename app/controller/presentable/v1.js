@@ -221,7 +221,7 @@ module.exports = class PresentableController extends Controller {
                 return {
                     contractId: contractInfo.contractId,
                     resourceId: contractInfo.resourceId,
-                    contractStatus: contractInfo.status,
+                    status: contractInfo.status,
                     createDate: contractInfo.createDate,
                     isMasterContract: contractInfo.resourceId === item.resourceId
                 }
