@@ -127,7 +127,7 @@ class PresentableSchemeService extends Service {
         if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
             presentable.status = presentable.status | 1
         } else if ((presentable.status & 1) === 1) {
-            presentable.status = presentable.status - 1
+            presentable.status = presentable.status ^ 1
         }
         presentable.contracts = contracts
     }

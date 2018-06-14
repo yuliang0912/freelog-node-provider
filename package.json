@@ -14,6 +14,7 @@
     "egg": "^2.9.0",
     "egg-freelog-base": "^1.1.42",
     "egg-freelog-database": "^1.0.6",
+    "egg-scripts": "^2.6.0",
     "js-yaml": "^3.12.0",
     "jsonschema": "^1.2.4",
     "knex": "^0.14.6",
@@ -28,7 +29,8 @@
     "node": ">=8.0.0"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "egg-scripts start --workers=1",
+    "stop": "egg-scripts stop"
   },
   "ci": {
     "version": "8,9"

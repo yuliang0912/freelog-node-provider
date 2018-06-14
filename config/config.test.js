@@ -6,6 +6,10 @@
 
 module.exports = {
 
+    cluster: {
+        listen: {port: 5005}
+    },
+
     gatewayUrl: "http://172.18.215.224:8895/test",
 
     knex: {
