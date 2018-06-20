@@ -24,6 +24,10 @@ module.exports = {
         presentableEvent
     },
 
+    /**
+     * restFul-api
+     * @returns {*}
+     */
     get webApi() {
         if (restfulWebApiInstance === null) {
             restfulWebApiInstance = new restfulWebApi(this.config)

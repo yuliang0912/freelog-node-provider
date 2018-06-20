@@ -2,7 +2,6 @@
 
 const lodash = require('lodash')
 const Service = require('egg').Service
-const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
 class PresentableSchemeService extends Service {
 
