@@ -36,7 +36,7 @@ class PresentableSchemeService extends Service {
             model.userDefinedTags = userDefinedTags
         }
         if (policies) {
-            model.policy = this._policiesHandler({presentable, policies})
+            model.policy = presentable.policy = this._policiesHandler({presentable, policies})
         }
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
