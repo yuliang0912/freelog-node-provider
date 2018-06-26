@@ -49,6 +49,23 @@ module.exports = {
         csrf: {enable: false}
     },
 
+    logger: {
+        consoleLevel: 'NONE',
+        level: 'ERROR',
+    },
+
+    //错误日志500MB自动分割
+    logrotator: {
+        filesRotateBySize: [
+            path.join(app.root, 'logs', app.name, 'common-error.log'),
+        ],
+        maxFileSize: 1024 * 1024 * 1024 * 0.5,
+    },
+
+    customLoader: [{
+        name: 'eventHandler', dir: 'app/event-handler'
+    }],
+
     /**
      * API网关地址
      */

@@ -4,34 +4,20 @@
 
 'use strict'
 
-const nodeEvent = require('./event/freelog-node-events')
-const presentableEvent = require('./event/freelog-presentable-events')
+const restfulWebApiKey = Symbol('app#restfulWebApiKey')
 const restfulWebApi = require('./restful-web-api/index')
-let restfulWebApiInstance = null
 
 module.exports = {
-
-    event: {
-
-        /**
-         * 节点事件
-         */
-        nodeEvent,
-
-        /**
-         * presentable事件
-         */
-        presentableEvent
-    },
 
     /**
      * restFul-api
      * @returns {*}
      */
     get webApi() {
-        if (restfulWebApiInstance === null) {
-            restfulWebApiInstance = new restfulWebApi(this.config)
+        if (!this.__cacheMap__.has(restfulWebApiKey)) {
+            this.__cacheMap__.set(restfulWebApiKey, new restfulWebApi(this.config))
         }
-        return restfulWebApiInstance
+        return this.__cacheMap__.get(restfulWebApiKey)
     },
+    
 }

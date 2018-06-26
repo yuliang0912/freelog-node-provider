@@ -11,14 +11,14 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async index(ctx) {
 
-        let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-        let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-        let templateType = ctx.checkQuery("templateType").exist().toInt().in([1, 2]).value
-        let isShare = ctx.checkQuery('isShare').default(0).toInt().in([0, 1]).value
+        const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
+        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+        const templateType = ctx.checkQuery("templateType").exist().toInt().in([1, 2]).value
+        const isShare = ctx.checkQuery('isShare').default(0).toInt().in([0, 1]).value
         ctx.validate()
 
-        let templateList = []
-        let condition = {templateType, isShare, status: 0, userId: ctx.request.userId}
+        var templateList = []
+        const condition = {templateType, isShare, status: 0, userId: ctx.request.userId}
 
         if (isShare === 1) {
             Reflect.deleteProperty(condition, 'userId')
@@ -40,9 +40,9 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async create(ctx) {
 
-        let name = ctx.checkBody('name').exist().trim().len(3, 40).value
-        let template = ctx.checkBody('template').exist().isBase64().decodeBase64().len(1, 3000).value
-        let templateType = ctx.checkBody('templateType').toInt().in([1, 2]).value
+        const name = ctx.checkBody('name').exist().trim().len(3, 40).value
+        const template = ctx.checkBody('template').exist().isBase64().decodeBase64().len(1, 3000).value
+        const templateType = ctx.checkBody('templateType').toInt().in([1, 2]).value
         ctx.allowContentType({type: 'json'}).validate()
 
         await ctx.dal.policyTemplate.create({
@@ -59,7 +59,7 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async show(ctx) {
 
-        let id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
+        const id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
         ctx.validate()
 
         await ctx.dal.policyTemplate.findById(id).then(ctx.success).catch(ctx.error)
@@ -72,21 +72,21 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async update(ctx) {
 
-        let id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
-        let name = ctx.checkBody('name').optional().trim().len(3, 40).value
-        let template = ctx.checkBody('template').optional().isBase64().decodeBase64().len(1, 3000).value
+        const id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
+        const name = ctx.checkBody('name').optional().trim().len(3, 40).value
+        const template = ctx.checkBody('template').optional().isBase64().decodeBase64().len(1, 3000).value
         ctx.allowContentType({type: 'json'}).validate()
 
         if (name === undefined && template === undefined) {
             ctx.error({msg: '参数name和template最少需要一个'})
         }
 
-        let policyTemplate = await ctx.dal.policyTemplate.findById(id)
+        const policyTemplate = await ctx.dal.policyTemplate.findById(id)
         if (!policyTemplate || policyTemplate.userId != ctx.request.userId) {
             ctx.error({msg: '参数id错误或者与当前用户不匹配'})
         }
 
-        let model = {}
+        const model = {}
         if (name !== undefined) {
             model.name = policyTemplate.name = name
         }

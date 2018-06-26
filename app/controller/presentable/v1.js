@@ -19,13 +19,13 @@ module.exports = class PresentableController extends Controller {
      */
     async index(ctx) {
 
-        let nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
-        let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
-        let tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
+        const nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
+        const tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
 
         ctx.validate(false)
 
-        let condition = {nodeId}
+        const condition = {nodeId}
         if (resourceType) {
             condition['resourceInfo.resourceType'] = resourceType
         }
@@ -43,7 +43,7 @@ module.exports = class PresentableController extends Controller {
      */
     async show(ctx) {
 
-        let presentableId = ctx.checkParams("id").isMongoObjectId().value
+        const presentableId = ctx.checkParams("id").isMongoObjectId().value
 
         ctx.validate(false)
 
@@ -142,7 +142,7 @@ module.exports = class PresentableController extends Controller {
      */
     async destroy(ctx) {
 
-        let presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
+        const presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
 
         ctx.validate()
 
@@ -159,7 +159,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         await ctx.dal.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
     }

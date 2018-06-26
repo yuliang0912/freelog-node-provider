@@ -12,7 +12,7 @@
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "egg": "^2.9.1",
-    "egg-freelog-base": "^1.1.43",
+    "egg-freelog-base": "^1.1.45",
     "egg-freelog-database": "^1.0.6",
     "egg-scripts": "^2.6.0",
     "js-yaml": "^3.12.0",

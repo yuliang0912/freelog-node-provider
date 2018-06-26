@@ -2,6 +2,7 @@
 
 const lodash = require('lodash')
 const Service = require('egg').Service
+const presentableEvents = require('../enum/presentable-events')
 
 class PresentableSchemeService extends Service {
 
@@ -18,7 +19,7 @@ class PresentableSchemeService extends Service {
         // }
 
         return ctx.dal.presentableProvider.createPresentable(presentable).then(data => {
-            app.emit(app.event.presentableEvent.createPresentableEvent, data.toObject())
+            app.emit(presentableEvents.createPresentableEvent, {presentable: data.toObject()})
             return data
         })
     }
