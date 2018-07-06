@@ -10,9 +10,10 @@ module.exports = class CustomDataStoreController extends Controller {
      * @returns {Promise<void>}
      */
     async create(ctx) {
-        let nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
-        let key = ctx.checkBody('key').exist().match(/^node_\d{5,9}_[a-z0-9_-|]{6,50}$/).value
-        let value = ctx.checkBody('value').exist().value
+
+        const nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
+        const key = ctx.checkBody('key').exist().match(/^node_\d{5,9}_[a-z0-9_-|]{6,50}$/).value
+        const value = ctx.checkBody('value').exist().value
         ctx.allowContentType({type: 'json'}).validate(false)
 
         if (!key.startsWith(`node_${nodeId}_`)) {
@@ -34,8 +35,9 @@ module.exports = class CustomDataStoreController extends Controller {
      * @returns {Promise<void>}
      */
     async show(ctx) {
-        let key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
-        ctx.validate()
+
+        const key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
+        ctx.validate(false)
 
         await ctx.dal.customStoreProvider.findOne({key})
             .then(ctx.success).catch(ctx.error)
@@ -47,8 +49,9 @@ module.exports = class CustomDataStoreController extends Controller {
      * @returns {Promise<void>}
      */
     async update(ctx) {
-        let key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
-        let value = ctx.checkBody('value').exist().isObject().value
+
+        const key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
+        const value = ctx.checkBody('value').exist().isObject().value
         ctx.allowContentType({type: 'json'}).validate()
 
         await ctx.dal.customStoreProvider.count({key}).then(count => {

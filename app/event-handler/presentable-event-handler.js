@@ -47,5 +47,7 @@ module.exports = class PresentableEventHandler {
 
         // arguments : {authScheme}
         this.app.on(presentableEvents.createPresentableEvent, (...args) => this.createPageBuild(...args))
+
+        this.app.on(presentableEvents.updatePresentableEvent, console.log)
     }
 }

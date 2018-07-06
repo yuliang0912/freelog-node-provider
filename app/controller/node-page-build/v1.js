@@ -46,9 +46,12 @@ module.exports = class NodePageBuildController extends Controller {
             ctx.error({msg: "未找到有效的nodePageBuild"})
         }
 
+        const presentable = await ctx.dal.presentableProvider.findById(nodePageBuild.presentableId)
+        if (!presentable || !presentable.isOnline) {
+            ctx.error({msg: 'presentable还未上线,无法使用', data: {presentable}})
+        }
+
         //如果是显示状态,则其他的全部设置为隐藏
-        await ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).then(data => {
-            ctx.success(true)
-        })
+        await ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).then(() => ctx.success(true))
     }
 }

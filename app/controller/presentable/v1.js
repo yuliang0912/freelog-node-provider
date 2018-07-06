@@ -22,6 +22,7 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
+        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).value
 
         ctx.validate(false)
 
@@ -31,6 +32,9 @@ module.exports = class PresentableController extends Controller {
         }
         if (tags) {
             condition.userDefinedTags = {$in: tags}
+        }
+        if (isOnline === 0 || isOnline === 1) {
+            condition.isOnline = isOnline
         }
 
         await ctx.dal.presentableProvider.getPresentableList(condition).then(ctx.success).catch(ctx.error)

@@ -18,9 +18,8 @@ class PresentableSchemeService extends Service {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         // }
 
-        return ctx.dal.presentableProvider.createPresentable(presentable).then(data => {
+        return ctx.dal.presentableProvider.createPresentable(presentable).tap(data => {
             app.emit(presentableEvents.createPresentableEvent, {presentable: data.toObject()})
-            return data
         })
     }
 
@@ -30,6 +29,7 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableName, userDefinedTags, policies, contracts, isOnline, presentable}) {
 
+        const {ctx, app} = this
         const model = {presentableName: presentableName || presentable.presentableName}
 
         if (userDefinedTags) {
@@ -52,7 +52,9 @@ class PresentableSchemeService extends Service {
 
         await this._updatePresentableAuthTree(presentable)
 
-        return this.ctx.dal.presentableProvider.update({_id: presentable.presentableId}, model)
+        return ctx.dal.presentableProvider.update({_id: presentable.presentableId}, model).tap(() => {
+            //app.emit(presentableEvents.updatePresentableEvent, {presentable})
+        })
     }
 
     /**
@@ -164,7 +166,7 @@ class PresentableSchemeService extends Service {
             return []
         }
 
-        const {ctx, config} = this
+        const {ctx} = this
         const dataList = []
         const authSchemeIds = associatedContracts.map(x => x.authSchemeId)
 
@@ -219,7 +221,7 @@ class PresentableSchemeService extends Service {
      */
     _batchCreatePresentableContracts({presentable, contracts}) {
 
-        const {ctx, app, config} = this
+        const {ctx, app} = this
 
         const body = {
             partyTwo: presentable.nodeId,
@@ -253,7 +255,7 @@ class PresentableSchemeService extends Service {
         const isCompleteSignContracts = (presentable.status & 1) === 1
         const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
 
-        if (presentable.isOnline === 1 && (!isCompleteSignContracts || !isExistEffectivePolicy)) {
+        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy)) {
             this.ctx.error({msg: !isCompleteSignContracts ? '未解决全部上抛的资源,不能设置为发布状态' : '策略段为空,不能设置为发布状态'})
         }
 

@@ -4,6 +4,7 @@
 
 'use strict'
 
+
 const restfulWebApiKey = Symbol('app#restfulWebApiKey')
 const restfulWebApi = require('./restful-web-api/index')
 

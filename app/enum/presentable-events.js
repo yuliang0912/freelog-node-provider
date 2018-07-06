@@ -7,8 +7,13 @@
 module.exports = {
 
     /**
-     * 创建资源时间
+     * 创建presentable事件
      */
     createPresentableEvent: Symbol('node#createPresentableEvent'),
+
+    /**
+     * 更新presentable事件
+     */
+    updatePresentableEvent: Symbol('node#updatePresentableEvent'),
 
 }

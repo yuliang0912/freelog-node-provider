@@ -24,7 +24,7 @@ module.exports = class PolicyTemplateController extends Controller {
             Reflect.deleteProperty(condition, 'userId')
         }
 
-        let totalItem = await ctx.dal.policyTemplate.count(condition)
+        var totalItem = await ctx.dal.policyTemplate.count(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
             templateList = await ctx.dal.policyTemplate.findPageList(condition, page, pageSize)
