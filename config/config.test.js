@@ -25,6 +25,6 @@ module.exports = {
     },
 
     mongoose: {
-        url: "mongodb://172.18.215.229/node"
+        url: "mongodb://172.18.215.229:27017/node"
     },
 }
