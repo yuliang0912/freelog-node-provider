@@ -39,7 +39,7 @@ module.exports = class PresentableController extends Controller {
 
         var presentableList = await ctx.dal.presentableProvider.getPresentableList(condition)
         if (!presentableList.length) {
-            ctx.success([])
+            return ctx.success([])
         }
 
         const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
