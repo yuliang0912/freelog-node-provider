@@ -37,7 +37,27 @@ module.exports = class PresentableController extends Controller {
             condition.isOnline = isOnline
         }
 
-        await ctx.dal.presentableProvider.getPresentableList(condition).then(ctx.success).catch(ctx.error)
+        var presentableList = await ctx.dal.presentableProvider.getPresentableList(condition)
+        if (!presentableList.length) {
+            ctx.success([])
+        }
+
+        const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
+        await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${Array.from(resourceMap.keys()).toString()}`).then(resourceList => {
+            resourceList.forEach(item => resourceMap.set(item.resourceId, item))
+        })
+
+        presentableList = presentableList.map(item => {
+            item = item.toObject()
+            if (resourceMap.has(item.resourceId)) {
+                const {resourceName, meta} = resourceMap.get(item.resourceId)
+                item.resourceInfo.meta = meta
+                item.resourceInfo.resourceName = resourceName
+            }
+            return item
+        })
+
+        ctx.success(presentableList)
     }
 
     /**
