@@ -22,7 +22,7 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
-        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(0).value
+        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).value
 
         ctx.validate(false)
 
