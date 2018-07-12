@@ -71,7 +71,17 @@ module.exports = class PresentableController extends Controller {
 
         ctx.validate(false)
 
-        await ctx.dal.presentableProvider.getPresentableById(presentableId).then(ctx.success).catch(ctx.error)
+        const presentableInfo = await ctx.dal.presentableProvider.getPresentableById(presentableId).then(data => data.toObject())
+
+        if (presentableInfo) {
+            await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
+                const {resourceName, resourceType, meta} = resourceInfo
+                presentableInfo.resourceInfo.meta = meta
+                presentableInfo.resourceInfo.resourceName = resourceName
+                presentableInfo.resourceInfo.resourceType = resourceType
+            })
+        }
+        ctx.success(presentableInfo)
     }
 
     /**
