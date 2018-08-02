@@ -29,6 +29,6 @@ module.exports = {
 
     mongoose: {
         //url: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/node?replicaSet=mgset-5016983"
-        url: "mongodb://192.168.2.239:27017/node"
+        url: "mongodb://127.0.0.1:27017/node"
     }
 }

@@ -12,6 +12,11 @@ const presentableContractSchema = require('../../extend/json-schema/presentable-
 
 module.exports = class PresentableController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.presentableProvider = app.dal.presentableProvider
+    }
+
     /**
      * 展示节点所有的消费方案
      * @param ctx
@@ -37,7 +42,7 @@ module.exports = class PresentableController extends Controller {
             condition.isOnline = isOnline
         }
 
-        var presentableList = await ctx.dal.presentableProvider.getPresentableList(condition)
+        var presentableList = await this.presentableProvider.getPresentableList(condition)
         if (!presentableList.length) {
             return ctx.success([])
         }
@@ -71,7 +76,7 @@ module.exports = class PresentableController extends Controller {
 
         ctx.validate(false)
 
-        const presentableInfo = await ctx.dal.presentableProvider.getPresentableById(presentableId).then(data => data.toObject())
+        const presentableInfo = await this.presentableProvider.getPresentableById(presentableId).then(data => data.toObject())
 
         if (presentableInfo) {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
@@ -113,7 +118,7 @@ module.exports = class PresentableController extends Controller {
         //     result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
         // }
 
-        await ctx.dal.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
+        await this.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
             oldInfo && ctx.error({msg: '不能重复添加'})
         })
 
@@ -154,7 +159,7 @@ module.exports = class PresentableController extends Controller {
             result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
         }
 
-        const presentable = await ctx.dal.presentableProvider.getPresentableById(presentableId)
+        const presentable = await this.presentableProvider.getPresentableById(presentableId)
         if (!presentable || presentable.userId !== ctx.request.userId) {
             ctx.error({msg: '参数presentableId错误或者没有操作权限'})
         }
@@ -166,7 +171,7 @@ module.exports = class PresentableController extends Controller {
             contracts,
             isOnline,
             presentable: presentable.toObject()
-        }).then(() => ctx.dal.presentableProvider.getPresentableById(presentableId)).then(ctx.success).catch(ctx.error)
+        }).then(() => this.presentableProvider.getPresentableById(presentableId)).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -180,7 +185,7 @@ module.exports = class PresentableController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.presentableProvider.updatePresentable({status: 1}, {_id: presentableId})
+        await this.presentableProvider.updatePresentable({status: 1}, {_id: presentableId})
             .then(data => ctx.success(data.nModified > 0)).catch(ctx.error)
     }
 
@@ -212,7 +217,7 @@ module.exports = class PresentableController extends Controller {
             resourceId, userId: ctx.request.userId
         }
 
-        await ctx.dal.presentableProvider.find(condition).map(x => new Object({
+        await this.presentableProvider.find(condition).map(x => new Object({
             nodeId: x.nodeId,
             resourceId: x.resourceId,
             presentableId: x._id.toString(),
@@ -234,7 +239,7 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         const presentableContractMap = new Map()
-        const presentableInfos = await ctx.dal.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
+        const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
 
         presentableInfos.forEach(item => item.contracts.forEach(contract => {
             contract.contractId && presentableContractMap.set(contract.contractId, null)

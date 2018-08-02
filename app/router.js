@@ -16,6 +16,8 @@ module.exports = app => {
 
     router.get('/v1/presentables/contractInfos', presentable.v1.contractInfos)
 
+    router.post('/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
+
     /**
      * node-pb restful api
      */

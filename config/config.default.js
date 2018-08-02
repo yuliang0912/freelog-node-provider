@@ -12,7 +12,7 @@ module.exports = app => {
          * mongoDB配置
          */
         mongoose: {
-            url: "mongodb://192.168.0.99:27017/node",
+            url: "mongodb://127.0.0.1:27017/node",
         },
 
         middleware: ['errorHandler', 'identiyAuthentication'],

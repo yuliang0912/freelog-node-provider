@@ -4,6 +4,11 @@ const Controller = require('egg').Controller;
 
 module.exports = class CustomDataStoreController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.customStoreProvider = app.dal.customStoreProvider
+    }
+
     /**
      * 创建自定义存储数据
      * @param ctx
@@ -20,11 +25,11 @@ module.exports = class CustomDataStoreController extends Controller {
             ctx.error({msg: '参数key命名规则错误'})
         }
 
-        await ctx.dal.customStoreProvider.count({key}).then(count => {
+        await this.customStoreProvider.count({key}).then(count => {
             count && ctx.error({msg: '当前key已经存在,不能重复创建', data: {key}})
         })
 
-        await ctx.dal.customStoreProvider.createCustomStore({
+        await this.customStoreProvider.createCustomStore({
             key, value, nodeId, userId: ctx.request.userId || 0
         }).then(ctx.success).catch(ctx.error)
     }
@@ -39,8 +44,7 @@ module.exports = class CustomDataStoreController extends Controller {
         const key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
         ctx.validate(false)
 
-        await ctx.dal.customStoreProvider.findOne({key})
-            .then(ctx.success).catch(ctx.error)
+        await this.customStoreProvider.findOne({key}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -54,11 +58,35 @@ module.exports = class CustomDataStoreController extends Controller {
         const value = ctx.checkBody('value').exist().isObject().value
         ctx.allowContentType({type: 'json'}).validate()
 
-        await ctx.dal.customStoreProvider.count({key}).then(count => {
+        await this.customStoreProvider.count({key}).then(count => {
             !count && ctx.error({msg: '当前key不存在,不能执行更新操作', data: {key}})
         })
 
-        await ctx.dal.customStoreProvider.update({key}, {value})
+        await this.customStoreProvider.update({key}, {value})
             .then(data => ctx.success(true)).catch(ctx.error)
+    }
+
+    /**
+     * 创建或更新
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async createOrUpdate(ctx) {
+
+        const nodeId = ctx.checkBody('nodeId').isInt().gt(0).value
+        const key = ctx.checkBody('key').exist().match(/^[a-z0-9_-|]{6,50}$/).value
+        const value = ctx.checkBody('value').exist().isObject().value
+        const userId = ctx.request.userId || 0
+        ctx.allowContentType({type: 'json'}).validate()
+
+        if (!key.startsWith(`node_${nodeId}_`)) {
+            ctx.error({msg: '参数key命名规则错误'})
+        }
+
+        await this.customStoreProvider.findOneAndUpdate({key}, {value}).then(oldInfo => {
+            return oldInfo ? this.customStoreProvider.findOne({key}) : this.customStoreProvider.create({
+                key, value, nodeId, userId
+            })
+        }).then(ctx.success).catch(ctx.error)
     }
 }
