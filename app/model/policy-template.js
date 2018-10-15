@@ -1,20 +1,13 @@
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = app => {
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return {
-                id: ret._id,
-                name: ret.name,
-                userId: ret.userId,
-                template: ret.template,
-                templateType: ret.templateType,
-                createDate: ret.createDate,
-                updateDate: ret.updateDate,
-                status: ret.status,
-            }
+            return Object.assign({id: doc.id}, lodash.omit(ret, ['_id']))
         }
     }
 

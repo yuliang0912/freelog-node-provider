@@ -31,15 +31,6 @@ module.exports = class NodeProvider extends KnexBaseOperation {
     }
 
     /**
-     * 更新节点pb
-     * @param model
-     * @returns {Promise|Promise.<*>}
-     */
-    updateNodePageBuild(model, condition) {
-        return super.update(model, condition)
-    }
-
-    /**
      * 查询nodePageBuild
      * @param condition
      * @returns {*}

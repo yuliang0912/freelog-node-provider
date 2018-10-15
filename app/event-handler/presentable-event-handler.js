@@ -4,7 +4,6 @@
 
 'use strict'
 
-
 const presentableEvents = require('../enum/presentable-events')
 
 module.exports = class PresentableEventHandler {
@@ -46,7 +45,7 @@ module.exports = class PresentableEventHandler {
     __registerEventHandler__() {
 
         // arguments : {authScheme}
-        this.app.on(presentableEvents.createPresentableEvent, (...args) => this.createPageBuild(...args))
+        this.app.on(presentableEvents.createPresentableEvent, this.createPageBuild.bind(this))
 
         this.app.on(presentableEvents.updatePresentableEvent, console.log)
     }

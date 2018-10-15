@@ -1,11 +1,12 @@
 'use strict'
 
+const lodash = require('lodash')
 const crypto = require('crypto')
 const Patrun = require('patrun')
 const {validator} = require('egg-freelog-base/app/extend/application')
-const PresentablePolicyCompiler = require('./presentable-policy-compiler')
+const FreelogPresentablePolicyCompiler = require('./presentable-policy-compiler')
 
-module.exports = class PolicyCompiler {
+class PolicyCompiler {
 
     constructor() {
         this.compilerPatrun = this._registerCompiler()
@@ -40,13 +41,13 @@ module.exports = class PolicyCompiler {
     _registerCompiler() {
 
         const patrun = Patrun()
-        const presentablePolicyCompiler = new PresentablePolicyCompiler()
+        const freelogPresentablePolicyCompiler = new FreelogPresentablePolicyCompiler()
 
         /**
          * 飞致网络默认策略编译器
          */
         patrun.add({languageType: 'freelog_policy_lang'}, (...args) => {
-            const policySegment = presentablePolicyCompiler.compiler(...args)
+            const policySegment = freelogPresentablePolicyCompiler.compiler(...args)
             return this._policySegmentIdGenerate(policySegment)
         })
 
@@ -61,13 +62,7 @@ module.exports = class PolicyCompiler {
      */
     _policySegmentIdGenerate(policySegment) {
 
-        const signObject = {
-            users: policySegment.users,
-            fsmDescription: policySegment.fsmDescription,
-            activatedStates: policySegment.activatedStates,
-            initialState: policySegment.initialState,
-            teminateState: policySegment.teminateState
-        }
+        const signObject = lodash.pick(policySegment, ['authorizedObjects', 'fsmStates', 'fsmDeclarations'])
 
         const targetSignText = JSON.stringify(signObject).replace(/\s/g, "").toLowerCase()
 
@@ -76,3 +71,5 @@ module.exports = class PolicyCompiler {
         return policySegment
     }
 }
+
+module.exports = new PolicyCompiler()

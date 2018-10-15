@@ -2,11 +2,18 @@
  * Created by yuliang on 2017/10/16.
  * node相关api
  */
+
 'use strict'
 
 const Controller = require('egg').Controller;
 
 module.exports = class NodeController extends Controller {
+
+    constructor({app}) {
+        super(...arguments)
+        this.nodeProvider = app.dal.nodeProvider
+    }
+
     /**
      * 节点列表
      * @param ctx
@@ -27,10 +34,10 @@ module.exports = class NodeController extends Controller {
         }
 
         var nodeList = []
-        const totalItem = await ctx.dal.nodeProvider.getCount(condition)
+        const totalItem = await this.nodeProvider.count(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            nodeList = await ctx.dal.nodeProvider.getNodeList(condition, page, pageSize)
+            nodeList = await this.nodeProvider.getNodeList(condition, page, pageSize)
         }
 
         ctx.success({page, pageSize, totalItem, dataList: nodeList})
@@ -47,7 +54,7 @@ module.exports = class NodeController extends Controller {
 
         ctx.validate(false)
 
-        await ctx.dal.nodeProvider.getNodeInfo({nodeId}).then(ctx.success)
+        await this.nodeProvider.findOne({nodeId}).then(ctx.success)
     }
 
     /**
@@ -67,8 +74,8 @@ module.exports = class NodeController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        const checkNodeNameTask = ctx.dal.nodeProvider.getNodeInfo({nodeName})
-        const checkNodeDomainTask = ctx.dal.nodeProvider.getNodeInfo({nodeDomain})
+        const checkNodeNameTask = this.nodeProvider.findOne({nodeName})
+        const checkNodeDomainTask = this.nodeProvider.findOne({nodeDomain})
 
         await Promise.all([checkNodeNameTask, checkNodeDomainTask]).then(([nodeNameResult, nodeDomainResult]) => {
             if (nodeNameResult) {
@@ -81,13 +88,12 @@ module.exports = class NodeController extends Controller {
         })
 
         const nodeModel = {
-            nodeName, nodeDomain,
-            ownerUserId: ctx.request.userId
+            nodeName, nodeDomain, ownerUserId: ctx.request.userId
         }
 
-        await ctx.dal.nodeProvider.createNode(nodeModel).then(result => {
+        await this.nodeProvider.createNode(nodeModel).then(result => {
             if (result.length > 0) {
-                return ctx.dal.nodeProvider.getNodeInfo({nodeId: result[0]})
+                return this.nodeProvider.findOne({nodeId: result[0]})
             }
         }).then(ctx.success)
     }
@@ -99,16 +105,16 @@ module.exports = class NodeController extends Controller {
      */
     async update(ctx) {
 
-        const nodeId = ctx.checkParams('id').isInt().gt(0).value
+        const nodeId = ctx.checkParams('id').toInt().gt(0).value
         const status = ctx.checkBody('status').in([0, 1]).value
         ctx.validate()
 
-        const nodeInfo = await ctx.dal.nodeProvider.getNodeInfo({nodeId})
+        const nodeInfo = await this.nodeProvider.findOne({nodeId})
         if (!nodeInfo || nodeInfo.ownerUserId !== ctx.request.userId) {
             ctx.error({msg: '节点信息未找到或者与身份信息不匹配'})
         }
 
-        await ctx.dal.nodeProvider.update({status}, {nodeId}).then(isSuccess => {
+        await this.nodeProvider.update({status}, {nodeId}).then(isSuccess => {
             if (isSuccess) {
                 nodeInfo.status = status
             }
@@ -128,6 +134,6 @@ module.exports = class NodeController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.nodeProvider.getNodeListByNodeIds(nodeIds).then(ctx.success).catch(ctx.error)
+        await this.nodeProvider.getNodeListByNodeIds(nodeIds).then(ctx.success).catch(ctx.error)
     }
 }

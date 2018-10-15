@@ -6,7 +6,6 @@ module.exports = class PresentableAuthTreeProvider extends MongoBaseOperation {
 
     constructor(app) {
         super(app.model.PresentableAuthTree)
-        this.app = app
     }
 
     /**
@@ -15,8 +14,8 @@ module.exports = class PresentableAuthTreeProvider extends MongoBaseOperation {
      * @returns {Promise}
      */
     createOrUpdateAuthTree(model) {
-        return super.findOneAndUpdate({presentableId: model.presentableId}, model).then(oldInfo => {
-            return oldInfo ? super.findOne({presentableId: model.presentableId}) : super.create(model)
+        return super.findOneAndUpdate({presentableId: model.presentableId}, model, {new: true}).then(authTree => {
+            return authTree || super.create(model)
         })
     }
 }

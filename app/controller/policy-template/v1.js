@@ -4,6 +4,11 @@ const Controller = require('egg').Controller;
 
 module.exports = class PolicyTemplateController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.policyTemplateProvider = app.dal.policyTemplateProvider
+    }
+
     /**
      * 查询列表
      * @param ctx
@@ -24,10 +29,10 @@ module.exports = class PolicyTemplateController extends Controller {
             Reflect.deleteProperty(condition, 'userId')
         }
 
-        var totalItem = await ctx.dal.policyTemplate.count(condition)
+        var totalItem = await this.policyTemplateProvider.count(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            templateList = await ctx.dal.policyTemplate.findPageList(condition, page, pageSize)
+            templateList = await this.policyTemplateProvider.findPageList(condition, page, pageSize)
         }
 
         ctx.success({page, pageSize, totalItem, dataList: templateList})
@@ -45,7 +50,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const templateType = ctx.checkBody('templateType').toInt().in([1, 2]).value
         ctx.allowContentType({type: 'json'}).validate()
 
-        await ctx.dal.policyTemplate.create({
+        await this.policyTemplateProvider.create({
             name, template, templateType,
             isShare: 0,
             userId: ctx.request.userId
@@ -62,7 +67,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
         ctx.validate()
 
-        await ctx.dal.policyTemplate.findById(id).then(ctx.success).catch(ctx.error)
+        await this.policyTemplateProvider.findById(id).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -81,7 +86,7 @@ module.exports = class PolicyTemplateController extends Controller {
             ctx.error({msg: '参数name和template最少需要一个'})
         }
 
-        const policyTemplate = await ctx.dal.policyTemplate.findById(id)
+        const policyTemplate = await this.policyTemplateProvider.findById(id)
         if (!policyTemplate || policyTemplate.userId != ctx.request.userId) {
             ctx.error({msg: '参数id错误或者与当前用户不匹配'})
         }
@@ -94,7 +99,6 @@ module.exports = class PolicyTemplateController extends Controller {
             model.template = policyTemplate.template = template
         }
 
-        await ctx.dal.policyTemplate.update({_id: id}, model)
-            .then(() => ctx.success(policyTemplate)).catch(ctx.error)
+        await policyTemplate.updateOne(model).then(() => ctx.success(policyTemplate)).catch(ctx.error)
     }
 }

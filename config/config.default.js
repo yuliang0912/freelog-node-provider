@@ -24,7 +24,7 @@ module.exports = app => {
             node: {
                 client: 'mysql',
                 connection: {
-                    host: '192.168.2.239',
+                    host: '127.0.0.1',
                     user: 'root',
                     password: 'yuliang@@',
                     database: 'fr_node',

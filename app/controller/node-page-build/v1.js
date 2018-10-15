@@ -9,6 +9,11 @@ const Controller = require('egg').Controller;
 
 module.exports = class NodePageBuildController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.nodePageBuildProvider = app.dal.nodePageBuildProvider
+    }
+
     /**
      * 节点获取自己的pb列表
      * @param ctx
@@ -20,7 +25,7 @@ module.exports = class NodePageBuildController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.nodePageBuildProvider.getNodePageBuildList({nodeId}).whereIn('status', [1, 2])
+        await this.nodePageBuildProvider.getNodePageBuildList({nodeId}).whereIn('status', [1, 2])
             .then(ctx.success).catch(ctx.error)
     }
 
@@ -37,11 +42,9 @@ module.exports = class NodePageBuildController extends Controller {
 
         ctx.validate()
 
-        const nodePageBuild = await ctx.dal.nodePageBuildProvider.getNodePageBuild({
-            id, nodeId,
-            userId: ctx.request.userId
-        }).catch(ctx.error)
-
+        const nodePageBuild = await this.nodePageBuildProvider.getNodePageBuild({
+            id, nodeId, userId: ctx.request.userId
+        })
         if (!nodePageBuild) {
             ctx.error({msg: "未找到有效的nodePageBuild"})
         }
@@ -52,6 +55,6 @@ module.exports = class NodePageBuildController extends Controller {
         }
 
         //如果是显示状态,则其他的全部设置为隐藏
-        await ctx.dal.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).then(() => ctx.success(true))
+        await this.nodePageBuildProvider.updateNodePageBuildStatus(nodeId, id, status).then(() => ctx.success(true))
     }
 }

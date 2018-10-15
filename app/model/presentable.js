@@ -4,28 +4,15 @@
 
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = app => {
 
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return {
-                presentableId: ret._id.toString(),
-                presentableName: ret.presentableName,
-                resourceId: ret.resourceId,
-                userId: ret.userId,
-                nodeId: ret.nodeId,
-                nodeName: ret.nodeName,
-                createDate: ret.createDate,
-                updateDate: ret.updateDate,
-                contracts: ret.contracts,
-                policy: ret.policy,
-                userDefinedTags: ret.userDefinedTags,
-                resourceInfo: ret.resourceInfo,
-                isOnline: ret.isOnline,
-                status: ret.status
-            }
+            return Object.assign({presentableId: doc.id}, lodash.omit(ret, ['_id']))
         }
     }
 
@@ -50,6 +37,7 @@ module.exports = app => {
         },
         contracts: {type: [AssociatedContractSchema], default: []},
         userDefinedTags: {type: [String], default: []},//用户自定义tags
+        presentableIntro: {type: String, default: ''},//presentable简介
         isOnline: {type: Number, default: 0, required: true}, //是否上线 0:否 1:是
         status: {type: Number, default: 0, required: true} //状态 0:初始态  1:合约已全部签订  2:策略已存在
     }, {
@@ -57,6 +45,10 @@ module.exports = app => {
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
         toJSON: toObjectOptions,
         toObject: toObjectOptions
+    })
+
+    PresentableSchema.virtual('presentableId').get(function () {
+        return this.id
     })
 
     PresentableSchema.index({nodeId: 1, resourceId: 1});

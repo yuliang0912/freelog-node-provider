@@ -18,9 +18,9 @@ module.exports = class NodeProvider extends KnexBaseOperation {
     /**
      * 创建节点
      * @param model
-     * @returns {Promise|Promise.<*>}
      */
     createNode(model) {
+
         if (!super.type.object(model)) {
             return Promise.reject(new Error("model must be object"))
         }
@@ -30,15 +30,6 @@ module.exports = class NodeProvider extends KnexBaseOperation {
 
         return super.create(model)
     }
-
-    /**
-     * 查询单个节点
-     * @param condition
-     */
-    getNodeInfo(condition) {
-        return super.findOne(condition)
-    }
-
 
     /**
      * 获取多个节点
@@ -65,14 +56,5 @@ module.exports = class NodeProvider extends KnexBaseOperation {
         }
 
         return super.queryChain.whereIn('nodeId', nodeIds).select()
-    }
-
-    /**
-     * 获取数量
-     * @param condition
-     * @returns {*}
-     */
-    getCount(condition) {
-        return super.count(condition)
     }
 }

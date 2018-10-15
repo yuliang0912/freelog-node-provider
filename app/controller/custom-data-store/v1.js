@@ -29,7 +29,7 @@ module.exports = class CustomDataStoreController extends Controller {
             count && ctx.error({msg: '当前key已经存在,不能重复创建', data: {key}})
         })
 
-        await this.customStoreProvider.createCustomStore({
+        await this.customStoreProvider.create({
             key, value, nodeId, userId: ctx.request.userId || 0
         }).then(ctx.success).catch(ctx.error)
     }
@@ -62,7 +62,7 @@ module.exports = class CustomDataStoreController extends Controller {
             !count && ctx.error({msg: '当前key不存在,不能执行更新操作', data: {key}})
         })
 
-        await this.customStoreProvider.update({key}, {value})
+        await this.customStoreProvider.updateOne({key}, {value})
             .then(data => ctx.success(true)).catch(ctx.error)
     }
 

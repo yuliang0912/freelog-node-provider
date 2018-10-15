@@ -15,6 +15,7 @@ module.exports = class PresentableController extends Controller {
     constructor({app}) {
         super(...arguments)
         this.presentableProvider = app.dal.presentableProvider
+        this.presentableAuthTreeProvider = app.dal.presentableAuthTreeProvider
     }
 
     /**
@@ -42,7 +43,7 @@ module.exports = class PresentableController extends Controller {
             condition.isOnline = isOnline
         }
 
-        var presentableList = await this.presentableProvider.getPresentableList(condition)
+        var presentableList = await this.presentableProvider.find(condition)
         if (!presentableList.length) {
             return ctx.success([])
         }
@@ -72,20 +73,21 @@ module.exports = class PresentableController extends Controller {
      */
     async show(ctx) {
 
-        const presentableId = ctx.checkParams("id").isMongoObjectId().value
+        const presentableId = ctx.checkParams("id").isPresentableId().value
 
         ctx.validate(false)
 
-        const presentableInfo = await this.presentableProvider.getPresentableById(presentableId).then(data => data.toObject())
-
+        var presentableInfo = await this.presentableProvider.findById(presentableId)
         if (presentableInfo) {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
+                presentableInfo = presentableInfo.toObject()
                 const {resourceName, resourceType, meta} = resourceInfo
                 presentableInfo.resourceInfo.meta = meta
                 presentableInfo.resourceInfo.resourceName = resourceName
                 presentableInfo.resourceInfo.resourceType = resourceType
             })
         }
+
         ctx.success(presentableInfo)
     }
 
@@ -108,7 +110,7 @@ module.exports = class PresentableController extends Controller {
             ctx.error({msg: '未能找到有效的资源', data: {resourceInfo}})
         }
 
-        const nodeInfo = await ctx.dal.nodeProvider.getNodeInfo({nodeId})
+        const nodeInfo = await ctx.dal.nodeProvider.findOne({nodeId})
         if (!nodeInfo || nodeInfo.ownerUserId !== userId) {
             ctx.error({msg: '未能找到有效的节点信息', data: {nodeInfo}})
         }
@@ -159,19 +161,14 @@ module.exports = class PresentableController extends Controller {
             result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
         }
 
-        const presentable = await this.presentableProvider.getPresentableById(presentableId)
+        const presentable = await this.presentableProvider.findById(presentableId)
         if (!presentable || presentable.userId !== ctx.request.userId) {
             ctx.error({msg: '参数presentableId错误或者没有操作权限'})
         }
 
         await ctx.service.presentableService.updatePresentable({
-            presentableName,
-            userDefinedTags,
-            policies,
-            contracts,
-            isOnline,
-            presentable: presentable.toObject()
-        }).then(() => this.presentableProvider.getPresentableById(presentableId)).then(ctx.success).catch(ctx.error)
+            presentableName, userDefinedTags, policies, contracts, isOnline, presentable
+        }).then(() => this.presentableProvider.findById(presentableId)).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -181,26 +178,31 @@ module.exports = class PresentableController extends Controller {
      */
     async destroy(ctx) {
 
-        const presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
+        const presentableId = ctx.checkParams("id").exist().isPresentableId().value
 
         ctx.validate()
 
-        await this.presentableProvider.updatePresentable({status: 1}, {_id: presentableId})
-            .then(data => ctx.success(data.nModified > 0)).catch(ctx.error)
+        const presentableInfo = await this.presentableProvider.findById(presentableId)
+
+        if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
+            ctx.error({msg: '未找到节点资源或者没有权限', data: {presentableInfo}})
+        }
+
+        await presentableInfo.updateOne({status: 1}).then(data => ctx.success(data.nModified > 0)).catch(ctx.error)
     }
 
     /**
-     * 获取presentbale授权树
+     * 获取presentable授权树
      * @param ctx
      * @returns {Promise<void>}
      */
     async presentableTree(ctx) {
 
-        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
 
         ctx.validate(false)
 
-        await ctx.dal.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
+        await this.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -217,12 +219,7 @@ module.exports = class PresentableController extends Controller {
             resourceId, userId: ctx.request.userId
         }
 
-        await this.presentableProvider.find(condition).map(x => new Object({
-            nodeId: x.nodeId,
-            resourceId: x.resourceId,
-            presentableId: x._id.toString(),
-            presentableName: x.presentableName,
-        })).then(nodeList => {
+        await this.presentableProvider.find(condition).map(model => lodash.pick(model, ['nodeId', 'resourceId', 'presentableId', 'presentableName'])).then(nodeList => {
             ctx.success(lodash.uniqBy(nodeList, 'nodeId'))
         }).catch(ctx.error)
     }

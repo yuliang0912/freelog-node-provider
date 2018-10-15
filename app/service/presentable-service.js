@@ -19,7 +19,7 @@ class PresentableSchemeService extends Service {
         // }
 
         return ctx.dal.presentableProvider.createPresentable(presentable).tap(data => {
-            app.emit(presentableEvents.createPresentableEvent, {presentable: data.toObject()})
+            app.emit(presentableEvents.createPresentableEvent, {presentable})
         })
     }
 
@@ -29,9 +29,7 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableName, userDefinedTags, policies, contracts, isOnline, presentable}) {
 
-        const {ctx, app} = this
         const model = {presentableName: presentableName || presentable.presentableName}
-
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
         }
@@ -42,6 +40,7 @@ class PresentableSchemeService extends Service {
             await this._checkPresentableContracts({presentable, contracts})
             model.contracts = presentable.contracts
         }
+
         if (isOnline !== undefined) {
             model.isOnline = presentable.isOnline = isOnline
         }
@@ -52,9 +51,7 @@ class PresentableSchemeService extends Service {
 
         await this._updatePresentableAuthTree(presentable)
 
-        return ctx.dal.presentableProvider.update({_id: presentable.presentableId}, model).tap(() => {
-            //app.emit(presentableEvents.updatePresentableEvent, {presentable})
-        })
+        return presentable.updateOne(model)
     }
 
     /**
@@ -256,7 +253,7 @@ class PresentableSchemeService extends Service {
         const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
 
         if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy)) {
-            this.ctx.error({msg: !isCompleteSignContracts ? '未解决全部上抛的资源,不能设置为发布状态' : '策略段为空,不能设置为发布状态'})
+            this.ctx.error({msg: isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' : '未解决全部上抛的资源,不能发布'})
         }
 
         presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0)
