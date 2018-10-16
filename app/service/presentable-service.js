@@ -18,8 +18,8 @@ class PresentableSchemeService extends Service {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         // }
 
-        return ctx.dal.presentableProvider.createPresentable(presentable).tap(data => {
-            app.emit(presentableEvents.createPresentableEvent, {presentable})
+        return ctx.dal.presentableProvider.createPresentable(presentable).tap(presentableInfo => {
+            app.emit(presentableEvents.createPresentableEvent, {presentable: presentableInfo})
         })
     }
 
