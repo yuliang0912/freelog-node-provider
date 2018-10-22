@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const Service = require('egg').Service
 const presentableEvents = require('../enum/presentable-events')
+const {LogicError, ApplicationError} = require('egg-freelog-base/error')
 
 class PresentableSchemeService extends Service {
 
@@ -66,12 +67,12 @@ class PresentableSchemeService extends Service {
         }
 
         if (!contracts.some(x => x.resourceId === presentable.resourceId)) {
-            ctx.error({msg: '合同数据校验失败,缺失完整性', data: contracts})
+            throw new LogicError('合同数据校验失败,缺失完整性', contracts)
         }
 
         const uniqueCount = lodash.uniqWith(contracts, (x, y) => x.resourceId === y.resourceId).length
         if (uniqueCount !== contracts.length) {
-            ctx.error({msg: '同一个资源只能选择一个策略或者合同'})
+            throw new LogicError('同一个资源只能选择一个策略或者合同')
         }
 
         const contractMap = new Map()
@@ -83,7 +84,7 @@ class PresentableSchemeService extends Service {
             })
         }
         if (contractMap.size !== contractIds.length) {
-            ctx.error({msg: 'contractId数据校验失败', data: {contractMap, contractIds}})
+            throw new ApplicationError('contractId数据校验失败', {contractMap, contractIds})
         }
 
         contracts.forEach(item => {
@@ -92,7 +93,7 @@ class PresentableSchemeService extends Service {
                 return
             }
             if (contractInfo.resourceId !== item.resourceId || contractInfo.partyTwo !== presentable.nodeId.toString()) {
-                ctx.error({msg: '合同信息与资源信息或者节点信息不匹配', data: {contractInfo}})
+                throw new LogicError('合同信息与资源信息或者节点信息不匹配', contractInfo)
             }
             item.policySegmentId = contractInfo.segmentId
             item.authSchemeId = contractInfo.targetId
@@ -103,17 +104,17 @@ class PresentableSchemeService extends Service {
 
         const allAuthSchemeBubbleResourceIds = authSchemeList.reduce((acc, current) => {
             if (current.status !== 1) {
-                ctx.error({msg: `授权点${current.authSchemeId}不可用`, data: current})
+                throw new ApplicationError(`授权点${current.authSchemeId}不可用`, current)
             }
             if (!contractResourceMap.has(current.resourceId) || contractResourceMap.get(current.resourceId).authSchemeId !== current.authSchemeId) {
-                ctx.error({msg: 'resourceId与authSchemeId不匹配', data: {authScheme: current}})
+                throw new LogicError('resourceId与authSchemeId不匹配', {authScheme: current})
             }
             return [...acc, ...current.bubbleResources.map(x => x.resourceId)]
         }, [presentable.resourceId])
 
         const diffResources = lodash.difference(Array.from(contractResourceMap.keys()), allAuthSchemeBubbleResourceIds)
         if (diffResources.length) {
-            ctx.error({msg: '合同中存在无效的资源数据', data: {resourceIds: diffResources}})
+            throw new LogicError('合同中存在无效的资源数据', {resourceIds: diffResources})
         }
 
         const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
@@ -143,7 +144,7 @@ class PresentableSchemeService extends Service {
         }
 
         const {ctx} = this
-        const result = await this._buildContractTree(presentable.contracts).catch(ctx.error)
+        const result = await this._buildContractTree(presentable.contracts)
         return ctx.dal.presentableAuthTreeProvider.createOrUpdateAuthTree({
             nodeId: presentable.nodeId,
             presentableId: presentable.presentableId,
@@ -171,7 +172,7 @@ class PresentableSchemeService extends Service {
             .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
 
         if (associatedContracts.length !== authSchemeMap.size) {
-            throw new Error('授权树数据完整性校验失败')
+            throw new ApplicationError('授权树数据完整性校验失败')
         }
 
         for (let i = 0, j = associatedContracts.length; i < j; i++) {
@@ -238,7 +239,7 @@ class PresentableSchemeService extends Service {
             contentType: 'json',
             data: body,
             dataType: 'json'
-        }).catch(ctx.error)
+        })
     }
 
 
@@ -253,7 +254,7 @@ class PresentableSchemeService extends Service {
         const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
 
         if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy)) {
-            this.ctx.error({msg: isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' : '未解决全部上抛的资源,不能发布'})
+            throw new LogicError(isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' : '未解决全部上抛的资源,不能发布')
         }
 
         presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0)
@@ -277,7 +278,7 @@ class PresentableSchemeService extends Service {
         updatePolicySegments && updatePolicySegments.forEach(item => {
             let targetPolicySegment = oldPolicySegmentMap.get(item.policySegmentId)
             if (!targetPolicySegment) {
-                throw Object.assign(new Error("未能找到需要更新的策略段"), {data: targetPolicySegment})
+                throw new ApplicationError('未能找到需要更新的策略段', targetPolicySegment)
             }
             targetPolicySegment.policyName = item.policyName
             targetPolicySegment.status = item.status
@@ -286,7 +287,7 @@ class PresentableSchemeService extends Service {
         addPolicySegments && addPolicySegments.forEach(item => {
             let newPolicy = ctx.helper.policyCompiler(item)
             if (oldPolicySegmentMap.has(newPolicy.segmentId)) {
-                throw Object.assign(new Error("不能添加已经存在的策略段"), {data: newPolicy})
+                throw new ApplicationError('不能添加已经存在的策略段', newPolicy)
             }
             oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
         })
