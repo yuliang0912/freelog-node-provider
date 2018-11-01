@@ -56,9 +56,7 @@ module.exports = class PresentableController extends Controller {
         presentableList = presentableList.map(item => {
             item = item.toObject()
             if (resourceMap.has(item.resourceId)) {
-                const {resourceName, meta} = resourceMap.get(item.resourceId)
-                item.resourceInfo.meta = meta
-                item.resourceInfo.resourceName = resourceName
+                item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta'])
             }
             return item
         })
@@ -81,10 +79,7 @@ module.exports = class PresentableController extends Controller {
         if (presentableInfo) {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
                 presentableInfo = presentableInfo.toObject()
-                const {resourceName, resourceType, meta} = resourceInfo
-                presentableInfo.resourceInfo.meta = meta
-                presentableInfo.resourceInfo.resourceName = resourceName
-                presentableInfo.resourceInfo.resourceType = resourceType
+                presentableInfo.resourceInfo = lodash.pick(resourceInfo, ['resourceName', 'resourceType', 'meta'])
             })
         }
 

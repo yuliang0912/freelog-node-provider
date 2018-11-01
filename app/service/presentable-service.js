@@ -13,13 +13,13 @@ class PresentableSchemeService extends Service {
      */
     async createPresentable(presentable) {
 
-        const {ctx, app} = this
+        const {app} = this
 
         // if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         // }
 
-        return ctx.dal.presentableProvider.createPresentable(presentable).tap(presentableInfo => {
+        return app.dal.presentableProvider.createPresentable(presentable).tap(presentableInfo => {
             app.emit(presentableEvents.createPresentableEvent, {presentable: presentableInfo})
         })
     }
@@ -34,7 +34,7 @@ class PresentableSchemeService extends Service {
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
         }
-        if (presentableIntro) {
+        if (presentableIntro !== undefined) {
             model.presentableIntro = presentableIntro
         }
         if (policies) {
@@ -120,12 +120,6 @@ class PresentableSchemeService extends Service {
         if (diffResources.length) {
             throw new LogicError('合同中存在无效的资源数据', {resourceIds: diffResources})
         }
-
-        // if (!masterResourceContract.contractId) {
-        //     const masterAuthScheme = authSchemeList.find(x => x.authScheme === masterResourceContract.authSchemeId)
-        //     const masterPolicy = masterAuthScheme.policy.find(x => x.segmentId === masterResourceContract.policySegmentId)
-        //     //TODO:此处需要校验创建presentable的资源的授权策略是否包含了presentable或者recontractable授权,如果不包含,则当前策略不允许被选择
-        // }
 
         const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
         newCreatedContracts && newCreatedContracts.forEach(item => {
@@ -276,8 +270,8 @@ class PresentableSchemeService extends Service {
         const isCanRecontractable = (presentable.status & 4) === 4
 
         if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
-            const errMsg = isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
-                isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可签约状态'
+            const errMsg = !isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
+                isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
             throw new LogicError(errMsg)
         }
 
