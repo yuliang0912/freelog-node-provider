@@ -102,6 +102,8 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkBody('nodeId').toInt().gt(0).value
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const presentableName = ctx.checkBody('presentableName').optional().len(2, 50).type('string').value
+        const presentableIntro = ctx.checkBody('presentableIntro').optional().type('string').len(2, 500).value
+
         //const contracts = ctx.checkBody('contracts').optional().isArray().value
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -127,6 +129,7 @@ module.exports = class PresentableController extends Controller {
         const presentable = {
             nodeId, resourceId, resourceInfo, userId,
             presentableName: presentableName || '',
+            presentableIntro: presentableIntro || '',
             nodeName: nodeInfo.nodeName,
             status: 0
         }
@@ -147,6 +150,8 @@ module.exports = class PresentableController extends Controller {
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
         const contracts = ctx.checkBody('contracts').optional().isArray().value
         const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
+        const presentableIntro = ctx.checkBody('presentableIntro').optional().type('string').len(2, 500).value
+
         ctx.allowContentType({type: 'json'}).validate()
 
         if ([policies, presentableName, userDefinedTags, contracts, isOnline].every(x => x === undefined)) {
@@ -167,7 +172,7 @@ module.exports = class PresentableController extends Controller {
         }
 
         await ctx.service.presentableService.updatePresentable({
-            presentableName, userDefinedTags, policies, contracts, isOnline, presentable
+            presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable
         }).then(() => this.presentableProvider.findById(presentableId)).then(ctx.success).catch(ctx.error)
     }
 

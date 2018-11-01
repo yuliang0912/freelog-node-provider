@@ -28,11 +28,14 @@ class PresentableSchemeService extends Service {
      * 更新presentable
      * @returns {Promise<void>}
      */
-    async updatePresentable({presentableName, userDefinedTags, policies, contracts, isOnline, presentable}) {
+    async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable}) {
 
         const model = {presentableName: presentableName || presentable.presentableName}
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
+        }
+        if (presentableIntro) {
+            model.presentableIntro = presentableIntro
         }
         if (policies) {
             model.policy = presentable.policy = this._policiesHandler({presentable, policies})
