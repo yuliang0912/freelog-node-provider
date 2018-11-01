@@ -271,7 +271,7 @@ class PresentableSchemeService extends Service {
 
         if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
             const errMsg = !isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
-                isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
+                !isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
             throw new LogicError(errMsg)
         }
 
