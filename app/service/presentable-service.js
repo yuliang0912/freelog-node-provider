@@ -66,7 +66,8 @@ class PresentableSchemeService extends Service {
             return
         }
 
-        if (!contracts.some(x => x.resourceId === presentable.resourceId)) {
+        const masterResourceContract = contracts.find(x => x.resourceId === presentable.resourceId)
+        if (!masterResourceContract) {
             throw new LogicError('合同数据校验失败,缺失完整性', contracts)
         }
 
@@ -117,10 +118,17 @@ class PresentableSchemeService extends Service {
             throw new LogicError('合同中存在无效的资源数据', {resourceIds: diffResources})
         }
 
+        // if (!masterResourceContract.contractId) {
+        //     const masterAuthScheme = authSchemeList.find(x => x.authScheme === masterResourceContract.authSchemeId)
+        //     const masterPolicy = masterAuthScheme.policy.find(x => x.segmentId === masterResourceContract.policySegmentId)
+        //     //TODO:此处需要校验创建presentable的资源的授权策略是否包含了presentable或者recontractable授权,如果不包含,则当前策略不允许被选择
+        // }
+
         const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
         newCreatedContracts && newCreatedContracts.forEach(item => {
             let contractInfo = contractResourceMap.get(item.resourceId)
             contractInfo.contractId = item.contractId
+            contractMap.set(item.contractId, item)
         })
 
         //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
@@ -129,6 +137,17 @@ class PresentableSchemeService extends Service {
         } else if ((presentable.status & 1) === 1) {
             presentable.status = presentable.status ^ 1
         }
+
+        //如果presentable对应的主资源合同已经执行到具有presentable或者recontractable状态,则表示具备完备态
+        const masterContractInfo = contractMap.get(masterResourceContract.contractId)
+        const masterContractFsmState = masterContractInfo.contractClause.fsmStates[masterContractInfo.contractClause.currentFsmState]
+        if (masterContractFsmState && masterContractFsmState.authorization.find(x => x.toLowerCase() === 'presentable' || x.toLowerCase() === 'recontractable')) {
+            presentable.status = presentable.status | 4
+        }
+        else if ((presentable.status & 4) === 4) {
+            presentable.status = presentable.status ^ 4
+        }
+
         presentable.contracts = contracts
     }
 
@@ -193,7 +212,6 @@ class PresentableSchemeService extends Service {
     /**
      * 平铺授权树
      * @param presentableAuthTree
-     * @returns {Promise<void>}
      * @private
      */
     _flattenAuthTree(presentableAuthTree) {
@@ -252,12 +270,15 @@ class PresentableSchemeService extends Service {
 
         const isCompleteSignContracts = (presentable.status & 1) === 1
         const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
+        const isCanRecontractable = (presentable.status & 4) === 4
 
-        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy)) {
-            throw new LogicError(isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' : '未解决全部上抛的资源,不能发布')
+        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
+            const errMsg = isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
+                isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可签约状态'
+            throw new LogicError(errMsg)
         }
 
-        presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0)
+        presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0) | (isCanRecontractable ? 4 : 0)
     }
 
     /**
