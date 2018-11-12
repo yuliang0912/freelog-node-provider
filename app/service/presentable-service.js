@@ -304,6 +304,7 @@ class PresentableSchemeService extends Service {
 
         addPolicySegments && addPolicySegments.forEach(item => {
             let newPolicy = ctx.helper.policyCompiler(item)
+            console.log(newPolicy)
             if (oldPolicySegmentMap.has(newPolicy.segmentId)) {
                 throw new ApplicationError('不能添加已经存在的策略段', newPolicy)
             }
