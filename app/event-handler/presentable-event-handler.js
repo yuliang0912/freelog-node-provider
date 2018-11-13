@@ -39,6 +39,18 @@ module.exports = class PresentableEventHandler {
     }
 
     /**
+     * presentable的合同执行到获得上线授权
+     * @param presentableId
+     * @returns {Promise<void>}
+     */
+    async presentableOnlineAuthEventHandler({presentableId}) {
+        const presentableInfo = await this.app.dal.presentableProvider.findById(presentableId)
+        if (presentableInfo && (presentableInfo.status & 4) !== 4) {
+            await presentableInfo.updateOne({status: presentableInfo.status | 4})
+        }
+    }
+
+    /**
      * 注册事件处理者
      * @private
      */
@@ -46,6 +58,8 @@ module.exports = class PresentableEventHandler {
 
         // arguments : {authScheme}
         this.app.on(presentableEvents.createPresentableEvent, this.createPageBuild.bind(this))
+
+        this.app.on(presentableEvents.presentableOnlineAuthEvent, this.presentableOnlineAuthEventHandler.bind(this))
 
         this.app.on(presentableEvents.updatePresentableEvent, console.log)
     }

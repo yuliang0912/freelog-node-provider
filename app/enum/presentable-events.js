@@ -16,4 +16,8 @@ module.exports = {
      */
     updatePresentableEvent: Symbol('node#updatePresentableEvent'),
 
+    /**
+     * presentable获得上线授权事件
+     */
+    presentableOnlineAuthEvent: Symbol('node#presentableOnlineAuthEvent'),
 }

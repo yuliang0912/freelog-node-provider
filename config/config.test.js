@@ -27,4 +27,14 @@ module.exports = {
     mongoose: {
         url: "mongodb://172.18.215.229:27017/node"
     },
+
+    rabbitMq: {
+        connOptions: {
+            host: '172.18.215.229',
+            port: 5672,
+            login: 'test_user_node',
+            password: 'test_user_2018',
+            authMechanism: 'AMQPLAIN'
+        },
+    },
 }

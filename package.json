@@ -9,6 +9,7 @@
   "dependencies": {
     "@freelog/resource-policy-lang": "0.0.33",
     "ali-oss": "^4.15.1",
+    "amqp": "^0.2.7",
     "bluebird": "^3.5.3",
     "cheerio": "^1.0.0-rc.2",
     "egg": "^2.13.0",

@@ -64,14 +64,42 @@ module.exports = app => {
             maxFileSize: 1024 * 1024 * 1024 * 0.5,
         },
 
-        customLoader: [{
-            name: 'eventHandler', dir: 'app/event-handler'
-        }],
+        customLoader: ['app/event-handler', 'app/mq-service'],
 
         /**
          * API网关地址
          */
         gatewayUrl: "https://api.freelog.com",
+
+        rabbitMq: {
+            connOptions: {
+                host: '192.168.164.165',
+                port: 5672,
+                login: 'guest',
+                password: 'guest',
+                authMechanism: 'AMQPLAIN',
+                heartbeat: 120  //每2分钟保持一次连接
+            },
+            implOptions: {
+                reconnect: true,
+                reconnectBackoffTime: 20000  //10秒尝试连接一次
+            },
+            exchange: {
+                name: 'freelog-node-exchange',
+            },
+            queues: [
+                {
+                    name: 'node#presentable-event-receive-queue',
+                    options: {autoDelete: false, durable: true},
+                    routingKeys: [
+                        {
+                            exchange: 'freelog-contract-exchange',
+                            routingKey: 'presentable.onlineAuth.event'
+                        }
+                    ]
+                },
+            ]
+        },
 
         keys: 'freelog-node-provider-1502781772068_5353'
     }
