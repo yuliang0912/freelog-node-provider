@@ -243,7 +243,6 @@ module.exports = class PresentableController extends Controller {
         }))
 
         if (presentableContractMap.size > 0) {
-            console.log(Array.from(presentableContractMap.keys()))
             await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
                 contractInfos.forEach(item => presentableContractMap.set(item.contractId, item))
             })
