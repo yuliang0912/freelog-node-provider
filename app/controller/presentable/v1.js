@@ -239,12 +239,15 @@ module.exports = class PresentableController extends Controller {
         const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
 
         presentableInfos.forEach(item => item.contracts.forEach(contract => {
-            contract.contractId && presentableContractMap.set(contract.contractId, null)
+            contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
         }))
 
-        await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
-            contractInfos.forEach(item => presentableContractMap.set(item.contractId, item))
-        })
+        if (presentableContractMap.size > 0) {
+            console.log(Array.from(presentableContractMap.keys()))
+            await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
+                contractInfos.forEach(item => presentableContractMap.set(item.contractId, item))
+            })
+        }
 
         const result = presentableInfos.map(item => new Object({
             presentableId: item._id.toString(),
