@@ -48,7 +48,6 @@ module.exports = class PresentableEventHandler {
         if (presentableInfo && (presentableInfo.status & 4) === 4) {
             return
         }
-        console.log('event ', presentableInfo, {nodeId, resourceId})
         await presentableInfo.updateOne({$inc: {status: 4}})
     }
 

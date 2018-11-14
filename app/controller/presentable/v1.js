@@ -149,8 +149,6 @@ module.exports = class PresentableController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        console.log("contracts", contracts)
-
         if ([policies, presentableName, userDefinedTags, contracts, isOnline].every(x => x === undefined)) {
             ctx.error({msg: '缺少必要的参数'})
         }
