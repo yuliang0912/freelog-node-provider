@@ -63,15 +63,16 @@ class PresentableSchemeService extends Service {
                 this._checkPresentableStatus(presentable)
             }
         }
-
         await this._updatePresentableAuthTree(presentable)
-        return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, {model}, {new: true}).then(newPresentableInfo => {
+        return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, model, {new: true}).then(newPresentableInfo => {
             if ((newPresentableInfo.status & 4) === 4) {
                 newPresentableInfo.status = presentableStatusTemp | 4
             } else {
                 newPresentableInfo.status = presentableStatusTemp
             }
-            return newPresentableInfo.updateOne({status: newPresentableInfo.status})
+            return newPresentableInfo.updateOne({status: newPresentableInfo.status}).then(() => {
+                return newPresentableInfo
+            })
         })
     }
 
@@ -290,7 +291,6 @@ class PresentableSchemeService extends Service {
 
         addPolicySegments && addPolicySegments.forEach(item => {
             let newPolicy = ctx.helper.policyCompiler(item)
-            console.log(newPolicy)
             if (oldPolicySegmentMap.has(newPolicy.segmentId)) {
                 throw new ApplicationError('不能添加已经存在的策略段', newPolicy)
             }
@@ -298,6 +298,7 @@ class PresentableSchemeService extends Service {
         })
 
         presentable.policy = Array.from(oldPolicySegmentMap.values())
+
         if (presentable.policy.some(x => x.status === 1)) {
             presentable.status = presentable.status | 2
         } else if ((presentable.status & 2) === 2) {

@@ -165,10 +165,9 @@ module.exports = class PresentableController extends Controller {
         if (!presentable || presentable.userId !== ctx.request.userId) {
             ctx.error({msg: '参数presentableId错误或者没有操作权限'})
         }
-
         await ctx.service.presentableService.updatePresentable({
             presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable
-        }).then(() => this.presentableProvider.findById(presentableId)).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
