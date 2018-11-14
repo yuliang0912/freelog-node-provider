@@ -7,19 +7,24 @@ const {LogicError, ApplicationError} = require('egg-freelog-base/error')
 
 class PresentableSchemeService extends Service {
 
+    constructor({app}) {
+        super(...arguments)
+        this.presentableProvider = app.dal.presentableProvider
+    }
+
     /**
      * 创建presentable
      * @returns {Promise<void>}
      */
     async createPresentable(presentable) {
 
-        const {app} = this
+        const {app, presentableProvider} = this
 
         // if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         // }
 
-        return app.dal.presentableProvider.createPresentable(presentable).tap(presentableInfo => {
+        return presentableProvider.createPresentable(presentable).tap(presentableInfo => {
             app.emit(presentableEvents.createPresentableEvent, {presentable: presentableInfo})
         })
     }
@@ -30,6 +35,7 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable}) {
 
+        var presentableStatusTemp = 0
         const model = {presentableName: presentableName || presentable.presentableName}
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
@@ -38,24 +44,35 @@ class PresentableSchemeService extends Service {
             model.presentableIntro = presentableIntro
         }
         if (policies) {
-            model.policy = presentable.policy = this._policiesHandler({presentable, policies})
+            this._policiesHandler({presentable, policies})
+            model.policy = presentable.policy
+            if ((presentable.status & 2) === 2) {
+                presentableStatusTemp = presentableStatusTemp | 2
+            }
         }
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
             model.contracts = presentable.contracts
+            if ((presentable.status & 1) === 1) {
+                presentableStatusTemp = presentableStatusTemp | 1
+            }
         }
-
         if (isOnline !== undefined) {
             model.isOnline = presentable.isOnline = isOnline
+            if (isOnline === 1) {
+                this._checkPresentableStatus(presentable)
+            }
         }
 
-        this._setPresentableStatus(presentable)
-
-        model.status = presentable.status
-
         await this._updatePresentableAuthTree(presentable)
-
-        return presentable.updateOne(model)
+        return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, {model}, {new: true}).then(newPresentableInfo => {
+            if ((newPresentableInfo.status & 4) === 4) {
+                newPresentableInfo.status = presentableStatusTemp | 4
+            } else {
+                newPresentableInfo.status = presentableStatusTemp
+            }
+            return newPresentableInfo.updateOne({status: newPresentableInfo.status})
+        })
     }
 
     /**
@@ -133,16 +150,6 @@ class PresentableSchemeService extends Service {
             presentable.status = presentable.status | 1
         } else if ((presentable.status & 1) === 1) {
             presentable.status = presentable.status ^ 1
-        }
-
-        //如果presentable对应的主资源合同已经执行到具有presentable或者recontractable状态,则表示具备完备态
-        const masterContractInfo = contractMap.get(masterResourceContract.contractId)
-        const masterContractFsmState = masterContractInfo.contractClause.fsmStates[masterContractInfo.contractClause.currentFsmState]
-        if (masterContractFsmState && masterContractFsmState.authorization.find(x => x.toLowerCase() === 'presentable' || x.toLowerCase() === 'recontractable')) {
-            presentable.status = presentable.status | 4
-        }
-        else if ((presentable.status & 4) === 4) {
-            presentable.status = presentable.status ^ 4
         }
 
         presentable.contracts = contracts
@@ -257,27 +264,6 @@ class PresentableSchemeService extends Service {
         })
     }
 
-
-    /**
-     * 检查presentable是否达到可以上线的标准
-     * @param presentable
-     * @private
-     */
-    _setPresentableStatus(presentable) {
-
-        const isCompleteSignContracts = (presentable.status & 1) === 1
-        const isExistEffectivePolicy = presentable.policy.some(x => x.status === 1)
-        const isCanRecontractable = (presentable.status & 4) === 4
-
-        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
-            const errMsg = !isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
-                !isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
-            throw new LogicError(errMsg)
-        }
-
-        presentable.status = (isCompleteSignContracts ? 1 : 0) | (isExistEffectivePolicy ? 2 : 0) | (isCanRecontractable ? 4 : 0)
-    }
-
     /**
      * 处理策略段变更
      * @param authScheme
@@ -311,7 +297,31 @@ class PresentableSchemeService extends Service {
             oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
         })
 
-        return Array.from(oldPolicySegmentMap.values())
+        presentable.policy = Array.from(oldPolicySegmentMap.values())
+        if (presentable.policy.some(x => x.status === 1)) {
+            presentable.status = presentable.status | 2
+        } else if ((presentable.status & 2) === 2) {
+            presentable.status = presentable.status ^ 2
+        }
+    }
+
+
+    /**
+     * 检查presentable是否达到可以上线的标准
+     * @param presentable
+     * @private
+     */
+    _checkPresentableStatus(presentable) {
+
+        const isCompleteSignContracts = (presentable.status & 1) === 1
+        const isExistEffectivePolicy = (presentable.status & 2) === 2
+        const isCanRecontractable = (presentable.status & 4) === 4
+
+        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
+            const errMsg = !isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
+                !isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
+            throw new LogicError(errMsg)
+        }
     }
 }
 

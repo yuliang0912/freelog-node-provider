@@ -45,9 +45,10 @@ module.exports = class PresentableEventHandler {
      */
     async presentableOnlineAuthEventHandler({presentableId}) {
         const presentableInfo = await this.app.dal.presentableProvider.findById(presentableId)
-        if (presentableInfo && (presentableInfo.status & 4) !== 4) {
-            await presentableInfo.updateOne({status: presentableInfo.status | 4})
+        if (presentableInfo && (presentableInfo.status & 4) === 4) {
+            return
         }
+        await presentableInfo.updateOne({$inc: {status: 4}})
     }
 
     /**
