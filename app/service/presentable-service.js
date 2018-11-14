@@ -35,7 +35,6 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable}) {
 
-        var presentableStatusTemp = 0
         const model = {presentableName: presentableName || presentable.presentableName}
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
@@ -46,16 +45,10 @@ class PresentableSchemeService extends Service {
         if (policies) {
             this._policiesHandler({presentable, policies})
             model.policy = presentable.policy
-            if ((presentable.status & 2) === 2) {
-                presentableStatusTemp = presentableStatusTemp | 2
-            }
         }
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
             model.contracts = presentable.contracts
-            if ((presentable.status & 1) === 1) {
-                presentableStatusTemp = presentableStatusTemp | 1
-            }
         }
         if (isOnline !== undefined) {
             model.isOnline = presentable.isOnline = isOnline
@@ -65,15 +58,17 @@ class PresentableSchemeService extends Service {
         }
         await this._updatePresentableAuthTree(presentable)
         return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, model, {new: true}).then(newPresentableInfo => {
-            if ((newPresentableInfo.status & 4) === 4) {
-                newPresentableInfo.status = presentableStatusTemp | 4
-            } else {
-                newPresentableInfo.status = presentableStatusTemp
+            var status = 0
+            if ((presentable.status & 1) === 1) {
+                status = status | 1
             }
-            console.log('service ', newPresentableInfo)
-            return newPresentableInfo.updateOne({status: newPresentableInfo.status}).then(() => {
-                return newPresentableInfo
-            })
+            if ((presentable.status & 2) === 2) {
+                status = status | 2
+            }
+            if ((newPresentableInfo.status & 4) === 4) {
+                status = status | 4
+            }
+            return newPresentableInfo.updateOne({status}).then(() => newPresentableInfo)
         })
     }
 
