@@ -68,6 +68,7 @@ class PresentableSchemeService extends Service {
             if ((newPresentableInfo.status & 4) === 4) {
                 status = status | 4
             }
+            newPresentableInfo.status = status
             return newPresentableInfo.updateOne({status}).then(() => newPresentableInfo)
         })
     }
