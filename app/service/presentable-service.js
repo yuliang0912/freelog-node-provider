@@ -70,6 +70,7 @@ class PresentableSchemeService extends Service {
             } else {
                 newPresentableInfo.status = presentableStatusTemp
             }
+            console.log('service ', newPresentableInfo)
             return newPresentableInfo.updateOne({status: newPresentableInfo.status}).then(() => {
                 return newPresentableInfo
             })
