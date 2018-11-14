@@ -51,7 +51,7 @@ module.exports = app => {
         return this.id
     })
 
-    PresentableSchema.index({nodeId: 1, resourceId: 1});
+    PresentableSchema.index({nodeId: 1, resourceId: 1}, {unique: true});
 
     return mongoose.model('presentable', PresentableSchema)
 }
