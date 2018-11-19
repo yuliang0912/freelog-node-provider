@@ -5,18 +5,15 @@
 'use strict'
 
 module.exports = {
-
-    cluster: {
-        listen: {port: 5005}
-    },
-
-    gatewayUrl: "http://172.18.215.224:8895/test",
-
+    /**
+     * DB-mysql相关配置
+     */
     knex: {
         node: {
             connection: {
-                host: 'rm-wz93t7g809kthrub7.mysql.rds.aliyuncs.com',
-                user: 'freelog_test',
+                host: '172.18.215.231',
+                user: 'root',
+                port: 3307,
                 password: 'Ff@233109',
                 database: 'fr_node'
             },
@@ -24,16 +21,24 @@ module.exports = {
         }
     },
 
+    /**
+     * api网关内网地址
+     */
+    gatewayUrl: "http://172.18.215.224:8895/test",
+
+    /**
+     * mongodb连接
+     */
     mongoose: {
-        url: "mongodb://172.18.215.229:27017/node"
+        url: "mongodb://172.18.215.231:27018/node"
     },
 
     rabbitMq: {
         connOptions: {
-            host: '172.18.215.229',
-            port: 5672,
+            host: '172.18.215.231',
+            port: 5673,
             login: 'test_user_node',
-            password: 'test_user_2018',
+            password: 'rabbit@freelog',
             authMechanism: 'AMQPLAIN'
         },
     },
