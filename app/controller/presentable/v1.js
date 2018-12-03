@@ -236,10 +236,10 @@ module.exports = class PresentableController extends Controller {
 
         const presentableContractMap = new Map()
         const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
-
-        presentableInfos.forEach(item => item.contracts.forEach(contract => {
-            contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
-        }))
+            +
+            presentableInfos.forEach(item => item.contracts.forEach(contract => {
+                contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
+            }))
 
         if (presentableContractMap.size > 0) {
             await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
