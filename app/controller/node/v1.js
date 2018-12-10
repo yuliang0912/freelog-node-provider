@@ -58,8 +58,8 @@ module.exports = class NodeController extends Controller {
      */
     async create(ctx) {
 
-        const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).value
-        const nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().value
+        const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).toLowercase().value
+        const nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().toLowercase().value
 
         const checkResult = ctx.helper.nodeDomain.checkNodeDomain(nodeDomain)
         if (checkResult !== true) {
@@ -118,5 +118,30 @@ module.exports = class NodeController extends Controller {
         ctx.validate()
 
         await this.nodeProvider.find({nodeId: {$in: nodeIds}}).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * 节点详情
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async detail(ctx) {
+
+        const nodeDomain = ctx.checkQuery('nodeDomain').optional().isNodeDomain().toLowercase().value
+        const nodeName = ctx.checkQuery('nodeName').optional().notBlank().type('string').trim().len(4, 20).value
+        ctx.validate(false)
+
+        if (nodeDomain === undefined && nodeName === undefined) {
+            ctx.error({msg: '缺少必要参数'})
+        }
+
+        const condition = {}
+        if (nodeDomain) {
+            condition.nodeDomain = nodeDomain
+        }
+        if (nodeName) {
+            condition.nodeName = nodeName
+        }
+        await this.nodeProvider.findOne(condition).then(ctx.success)
     }
 }

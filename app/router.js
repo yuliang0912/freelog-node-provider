@@ -27,6 +27,9 @@ module.exports = app => {
      */
     //router.resources('/v1/nodes/pagebuilds', '/v1/nodes/pagebuilds', nodePageBuild.v1)
 
+
+    router.get('/v1/nodes/detail', node.v1.detail)
+    
     /**
      * node restful api
      */
