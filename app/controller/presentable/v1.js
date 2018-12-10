@@ -29,6 +29,10 @@ module.exports = class PresentableController extends Controller {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const tags = ctx.checkQuery('tags').optional().len(1).toSplitArray().value
         const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).value
+        const page = ctx.checkQuery("page").default(1).toInt().gt(0).value
+        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+        const order = ctx.checkQuery("order").optional().in(['isOnline']).value
+        const asc = ctx.checkQuery("asc").optional().default(0).in([0, 1]).value
 
         ctx.validate(false)
 
@@ -42,26 +46,27 @@ module.exports = class PresentableController extends Controller {
         if (isOnline === 0 || isOnline === 1) {
             condition.isOnline = isOnline
         }
-
-        var presentableList = await this.presentableProvider.find(condition)
-        if (!presentableList.length) {
-            return ctx.success([])
+        
+        var presentableList = []
+        const totalItem = await this.presentableProvider.count(condition)
+        if (totalItem > (page - 1) * pageSize) {
+            presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
+        }
+        if (presentableList.length) {
+            const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
+            await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${Array.from(resourceMap.keys()).toString()}`).then(resourceList => {
+                resourceList.forEach(item => resourceMap.set(item.resourceId, item))
+            })
+            presentableList = presentableList.map(item => {
+                item = item.toObject()
+                if (resourceMap.has(item.resourceId)) {
+                    item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta'])
+                }
+                return item
+            })
         }
 
-        const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
-        await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${Array.from(resourceMap.keys()).toString()}`).then(resourceList => {
-            resourceList.forEach(item => resourceMap.set(item.resourceId, item))
-        })
-
-        presentableList = presentableList.map(item => {
-            item = item.toObject()
-            if (resourceMap.has(item.resourceId)) {
-                item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta'])
-            }
-            return item
-        })
-
-        ctx.success(presentableList)
+        ctx.success({page, pageSize, totalItem, dataList: presentableList})
     }
 
     /**
@@ -144,12 +149,12 @@ module.exports = class PresentableController extends Controller {
         const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
         const contracts = ctx.checkBody('contracts').optional().isArray().value
-        const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
+        //const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
         const presentableIntro = ctx.checkBody('presentableIntro').optional().type('string').len(2, 500).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if ([policies, presentableName, userDefinedTags, contracts, isOnline].every(x => x === undefined)) {
+        if ([policies, presentableName, userDefinedTags, contracts].every(x => x === undefined)) {
             ctx.error({msg: '缺少必要的参数'})
         }
         if (policies) {
@@ -166,7 +171,7 @@ module.exports = class PresentableController extends Controller {
             ctx.error({msg: '参数presentableId错误或者没有操作权限'})
         }
         await ctx.service.presentableService.updatePresentable({
-            presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable
+            presentableName, userDefinedTags, presentableIntro, policies, contracts, presentable
         }).then(ctx.success).catch(ctx.error)
     }
 
@@ -191,6 +196,28 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * 上线或下线
+     * @returns {Promise<void>}
+     */
+    async onlineOrOffline(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
+        const isOnline = ctx.checkBody("isOnline").exist().toInt().in([0, 1]).value
+        ctx.validate()
+
+        const presentableInfo = await this.presentableProvider.findById(presentableId)
+        if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
+            ctx.error({msg: '未找到节点资源或者没有权限', data: {presentableInfo}})
+        }
+
+        if (presentableInfo.isOnline === isOnline) {
+            return ctx.success(presentableInfo)
+        }
+
+        await ctx.service.presentableService.presentableOnlineOrOffline(presentableInfo, isOnline).then(ctx.success)
+    }
+
+    /**
      * 获取presentable授权树
      * @param ctx
      * @returns {Promise<void>}
@@ -202,6 +229,19 @@ module.exports = class PresentableController extends Controller {
         ctx.validate(false)
 
         await this.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * 获取presentable授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async presentableTrees(ctx) {
+
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 99).value
+        ctx.validate(false)
+
+        await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}}).then(ctx.success).catch(ctx.error)
     }
 
     /**

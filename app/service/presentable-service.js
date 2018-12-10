@@ -4,11 +4,13 @@ const lodash = require('lodash')
 const Service = require('egg').Service
 const presentableEvents = require('../enum/presentable-events')
 const {LogicError, ApplicationError} = require('egg-freelog-base/error')
+const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
 class PresentableSchemeService extends Service {
 
     constructor({app}) {
         super(...arguments)
+        this.nodeProvider = app.dal.nodeProvider
         this.presentableProvider = app.dal.presentableProvider
     }
 
@@ -24,16 +26,14 @@ class PresentableSchemeService extends Service {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
         // }
 
-        return presentableProvider.createPresentable(presentable).tap(presentableInfo => {
-            app.emit(presentableEvents.createPresentableEvent, {presentable: presentableInfo})
-        })
+        return presentableProvider.createPresentable(presentable)
     }
 
     /**
      * 更新presentable
      * @returns {Promise<void>}
      */
-    async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, isOnline, presentable}) {
+    async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, presentable}) {
 
         const model = {presentableName: presentableName || presentable.presentableName}
         if (userDefinedTags) {
@@ -48,15 +48,14 @@ class PresentableSchemeService extends Service {
         }
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
+            await this._updatePresentableAuthTree(presentable)
             model.contracts = presentable.contracts
-        }
-        if (isOnline !== undefined) {
-            model.isOnline = presentable.isOnline = isOnline
-            if (isOnline === 1) {
-                this._checkPresentableStatus(presentable)
+            const masterContractInfo = presentable.contracts.find(x => x.resourceId === presentable.resourceId)
+            if (masterContractInfo) {
+                model.masterResourceId = masterContractInfo.contractId
             }
         }
-        await this._updatePresentableAuthTree(presentable)
+
         return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, model, {new: true}).then(newPresentableInfo => {
             var status = 0
             if ((presentable.status & 1) === 1) {
@@ -70,6 +69,25 @@ class PresentableSchemeService extends Service {
             }
             newPresentableInfo.status = status
             return newPresentableInfo.updateOne({status}).then(() => newPresentableInfo)
+        })
+    }
+
+    /**
+     * presentable上下线操作
+     * @param presentable
+     * @param isOnline
+     * @returns {Promise<void>}
+     * @constructor
+     */
+    async presentableOnlineOrOffline(presentable, isOnline) {
+        const {app} = this
+        if (isOnline) {
+            await this._checkPresentableStatus(presentable)
+        }
+        return presentable.updateOne({isOnline}).then(() => {
+            presentable.isOnline = isOnline
+            app.emit(presentableEvents.presentableOnlineOrOfflineEvent, presentable)
+            return presentable
         })
     }
 
@@ -159,11 +177,6 @@ class PresentableSchemeService extends Service {
      * @private
      */
     async _updatePresentableAuthTree(presentable) {
-
-        if (presentable.status === 0) {
-            return
-        }
-
         const {ctx} = this
         const result = await this._buildContractTree(presentable.contracts)
         return ctx.dal.presentableAuthTreeProvider.createOrUpdateAuthTree({
@@ -303,23 +316,31 @@ class PresentableSchemeService extends Service {
         }
     }
 
-
     /**
      * 检查presentable是否达到可以上线的标准
      * @param presentable
      * @private
      */
-    _checkPresentableStatus(presentable) {
+    async _checkPresentableStatus(presentable) {
 
-        const isCompleteSignContracts = (presentable.status & 1) === 1
-        const isExistEffectivePolicy = (presentable.status & 2) === 2
-        const isCanRecontractable = (presentable.status & 4) === 4
-
-        if (presentable.isOnline === 1 && !(isCompleteSignContracts && isExistEffectivePolicy && isCanRecontractable)) {
-            const errMsg = !isExistEffectivePolicy ? 'presentable不存在有效的策略段,不能发布' :
-                !isCompleteSignContracts ? '未解决全部上抛的资源,不能发布' : 'presentable主资源合同未执行到可上线状态'
-            throw new LogicError(errMsg)
+        if ((presentable.status & 1) !== 1) {
+            throw new LogicError('未解决全部上抛的资源,不能上线资源')
         }
+        if ((presentable.status & 2) !== 2) {
+            throw new LogicError('不存在有效的策略,不能上线资源')
+        }
+
+        const {ctx} = this
+        const {presentableId, nodeId} = presentable
+        const identityInfo = {tokenType: 'token-client', userInfo: {userId: ctx.request.userId}}
+        const authResult = await ctx.curlFromClient(`${ctx.webApi.authInfo}/presentable/presentableTreeAuthTest?presentableId=${presentableId}&nodeId=${nodeId}`, {
+            headers: {authentication: cryptoHelper.base64Encode(JSON.stringify(identityInfo))}
+        })
+        if (!authResult.isAuth) {
+            throw new LogicError('资源的部分合同未获得授权', {authResult})
+        }
+
+        return true
     }
 }
 

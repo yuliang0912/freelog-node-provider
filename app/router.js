@@ -6,9 +6,11 @@
 module.exports = app => {
 
     const {router, controller} = app
-    const {node, presentable, policyTemplate, nodePageBuild, customDataStore} = controller
+    const {node, presentable, policyTemplate, customDataStore} = controller
 
     router.get('/v1/nodes/list', node.v1.list)
+
+    router.get('/v1/presentables/presentableTrees', presentable.v1.presentableTrees)
 
     router.get('/v1/presentables/presentableTree/:presentableId', presentable.v1.presentableTree)
 
@@ -16,12 +18,14 @@ module.exports = app => {
 
     router.get('/v1/presentables/contractInfos', presentable.v1.contractInfos)
 
+    router.put('/v1/presentables/:presentableId/onlineOrOffline', presentable.v1.onlineOrOffline)
+
     router.post('/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
 
     /**
      * node-pb restful api
      */
-    router.resources('/v1/nodes/pagebuilds', '/v1/nodes/pagebuilds', nodePageBuild.v1)
+    //router.resources('/v1/nodes/pagebuilds', '/v1/nodes/pagebuilds', nodePageBuild.v1)
 
     /**
      * node restful api

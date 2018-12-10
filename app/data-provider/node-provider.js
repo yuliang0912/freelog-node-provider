@@ -4,31 +4,45 @@
 
 'use strict'
 
-const moment = require('moment')
-const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
+const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
-module.exports = class NodeProvider extends KnexBaseOperation {
+module.exports = class NodeProvider extends MongoBaseOperation {
 
     constructor(app) {
-        super(app.knex.node("nodeinfo"))
+        super(app.model.Node)
         this.app = app
-        this.nodeKnex = app.knex.node
     }
+
 
     /**
      * 创建节点
      * @param model
      */
-    createNode(model) {
+    async createNode(model) {
 
         if (!super.type.object(model)) {
             return Promise.reject(new Error("model must be object"))
         }
 
-        model.createDate = moment().toDate()
-        model.status = 0 //开发阶段先不审核
+        while (true) {
+            model.nodeId = parseInt(Date.now().toString().substr(5, 6) + Math.random().toString().replace(/0.(0)*/, "").substr(0, 3))
+            let isExistNodeId = await this._checkNodeIdIsExist(model.nodeId)
+            if (!isExistNodeId) {
+                break
+            }
+        }
 
         return super.create(model)
+    }
+
+    /**
+     * 节点ID是否存在
+     * @param nodeId
+     * @returns {Promise<boolean>}
+     * @private
+     */
+    async _checkNodeIdIsExist(nodeId) {
+        return await super.count({nodeId}) > 0
     }
 
     /**
@@ -37,11 +51,7 @@ module.exports = class NodeProvider extends KnexBaseOperation {
      * @returns {Promise.<*>}
      */
     getNodeList(condition, page, pageSize) {
-        return super.findPageList({
-            where: condition, page, pageSize,
-            orderBy: "nodeId",
-            asc: false
-        })
+        return super.findPageList(condition, page, pageSize, null, {nodeId: 1})
     }
 
     /**
@@ -55,6 +65,6 @@ module.exports = class NodeProvider extends KnexBaseOperation {
             return Promise.resolve([])
         }
 
-        return super.queryChain.whereIn('nodeId', nodeIds).select()
+        return super.find({nodeId: {$in: nodeIds}})
     }
 }

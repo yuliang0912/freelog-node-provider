@@ -101,6 +101,12 @@ module.exports = app => {
             ]
         },
 
+        clientCredentialInfo: {
+            clientId: 1004,
+            publicKey: 'c8724fd977542b155abac77664093770',
+            privateKey: 'e8739ff716660a4c942724d306216612'
+        },
+
         keys: 'freelog-node-provider-1502781772068_5353'
     }
 }

@@ -31,6 +31,7 @@ module.exports = app => {
         nodeName: {type: String, required: true},//节点名称
         userId: {type: Number, required: true}, //创建者ID
         resourceId: {type: String, required: true}, //资源ID
+        masterContractId: {type: String, default: ''},//主合约ID
         resourceInfo: {
             resourceType: {type: String, required: true},
             resourceName: {type: String, required: true},

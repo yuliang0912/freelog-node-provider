@@ -9,7 +9,7 @@ module.exports = {
     /**
      * 创建presentable事件
      */
-    createPresentableEvent: Symbol('node#createPresentableEvent'),
+    presentableOnlineOrOfflineEvent: Symbol('node#presentableOnlineOrOfflineEvent'),
 
     /**
      * 更新presentable事件

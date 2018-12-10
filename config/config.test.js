@@ -5,22 +5,7 @@
 'use strict'
 
 module.exports = {
-    /**
-     * DB-mysql相关配置
-     */
-    knex: {
-        node: {
-            connection: {
-                host: '172.18.215.231',
-                user: 'root',
-                port: 3307,
-                password: 'Ff@233109',
-                database: 'fr_node'
-            },
-            debug: false
-        }
-    },
-
+    
     /**
      * api网关内网地址
      */

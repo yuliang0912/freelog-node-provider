@@ -14,31 +14,6 @@ module.exports = class PresentableEventHandler {
     }
 
     /**
-     * 创建节点的pageBuild信息
-     * @param presentable
-     * @returns {Promise<void>}
-     */
-    async createPageBuild({presentable}) {
-
-        const {app} = this
-        if (presentable.resourceInfo.resourceType !== app.resourceType.PAGE_BUILD) {
-            return
-        }
-        const model = {
-            nodeId: presentable.nodeId,
-            presentableId: presentable.presentableId,
-            presentableName: presentable.presentableName,
-            resourceId: presentable.resourceId,
-            userId: presentable.userId,
-            status: 2 //默认隐藏
-        }
-        app.dal.nodePageBuildProvider.createNodePageBuild(model).catch(error => {
-            console.error("createPageBuild-error", error)
-            app.logger.error("createPageBuild-error", error)
-        })
-    }
-
-    /**
      * presentable的合同执行到获得上线授权
      * @param presentableId
      * @returns {Promise<void>}
@@ -46,12 +21,35 @@ module.exports = class PresentableEventHandler {
     async presentableOnlineAuthEventHandler({nodeId, resourceId}) {
         const presentableInfo = await this.app.dal.presentableProvider.findOne({nodeId, resourceId})
         if (!presentableInfo) {
-            console.log(nodeId, resourceId)
             return
         }
         if ((presentableInfo.status & 4) !== 4) {
             await presentableInfo.updateOne({$inc: {status: 4}})
         }
+    }
+
+    /**
+     * presentable上线事件
+     * @returns {Promise<void>}
+     */
+    async presentableOnlineOrOfflineEventHandler(presentable) {
+
+        const {app} = this
+        if (presentable.resourceInfo.resourceType !== app.resourceType.PAGE_BUILD || presentable.isOnline !== 1) {
+            return
+        }
+
+        if (!presentable.isOnline) {
+            return app.dal.nodeProvider.updateOne({nodeId: presentable.nodeId}, {pageBuildId: ''})
+        }
+
+        const task1 = app.dal.nodeProvider.updateOne({nodeId: presentable.nodeId}, {pageBuildId: presentable.presentableId})
+        const task2 = app.dal.presentableProvider.updateMany({
+            _id: {$ne: presentable.presentableId},
+            nodeId: presentable.nodeId,
+            'resourceInfo.resourceType': app.resourceType.PAGE_BUILD
+        }, {isOnline: 0})
+        return Promise.all([task1, task2])
     }
 
     /**
@@ -61,7 +59,7 @@ module.exports = class PresentableEventHandler {
     __registerEventHandler__() {
 
         // arguments : {authScheme}
-        this.app.on(presentableEvents.createPresentableEvent, this.createPageBuild.bind(this))
+        this.app.on(presentableEvents.presentableOnlineOrOfflineEvent, this.presentableOnlineOrOfflineEventHandler.bind(this))
 
         this.app.on(presentableEvents.presentableOnlineAuthEvent, this.presentableOnlineAuthEventHandler.bind(this))
 

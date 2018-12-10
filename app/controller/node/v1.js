@@ -16,8 +16,6 @@ module.exports = class NodeController extends Controller {
 
     /**
      * 节点列表
-     * @param ctx
-     * @returns {Promise.<void>}
      */
     async index(ctx) {
 
@@ -45,8 +43,6 @@ module.exports = class NodeController extends Controller {
 
     /**
      * 查看节点详情
-     * @param ctx
-     * @returns {Promise.<void>}
      */
     async show(ctx) {
 
@@ -59,8 +55,6 @@ module.exports = class NodeController extends Controller {
 
     /**
      * 创建节点
-     * @param ctx
-     * @returns {Promise.<void>}
      */
     async create(ctx) {
 
@@ -91,17 +85,11 @@ module.exports = class NodeController extends Controller {
             nodeName, nodeDomain, ownerUserId: ctx.request.userId
         }
 
-        await this.nodeProvider.createNode(nodeModel).then(result => {
-            if (result.length > 0) {
-                return this.nodeProvider.findOne({nodeId: result[0]})
-            }
-        }).then(ctx.success)
+        await this.nodeProvider.createNode(nodeModel).then(ctx.success)
     }
 
     /**
      * 更新节点信息
-     * @param ctx
-     * @returns {Promise<void>}
      */
     async update(ctx) {
 
@@ -114,19 +102,14 @@ module.exports = class NodeController extends Controller {
             ctx.error({msg: '节点信息未找到或者与身份信息不匹配'})
         }
 
-        await this.nodeProvider.update({status}, {nodeId}).then(isSuccess => {
-            if (isSuccess) {
-                nodeInfo.status = status
-            }
-            ctx.success(nodeInfo)
-        })
-    }
+        nodeInfo.status = status
+        await nodeInfo.updateOne({status})
 
+        ctx.success(nodeInfo)
+    }
 
     /**
      * 获取节点列表
-     * @param ctx
-     * @returns {Promise<void>}
      */
     async list(ctx) {
 
@@ -134,6 +117,6 @@ module.exports = class NodeController extends Controller {
 
         ctx.validate()
 
-        await this.nodeProvider.getNodeListByNodeIds(nodeIds).then(ctx.success).catch(ctx.error)
+        await this.nodeProvider.find({nodeId: {$in: nodeIds}}).then(ctx.success).catch(ctx.error)
     }
 }
