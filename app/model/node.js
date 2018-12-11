@@ -16,7 +16,7 @@ module.exports = app => {
         nodeId: {type: Number, unique: true, required: true},
         nodeName: {type: String, unique: true, required: true},
         nodeDomain: {type: String, unique: true, required: true},
-        pageBuildId: {type: String, unique: true, required: false, default: ''},
+        pageBuildId: {type: String, required: false, default: ''},
         ownerUserId: {type: Number, required: true},
         status: {type: Number, default: 0, required: true}, //状态 节点状态(0:未发布 1:已发布 2:系统冻结)
     }, {

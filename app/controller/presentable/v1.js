@@ -33,6 +33,7 @@ module.exports = class PresentableController extends Controller {
         const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         const order = ctx.checkQuery("order").optional().in(['isOnline']).value
         const asc = ctx.checkQuery("asc").optional().default(0).in([0, 1]).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().value
 
         ctx.validate(false)
 
@@ -46,14 +47,18 @@ module.exports = class PresentableController extends Controller {
         if (isOnline === 0 || isOnline === 1) {
             condition.isOnline = isOnline
         }
-        
-        var presentableList = []
+
+        var presentableList = [], projectionStr = null
+        if (projection && projection.length) {
+            projectionStr = projection.join(' ')
+        }
         const totalItem = await this.presentableProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) {
-            presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
+            presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, projectionStr, {createDate: 1})
         }
-        if (presentableList.length) {
-            const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
+        const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
+        const resourceIds = Array.from(resourceMap.keys()).toString()
+        if (resourceIds) {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${Array.from(resourceMap.keys()).toString()}`).then(resourceList => {
                 resourceList.forEach(item => resourceMap.set(item.resourceId, item))
             })
@@ -65,7 +70,6 @@ module.exports = class PresentableController extends Controller {
                 return item
             })
         }
-
         ctx.success({page, pageSize, totalItem, dataList: presentableList})
     }
 

@@ -20,7 +20,7 @@ class PresentableSchemeService extends Service {
      */
     async createPresentable(presentable) {
 
-        const {app, presentableProvider} = this
+        const {presentableProvider} = this
 
         // if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
         //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
@@ -52,7 +52,7 @@ class PresentableSchemeService extends Service {
             model.contracts = presentable.contracts
             const masterContractInfo = presentable.contracts.find(x => x.resourceId === presentable.resourceId)
             if (masterContractInfo) {
-                model.masterResourceId = masterContractInfo.contractId
+                model.masterContractId = masterContractInfo.contractId
             }
         }
 

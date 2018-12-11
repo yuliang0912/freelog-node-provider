@@ -12,7 +12,7 @@ module.exports = app => {
     }
 
     const PolicyTemplateSchema = new mongoose.Schema({
-        name: {type: String},
+        name: {type: String, default: ''},
         userId: {type: Number, required: true}, //创建者ID
         template: {type: String, required: true},
         templateType: {type: Number, required: true},
