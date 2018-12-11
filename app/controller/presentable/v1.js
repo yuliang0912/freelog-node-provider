@@ -297,7 +297,6 @@ module.exports = class PresentableController extends Controller {
 
         const presentableContractMap = new Map()
         const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
-            +
             presentableInfos.forEach(item => item.contracts.forEach(contract => {
                 contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
             }))
