@@ -65,7 +65,7 @@ module.exports = class PresentableController extends Controller {
             presentableList = presentableList.map(item => {
                 item = item.toObject()
                 if (resourceMap.has(item.resourceId)) {
-                    item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta'])
+                    item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta', 'purpose'])
                 }
                 return item
             })
@@ -216,6 +216,12 @@ module.exports = class PresentableController extends Controller {
 
         if (presentableInfo.isOnline === isOnline) {
             return ctx.success(presentableInfo)
+        }
+        if (isOnline) {
+            const resourceInfo = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`)
+            if ((resourceInfo.purpose & 2) != 2) {
+                ctx.error({msg: '原资源未提供包含presentable授权的策略,无法上线', data: {resourceInfo}})
+            }
         }
 
         await ctx.service.presentableService.presentableOnlineOrOffline(presentableInfo, isOnline).then(ctx.success)
