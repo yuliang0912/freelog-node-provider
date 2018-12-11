@@ -333,7 +333,7 @@ class PresentableSchemeService extends Service {
         const {ctx} = this
         const {presentableId, nodeId} = presentable
         const identityInfo = {tokenType: 'token-client', userInfo: {userId: ctx.request.userId}}
-        const authResult = await ctx.curlFromClient(`${ctx.webApi.authInfo}/presentable/presentableTreeAuthTest?presentableId=${presentableId}&nodeId=${nodeId}`, {
+        const authResult = await ctx.curlFromClient(`${ctx.webApi.authInfo}/presentables/${presentableId}/presentableTreeAuthTest?nodeId=${nodeId}`, {
             headers: {authentication: cryptoHelper.base64Encode(JSON.stringify(identityInfo))}
         })
         if (!authResult.isAuth) {
