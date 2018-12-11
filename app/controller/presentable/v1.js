@@ -195,8 +195,19 @@ module.exports = class PresentableController extends Controller {
         if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
             ctx.error({msg: '未找到节点资源或者没有权限', data: {presentableInfo}})
         }
+        if (presentableInfo.masterContractId) {
+            ctx.error({msg: '已签约的节点资源不允许删除', data: {presentableInfo}})
+        }
 
-        await presentableInfo.updateOne({status: 1}).then(data => ctx.success(data.nModified > 0)).catch(ctx.error)
+        const task1 = this.app.dal.dataRecycleBinProvider.create({
+            primaryKey: presentableId,
+            dataType: 'presentable',
+            data: presentableInfo.toObject()
+        })
+
+        const task2 = this.presentableProvider.deleteOne({_id: presentableId})
+
+        await Promise.all([task1, task2]).then(() => ctx.success(true))
     }
 
     /**

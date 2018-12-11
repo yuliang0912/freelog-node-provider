@@ -40,7 +40,7 @@ module.exports = app => {
         userDefinedTags: {type: [String], default: []},//用户自定义tags
         presentableIntro: {type: String, default: ''},//presentable简介
         isOnline: {type: Number, default: 0, required: true}, //是否上线 0:否 1:是
-        status: {type: Number, default: 0, required: true} //状态 0:初始态  1:合约已全部签订  2:策略已存在
+        status: {type: Number, default: 0, required: true}, //状态 0:初始态  1:合约已全部签订  2:策略已存在
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
