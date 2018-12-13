@@ -34,6 +34,8 @@ module.exports = class PresentableController extends Controller {
         const order = ctx.checkQuery("order").optional().in(['isOnline']).value
         const asc = ctx.checkQuery("asc").optional().default(0).in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().value
+        const isSignContract = ctx.checkQuery('isSignContract').optional().toInt().in([0, 1, 2]).value
+        const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
 
         ctx.validate(false)
 
@@ -47,6 +49,20 @@ module.exports = class PresentableController extends Controller {
         if (isOnline === 0 || isOnline === 1) {
             condition.isOnline = isOnline
         }
+        if (isSignContract === 0) {
+            condition.masterContractId = ''
+        }
+        if (isSignContract === 1) {
+            condition.masterContractId = {$ne: ''}
+        }
+        if (keywords !== undefined) {
+            let searchExp = {
+                $regex: keywords, $options: 'i'
+            }
+            condition.$or = [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}]
+        }
+
+        console.log(condition)
 
         var presentableList = [], projectionStr = null
         if (projection && projection.length) {
@@ -88,7 +104,7 @@ module.exports = class PresentableController extends Controller {
         if (presentableInfo) {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
                 presentableInfo = presentableInfo.toObject()
-                presentableInfo.resourceInfo = lodash.pick(resourceInfo, ['resourceName', 'resourceType', 'meta'])
+                presentableInfo.resourceInfo = lodash.pick(resourceInfo, ['resourceName', 'resourceType', 'meta', 'purpose'])
             })
         }
 
@@ -127,12 +143,12 @@ module.exports = class PresentableController extends Controller {
         // }
 
         await this.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
-            oldInfo && ctx.error({msg: '不能重复添加'})
+            oldInfo && ctx.error({msg: '已经添加的节点资源,不能重复添加'})
         })
 
         const presentable = {
             nodeId, resourceId, resourceInfo, userId,
-            presentableName: presentableName || '',
+            presentableName: presentableName || resourceInfo.resourceName,
             presentableIntro: presentableIntro || '',
             nodeName: nodeInfo.nodeName,
             status: 0
@@ -297,9 +313,9 @@ module.exports = class PresentableController extends Controller {
 
         const presentableContractMap = new Map()
         const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
-            presentableInfos.forEach(item => item.contracts.forEach(contract => {
-                contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
-            }))
+        presentableInfos.forEach(item => item.contracts.forEach(contract => {
+            contract && contract.contractId && presentableContractMap.set(contract.contractId, null)
+        }))
 
         if (presentableContractMap.size > 0) {
             await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${Array.from(presentableContractMap.keys())}`).then(contractInfos => {
