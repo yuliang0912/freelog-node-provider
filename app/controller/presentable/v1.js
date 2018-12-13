@@ -62,8 +62,6 @@ module.exports = class PresentableController extends Controller {
             condition.$or = [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}]
         }
 
-        console.log(condition)
-
         var presentableList = [], projectionStr = null
         if (projection && projection.length) {
             projectionStr = projection.join(' ')
