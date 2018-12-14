@@ -56,9 +56,7 @@ module.exports = class PresentableController extends Controller {
             condition.masterContractId = {$ne: ''}
         }
         if (keywords !== undefined) {
-            let searchExp = {
-                $regex: keywords, $options: 'i'
-            }
+            let searchExp = {$regex: keywords, $options: 'i'}
             condition.$or = [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}]
         }
 
@@ -322,7 +320,7 @@ module.exports = class PresentableController extends Controller {
         }
 
         const result = presentableInfos.map(item => new Object({
-            presentableId: item._id.toString(),
+            presentableId: item.presentableId.toString(),
             presentableName: item.presentableName,
             status: item.status,
             isOnline: item.isOnline,

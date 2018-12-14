@@ -24,13 +24,7 @@ module.exports = class NodeProvider extends MongoBaseOperation {
             return Promise.reject(new Error("model must be object"))
         }
 
-        while (true) {
-            model.nodeId = parseInt(Date.now().toString().substr(5, 6) + Math.random().toString().replace(/0.(0)*/, "").substr(0, 3))
-            let isExistNodeId = await this._checkNodeIdIsExist(model.nodeId)
-            if (!isExistNodeId) {
-                break
-            }
-        }
+        model.nodeId = await this.app.dal.autoIncrementRecordProvider.getNextDateValue()
 
         return super.create(model)
     }
