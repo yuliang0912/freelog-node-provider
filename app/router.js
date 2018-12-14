@@ -29,7 +29,7 @@ module.exports = app => {
 
 
     router.get('/v1/nodes/detail', node.v1.detail)
-    
+
     /**
      * node restful api
      */

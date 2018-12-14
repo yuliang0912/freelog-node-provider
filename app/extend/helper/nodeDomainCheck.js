@@ -4,7 +4,7 @@
 
 'use strict'
 
-const systemRetain = ['freelog', 'node', 'nodes', 'admin']
+const systemRetain = ['freelog', 'node', 'nodes', 'admin', 'self', 'public', 'system', 'user', 'group', 'copyright', 'platform', 'china', 'xijinping', 'company']
 
 module.exports = {
 
@@ -14,6 +14,7 @@ module.exports = {
      * @param nodeDomain
      */
     checkNodeDomain(nodeDomain) {
+
         nodeDomain = nodeDomain.trim()
 
         if (nodeDomain.length < 4 || nodeDomain.length > 24) {

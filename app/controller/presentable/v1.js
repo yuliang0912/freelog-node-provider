@@ -74,10 +74,11 @@ module.exports = class PresentableController extends Controller {
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${Array.from(resourceMap.keys()).toString()}`).then(resourceList => {
                 resourceList.forEach(item => resourceMap.set(item.resourceId, item))
             })
+            const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'purpose', 'previewImages', 'createDate', 'updateDate']
             presentableList = presentableList.map(item => {
                 item = item.toObject()
                 if (resourceMap.has(item.resourceId)) {
-                    item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), ['resourceName', 'resourceType', 'meta', 'purpose'])
+                    item.resourceInfo = lodash.pick(resourceMap.get(item.resourceId), resourceFiled)
                 }
                 return item
             })
@@ -98,9 +99,10 @@ module.exports = class PresentableController extends Controller {
 
         var presentableInfo = await this.presentableProvider.findById(presentableId)
         if (presentableInfo) {
+            const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'purpose', 'previewImages', 'createDate', 'updateDate']
             await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`).then(resourceInfo => {
                 presentableInfo = presentableInfo.toObject()
-                presentableInfo.resourceInfo = lodash.pick(resourceInfo, ['resourceName', 'resourceType', 'meta', 'purpose'])
+                presentableInfo.resourceInfo = lodash.pick(resourceInfo, resourceFiled)
             })
         }
 
