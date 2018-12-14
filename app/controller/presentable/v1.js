@@ -255,7 +255,7 @@ module.exports = class PresentableController extends Controller {
      * @param ctx
      * @returns {Promise<void>}
      */
-    async presentableTree(ctx) {
+    async presentableAuthTree(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
 

@@ -12,7 +12,7 @@ module.exports = app => {
 
     router.get('/v1/presentables/presentableTrees', presentable.v1.presentableTrees)
 
-    router.get('/v1/presentables/presentableTree/:presentableId', presentable.v1.presentableTree)
+    router.get('/v1/presentables/:presentableId/authTree', presentable.v1.presentableAuthTree)
 
     router.get('/v1/presentables/resourceSubordinateNodes', presentable.v1.resourceSubordinateNodes)
 
