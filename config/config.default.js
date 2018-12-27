@@ -15,7 +15,7 @@ module.exports = app => {
             url: "mongodb://127.0.0.1:27017/node",
         },
 
-        middleware: ['errorHandler', 'identiyAuthentication'],
+        middleware: ['errorHandler', 'identityAuthentication'],
 
         /**
          * DB-mysql相关配置
