@@ -8,7 +8,7 @@
 
 module.exports = {
 
-    middleware: ['errorHandler', 'identityAuthentication'], //, localUserIdentity
+    middleware: ['errorHandler', 'localUserIdentity'], //, localUserIdentity
 
     /**
      * 本地开发环境身份信息

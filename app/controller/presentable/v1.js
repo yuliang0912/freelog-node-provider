@@ -341,4 +341,18 @@ module.exports = class PresentableController extends Controller {
 
         ctx.success(result)
     }
+
+    /**
+     * 批量获取presentable合同状态
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async getPresentableContractState(ctx) {
+
+        const nodeId = ctx.checkQuery("nodeId").exist().toInt().value
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 20).value
+        ctx.validate()
+
+        await ctx.service.presentableService.getPresentableContractState(nodeId, presentableIds).then(ctx.success)
+    }
 }

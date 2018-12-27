@@ -92,6 +92,47 @@ class PresentableSchemeService extends Service {
     }
 
     /**
+     * 批量获取presentable合同状态
+     * @param nodeId
+     * @param presentableIds
+     */
+    async getPresentableContractState(nodeId, presentableIds) {
+
+        const {ctx} = this
+        const presentableMap = await this.presentableProvider.find({
+            nodeId, _id: {$in: presentableIds}
+        }, 'contracts').then(list => {
+            return new Map(list.map(x => [x.presentableId, x.contracts]))
+        })
+
+        const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
+        const contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`).then(contractList => {
+            return new Map(contractList.map(x => [x.contractId, x]))
+        })
+
+        const result = []
+        presentableIds.forEach(presentableId => {
+            const contracts = presentableMap.get(presentableId)
+            if (!contracts) {
+                result.push({presentableId, status: 0})
+                return
+            }
+
+            let status = 1
+            for (let i = 0; i < contracts.length; i++) {
+                const contractInfo = contractMap.get(contracts[i].contractId)
+                if (!contractInfo || contractInfo.status !== 4) {
+                    status = 0
+                    break
+                }
+            }
+            result.push({presentableId, status})
+        })
+
+        return result
+    }
+
+    /**
      * 检查合同的完整性
      * @private
      */

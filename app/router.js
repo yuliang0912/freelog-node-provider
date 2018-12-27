@@ -20,6 +20,8 @@ module.exports = app => {
 
     router.put('/v1/presentables/:presentableId/onlineOrOffline', presentable.v1.onlineOrOffline)
 
+    router.get('/v1/presentables/getPresentableContractState', presentable.v1.getPresentableContractState)
+
     router.post('/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
 
     /**
