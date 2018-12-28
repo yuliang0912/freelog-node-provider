@@ -99,21 +99,17 @@ class PresentableSchemeService extends Service {
     async getPresentableContractState(nodeId, presentableIds) {
 
         const {ctx} = this
-        const presentableMap = await this.presentableProvider.find({
-            nodeId, _id: {$in: presentableIds}
-        }, 'contracts').then(list => {
-            return new Map(list.map(x => [x.presentableId, x.contracts]))
-        })
+        const presentableMap = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}}, 'contracts')
+            .then(list => new Map(list.map(x => [x.presentableId, x.contracts])))
 
         const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
-        const contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`).then(contractList => {
-            return new Map(contractList.map(x => [x.contractId, x]))
-        })
+        const contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
+            .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
 
         const result = []
         presentableIds.forEach(presentableId => {
             const contracts = presentableMap.get(presentableId)
-            if (!contracts) {
+            if (!contracts || !contracts.length) {
                 result.push({presentableId, status: 0})
                 return
             }
