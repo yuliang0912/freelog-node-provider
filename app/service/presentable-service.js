@@ -103,8 +103,12 @@ class PresentableSchemeService extends Service {
             .then(list => new Map(list.map(x => [x.presentableId, x.contracts])))
 
         const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
-        const contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
-            .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
+
+        var contractMap = new Map()
+        if (contractIds.length) {
+            contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
+                .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
+        }
 
         const result = []
         presentableIds.forEach(presentableId => {
