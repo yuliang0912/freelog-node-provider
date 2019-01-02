@@ -66,11 +66,6 @@ module.exports = app => {
 
         customLoader: ['app/event-handler', 'app/mq-service'],
 
-        /**
-         * API网关地址
-         */
-        gatewayUrl: "https://api.freelog.com",
-
         rabbitMq: {
             connOptions: {
                 host: '192.168.164.165',

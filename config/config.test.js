@@ -5,11 +5,6 @@
 'use strict'
 
 module.exports = {
-    
-    /**
-     * api网关内网地址
-     */
-    gatewayUrl: "http://172.18.215.229:6895/test",
 
     /**
      * mongodb连接

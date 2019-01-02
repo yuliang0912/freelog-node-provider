@@ -373,10 +373,7 @@ class PresentableSchemeService extends Service {
 
         const {ctx} = this
         const {presentableId, nodeId} = presentable
-        const identityInfo = {tokenType: 'token-client', userInfo: {userId: ctx.request.userId}}
-        const authResult = await ctx.curlFromClient(`${ctx.webApi.authInfo}/presentables/${presentableId}/presentableTreeAuthTest?nodeId=${nodeId}`, {
-            headers: {authentication: cryptoHelper.base64Encode(JSON.stringify(identityInfo))}
-        })
+        const authResult = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/presentables/${presentableId}/presentableTreeAuthTest?nodeId=${nodeId}`)
         if (!authResult.isAuth) {
             throw new LogicError('资源的部分合同未获得授权', {authResult})
         }
