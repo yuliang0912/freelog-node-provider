@@ -8,6 +8,8 @@
 
 module.exports = {
 
+    gatewayUrl: "http://192.168.164.165:8895",
+
     //middleware: ['errorHandler', 'localUserIdentity'], //, localUserIdentity
 
     /**

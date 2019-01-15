@@ -26,5 +26,7 @@ module.exports = app => {
         toObject: toObjectOptions
     })
 
+    NodeSchema.index({ownerUserId: 1});
+
     return mongoose.model('node', NodeSchema)
 }

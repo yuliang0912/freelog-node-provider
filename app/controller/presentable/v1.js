@@ -46,6 +46,7 @@ module.exports = class PresentableController extends Controller {
         if (tags) {
             condition.userDefinedTags = {$in: tags}
         }
+
         if (isOnline === 0 || isOnline === 1) {
             condition.isOnline = isOnline
         }
@@ -105,7 +106,6 @@ module.exports = class PresentableController extends Controller {
                 presentableInfo.resourceInfo = lodash.pick(resourceInfo, resourceFiled)
             })
         }
-
         ctx.success(presentableInfo)
     }
 
