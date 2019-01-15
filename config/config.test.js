@@ -6,6 +6,10 @@
 
 module.exports = {
 
+    cluster: {
+        listen: {port: 5005}
+    },
+
     /**
      * mongodb连接
      */

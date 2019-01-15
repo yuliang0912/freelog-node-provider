@@ -17,35 +17,6 @@ module.exports = app => {
 
         middleware: ['errorHandler', 'identityAuthentication'],
 
-        /**
-         * DB-mysql相关配置
-         */
-        knex: {
-            node: {
-                client: 'mysql',
-                connection: {
-                    host: '127.0.0.1',
-                    user: 'root',
-                    password: 'yuliang@@',
-                    database: 'fr_node',
-                    charset: 'utf8',
-                    timezone: '+08:00',
-                    bigNumberStrings: true,
-                    supportBigNumbers: true,
-                    connectTimeout: 1500,
-                    typeCast: (field, next) => {
-                        if (field.type === 'JSON') {
-                            return JSON.parse(field.string())
-                        }
-                        return next()
-                    },
-                },
-                pool: {max: 10, min: 2},
-                acquireConnectionTimeout: 500,
-                debug: false
-            },
-        },
-
         security: {
             xframe: {enable: false},
             csrf: {enable: false}
