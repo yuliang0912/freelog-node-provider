@@ -10,6 +10,8 @@ module.exports = app => {
 
     router.get('/v1/nodes/list', node.v1.list)
 
+    router.get('/v1/presentables/list', presentable.v1.list)
+
     router.get('/v1/presentables/presentableTrees', presentable.v1.presentableTrees)
 
     router.get('/v1/presentables/:presentableId/authTree', presentable.v1.presentableAuthTree)

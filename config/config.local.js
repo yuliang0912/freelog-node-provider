@@ -8,15 +8,19 @@
 
 module.exports = {
 
-    gatewayUrl: "http://192.168.164.165:8895",
+    gatewayUrl: 'https://api.freelog.com',
 
-    //middleware: ['errorHandler', 'localUserIdentity'], //, localUserIdentity
+    middleware: ['errorHandler', 'localUserIdentity'],
+
+    mongoose: {
+        url: "mongodb://119.23.45.143:27017/node"
+    },
 
     /**
      * 本地开发环境身份信息
      */
     localIdentity: {
-        userId: 10026,
+        userId: 10025,
         userName: "余亮",
         nickname: "烟雨落叶",
         email: "4896819@qq.com",
@@ -27,9 +31,5 @@ module.exports = {
         createDate: "2017-10-20T16:38:17.000Z",
         updateDate: "2017-11-01T15:53:29.000Z",
         tokenType: "local"
-    },
-
-    mongoose: {
-        url: "mongodb://127.0.0.1:27017/node"
     }
 }

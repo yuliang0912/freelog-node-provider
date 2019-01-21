@@ -88,6 +88,37 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * 获取presentable列表
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async list(ctx) {
+
+        const userId = ctx.checkQuery('userId').optional().toInt().gt(0).value
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().value
+
+        ctx.validate()
+
+        const condition = {
+            _id: {$in: presentableIds}
+        }
+        if (userId) {
+            condition.userId = userId
+        }
+        if (nodeId) {
+            condition.nodeId = nodeId
+        }
+        var projectionStr = null
+        if (projection && projection.length) {
+            projectionStr = projection.join(' ')
+        }
+
+        await this.presentableProvider.find(condition, projectionStr).then(ctx.success)
+    }
+
+    /**
      * 展示消费策略
      * @param ctx
      * @returns {Promise.<void>}
