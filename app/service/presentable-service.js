@@ -45,6 +45,9 @@ class PresentableSchemeService extends Service {
         if (policies) {
             this._policiesHandler({presentable, policies})
             model.policy = presentable.policy
+            if (presentable.isOnline === 1 && !presentable.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已上线的节点资源最少需要一个有效的授权策略')
+            }
         }
         if (contracts) {
             await this._checkPresentableContracts({presentable, contracts})
