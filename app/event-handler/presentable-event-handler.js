@@ -29,20 +29,22 @@ module.exports = class PresentableEventHandler {
     }
 
     /**
-     * presentable上线事件
+     * presentable上线或下线事件
      * @returns {Promise<void>}
      */
     async presentableOnlineOrOfflineEventHandler(presentable) {
 
         const {app} = this
-        if (presentable.resourceInfo.resourceType !== app.resourceType.PAGE_BUILD || presentable.isOnline !== 1) {
+        if (presentable.resourceInfo.resourceType !== app.resourceType.PAGE_BUILD) {
             return
         }
 
+        //下线,置空pageBuildId
         if (!presentable.isOnline) {
             return app.dal.nodeProvider.updateOne({nodeId: presentable.nodeId}, {pageBuildId: ''})
         }
 
+        //上线pb,则下线其他的pb.
         const task1 = app.dal.nodeProvider.updateOne({nodeId: presentable.nodeId}, {pageBuildId: presentable.presentableId})
         const task2 = app.dal.presentableProvider.updateMany({
             _id: {$ne: presentable.presentableId},

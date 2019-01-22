@@ -14,9 +14,9 @@ module.exports = {
 
     middleware: ['errorHandler', 'localUserIdentity'],
 
-    mongoose: {
-        url: "mongodb://119.23.45.143:27018/node"
-    },
+    // mongoose: {
+    //     url: "mongodb://119.23.45.143:27018/node"
+    // },
 
     /**
      * 本地开发环境身份信息
