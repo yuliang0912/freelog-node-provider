@@ -11,7 +11,6 @@ module.exports = class AutoIncrementRecordProvider extends MongoBaseOperation {
     /**
      * 获取下一个递增值
      * @param dataType
-     * @returns {Promise<void>}
      */
     async getNextDateValue(dataType = 'NODE_ID') {
         return super.findOneAndUpdate({dataType}, {$inc: {value: 1}}, {new: true}).then(model => {

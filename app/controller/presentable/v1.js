@@ -67,7 +67,7 @@ module.exports = class PresentableController extends Controller {
         }
         const totalItem = await this.presentableProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) {
-            presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, projectionStr, {createDate: 1})
+            presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, projectionStr, {createDate: -1})
         }
         const resourceMap = new Map(presentableList.map(x => [x.resourceId, null]))
         const resourceIds = Array.from(resourceMap.keys()).toString()
@@ -152,8 +152,6 @@ module.exports = class PresentableController extends Controller {
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const presentableName = ctx.checkBody('presentableName').optional().len(2, 50).type('string').value
         const presentableIntro = ctx.checkBody('presentableIntro').optional().type('string').len(2, 500).value
-
-        //const contracts = ctx.checkBody('contracts').optional().isArray().value
         ctx.allowContentType({type: 'json'}).validate()
 
         const resourceInfo = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${resourceId}`)
@@ -165,12 +163,6 @@ module.exports = class PresentableController extends Controller {
         if (!nodeInfo || nodeInfo.ownerUserId !== userId) {
             ctx.error({msg: '未能找到有效的节点信息', data: {nodeInfo}})
         }
-
-        // if (contracts) {
-        //     const result = presentableContractSchema.validate(contracts, presentableContractSchema.presentableContractsValidator)
-        //     result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
-        // }
-
         await this.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
             oldInfo && ctx.error({msg: '已经添加的节点资源,不能重复添加'})
         })
