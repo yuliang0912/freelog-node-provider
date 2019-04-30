@@ -14,12 +14,18 @@ module.exports = {
      * 节点域名
      * @param object
      */
-    nodeDomain: nodeDomainCheck,
+    checkNodeDomain(nodeDomain) {
+
+        const {ctx} = this
+
+        return nodeDomainCheck.checkNodeDomain(ctx, nodeDomain)
+    },
 
     /**
      * 授权语言转换{policyText, languageType, policyName}
      */
     policyCompiler(...args) {
-        return policyCompiler.compiler(...args)
+        const {ctx} = this
+        return policyCompiler.compiler(ctx, ...args)
     }
 }

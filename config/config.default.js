@@ -22,6 +22,11 @@ module.exports = app => {
             csrf: {enable: false}
         },
 
+        i18n: {
+            enable: true,
+            defaultLocale: 'zh-CN'
+        },
+
         logger: {
             consoleLevel: 'NONE',
             level: 'ERROR',

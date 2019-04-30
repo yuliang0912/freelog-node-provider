@@ -156,15 +156,15 @@ module.exports = class PresentableController extends Controller {
 
         const resourceInfo = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${resourceId}`)
         if (!resourceInfo || resourceInfo.status !== 2) {
-            ctx.error({msg: '未能找到有效的资源', data: {resourceInfo}})
+            ctx.error({msg: ctx.gettext('缺少有效资源信息'), data: {resourceInfo}})
         }
 
         const nodeInfo = await ctx.dal.nodeProvider.findOne({nodeId})
         if (!nodeInfo || nodeInfo.ownerUserId !== userId) {
-            ctx.error({msg: '未能找到有效的节点信息', data: {nodeInfo}})
+            ctx.error({msg: ctx.gettext('缺少有效节点信息'), data: {nodeInfo}})
         }
         await this.presentableProvider.findOne({resourceId, nodeId}).then(oldInfo => {
-            oldInfo && ctx.error({msg: '已经添加的节点资源,不能重复添加'})
+            oldInfo && ctx.error({msg: ctx.gettext('已经添加的节点资源,不能重复添加')})
         })
 
         const presentable = {
@@ -196,20 +196,20 @@ module.exports = class PresentableController extends Controller {
         ctx.allowContentType({type: 'json'}).validate()
 
         if ([policies, presentableName, userDefinedTags, contracts].every(x => x === undefined)) {
-            ctx.error({msg: '缺少必要的参数'})
+            ctx.error({msg: ctx.gettext('缺少必要的参数')})
         }
         if (policies) {
             const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
-            result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
+            result.errors.length && ctx.error({msg: ctx.gettext('参数%s格式校验失败', 'policies'), data: result.errors})
         }
         if (contracts) {
             const result = presentableContractSchema.validate(contracts, presentableContractSchema.presentableContractsValidator)
-            result.errors.length && ctx.error({msg: '参数contracts格式校验失败', data: result.errors})
+            result.errors.length && ctx.error({msg: ctx.gettext('参数%s格式校验失败', 'contracts'), data: result.errors})
         }
 
         const presentable = await this.presentableProvider.findById(presentableId)
         if (!presentable || presentable.userId !== ctx.request.userId) {
-            ctx.error({msg: '参数presentableId错误或者没有操作权限'})
+            ctx.error({msg: ctx.gettext('参数%s错误或者没有操作权限', 'presentableId')})
         }
         await ctx.service.presentableService.updatePresentable({
             presentableName, userDefinedTags, presentableIntro, policies, contracts, presentable
@@ -230,10 +230,10 @@ module.exports = class PresentableController extends Controller {
         const presentableInfo = await this.presentableProvider.findById(presentableId)
 
         if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
-            ctx.error({msg: '未找到节点资源或者没有权限', data: {presentableInfo}})
+            ctx.error({msg: ctx.gettext('未找到节点资源或者没有权限'), data: {presentableInfo}})
         }
         if (presentableInfo.masterContractId) {
-            ctx.error({msg: '已签约的节点资源不允许删除', data: {presentableInfo}})
+            ctx.error({msg: ctx.gettext('已签约的节点资源不允许删除'), data: {presentableInfo}})
         }
 
         const task1 = this.app.dal.dataRecycleBinProvider.create({
@@ -259,7 +259,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableInfo = await this.presentableProvider.findById(presentableId)
         if (!presentableInfo || presentableInfo.userId !== ctx.request.userId) {
-            ctx.error({msg: '未找到节点资源或者没有权限', data: {presentableInfo}})
+            ctx.error({msg: ctx.gettext('未找到节点资源或者没有权限'), data: {presentableInfo}})
         }
 
         if (presentableInfo.isOnline === isOnline) {
@@ -268,7 +268,7 @@ module.exports = class PresentableController extends Controller {
         if (isOnline) {
             const resourceInfo = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/${presentableInfo.resourceId}`)
             if ((resourceInfo.purpose & 2) != 2) {
-                ctx.error({msg: '原资源未提供包含presentable授权的策略,无法上线', data: {resourceInfo}})
+                ctx.error({msg: ctx.gettext('原资源未提供包含presentable授权的策略,无法上线'), data: {resourceInfo}})
             }
         }
 

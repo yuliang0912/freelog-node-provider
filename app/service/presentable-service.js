@@ -4,7 +4,6 @@ const lodash = require('lodash')
 const Service = require('egg').Service
 const presentableEvents = require('../enum/presentable-events')
 const {LogicError, ApplicationError} = require('egg-freelog-base/error')
-const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
 class PresentableSchemeService extends Service {
 
@@ -35,6 +34,7 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, presentable}) {
 
+        const {ctx} = this
         const model = {presentableName: presentableName || presentable.presentableName}
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
@@ -46,7 +46,7 @@ class PresentableSchemeService extends Service {
             this._policiesHandler({presentable, policies})
             model.policy = presentable.policy
             if (presentable.isOnline === 1 && !presentable.policy.some(x => x.status === 1)) {
-                throw new ApplicationError('已上线的节点资源最少需要一个有效的授权策略')
+                throw new ApplicationError(ctx.gettext('已上线的节点资源最少需要一个有效的授权策略'))
             }
         }
         if (contracts) {
@@ -148,12 +148,12 @@ class PresentableSchemeService extends Service {
 
         const masterResourceContract = contracts.find(x => x.resourceId === presentable.resourceId)
         if (!masterResourceContract) {
-            throw new LogicError('合同数据校验失败,缺失完整性', contracts)
+            throw new LogicError(ctx.gettext('合同数据校验失败,缺失完整性'), contracts)
         }
 
         const uniqueCount = lodash.uniqWith(contracts, (x, y) => x.resourceId === y.resourceId).length
         if (uniqueCount !== contracts.length) {
-            throw new LogicError('同一个资源只能选择一个策略或者合同')
+            throw new LogicError(ctx.gettext('同一个资源只能选择一个策略或者合同'))
         }
 
         const contractMap = new Map()
@@ -165,7 +165,7 @@ class PresentableSchemeService extends Service {
             })
         }
         if (contractMap.size !== contractIds.length) {
-            throw new ApplicationError('contractId数据校验失败', {contractMap, contractIds})
+            throw new ApplicationError(ctx.gettext('参数%s校验失败', 'contractId'), {contractMap, contractIds})
         }
 
         contracts.forEach(item => {
@@ -174,7 +174,7 @@ class PresentableSchemeService extends Service {
                 return
             }
             if (contractInfo.resourceId !== item.resourceId || contractInfo.partyTwo !== presentable.nodeId.toString()) {
-                throw new LogicError('合同信息与资源信息或者节点信息不匹配', contractInfo)
+                throw new LogicError(ctx.gettext('合同信息与资源信息或者节点信息不匹配'), contractInfo)
             }
             item.policySegmentId = contractInfo.segmentId
             item.authSchemeId = contractInfo.targetId
@@ -185,17 +185,17 @@ class PresentableSchemeService extends Service {
 
         const allAuthSchemeBubbleResourceIds = authSchemeList.reduce((acc, current) => {
             if (current.status !== 1) {
-                throw new ApplicationError(`授权点${current.authSchemeId}不可用`, current)
+                throw new ApplicationError(ctx.gettext('授权方案%s不可用', current.authSchemeId), current)
             }
             if (!contractResourceMap.has(current.resourceId) || contractResourceMap.get(current.resourceId).authSchemeId !== current.authSchemeId) {
-                throw new LogicError('resourceId与authSchemeId不匹配', {authScheme: current})
+                throw new LogicError(ctx.gettext('resourceId与authSchemeId不匹配'), {authScheme: current})
             }
             return [...acc, ...current.bubbleResources.map(x => x.resourceId)]
         }, [presentable.resourceId])
 
         const diffResources = lodash.difference(Array.from(contractResourceMap.keys()), allAuthSchemeBubbleResourceIds)
         if (diffResources.length) {
-            throw new LogicError('合同中存在无效的资源数据', {resourceIds: diffResources})
+            throw new LogicError(ctx.gettext('合同中存在无效的资源数据'), {resourceIds: diffResources})
         }
 
         const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
@@ -250,7 +250,7 @@ class PresentableSchemeService extends Service {
             .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
 
         if (associatedContracts.length !== authSchemeMap.size) {
-            throw new ApplicationError('授权树数据完整性校验失败')
+            throw new ApplicationError(ctx.gettext('授权树数据完整性校验失败'))
         }
 
         for (let i = 0, j = associatedContracts.length; i < j; i++) {
@@ -337,7 +337,7 @@ class PresentableSchemeService extends Service {
         updatePolicySegments && updatePolicySegments.forEach(item => {
             let targetPolicySegment = oldPolicySegmentMap.get(item.policySegmentId)
             if (!targetPolicySegment) {
-                throw new ApplicationError('未能找到需要更新的策略段', targetPolicySegment)
+                throw new ApplicationError(ctx.gettext('未能找到需要更新的策略段'), targetPolicySegment)
             }
             targetPolicySegment.policyName = item.policyName
             targetPolicySegment.status = item.status
@@ -346,7 +346,7 @@ class PresentableSchemeService extends Service {
         addPolicySegments && addPolicySegments.forEach(item => {
             let newPolicy = ctx.helper.policyCompiler(item)
             if (oldPolicySegmentMap.has(newPolicy.segmentId)) {
-                throw new ApplicationError('不能添加已经存在的策略段', newPolicy)
+                throw new ApplicationError(ctx.gettext('不能添加已经存在的策略段'), newPolicy)
             }
             oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
         })
@@ -368,17 +368,17 @@ class PresentableSchemeService extends Service {
     async _checkPresentableStatus(presentable) {
 
         if ((presentable.status & 1) !== 1) {
-            throw new LogicError('未解决全部上抛的资源,不能上线资源')
+            throw new LogicError(ctx.gettext('未解决全部上抛的资源,不能上线资源'))
         }
         if ((presentable.status & 2) !== 2) {
-            throw new LogicError('不存在有效的策略,不能上线资源')
+            throw new LogicError(ctx.gettext('不存在有效的策略,不能上线资源'))
         }
 
         const {ctx} = this
         const {presentableId, nodeId} = presentable
         const authResult = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/presentables/${presentableId}/presentableTreeAuthTest?nodeId=${nodeId}`)
         if (!authResult.isAuth) {
-            throw new LogicError('资源的部分合同未获得授权', {authResult})
+            throw new LogicError(ctx.gettext('资源的部分合同未获得授权'), {authResult})
         }
 
         return true

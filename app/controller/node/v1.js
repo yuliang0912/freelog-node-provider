@@ -61,7 +61,7 @@ module.exports = class NodeController extends Controller {
         const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).toLowercase().value
         const nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().toLowercase().value
 
-        const checkResult = ctx.helper.nodeDomain.checkNodeDomain(nodeDomain)
+        const checkResult = ctx.helper.checkNodeDomain(nodeDomain)
         if (checkResult !== true) {
             ctx.errors.push({nodeDomain: checkResult})
         }
@@ -73,10 +73,10 @@ module.exports = class NodeController extends Controller {
 
         await Promise.all([checkNodeNameTask, checkNodeDomainTask]).then(([nodeNameResult, nodeDomainResult]) => {
             if (nodeNameResult) {
-                ctx.errors.push({nodeName: '节点名已经存在'})
+                ctx.errors.push({nodeName: ctx.gettext('节点名已经存在')})
             }
             if (nodeDomainResult) {
-                ctx.errors.push({nodeDomain: '节点域名已经存在'})
+                ctx.errors.push({nodeDomain: ctx.gettext('节点域名已经存在')})
             }
             ctx.validate()
         })
@@ -99,7 +99,7 @@ module.exports = class NodeController extends Controller {
 
         const nodeInfo = await this.nodeProvider.findOne({nodeId})
         if (!nodeInfo || nodeInfo.ownerUserId !== ctx.request.userId) {
-            ctx.error({msg: '节点信息未找到或者与身份信息不匹配'})
+            ctx.error({msg: ctx.gettext('节点信息未找到或者与身份信息不匹配')})
         }
 
         nodeInfo.status = status
@@ -113,7 +113,7 @@ module.exports = class NodeController extends Controller {
      */
     async list(ctx) {
 
-        const nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, 'nodeIds格式错误').toSplitArray().len(1, 100).value
+        const nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, ctx.gettext('参数%s格式校验失败', 'nodeIds')).toSplitArray().len(1, 100).value
 
         ctx.validate()
 
@@ -132,7 +132,7 @@ module.exports = class NodeController extends Controller {
         ctx.validate(false)
 
         if (nodeDomain === undefined && nodeName === undefined) {
-            ctx.error({msg: '缺少必要参数'})
+            ctx.error({msg: ctx.gettext('缺少必要参数')})
         }
 
         const condition = {}

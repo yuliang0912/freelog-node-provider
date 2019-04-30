@@ -8,12 +8,12 @@ module.exports = class FreelogPresentablePolicyCompiler {
      * @param policyText
      * @param policyName
      */
-    compiler({policyText, policyName}) {
+    compiler(ctx, {policyText, policyName}) {
 
         const {authorizedObjects, state_machine, errors, policy_text} = freelogResourcePolicyLang.compile(policyText)
 
         if (errors.length) {
-            throw new Error("授权策略错误:" + errors.toString())
+            throw new Error(ctx.gettext('授权方案策略编译失败%s', errors.toString()))
         }
 
         return {

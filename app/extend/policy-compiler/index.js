@@ -18,7 +18,7 @@ class PolicyCompiler {
      * @param languageType
      * @param policyName
      */
-    compiler({policyText, policyName, languageType = 'freelog_policy_lang'}) {
+    compiler(ctx, {policyText, policyName, languageType = 'freelog_policy_lang'}) {
 
         const compilerFn = this.compilerPatrun.find({languageType})
 
@@ -30,7 +30,7 @@ class PolicyCompiler {
             policyText = new Buffer(policyText, 'base64').toString()
         }
 
-        return compilerFn({policyText, languageType, policyName})
+        return compilerFn(ctx, {policyText, languageType, policyName})
     }
 
     /**

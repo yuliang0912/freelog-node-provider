@@ -22,11 +22,11 @@ module.exports = class CustomDataStoreController extends Controller {
         ctx.allowContentType({type: 'json'}).validate(false)
 
         if (!key.startsWith(`node_${nodeId}_`)) {
-            ctx.error({msg: '参数key命名规则错误'})
+            ctx.error({msg: ctx.gettext('参数key命名规则错误')})
         }
 
         await this.customStoreProvider.count({key}).then(count => {
-            count && ctx.error({msg: '当前key已经存在,不能重复创建', data: {key}})
+            count && ctx.error({msg: ctx.gettext('当前key已经存在,不能重复创建'), data: {key}})
         })
 
         await this.customStoreProvider.create({
@@ -59,7 +59,7 @@ module.exports = class CustomDataStoreController extends Controller {
         ctx.allowContentType({type: 'json'}).validate()
 
         await this.customStoreProvider.count({key}).then(count => {
-            !count && ctx.error({msg: '当前key不存在,不能执行更新操作', data: {key}})
+            !count && ctx.error({msg: ctx.gettext('当前key不存在,不能执行更新操作'), data: {key}})
         })
 
         await this.customStoreProvider.updateOne({key}, {value})
@@ -80,7 +80,7 @@ module.exports = class CustomDataStoreController extends Controller {
         ctx.allowContentType({type: 'json'}).validate()
 
         if (!key.startsWith(`node_${nodeId}_`)) {
-            ctx.error({msg: '参数key命名规则错误'})
+            ctx.error({msg: ctx.gettext('参数key命名规则错误')})
         }
 
         await this.customStoreProvider.findOneAndUpdate({key}, {value}).then(oldInfo => {

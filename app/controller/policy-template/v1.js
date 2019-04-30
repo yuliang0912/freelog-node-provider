@@ -64,7 +64,7 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async show(ctx) {
 
-        const id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
+        const id = ctx.checkParams("id").isMongoObjectId().value
         ctx.validate()
 
         await this.policyTemplateProvider.findById(id).then(ctx.success).catch(ctx.error)
@@ -77,18 +77,18 @@ module.exports = class PolicyTemplateController extends Controller {
      */
     async update(ctx) {
 
-        const id = ctx.checkParams("id").isMongoObjectId("id格式错误").value
+        const id = ctx.checkParams("id").isMongoObjectId().value
         const name = ctx.checkBody('name').optional().trim().len(3, 40).value
         const template = ctx.checkBody('template').optional().isBase64().decodeBase64().len(1, 3000).value
         ctx.allowContentType({type: 'json'}).validate()
 
         if (name === undefined && template === undefined) {
-            ctx.error({msg: '参数name和template最少需要一个'})
+            ctx.error({msg: ctx.gettext('缺少必要参数')})
         }
 
         const policyTemplate = await this.policyTemplateProvider.findById(id)
         if (!policyTemplate || policyTemplate.userId != ctx.request.userId) {
-            ctx.error({msg: '参数id错误或者与当前用户不匹配'})
+            ctx.error({msg: ctx.gettext('参数id错误或者与当前用户不匹配')})
         }
 
         const model = {}
