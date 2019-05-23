@@ -6,6 +6,7 @@
 'use strict'
 
 const Controller = require('egg').Controller;
+const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
 
 module.exports = class NodeController extends Controller {
 
@@ -19,26 +20,25 @@ module.exports = class NodeController extends Controller {
      */
     async index(ctx) {
 
-        const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-        const status = ctx.checkQuery("status").default(0).in([0, 1, 2]).toInt().value
-        const ownerUserId = ctx.checkQuery("ownerUserId").exist().gt(1).toInt().value
-
-        ctx.validate(false)
+        const page = ctx.checkQuery("page").optional().default(1).gt(0).toInt().value
+        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
+        const status = ctx.checkQuery("status").optional().default(0).in([0, 1, 2]).toInt().value
+        const ownerUserId = ctx.checkQuery("ownerUserId").optional().gt(1).toInt().value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        ctx.validate()
 
         const condition = {status}
-        if (ownerUserId > 0) {
+        if (ownerUserId) {
             condition.ownerUserId = ownerUserId
         }
 
-        var nodeList = []
+        var dataList = []
         const totalItem = await this.nodeProvider.count(condition)
-
-        if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            nodeList = await this.nodeProvider.getNodeList(condition, page, pageSize)
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.nodeProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
         }
 
-        ctx.success({page, pageSize, totalItem, dataList: nodeList})
+        ctx.success({page, pageSize, totalItem, dataList})
     }
 
     /**
@@ -59,33 +59,27 @@ module.exports = class NodeController extends Controller {
     async create(ctx) {
 
         const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).toLowercase().value
-        const nodeDomain = ctx.checkBody('nodeDomain').isNodeDomain().toLowercase().value
+        const nodeDomain = ctx.checkBody('nodeDomain').exist().type('string').isNodeDomain().toLowercase().value
+        ctx.validate()
 
         const checkResult = ctx.helper.checkNodeDomain(nodeDomain)
         if (checkResult !== true) {
-            ctx.errors.push({nodeDomain: checkResult})
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'nodeDomain'), {checkResult})
         }
 
-        ctx.allowContentType({type: 'json'}).validate()
+        const nodeList = await this.nodeProvider.find({$or: [{nodeName}, {nodeDomain}]})
+        if (nodeList.some(x => x.nodeName === nodeName)) {
+            throw new ApplicationError(ctx.gettext('节点名已经存在'), {nodeName})
+        }
+        if (nodeList.some(x => x.nodeDomain === nodeDomain)) {
+            throw new ApplicationError(ctx.gettext('节点域名已经存在'), {nodeDomain})
+        }
 
-        const checkNodeNameTask = this.nodeProvider.findOne({nodeName})
-        const checkNodeDomainTask = this.nodeProvider.findOne({nodeDomain})
-
-        await Promise.all([checkNodeNameTask, checkNodeDomainTask]).then(([nodeNameResult, nodeDomainResult]) => {
-            if (nodeNameResult) {
-                ctx.errors.push({nodeName: ctx.gettext('节点名已经存在')})
-            }
-            if (nodeDomainResult) {
-                ctx.errors.push({nodeDomain: ctx.gettext('节点域名已经存在')})
-            }
-            ctx.validate()
-        })
-
-        const nodeModel = {
+        const nodeInfo = {
             nodeName, nodeDomain, ownerUserId: ctx.request.userId
         }
 
-        await this.nodeProvider.createNode(nodeModel).then(ctx.success)
+        await this.nodeProvider.createNode(nodeInfo).then(ctx.success)
     }
 
     /**
@@ -94,18 +88,15 @@ module.exports = class NodeController extends Controller {
     async update(ctx) {
 
         const nodeId = ctx.checkParams('id').toInt().gt(0).value
-        const status = ctx.checkBody('status').in([0, 1]).value
+        const status = ctx.checkBody('status').exist().toInt().in([0, 1]).value
         ctx.validate()
 
-        const nodeInfo = await this.nodeProvider.findOne({nodeId})
-        if (!nodeInfo || nodeInfo.ownerUserId !== ctx.request.userId) {
-            ctx.error({msg: ctx.gettext('节点信息未找到或者与身份信息不匹配')})
-        }
+        await this.nodeProvider.findOne({nodeId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('节点信息未找到或者与身份信息不匹配'),
+            property: 'ownerUserId'
+        }))
 
-        nodeInfo.status = status
-        await nodeInfo.updateOne({status})
-
-        ctx.success(nodeInfo)
+        await this.nodeProvider.findOneAndUpdate({nodeId}, {status}, {new: true}).then(ctx.success)
     }
 
     /**
@@ -113,11 +104,11 @@ module.exports = class NodeController extends Controller {
      */
     async list(ctx) {
 
-        const nodeIds = ctx.checkQuery('nodeIds').match(/^[0-9]{5,9}(,[0-9]{5,9})*$/, ctx.gettext('参数%s格式校验失败', 'nodeIds')).toSplitArray().len(1, 100).value
-
+        const nodeIds = ctx.checkQuery('nodeIds').exist().match(/^[0-9]{5,9}(,[0-9]{5,9})*$/).toSplitArray().len(1, 100).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate()
 
-        await this.nodeProvider.find({nodeId: {$in: nodeIds}}).then(ctx.success).catch(ctx.error)
+        await this.nodeProvider.find({nodeId: {$in: nodeIds}}, projection.join(' ')).then(ctx.success)
     }
 
     /**
@@ -132,7 +123,7 @@ module.exports = class NodeController extends Controller {
         ctx.validate(false)
 
         if (nodeDomain === undefined && nodeName === undefined) {
-            ctx.error({msg: ctx.gettext('缺少必要参数')})
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
 
         const condition = {}
@@ -142,6 +133,7 @@ module.exports = class NodeController extends Controller {
         if (nodeName) {
             condition.nodeName = nodeName
         }
+
         await this.nodeProvider.findOne(condition).then(ctx.success)
     }
 }

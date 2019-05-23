@@ -1,15 +1,11 @@
-/**
- * Created by yuliang on 2017/10/31.
- */
-
 'use strict'
 
 const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
-module.exports = class PresentableProvider extends MongoBaseOperation {
+module.exports = class PresentableDependencyTreeProvider extends MongoBaseOperation {
 
     constructor(app) {
-        super(app.model.Presentable)
+        super(app.model.PresentableDependencyTree)
         this.app = app
     }
 }

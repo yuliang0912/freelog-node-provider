@@ -1,6 +1,7 @@
 'use strict'
 
 const Controller = require('egg').Controller;
+const {ArgumentError} = require('egg-freelog-base/error')
 
 module.exports = class PolicyTemplateController extends Controller {
 
@@ -22,20 +23,18 @@ module.exports = class PolicyTemplateController extends Controller {
         const isShare = ctx.checkQuery('isShare').default(0).toInt().in([0, 1]).value
         ctx.validate()
 
-        var templateList = []
-        const condition = {templateType, isShare, status: 0, userId: ctx.request.userId}
-
-        if (isShare === 1) {
-            Reflect.deleteProperty(condition, 'userId')
+        const condition = {templateType, isShare, status: 0}
+        if (!isShare) {
+            condition.userId = ctx.request.userId
         }
 
-        var totalItem = await this.policyTemplateProvider.count(condition)
-
+        var dataList = []
+        const totalItem = await this.policyTemplateProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            templateList = await this.policyTemplateProvider.findPageList(condition, page, pageSize)
+            dataList = await this.policyTemplateProvider.findPageList(condition, page, pageSize)
         }
 
-        ctx.success({page, pageSize, totalItem, dataList: templateList})
+        ctx.success({page, pageSize, totalItem, dataList})
     }
 
     /**
@@ -48,13 +47,13 @@ module.exports = class PolicyTemplateController extends Controller {
         const name = ctx.checkBody('name').exist().trim().len(3, 40).value
         const template = ctx.checkBody('template').exist().isBase64().decodeBase64().len(1, 3000).value
         const templateType = ctx.checkBody('templateType').toInt().in([1, 2]).value
-        ctx.allowContentType({type: 'json'}).validate()
+        const isShare = ctx.checkBody('isShare').optional().toInt().in([0, 1]).default(0).value
+        ctx.validate()
 
         await this.policyTemplateProvider.create({
-            name, template, templateType,
-            isShare: 0,
+            name, template, templateType, isShare,
             userId: ctx.request.userId
-        }).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success)
     }
 
     /**
@@ -67,7 +66,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const id = ctx.checkParams("id").isMongoObjectId().value
         ctx.validate()
 
-        await this.policyTemplateProvider.findById(id).then(ctx.success).catch(ctx.error)
+        await this.policyTemplateProvider.findById(id).then(ctx.success)
     }
 
     /**
@@ -80,16 +79,15 @@ module.exports = class PolicyTemplateController extends Controller {
         const id = ctx.checkParams("id").isMongoObjectId().value
         const name = ctx.checkBody('name').optional().trim().len(3, 40).value
         const template = ctx.checkBody('template').optional().isBase64().decodeBase64().len(1, 3000).value
-        ctx.allowContentType({type: 'json'}).validate()
+        ctx.validate()
 
         if (name === undefined && template === undefined) {
-            ctx.error({msg: ctx.gettext('缺少必要参数')})
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
 
-        const policyTemplate = await this.policyTemplateProvider.findById(id)
-        if (!policyTemplate || policyTemplate.userId != ctx.request.userId) {
-            ctx.error({msg: ctx.gettext('参数id错误或者与当前用户不匹配')})
-        }
+        const policyTemplate = await this.policyTemplateProvider.findById(id).then(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'id')
+        }))
 
         const model = {}
         if (name !== undefined) {
@@ -99,6 +97,6 @@ module.exports = class PolicyTemplateController extends Controller {
             model.template = policyTemplate.template = template
         }
 
-        await policyTemplate.updateOne(model).then(() => ctx.success(policyTemplate)).catch(ctx.error)
+        await policyTemplate.updateOne(model).then(() => ctx.success(policyTemplate))
     }
 }

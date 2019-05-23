@@ -1,23 +1,19 @@
-/**
- * presentable事件
- */
-
 'use strict'
 
 module.exports = {
 
     /**
-     * 创建presentable事件
+     * presentable签约事件
      */
-    presentableOnlineOrOfflineEvent: Symbol('node#presentableOnlineOrOfflineEvent'),
+    signReleaseContractEvent: Symbol('node#signReleaseContractEvent'),
 
     /**
-     * 更新presentable事件
+     * presentable对应的发行版本锁定事件
      */
-    updatePresentableEvent: Symbol('node#updatePresentableEvent'),
+    presentableVersionLockEvent: Symbol('node#presentableVersionLockEvent'),
 
     /**
-     * presentable获得上线授权事件
+     * 生成presentable依赖树事件(锁定版本)
      */
-    presentableOnlineAuthEvent: Symbol('node#presentableOnlineAuthEvent'),
+    generatePresentableDependencyTreeEvent: Symbol('node#generatePresentableDependencyTreeEvent'),
 }

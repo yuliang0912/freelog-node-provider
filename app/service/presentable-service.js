@@ -2,96 +2,187 @@
 
 const lodash = require('lodash')
 const Service = require('egg').Service
-const presentableEvents = require('../enum/presentable-events')
-const {LogicError, ApplicationError} = require('egg-freelog-base/error')
+const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
+const {signReleaseContractEvent, presentableVersionLockEvent} = require('../enum/presentable-events')
+const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
 
 class PresentableSchemeService extends Service {
 
-    constructor({app}) {
+    constructor({app, request}) {
         super(...arguments)
-        this.nodeProvider = app.dal.nodeProvider
+        this.userId = request.userId
         this.presentableProvider = app.dal.presentableProvider
     }
 
     /**
      * 创建presentable
-     * @returns {Promise<void>}
+     * @param releaseInfo
+     * @param presentableName
+     * @param resolveReleases
+     * @param version
+     * @param policies
+     * @param nodeInfo
+     * @param intro
+     * @param userDefinedTags
+     * @returns {Promise<model>}
      */
-    async createPresentable(presentable) {
+    async createPresentable({releaseInfo, presentableName, resolveReleases, version, policies, nodeInfo, intro, userDefinedTags}) {
 
-        const {presentableProvider} = this
+        const {app, userId} = this
+        await this._validateResolveReleases(releaseInfo, resolveReleases)
+        await this._validatePolicyIdentityAndSignAuth(nodeInfo.nodeId, resolveReleases, false)
 
-        // if (Array.isArray(presentable.contracts) && presentable.contracts.length) {
-        //     await this._checkPresentableContracts({presentable, contracts: presentable.contracts})
-        // }
+        const {releaseId, releaseName, resourceType} = releaseInfo
+        const model = {
+            userId, presentableName, intro, userDefinedTags, resolveReleases, policies: [],
+            nodeId: nodeInfo.nodeId,
+            releaseInfo: {
+                releaseId, releaseName, resourceType, version
+            }
+        }
+        if (!lodash.isEmpty(policies)) {
+            model.policies = this._compilePolicies(policies)
+        }
 
-        return presentableProvider.createPresentable(presentable)
+        return this.presentableProvider.create(model).tap(presentableInfo => {
+            app.emit(presentableVersionLockEvent, presentableInfo)
+            this.batchSignReleaseContracts(nodeInfo.nodeId, presentableInfo.id, resolveReleases).then(contracts => {
+                app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
+            }).catch(error => {
+                console.error('presentable签约失败', error)
+                presentableInfo.updateOne({contractStatus: 2}).exec()
+            })
+        })
     }
 
     /**
      * 更新presentable
-     * @returns {Promise<void>}
+     * @param presentableInfo
+     * @param policyInfo
+     * @param presentableName
+     * @param userDefinedTags
+     * @param resolveReleases
+     * @param intro
+     * @returns {Promise<Collection~findAndModifyWriteOpResultObject>}
      */
-    async updatePresentable({presentableName, userDefinedTags, presentableIntro, policies, contracts, presentable}) {
+    async updatePresentable({presentableInfo, policyInfo, presentableName, userDefinedTags, resolveReleases, intro}) {
 
-        const {ctx} = this
-        const model = {presentableName: presentableName || presentable.presentableName}
+        const {ctx, app} = this
+        let model = {}
+        if (lodash.isString(intro)) {
+            model.intro = intro
+        }
+        if (lodash.isString(presentableName)) {
+            model.presentableName = presentableName
+        }
         if (userDefinedTags) {
             model.userDefinedTags = userDefinedTags
         }
-        if (presentableIntro !== undefined) {
-            model.presentableIntro = presentableIntro
-        }
-        if (policies) {
-            this._policiesHandler({presentable, policies})
-            model.policy = presentable.policy
-            if (presentable.isOnline === 1 && !presentable.policy.some(x => x.status === 1)) {
+        if (policyInfo) {
+            model.policies = this._policiesHandler(presentableInfo, policyInfo)
+            if (presentableInfo.isOnline === 1 && !model.policies.some(x => x.status === 1)) {
                 throw new ApplicationError(ctx.gettext('已上线的节点资源最少需要一个有效的授权策略'))
             }
         }
-        if (contracts) {
-            await this._checkPresentableContracts({presentable, contracts})
-            await this._updatePresentableAuthTree(presentable)
-            model.contracts = presentable.contracts
-            const masterContractInfo = presentable.contracts.find(x => x.resourceId === presentable.resourceId)
-            if (masterContractInfo) {
-                model.masterContractId = masterContractInfo.contractId
+
+        const changedResolveReleases = []
+        if (resolveReleases && resolveReleases.length) {
+            const invalidResolveReleases = lodash.differenceBy(resolveReleases, presentableInfo.resolveReleases, x => x.releaseId)
+            if (invalidResolveReleases.length) {
+                throw new ApplicationError(ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveReleases})
+            }
+            const intrinsicResolveReleases = []
+            for (let i = 0, j = presentableInfo.resolveReleases.length; i < j; i++) {
+                const resolveRelease = presentableInfo.resolveReleases[i]
+                const newModel = resolveReleases.find(x => x.releaseId === resolveRelease.releaseId)
+                if (!newModel) {
+                    intrinsicResolveReleases.push(resolveRelease)
+                    continue
+                }
+                newModel.contracts.forEach(item => {
+                    var policyContractInfo = resolveRelease.contracts.find(x => x.policyId === item.policyId)
+                    if (policyContractInfo) {
+                        item.contractId = policyContractInfo.contractId
+                    }
+                })
+                newModel.releaseName = resolveRelease.releaseName
+                changedResolveReleases.push(newModel)
+            }
+
+            await this._validatePolicyIdentityAndSignAuth(presentableInfo.nodeId, changedResolveReleases, true)
+
+            model.resolveReleases = [...changedResolveReleases, ...intrinsicResolveReleases]
+        }
+
+        const presentable = await this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true})
+
+        if (changedResolveReleases.length) {
+            this.batchSignReleaseContracts(presentableInfo.nodeId, changedResolveReleases).then(contracts => {
+                app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
+            })
+        }
+
+        return presentable
+    }
+
+
+    /**
+     * 生成授权树
+     * @returns {Promise<void>}
+     */
+    async generatePresentableAuthTree(presentableInfo) {
+
+        const {ctx} = this
+        const {releaseId, version} = presentableInfo.releaseInfo
+
+        const presentableResolveReleases = presentableInfo.resolveReleases.map(item => {
+            return {
+                releaseId: item.releaseId,
+                releaseName: item.releaseName,
+                contracts: item.contracts,
+                versions: item.releaseId === releaseId ? [{version}] : []
+            }
+        })
+
+        //获取presentable所直接引用的发行的上抛树(用于分析presentable解决的上抛的具体版本集合)
+        if (presentableResolveReleases.length > 1) {
+            const releaseUpcastTree = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}/upcastTree?version=${version}&maxDeep=1`)
+            for (let i = 0, j = presentableResolveReleases.length; i < j; i++) {
+                let presentableResolveRelease = presentableResolveReleases[i]
+                let releaseUpcast = releaseUpcastTree.find(x => x.releaseId === presentableResolveRelease.releaseId)
+                if (releaseUpcast) {
+                    presentableResolveRelease.versions = releaseUpcast.versions.map(x => Object({version: x.version}))
+                }
             }
         }
 
-        return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, model, {new: true}).then(newPresentableInfo => {
-            var status = 0
-            if ((presentable.status & 1) === 1) {
-                status = status | 1
+        const allTasks = presentableResolveReleases.reduce((tasks, current) => {
+            for (let i = 0, j = current.versions.length; i < j; i++) {
+                let task = ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${current.releaseId}/authTree?version=${current.versions[i].version}`)
+                    .then(list => current.versions[i].resolveReleases = list)
+                tasks.push(task)
             }
-            if ((presentable.status & 2) === 2) {
-                status = status | 2
-            }
-            if ((newPresentableInfo.status & 4) === 4) {
-                status = status | 4
-            }
-            newPresentableInfo.status = status
-            return newPresentableInfo.updateOne({status}).then(() => newPresentableInfo)
-        })
+            return tasks
+        }, [])
+
+        return Promise.all(allTasks).then(() => presentableResolveReleases)
     }
 
     /**
      * presentable上下线操作
      * @param presentable
      * @param isOnline
-     * @returns {Promise<void>}
+     * @returns {Promise<Bool>}
      * @constructor
      */
-    async presentableOnlineOrOffline(presentable, isOnline) {
-        const {app} = this
-        if (isOnline) {
-            await this._checkPresentableStatus(presentable)
-        }
-        return presentable.updateOne({isOnline}).then(() => {
-            presentable.isOnline = isOnline
-            app.emit(presentableEvents.presentableOnlineOrOfflineEvent, presentable)
-            return presentable
-        })
+    async switchPresentableOnlineState(presentable, isOnline) {
+
+        //TODO:上线逻辑检查(1.包含策略 2:节点资源授权链路需要通过)
+
+        return presentable.updateOne({isOnline}).then((model) => Boolean(model.ok))
+
+        //presentable.isOnline = isOnline
+        //this.app.emit(presentableOnlineOrOfflineEvent, presentable)
     }
 
     /**
@@ -136,252 +227,154 @@ class PresentableSchemeService extends Service {
     }
 
     /**
-     * 检查合同的完整性
-     * @private
+     * 批量签约
+     * @param nodeId
+     * @param targetId
+     * @param resolveReleases
+     * @returns {Promise<*>}
      */
-    async _checkPresentableContracts({presentable, contracts}) {
+    async batchSignReleaseContracts(nodeId, presentableId, resolveReleases) {
 
-        const {ctx} = this
-        if (!contracts.length) {
-            return
-        }
-
-        const masterResourceContract = contracts.find(x => x.resourceId === presentable.resourceId)
-        if (!masterResourceContract) {
-            throw new LogicError(ctx.gettext('合同数据校验失败,缺失完整性'), contracts)
-        }
-
-        const uniqueCount = lodash.uniqWith(contracts, (x, y) => x.resourceId === y.resourceId).length
-        if (uniqueCount !== contracts.length) {
-            throw new LogicError(ctx.gettext('同一个资源只能选择一个策略或者合同'))
-        }
-
-        const contractMap = new Map()
-        const contractResourceMap = new Map(contracts.map(x => [x.resourceId, x]))
-        const contractIds = contracts.filter(x => x.contractId).map(x => x.contractId)
-        if (contractIds.length) {
-            await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`).then(contractList => {
-                contractList.forEach(x => contractMap.set(x.contractId, x))
-            })
-        }
-        if (contractMap.size !== contractIds.length) {
-            throw new ApplicationError(ctx.gettext('参数%s校验失败', 'contractId'), {contractMap, contractIds})
-        }
-
-        contracts.forEach(item => {
-            let contractInfo = contractMap.get(item.contractId)
-            if (!contractInfo) {
-                return
-            }
-            if (contractInfo.resourceId !== item.resourceId || contractInfo.partyTwo !== presentable.nodeId.toString()) {
-                throw new LogicError(ctx.gettext('合同信息与资源信息或者节点信息不匹配'), contractInfo)
-            }
-            item.policySegmentId = contractInfo.segmentId
-            item.authSchemeId = contractInfo.targetId
-        })
-
-        const allAuthSchemeIds = contracts.map(x => x.authSchemeId)
-        const authSchemeList = await ctx.curlIntranetApi(`${ctx.webApi.authSchemeInfo}?authSchemeIds=${allAuthSchemeIds.toString()}`)
-
-        const allAuthSchemeBubbleResourceIds = authSchemeList.reduce((acc, current) => {
-            if (current.status !== 1) {
-                throw new ApplicationError(ctx.gettext('授权方案%s不可用', current.authSchemeId), current)
-            }
-            if (!contractResourceMap.has(current.resourceId) || contractResourceMap.get(current.resourceId).authSchemeId !== current.authSchemeId) {
-                throw new LogicError(ctx.gettext('resourceId与authSchemeId不匹配'), {authScheme: current})
-            }
-            return [...acc, ...current.bubbleResources.map(x => x.resourceId)]
-        }, [presentable.resourceId])
-
-        const diffResources = lodash.difference(Array.from(contractResourceMap.keys()), allAuthSchemeBubbleResourceIds)
-        if (diffResources.length) {
-            throw new LogicError(ctx.gettext('合同中存在无效的资源数据'), {resourceIds: diffResources})
-        }
-
-        const newCreatedContracts = await this._batchCreatePresentableContracts({presentable, contracts})
-        newCreatedContracts && newCreatedContracts.forEach(item => {
-            let contractInfo = contractResourceMap.get(item.resourceId)
-            contractInfo.contractId = item.contractId
-            contractMap.set(item.contractId, item)
-        })
-
-        //如果所有上抛的资源都已经被选择解决了,则表示具备完备态
-        if (allAuthSchemeBubbleResourceIds.every(x => contractResourceMap.has(x))) {
-            presentable.status = presentable.status | 1
-        } else if ((presentable.status & 1) === 1) {
-            presentable.status = presentable.status ^ 1
-        }
-
-        presentable.contracts = contracts
-    }
-
-    /**
-     * 构建presentable的授权树
-     * @param presentable
-     * @private
-     */
-    async _updatePresentableAuthTree(presentable) {
-        const {ctx} = this
-        const result = await this._buildContractTree(presentable.contracts)
-        return ctx.dal.presentableAuthTreeProvider.createOrUpdateAuthTree({
-            nodeId: presentable.nodeId,
-            presentableId: presentable.presentableId,
-            masterResourceId: presentable.resourceId,
-            authTree: this._flattenAuthTree(result)
-        })
-    }
-
-    /**
-     * 生产合同的构建树
-     * @param contracts
-     * @private
-     */
-    async _buildContractTree(associatedContracts = [], deep = 0) {
-
-        if (!associatedContracts.length) {
+        const {ctx, app, userId} = this
+        if (!resolveReleases.length) {
             return []
         }
 
-        const {ctx} = this
-        const dataList = []
-        const authSchemeIds = associatedContracts.map(x => x.authSchemeId)
-
-        const authSchemeMap = await ctx.curlIntranetApi(`${ctx.webApi.authSchemeInfo}?authSchemeIds=${authSchemeIds.toString()}`)
-            .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
-
-        if (associatedContracts.length !== authSchemeMap.size) {
-            throw new ApplicationError(ctx.gettext('授权树数据完整性校验失败'))
-        }
-
-        for (let i = 0, j = associatedContracts.length; i < j; i++) {
-            let {authSchemeId, contractId} = associatedContracts[i]
-            let currentAuthScheme = authSchemeMap.get(authSchemeId)
-            dataList.push({
-                deep,
-                authSchemeId,
-                contractId,
-                resourceId: currentAuthScheme.resourceId,
-                children: await this._buildContractTree(currentAuthScheme.associatedContracts, deep + 1)
-            })
-        }
-
-        return dataList
-    }
-
-    /**
-     * 平铺授权树
-     * @param presentableAuthTree
-     * @private
-     */
-    _flattenAuthTree(presentableAuthTree) {
-
-        const dataList = []
-
-        const recursion = (children, parentAuthSchemeId = '') => {
-            children.forEach(x => {
-                let {deep, contractId, authSchemeId, resourceId, children} = x
-                dataList.push({contractId, authSchemeId, resourceId, parentAuthSchemeId, deep,})
-                children.length && recursion(children, authSchemeId)
-            })
-        }
-
-        recursion(presentableAuthTree)
-
-        return dataList
-    }
-
-    /**
-     * 批量签约
-     * @private
-     */
-    _batchCreatePresentableContracts({presentable, contracts}) {
-
-        const {ctx, app} = this
-
-        const body = {
-            partyTwo: presentable.nodeId,
+        const batchSignReleaseContractParams = {
+            partyTwoId: nodeId,
+            targetId: presentableId,
+            partyTwoUserId: userId,
             contractType: app.contractType.ResourceToNode,
-            signObjects: contracts.filter(x => x.contractId === undefined).map(x => new Object({
-                targetId: x.authSchemeId,
-                segmentId: x.policySegmentId
+            signReleases: resolveReleases.map(item => Object({
+                releaseId: item.releaseId,
+                policyIds: item.contracts.map(x => x.policyId)
             }))
         }
 
-        if (!body.signObjects.length) {
+        return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
+            method: 'post', contentType: 'json', data: batchSignReleaseContractParams
+        })
+    }
+
+    /**
+     *
+     * @param releaseInfo
+     * @param resolveReleases
+     * @private
+     */
+    async _validateResolveReleases(releaseInfo, resolveReleases) {
+
+        const {ctx} = this
+        const allUntreatedReleases = releaseInfo.baseUpcastReleases.concat([{releaseId: releaseInfo.releaseId}])
+
+        const untreatedReleases = lodash.differenceBy(allUntreatedReleases, resolveReleases, x => x.releaseId)
+        if (untreatedReleases.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-resolve-integrity-validate-failed'), {untreatedReleases})
+        }
+
+        const invalidResolveReleases = lodash.differenceBy(resolveReleases, allUntreatedReleases, x => x.releaseId)
+        if (invalidResolveReleases.length) {
+            throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveReleases'), {invalidResolveReleases})
+        }
+
+        const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${resolveReleases.map(x => x.releaseId).toString()}&projection=releaseName,policies`)
+            .then(list => new Map(list.map(x => [x.releaseId, x])))
+
+        const invalidPolicies = []
+        for (let i = 0, j = resolveReleases.length; i < j; i++) {
+            let resolveRelease = resolveReleases[i]
+            const releaseInfo = releaseMap.get(resolveRelease.releaseId)
+            resolveRelease.releaseName = releaseInfo.releaseName
+            resolveRelease.contracts.forEach(item => {
+                if (!releaseInfo.policies.some(x => x.policyId === item.policyId && x.status === 1)) {
+                    invalidPolicies.push({releaseId: resolveRelease.releaseId, policyId: item.policyId})
+                }
+            })
+        }
+        if (invalidPolicies.length) {
+            throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveReleases'), {invalidPolicies})
+        }
+    }
+
+    /**
+     * 校验策略身份和签约授权
+     * @param nodeId
+     * @param resolveReleases
+     * @param isFilterSignedPolicy
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _validatePolicyIdentityAndSignAuth(nodeId, resolveReleases, isFilterSignedPolicy = true) {
+
+        if (lodash.isEmpty(resolveReleases)) {
             return
         }
 
-        return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
-            method: 'post',
-            contentType: 'json',
-            data: body,
-            dataType: 'json'
+        const {ctx} = this
+        const releasePolicies = lodash.chain(resolveReleases).map(x => x.contracts.map(m => `${x.releaseId}-${m.policyId}`)).flattenDeep().value()
+
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?nodeId=${nodeId}&releasePolicies=${releasePolicies.toString()}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
+        const identityAuthFailedPolices = authResults.filter(x => x.status !== 1)
+        if (identityAuthFailedPolices.length) {
+            throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})
+        }
+    }
+
+    /**
+     * 编译策略
+     * @param policies
+     * @returns {*}
+     * @private
+     */
+    _compilePolicies(policies) {
+
+        return policies.map(({policyName, policyText}) => {
+            let signAuth = 0
+            let policyInfo = releasePolicyCompiler.compile(policyText, policyName)
+            if (policyText.toLowerCase().includes('presentable')) {
+                signAuth = signAuth | 2
+            }
+            if (policyText.toLowerCase().includes('recontractable')) {
+                signAuth = signAuth | 1
+            }
+            policyInfo.signAuth = signAuth
+
+            return policyInfo
         })
     }
 
     /**
      * 处理策略段变更
-     * @param authScheme
+     * @param presentable
      * @param policies
      * @returns {*}
      * @private
      */
-    _policiesHandler({presentable, policies}) {
+    _policiesHandler(presentable, policyInfo) {
 
         const {ctx} = this
-        const {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
-        const oldPolicySegmentMap = new Map(presentable.policy.map(x => [x.segmentId, x]))
+        const {addPolicies, updatePolicies} = policyInfo
 
-        removePolicySegments && removePolicySegments.forEach(oldPolicySegmentMap.delete)
+        const oldPolicyMap = new Map(presentable.policies.map(x => [x.policyId, x]))
 
-        updatePolicySegments && updatePolicySegments.forEach(item => {
-            let targetPolicySegment = oldPolicySegmentMap.get(item.policySegmentId)
-            if (!targetPolicySegment) {
-                throw new ApplicationError(ctx.gettext('未能找到需要更新的策略段'), targetPolicySegment)
+        updatePolicies && updatePolicies.forEach(item => {
+            let targetPolicy = oldPolicyMap.get(item.policyId)
+            if (!targetPolicy) {
+                throw new ApplicationError(ctx.gettext('params-validate-failed', 'policyId'), item)
             }
-            targetPolicySegment.policyName = item.policyName
-            targetPolicySegment.status = item.status
+            targetPolicy.status = item.status
+            targetPolicy.policyName = item.policyName
         })
 
-        addPolicySegments && addPolicySegments.forEach(item => {
-            let newPolicy = ctx.helper.policyCompiler(item)
-            if (oldPolicySegmentMap.has(newPolicy.segmentId)) {
-                throw new ApplicationError(ctx.gettext('不能添加已经存在的策略段'), newPolicy)
+        addPolicies && addPolicies.forEach(item => {
+            let newPolicy = releasePolicyCompiler.compile(item.policyText, item.policyName)
+            if (oldPolicyMap.has(newPolicy.policyId)) {
+                throw new ApplicationError(ctx.gettext('policy-create-duplicate-error'), item)
             }
-            oldPolicySegmentMap.set(newPolicy.segmentId, newPolicy)
+            oldPolicyMap.set(newPolicy.policyId, newPolicy)
         })
 
-        presentable.policy = Array.from(oldPolicySegmentMap.values())
-
-        if (presentable.policy.some(x => x.status === 1)) {
-            presentable.status = presentable.status | 2
-        } else if ((presentable.status & 2) === 2) {
-            presentable.status = presentable.status ^ 2
-        }
-    }
-
-    /**
-     * 检查presentable是否达到可以上线的标准
-     * @param presentable
-     * @private
-     */
-    async _checkPresentableStatus(presentable) {
-
-        if ((presentable.status & 1) !== 1) {
-            throw new LogicError(ctx.gettext('未解决全部上抛的资源,不能上线资源'))
-        }
-        if ((presentable.status & 2) !== 2) {
-            throw new LogicError(ctx.gettext('不存在有效的策略,不能上线资源'))
-        }
-
-        const {ctx} = this
-        const {presentableId, nodeId} = presentable
-        const authResult = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/presentables/${presentableId}/presentableTreeAuthTest?nodeId=${nodeId}`)
-        if (!authResult.isAuth) {
-            throw new LogicError(ctx.gettext('资源的部分合同未获得授权'), {authResult})
-        }
-
-        return true
+        return Array.from(oldPolicyMap.values())
     }
 }
 

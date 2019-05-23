@@ -40,7 +40,7 @@ module.exports = app => {
             maxFileSize: 1024 * 1024 * 1024 * 0.5,
         },
 
-        customLoader: ['app/event-handler', 'app/mq-service'],
+        customFileLoader: ['app/event-handler', 'app/mq-service'],
 
         rabbitMq: {
             connOptions: {

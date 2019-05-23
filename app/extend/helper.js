@@ -4,7 +4,6 @@
 
 'use strict'
 
-const policyCompiler = require('./policy-compiler/index')
 const nodeDomainCheck = require('./helper/nodeDomainCheck')
 
 
@@ -19,13 +18,5 @@ module.exports = {
         const {ctx} = this
 
         return nodeDomainCheck.checkNodeDomain(ctx, nodeDomain)
-    },
-
-    /**
-     * 授权语言转换{policyText, languageType, policyName}
-     */
-    policyCompiler(...args) {
-        const {ctx} = this
-        return policyCompiler.compiler(ctx, ...args)
     }
 }

@@ -13,52 +13,14 @@ module.exports = class NodeProvider extends MongoBaseOperation {
         this.app = app
     }
 
-
     /**
      * 创建节点
      * @param model
      */
     async createNode(model) {
 
-        if (!super.type.object(model)) {
-            return Promise.reject(new Error("model must be object"))
-        }
-
         model.nodeId = await this.app.dal.autoIncrementRecordProvider.getNextDateValue()
 
         return super.create(model)
-    }
-
-    /**
-     * 节点ID是否存在
-     * @param nodeId
-     * @returns {Promise<boolean>}
-     * @private
-     */
-    async _checkNodeIdIsExist(nodeId) {
-        return await super.count({nodeId}) > 0
-    }
-
-    /**
-     * 获取多个节点
-     * @param condition 资源查找条件
-     * @returns {Promise.<*>}
-     */
-    getNodeList(condition, page, pageSize) {
-        return super.findPageList(condition, page, pageSize, null, {nodeId: 1})
-    }
-
-    /**
-     * 批量查询节点
-     * @param nodeIds
-     * @returns {Promise<Array>}
-     */
-    getNodeListByNodeIds(nodeIds) {
-
-        if (!Array.isArray(nodeIds) || !nodeIds.length) {
-            return Promise.resolve([])
-        }
-
-        return super.find({nodeId: {$in: nodeIds}})
     }
 }
