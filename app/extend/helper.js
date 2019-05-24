@@ -4,8 +4,7 @@
 
 'use strict'
 
-const nodeDomainCheck = require('./helper/nodeDomainCheck')
-
+const nodeDomainCheck = require('./helper/node-domain-check')
 
 module.exports = {
 

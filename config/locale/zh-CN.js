@@ -2,76 +2,75 @@
 
 module.exports = {
 
-    /**
-     * 必选参数缺失
-     */
-    '缺少必要参数': '缺少必要参数',
+    'params-format-validate-failed': '参数%s格式校验失败',
 
-    "节点名已经存在": "节点名已经存在",
+    'params-validate-failed': '参数%s校验失败',
 
-    "节点域名已经存在": "节点域名已经存在",
+    'params-required-validate-failed': '缺少必选参数',
 
-    '缺少有效资源信息': '缺少有效资源信息',
+    'params-comb-validate-failed': '组合参数%s校验失败',
 
-    '缺少有效节点信息': '缺少有效节点信息',
+    'params-relevance-validate-failed': '参数%s之间关联性校验失败',
 
-    '参数%s格式校验失败': '参数%s格式校验失败',
+    'user-authentication-failed': '用户认证失败,请登录',
 
-    '参数%s校验失败': '参数%s校验失败',
+    'user-authorization-failed': '授权失败,当前用户没有操作权限',
 
-    '参数%s错误或者没有操作权限': '参数%s错误或者没有操作权限',
+    'resource-entity-not-found': '未找到指定资源',
 
-    '已签约的节点资源不允许删除': '已签约的节点资源不允许删除',
+    'resource-invalid': '未找到有效资源',
 
-    '未找到节点资源或者没有权限': '未找到节点资源或者没有权限',
+    'node-entity-not-found': '未找到节点',
 
-    '原资源未提供包含presentable授权的策略,无法上线': '原资源未提供包含presentable授权的策略,无法上线',
+    'node-invalid': '未找到有效节点',
 
-    "节点信息未找到或者与身份信息不匹配": "节点信息未找到或者与身份信息不匹配",
+    'presentable-entity-not-found': '未找到节点资源',
 
-    "参数id错误或者与当前用户不匹配": "参数id错误或者与当前用户不匹配",
+    'presentable-invalid': '未找到有效节点资源',
 
-    "已经添加的节点资源,不能重复添加": "已经添加的节点资源,不能重复添加",
+    'contract-entity-not-found': '未找到合同',
 
-    '参数key命名规则错误': '参数key命名规则错误',
+    'contract-invalid': '未找到有效合同',
 
-    '当前key已经存在,不能重复创建': '当前key已经存在,不能重复创建',
+    'auth-contract-notActivated': '未获得合同授权',
 
-    '当前key不存在,不能执行更新操作': '当前key不存在,不能执行更新操作',
+    'policy-authorization-failed': '未获得策略授权',
 
-    '已上线的节点资源最少需要一个有效的授权策略': '已上线的节点资源最少需要一个有效的授权策略',
+    'auth-recontractable-failed': '资源未获得再签约授权',
 
-    '合同数据校验失败,缺失完整性': '合同数据校验失败,缺失完整性',
+    'auth-presentable-failed': '资源未获得零售授权',
 
-    '同一个资源只能选择一个策略或者合同': '同一个资源只能选择一个策略或者合同',
+    'auth-policy-authorizationObject-failed': '未获得策略身份授权',
 
-    '合同信息与资源信息或者节点信息不匹配': '合同信息与资源信息或者节点信息不匹配',
+    'user-entity-not-found': '未找到用户信息',
 
-    '授权方案%s不可用': '授权方案%s不可用',
+    'user-invalid': '未找到有效用户信息',
 
-    'resourceId与authSchemeId不匹配': 'resourceId与authSchemeId不匹配',
+    'jwt-signature-validate-failed': 'JWT签名校验失败',
 
-    '合同中存在无效的资源数据': '合同中存在无效的资源数据',
+    'jwt-format-validate-failed': 'JWT数据格式校验失败',
 
-    '授权树数据完整性校验失败': '授权树数据完整性校验失败',
+    'user-node-count-limit-error': '用户可创建的节点数量超出限制',
 
-    '未能找到需要更新的策略段': '未能找到需要更新的策略段',
+    'node-name-has-already-existed': '节点名已经存在',
 
-    '不能添加已经存在的策略段': '不能添加已经存在的策略段',
+    'node-domain-has-already-existed': '节点域名已经存在',
 
-    '未解决全部上抛的资源,不能上线资源': '未解决全部上抛的资源,不能上线资源',
+    'custom-store-key-has-already-existed': '当前key已经存在,不能重复创建',
 
-    '不存在有效的策略,不能上线资源': '不存在有效的策略,不能上线资源',
+    'presentable-release-repetition-create-error': '当前发行已经创建成节点资源,无法重复创建',
 
-    '资源的部分合同未获得授权': '资源的部分合同未获得授权',
+    'presentable-policy-offline-validate-error': '已上线的节点资源最少需要一个有效的授权策略',
 
-    '授权方案策略编译失败%s': '授权方案策略编译失败%s',
+    'presentable-update-resolve-release-invalid-error': '解决的发行中存在无效的数据',
 
-    '节点域名长度必须在$s个之间': '节点域名长度必须在%s个之间',
+    'presentable-resolve-release-integrity-validate-failed': 'presentable未全部解决所有上抛的发行',
 
-    '节点域名只能由英文字母,数字和 "-" 组成': '节点域名只能由英文字母,数字和 "-" 组成',
+    'release-policy-identity-authorization-failed': '待签约的发行策略身份对象校验不通过',
 
-    '节点域名不能以"-"结尾': '节点域名不能以"-"结尾',
-
-    '节点域名不能注册系统保留字段': '节点域名不能注册系统保留字段'
+    'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建'
 }
+
+
+
+

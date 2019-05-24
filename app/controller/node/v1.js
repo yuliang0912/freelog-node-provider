@@ -66,12 +66,19 @@ module.exports = class NodeController extends Controller {
         if (!ret) {
             throw new ArgumentError(msg)
         }
+
+        await this.nodeProvider.count({ownerUserId: ctx.request.userId}).then(nodeCount => {
+            if (nodeCount < 5) {
+                return
+            }
+            throw new ApplicationError(ctx.gettext('user-node-count-limit-error'), {nodeCount})
+        })
         const nodeList = await this.nodeProvider.find({$or: [{nodeName}, {nodeDomain}]})
         if (nodeList.some(x => x.nodeName === nodeName)) {
-            throw new ApplicationError(ctx.gettext('节点名已经存在'), {nodeName})
+            throw new ApplicationError(ctx.gettext('node-name-has-already-existed'), {nodeName})
         }
         if (nodeList.some(x => x.nodeDomain === nodeDomain)) {
-            throw new ApplicationError(ctx.gettext('节点域名已经存在'), {nodeDomain})
+            throw new ApplicationError(ctx.gettext('node-domain-has-already-existed'), {nodeDomain})
         }
 
         const nodeInfo = {
@@ -91,7 +98,7 @@ module.exports = class NodeController extends Controller {
         ctx.validate()
 
         await this.nodeProvider.findOne({nodeId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('节点信息未找到或者与身份信息不匹配'),
+            msg: ctx.gettext('params-validate-failed', 'nodeId'),
             property: 'ownerUserId'
         }))
 

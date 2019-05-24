@@ -140,7 +140,6 @@ module.exports = class PresentableController extends Controller {
         const nodeInfo = await this.nodeProvider.findOne({nodeId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             property: 'ownerUserId',
             msg: ctx.gettext('params-validate-failed', 'nodeId'),
-            data: {nodeId}
         }))
 
         await this.presentableProvider.findOne({'releaseInfo.releaseId': releaseId, nodeId}, 'id').then(exist => {
@@ -180,14 +179,16 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         if ([policyInfo, presentableName, userDefinedTags, resolveReleases, intro].every(x => x === undefined)) {
-            ctx.error({msg: ctx.gettext('params-required-validate-failed')})
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
         if (resolveReleases) {
             this._validateResolveReleasesParamFormat(resolveReleases)
         }
         if (policyInfo) {
             const result = new PresentablePolicyValidator().updateReleasePoliciesValidate(policyInfo)
-            result.errors.length && ctx.error({msg: ctx.gettext('参数%s格式校验失败', 'policyInfo'), data: result.errors})
+            if (result.errors.length) {
+                throw new ArgumentError(ctx.gettext('params-format-validate-failed'), {error: result.errors})
+            }
         }
 
         const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {

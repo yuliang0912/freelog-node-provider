@@ -30,7 +30,7 @@ module.exports = class PolicyTemplateController extends Controller {
 
         var dataList = []
         const totalItem = await this.policyTemplateProvider.count(condition)
-        if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
+        if (totalItem > (page - 1) * pageSize) {
             dataList = await this.policyTemplateProvider.findPageList(condition, page, pageSize)
         }
 

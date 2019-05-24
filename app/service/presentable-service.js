@@ -80,7 +80,7 @@ class PresentableSchemeService extends Service {
         if (policyInfo) {
             model.policies = this._policiesHandler(presentableInfo, policyInfo)
             if (presentableInfo.isOnline === 1 && !model.policies.some(x => x.status === 1)) {
-                throw new ApplicationError(ctx.gettext('已上线的节点资源最少需要一个有效的授权策略'))
+                throw new ApplicationError(ctx.gettext('presentable-policy-offline-validate-error'))
             }
         }
 
@@ -88,7 +88,7 @@ class PresentableSchemeService extends Service {
         if (!lodash.isEmpty(resolveReleases)) {
             const invalidResolveReleases = lodash.differenceBy(resolveReleases, presentableInfo.resolveReleases, x => x.releaseId)
             if (invalidResolveReleases.length) {
-                throw new ApplicationError(ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveReleases})
+                throw new ApplicationError(ctx.gettext('presentable-update-resolve-release-invalid-error'), {invalidResolveReleases})
             }
             model.resolveReleases = presentableInfo.toObject().resolveReleases
             for (let i = 0, j = resolveReleases.length; i < j; i++) {
@@ -220,7 +220,7 @@ class PresentableSchemeService extends Service {
 
         const untreatedReleases = lodash.differenceBy(allUntreatedReleases, resolveReleases, x => x.releaseId)
         if (untreatedReleases.length) {
-            throw new ApplicationError(ctx.gettext('resource-depend-resolve-integrity-validate-failed'), {untreatedReleases})
+            throw new ApplicationError(ctx.gettext('presentable-resolve-release-integrity-validate-failed'), {untreatedReleases})
         }
 
         const invalidResolveReleases = lodash.differenceBy(resolveReleases, allUntreatedReleases, x => x.releaseId)
@@ -320,7 +320,7 @@ class PresentableSchemeService extends Service {
         addPolicies && addPolicies.forEach(item => {
             let newPolicy = releasePolicyCompiler.compile(item.policyText, item.policyName)
             if (oldPolicyMap.has(newPolicy.policyId)) {
-                throw new ApplicationError(ctx.gettext('policy-create-duplicate-error'), item)
+                throw new ApplicationError(ctx.gettext('presentable-policy-create-duplicate-error'), item)
             }
             oldPolicyMap.set(newPolicy.policyId, newPolicy)
         })
