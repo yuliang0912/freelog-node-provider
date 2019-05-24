@@ -67,8 +67,7 @@ class PresentableSchemeService extends Service {
      */
     async updatePresentable({presentableInfo, policyInfo, presentableName, userDefinedTags, resolveReleases, intro}) {
 
-        const {ctx, app} = this
-        let model = {}
+        let model = {}, {ctx, app} = this
         if (lodash.isString(intro)) {
             model.intro = intro
         }
@@ -85,44 +84,37 @@ class PresentableSchemeService extends Service {
             }
         }
 
-        const changedResolveReleases = []
-        if (resolveReleases && resolveReleases.length) {
+        const beSignedContractReleases = []
+        if (!lodash.isEmpty(resolveReleases)) {
             const invalidResolveReleases = lodash.differenceBy(resolveReleases, presentableInfo.resolveReleases, x => x.releaseId)
             if (invalidResolveReleases.length) {
                 throw new ApplicationError(ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveReleases})
             }
-            const intrinsicResolveReleases = []
-            for (let i = 0, j = presentableInfo.resolveReleases.length; i < j; i++) {
-                const resolveRelease = presentableInfo.resolveReleases[i]
-                const newModel = resolveReleases.find(x => x.releaseId === resolveRelease.releaseId)
-                if (!newModel) {
-                    intrinsicResolveReleases.push(resolveRelease)
-                    continue
-                }
-                newModel.contracts.forEach(item => {
-                    var policyContractInfo = resolveRelease.contracts.find(x => x.policyId === item.policyId)
-                    if (policyContractInfo) {
-                        item.contractId = policyContractInfo.contractId
+            model.resolveReleases = presentableInfo.toObject().resolveReleases
+            for (let i = 0, j = resolveReleases.length; i < j; i++) {
+                let {releaseId, contracts} = resolveReleases[i]
+                let intrinsicResolve = model.resolveReleases.find(x => x.releaseId === releaseId)
+                for (let x = 0; x < contracts.length; x++) {
+                    let changedPolicy = contracts[x]
+                    let oldContractInfo = intrinsicResolve.contracts.find(x => x.policyId === changedPolicy.policyId)
+                    if (oldContractInfo) {
+                        changedPolicy.contractId = oldContractInfo.contractId
                     }
-                })
-                newModel.releaseName = resolveRelease.releaseName
-                changedResolveReleases.push(newModel)
+                }
+                if (contracts.some(x => !x.contractId)) {
+                    beSignedContractReleases.push(intrinsicResolve)
+                }
+                intrinsicResolve.contracts = contracts
             }
-
-            await this._validatePolicyIdentityAndSignAuth(presentableInfo.nodeId, changedResolveReleases, true)
-
-            model.resolveReleases = [...changedResolveReleases, ...intrinsicResolveReleases]
+            await this._validatePolicyIdentityAndSignAuth(presentableInfo.nodeId, beSignedContractReleases, true)
         }
 
-        const presentable = await this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true})
-
-        if (changedResolveReleases.length) {
-            this.batchSignReleaseContracts(presentableInfo.nodeId, changedResolveReleases).then(contracts => {
+        return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true}).then(presentable => {
+            beSignedContractReleases.length && this.batchSignReleaseContracts(presentableInfo.nodeId, beSignedContractReleases).then(contracts => {
                 app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
             })
-        }
-
-        return presentable
+            return presentable
+        })
     }
 
 
@@ -335,48 +327,6 @@ class PresentableSchemeService extends Service {
 
         return Array.from(oldPolicyMap.values())
     }
-
-    /**
-     * 批量获取presentable合同状态
-     * @param nodeId
-     * @param presentableIds
-     */
-    // async getPresentableContractState(nodeId, presentableIds) {
-    //
-    //     const {ctx} = this
-    //     const presentableMap = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}}, 'contracts')
-    //         .then(list => new Map(list.map(x => [x.presentableId, x.contracts])))
-    //
-    //     const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
-    //
-    //     var contractMap = new Map()
-    //     if (contractIds.length) {
-    //         contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
-    //             .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
-    //     }
-    //
-    //     const result = []
-    //     presentableIds.forEach(presentableId => {
-    //         const contracts = presentableMap.get(presentableId)
-    //         if (!contracts || !contracts.length) {
-    //             result.push({presentableId, status: 0})
-    //             return
-    //         }
-    //
-    //         let status = 1
-    //         for (let i = 0; i < contracts.length; i++) {
-    //             const contractInfo = contractMap.get(contracts[i].contractId)
-    //             if (!contractInfo || contractInfo.status !== 4) {
-    //                 status = 0
-    //                 break
-    //             }
-    //         }
-    //         result.push({presentableId, status})
-    //     })
-    //
-    //     return result
-    // }
-
 }
 
 module.exports = PresentableSchemeService

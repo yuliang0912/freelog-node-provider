@@ -147,9 +147,7 @@ module.exports = class PresentableController extends Controller {
             if (!exist) {
                 return
             }
-            throw new ApplicationError(ctx.gettext('presentable-release-repetition-create-error'), {
-                releaseId, nodeId
-            })
+            throw new ApplicationError(ctx.gettext('presentable-release-repetition-create-error'))
         })
 
         const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`)
@@ -167,6 +165,62 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * 更新presentable
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async update(ctx) {
+
+        const presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
+        const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
+        const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
+        const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
+        const resolveReleases = ctx.checkBody('resolveReleases').optional().isArray().value
+        const intro = ctx.checkBody('intro').optional().type('string').len(0, 500).value
+        ctx.validate()
+
+        if ([policyInfo, presentableName, userDefinedTags, resolveReleases, intro].every(x => x === undefined)) {
+            ctx.error({msg: ctx.gettext('params-required-validate-failed')})
+        }
+        if (resolveReleases) {
+            this._validateResolveReleasesParamFormat(resolveReleases)
+        }
+        if (policyInfo) {
+            const result = new PresentablePolicyValidator().updateReleasePoliciesValidate(policyInfo)
+            result.errors.length && ctx.error({msg: ctx.gettext('参数%s格式校验失败', 'policyInfo'), data: result.errors})
+        }
+
+        const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId')
+        }))
+
+        await ctx.service.presentableService.updatePresentable({
+            presentableInfo, policyInfo, presentableName, userDefinedTags, resolveReleases, intro
+        }).then(ctx.success)
+    }
+
+    /**
+     * 切换presentable上线状态(上线或下线)
+     * @returns {Promise<void>}
+     */
+    async switchOnlineState(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
+        const onlineState = ctx.checkBody("onlineState").exist().toInt().in([0, 1]).value
+        ctx.validate()
+
+        const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId')
+        }))
+
+        if (presentableInfo.isOnline === onlineState) {
+            return ctx.success(true)
+        }
+
+        await ctx.service.presentableService.switchPresentableOnlineState(presentableInfo, onlineState).then(ctx.success)
+    }
+
+    /**
      * @param ctx
      * @returns {Promise<void>}
      */
@@ -181,52 +235,13 @@ module.exports = class PresentableController extends Controller {
         }))
 
         const presentableAuthTreeInfo = await this.presentableAuthTreeProvider.findOne({presentableId})
+        const presentableBaseInfo = lodash.pick(presentableInfo, ['userId', 'presentableName', 'resolveReleases'])
+        const presentableAuthTreeBaseInfo = lodash.pick(presentableAuthTreeInfo, ['presentableId', 'nodeId', 'masterReleaseId', 'version'])
 
-        const result = lodash.pick(presentableAuthTreeInfo, ['presentableId', 'nodeId', 'masterReleaseId', 'version'])
-        result.userId = presentableInfo.userId
-        result.presentableName = presentableInfo.presentableName
-        result.nodeResolveReleases = presentableInfo.resolveReleases
-        result.schemeResolveReleases = presentableAuthTreeInfo.authTree
-
-        ctx.success(result)
-    }
-
-    /**
-     * 更新presentable
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async update(ctx) {
-
-        const presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
-        const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
-        const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
-        const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
-        const resolveReleases = ctx.checkBody('resolveReleases').optional().isArray().value
-        const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
-        ctx.validate()
-
-        if ([policyInfo, presentableName, userDefinedTags, resolveReleases, intro].every(x => x === undefined)) {
-            ctx.error({msg: ctx.gettext('缺少必要的参数')})
-        }
-        if (resolveReleases) {
-            this._validateResolveReleasesParamFormat(resolveReleases)
-        }
-        if (policyInfo) {
-            const result = new PresentablePolicyValidator().updateReleasePoliciesValidate(policyInfo)
-            result.errors.length && ctx.error({msg: ctx.gettext('参数%s格式校验失败', 'policyInfo'), data: result.errors})
-        }
-
-        const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'presentableId'),
-            data: {presentableId}
+        ctx.success(Object.assign(presentableBaseInfo, presentableAuthTreeBaseInfo, {
+            schemeResolveReleases: presentableAuthTreeInfo.authTree
         }))
-
-        await ctx.service.presentableService.updatePresentable({
-            presentableInfo, policyInfo, presentableName, userDefinedTags, resolveReleases, intro
-        }).then(ctx.success)
     }
-
 
     /**
      * 删除节点消费方案
@@ -234,30 +249,7 @@ module.exports = class PresentableController extends Controller {
      * @returns {Promise.<void>}
      */
     async destroy(ctx) {
-        throw new ApplicationError('接口已过期,presentable不允许删除')
-    }
-
-
-    /**
-     * 切换presentable上线状态(上线或下线)
-     * @returns {Promise<void>}
-     */
-    async switchOnlineState(ctx) {
-
-        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
-        const onlineState = ctx.checkBody("onlineState").exist().toInt().in([0, 1]).value
-        ctx.validate()
-
-        const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'presentableId'),
-            data: {presentableId}
-        }))
-
-        if (presentableInfo.isOnline === onlineState) {
-            return ctx.success(true)
-        }
-
-        await ctx.service.presentableService.switchPresentableOnlineState(presentableInfo, onlineState).then(ctx.success)
+        throw new ApplicationError('接口已过期')
     }
 
     /**
@@ -267,15 +259,16 @@ module.exports = class PresentableController extends Controller {
      */
     async releaseSubordinateNodes(ctx) {
 
-        const releaseId = ctx.checkQuery('releaseId').isReleaseId().value
-        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validate()
-
-        const condition = {
-            'releaseInfo.releaseId': releaseId, userId: ctx.request.userId
-        }
-
-        await this.presentableProvider.find(condition, projection.join(' ')).then(ctx.success)
+        throw new ApplicationError('接口已过期')
+        // const releaseId = ctx.checkQuery('releaseId').isReleaseId().value
+        // const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        // ctx.validate()
+        //
+        // const condition = {
+        //     'releaseInfo.releaseId': releaseId, userId: ctx.request.userId
+        // }
+        //
+        // await this.presentableProvider.find(condition, projection.join(' ')).then(ctx.success)
     }
 
     /**
@@ -286,8 +279,7 @@ module.exports = class PresentableController extends Controller {
      */
     async contractInfos(ctx) {
 
-        throw new ApplicationError('接口终止提供功能')
-
+        throw new ApplicationError('接口已过期')
         // const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(1).value
         // const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         // ctx.validate()
@@ -332,14 +324,7 @@ module.exports = class PresentableController extends Controller {
      * @returns {Promise<void>}
      */
     async getPresentableContractState(ctx) {
-
-        throw new ApplicationError('此接口不在提供')
-
-        // const nodeId = ctx.checkQuery("nodeId").exist().toInt().value
-        // const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 20).value
-        // ctx.validate()
-        //
-        // await ctx.service.presentableService.getPresentableContractState(nodeId, presentableIds).then(ctx.success)
+        throw new ApplicationError('接口已过期')
     }
 
     /**
