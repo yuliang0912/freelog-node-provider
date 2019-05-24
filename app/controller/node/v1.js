@@ -23,13 +23,13 @@ module.exports = class NodeController extends Controller {
         const page = ctx.checkQuery("page").optional().default(1).gt(0).toInt().value
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const status = ctx.checkQuery("status").optional().default(0).in([0, 1, 2]).toInt().value
-        const ownerUserId = ctx.checkQuery("ownerUserId").optional().gt(1).toInt().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        const isSelf = ctx.checkQuery("isSelf").optional().default(1).in([0, 1]).toInt().value
         ctx.validate()
 
         const condition = {status}
-        if (ownerUserId) {
-            condition.ownerUserId = ownerUserId
+        if (isSelf) {
+            condition.ownerUserId = ctx.request.userId
         }
 
         var dataList = []
@@ -58,15 +58,14 @@ module.exports = class NodeController extends Controller {
      */
     async create(ctx) {
 
-        const nodeName = ctx.checkBody('nodeName').notBlank().type('string').trim().len(4, 20).toLowercase().value
+        const nodeName = ctx.checkBody('nodeName').exist().type('string').trim().len(4, 20).value
         const nodeDomain = ctx.checkBody('nodeDomain').exist().type('string').isNodeDomain().toLowercase().value
         ctx.validate()
 
-        const checkResult = ctx.helper.checkNodeDomain(nodeDomain)
-        if (checkResult !== true) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'nodeDomain'), {checkResult})
+        const {ret, msg} = ctx.helper.checkNodeDomain(nodeDomain)
+        if (!ret) {
+            throw new ArgumentError(msg)
         }
-
         const nodeList = await this.nodeProvider.find({$or: [{nodeName}, {nodeDomain}]})
         if (nodeList.some(x => x.nodeName === nodeName)) {
             throw new ApplicationError(ctx.gettext('节点名已经存在'), {nodeName})

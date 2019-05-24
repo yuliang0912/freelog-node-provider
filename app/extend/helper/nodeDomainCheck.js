@@ -1,10 +1,4 @@
-/**
- * Created by yuliang on 2017/10/16.
- */
-
 'use strict'
-
-const systemRetain = ['freelog', 'service', 'node', 'nodes', 'admin', 'self', 'public', 'system', 'user', 'group', 'copyright', 'platform', 'china', 'xijinping', 'company', 'maozedong', 'dengxiaop', 'zhouenlai', 'likeqiang', 'jiangzeming', 'hujingtao']
 
 module.exports = {
 
@@ -15,25 +9,13 @@ module.exports = {
      */
     checkNodeDomain(ctx, nodeDomain) {
 
-        nodeDomain = nodeDomain.trim()
-
-        if (nodeDomain.length < 4 || nodeDomain.length > 24) {
-            return ctx.gettext('节点域名长度必须在$s个之间', '4-24')
+        const result = {ret: true, msg: ''}
+        if (this.systemRetain.some(item => item.toLocaleLowerCase() === nodeDomain.toLocaleLowerCase())) {
+            result.ret = false
+            result.msg = ctx.gettext('节点域名不能注册系统保留字段')
         }
-
-        if (!/^[a-zA-Z0-9-]{4,24}$/.test(nodeDomain)) {
-            return ctx.gettext('节点域名只能由英文字母,数字和 "-" 组成')
-        }
-
-        if (nodeDomain.endsWith('-')) {
-            return ctx.gettext('节点域名不能以"-"结尾')
-        }
-
-        if (systemRetain.some(item => item.toLocaleLowerCase() === nodeDomain.toLocaleLowerCase())) {
-            return ctx.gettext('节点域名不能注册系统保留字段')
-        }
-
-        return true
+        
+        return result
     },
 
     /**
@@ -41,6 +23,6 @@ module.exports = {
      * @returns {[string,string]}
      */
     get systemRetain() {
-        return systemRetain
+        return ['freelog', 'free', 'democracy', 'service', 'node', 'nodes', 'admin', 'self', 'public', 'system', 'user', 'group', 'copyright', 'platform', 'china', 'xijinping', 'company', 'maozedong', 'dengxiaop', 'zhouenlai', 'likeqiang', 'jiangzeming', 'hujingtao']
     }
 }

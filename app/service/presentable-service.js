@@ -186,47 +186,6 @@ class PresentableSchemeService extends Service {
     }
 
     /**
-     * 批量获取presentable合同状态
-     * @param nodeId
-     * @param presentableIds
-     */
-    async getPresentableContractState(nodeId, presentableIds) {
-
-        const {ctx} = this
-        const presentableMap = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}}, 'contracts')
-            .then(list => new Map(list.map(x => [x.presentableId, x.contracts])))
-
-        const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
-
-        var contractMap = new Map()
-        if (contractIds.length) {
-            contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
-                .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
-        }
-
-        const result = []
-        presentableIds.forEach(presentableId => {
-            const contracts = presentableMap.get(presentableId)
-            if (!contracts || !contracts.length) {
-                result.push({presentableId, status: 0})
-                return
-            }
-
-            let status = 1
-            for (let i = 0; i < contracts.length; i++) {
-                const contractInfo = contractMap.get(contracts[i].contractId)
-                if (!contractInfo || contractInfo.status !== 4) {
-                    status = 0
-                    break
-                }
-            }
-            result.push({presentableId, status})
-        })
-
-        return result
-    }
-
-    /**
      * 批量签约
      * @param nodeId
      * @param targetId
@@ -376,6 +335,48 @@ class PresentableSchemeService extends Service {
 
         return Array.from(oldPolicyMap.values())
     }
+
+    /**
+     * 批量获取presentable合同状态
+     * @param nodeId
+     * @param presentableIds
+     */
+    // async getPresentableContractState(nodeId, presentableIds) {
+    //
+    //     const {ctx} = this
+    //     const presentableMap = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}}, 'contracts')
+    //         .then(list => new Map(list.map(x => [x.presentableId, x.contracts])))
+    //
+    //     const contractIds = lodash.flatten(Array.from(presentableMap.values())).map(x => x.contractId)
+    //
+    //     var contractMap = new Map()
+    //     if (contractIds.length) {
+    //         contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}&projection=status`)
+    //             .then(contractList => new Map(contractList.map(x => [x.contractId, x])))
+    //     }
+    //
+    //     const result = []
+    //     presentableIds.forEach(presentableId => {
+    //         const contracts = presentableMap.get(presentableId)
+    //         if (!contracts || !contracts.length) {
+    //             result.push({presentableId, status: 0})
+    //             return
+    //         }
+    //
+    //         let status = 1
+    //         for (let i = 0; i < contracts.length; i++) {
+    //             const contractInfo = contractMap.get(contracts[i].contractId)
+    //             if (!contractInfo || contractInfo.status !== 4) {
+    //                 status = 0
+    //                 break
+    //             }
+    //         }
+    //         result.push({presentableId, status})
+    //     })
+    //
+    //     return result
+    // }
+
 }
 
 module.exports = PresentableSchemeService

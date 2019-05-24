@@ -76,18 +76,26 @@ module.exports = class PresentableController extends Controller {
 
         const userId = ctx.checkQuery('userId').optional().toInt().gt(0).value
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value
-        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate()
 
-        const condition = {
-            _id: {$in: presentableIds}
-        }
+        const condition = {}
         if (userId) {
             condition.userId = userId
         }
         if (nodeId) {
             condition.nodeId = nodeId
+        }
+        if (presentableIds) {
+            condition._id = {$in: presentableIds}
+        }
+        if (releaseIds) {
+            condition['releaseInfo.releaseId'] = {$in: releaseIds}
+        }
+        if (!releaseIds && !presentableIds) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,releaseIds'))
         }
 
         await this.presentableProvider.find(condition, projection.join(' ')).then(ctx.success)
@@ -229,14 +237,15 @@ module.exports = class PresentableController extends Controller {
         throw new ApplicationError('接口已过期,presentable不允许删除')
     }
 
+
     /**
-     * 上线或下线
+     * 切换presentable上线状态(上线或下线)
      * @returns {Promise<void>}
      */
-    async onlineOrOffline(ctx) {
+    async switchOnlineState(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
-        const isOnline = ctx.checkBody("isOnline").exist().toInt().in([0, 1]).value
+        const onlineState = ctx.checkBody("onlineState").exist().toInt().in([0, 1]).value
         ctx.validate()
 
         const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
@@ -244,11 +253,11 @@ module.exports = class PresentableController extends Controller {
             data: {presentableId}
         }))
 
-        if (presentableInfo.isOnline === isOnline) {
+        if (presentableInfo.isOnline === onlineState) {
             return ctx.success(true)
         }
 
-        await ctx.service.presentableService.switchPresentableOnlineState(presentableInfo, isOnline).then(ctx.success)
+        await ctx.service.presentableService.switchPresentableOnlineState(presentableInfo, onlineState).then(ctx.success)
     }
 
     /**
@@ -279,42 +288,42 @@ module.exports = class PresentableController extends Controller {
 
         throw new ApplicationError('接口终止提供功能')
 
-        const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(1).value
-        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
-        ctx.validate()
-
-        var presentableContractMap = new Map()
-        const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
-
-        const contractIds = lodash.chain(presentableInfos).map(x => x.resolveReleases).flattenDeep().map(x => x.contracts)
-            .flattenDeep().map(x => x.contractId).uniq().value()
-
-        if (contractIds.length) {
-            presentableContractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
-                .then(contractInfos => new Map(contractInfos.map(x => [x.contractId, x])))
-        }
-
-        const results = []
-        for (let i = 0, j = presentableInfos.length; i < j; i++) {
-            let presentable = presentableInfos[i]
-            let model = lodash.pick(presentable, ['presentableId', 'presentableName', 'status', 'isOnline', 'createDate'])
-            model.resolveReleases = presentable.resolveReleases.map(release => Object({
-                releaseId: release.releaseId,
-                releaseName: release.releaseName,
-                isMasterRelease: release.releaseId === presentable.releaseInfo.releaseId,
-                contracts: release.contracts.map(item => {
-                    let contractInfo = presentableContractMap.get(item.contractId)
-                    return {
-                        contractId: item.contractId,
-                        policyId: item.policyId,
-                        status: contractInfo.status
-                    }
-                })
-            }))
-            results.push(model)
-        }
-
-        ctx.success(results)
+        // const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(1).value
+        // const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        // ctx.validate()
+        //
+        // var presentableContractMap = new Map()
+        // const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
+        //
+        // const contractIds = lodash.chain(presentableInfos).map(x => x.resolveReleases).flattenDeep().map(x => x.contracts)
+        //     .flattenDeep().map(x => x.contractId).uniq().value()
+        //
+        // if (contractIds.length) {
+        //     presentableContractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
+        //         .then(contractInfos => new Map(contractInfos.map(x => [x.contractId, x])))
+        // }
+        //
+        // const results = []
+        // for (let i = 0, j = presentableInfos.length; i < j; i++) {
+        //     let presentable = presentableInfos[i]
+        //     let model = lodash.pick(presentable, ['presentableId', 'presentableName', 'status', 'isOnline', 'createDate'])
+        //     model.resolveReleases = presentable.resolveReleases.map(release => Object({
+        //         releaseId: release.releaseId,
+        //         releaseName: release.releaseName,
+        //         isMasterRelease: release.releaseId === presentable.releaseInfo.releaseId,
+        //         contracts: release.contracts.map(item => {
+        //             let contractInfo = presentableContractMap.get(item.contractId)
+        //             return {
+        //                 contractId: item.contractId,
+        //                 policyId: item.policyId,
+        //                 status: contractInfo.status
+        //             }
+        //         })
+        //     }))
+        //     results.push(model)
+        // }
+        //
+        // ctx.success(results)
     }
 
     /**
@@ -324,11 +333,13 @@ module.exports = class PresentableController extends Controller {
      */
     async getPresentableContractState(ctx) {
 
-        const nodeId = ctx.checkQuery("nodeId").exist().toInt().value
-        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 20).value
-        ctx.validate()
+        throw new ApplicationError('此接口不在提供')
 
-        await ctx.service.presentableService.getPresentableContractState(nodeId, presentableIds).then(ctx.success)
+        // const nodeId = ctx.checkQuery("nodeId").exist().toInt().value
+        // const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 20).value
+        // ctx.validate()
+        //
+        // await ctx.service.presentableService.getPresentableContractState(nodeId, presentableIds).then(ctx.success)
     }
 
     /**
