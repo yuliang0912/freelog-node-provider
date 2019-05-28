@@ -94,17 +94,19 @@ class PresentableSchemeService extends Service {
             for (let i = 0, j = resolveReleases.length; i < j; i++) {
                 let {releaseId, contracts} = resolveReleases[i]
                 let intrinsicResolve = model.resolveReleases.find(x => x.releaseId === releaseId)
-                for (let x = 0; x < contracts.length; x++) {
-                    let changedPolicy = contracts[x]
-                    let oldContractInfo = intrinsicResolve.contracts.find(x => x.policyId === changedPolicy.policyId)
-                    if (oldContractInfo) {
-                        changedPolicy.contractId = oldContractInfo.contractId
-                    }
-                }
-                if (contracts.some(x => !x.contractId)) {
-                    beSignedContractReleases.push(intrinsicResolve)
-                }
+                //考虑到现有的合约有过期的可能,所以先注释此段代码
+                // for (let x = 0; x < contracts.length; x++) {
+                //     let changedPolicy = contracts[x]
+                //     let oldContractInfo = intrinsicResolve.contracts.find(x => x.policyId === changedPolicy.policyId)
+                //     if (oldContractInfo) {
+                //         changedPolicy.contractId = oldContractInfo.contractId
+                //     }
+                // }
+                // if (contracts.some(x => !x.contractId)) {
+                //     beSignedContractReleases.push(intrinsicResolve)
+                // }
                 intrinsicResolve.contracts = contracts
+                beSignedContractReleases.push(intrinsicResolve)
             }
             await this._validatePolicyIdentityAndSignAuth(presentableInfo.nodeId, beSignedContractReleases, true)
         }
@@ -262,9 +264,18 @@ class PresentableSchemeService extends Service {
         }
 
         const {ctx} = this
-        const releasePolicies = lodash.chain(resolveReleases).map(x => x.contracts.map(m => `${x.releaseId}-${m.policyId}`)).flattenDeep().value()
+        //const releasePolicies = lodash.chain(resolveReleases).map(x => x.contracts.map(m => `${x.releaseId}-${m.policyId}`)).flattenDeep().value()
 
-        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?nodeId=${nodeId}&releasePolicies=${releasePolicies.toString()}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
+        const releaseIds = [], policyIds = []
+        for (let i = 0, j = resolveReleases.length; i < j; i++) {
+            let {releaseId, contracts} = resolveReleases
+            for (let x = 0; x < contracts.length; x++) {
+                releaseIds.push(releaseId)
+                policyIds.push(contracts[x].policyId)
+            }
+        }
+
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?nodeId=${nodeId}&releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
         const identityAuthFailedPolices = authResults.filter(x => x.status !== 1)
         if (identityAuthFailedPolices.length) {
             throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})

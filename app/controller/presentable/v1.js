@@ -222,7 +222,7 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
-     * @param ctx
+     * presentable授权链基础信息(包含节点和发行所关联的合约以及层级关系)
      * @returns {Promise<void>}
      */
     async presentableAuthChainInfo(ctx) {
