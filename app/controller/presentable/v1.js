@@ -245,6 +245,33 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * presentable授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async presentableAuthTree(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+        ctx.validate()
+
+        await this.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success)
+    }
+
+    /**
+     * 批量获取presentable授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async batchPresentableAuthTrees(ctx) {
+
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        ctx.validate()
+
+        await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}}).then(ctx.success)
+
+    }
+
+    /**
      * 删除节点消费方案
      * @param ctx
      * @returns {Promise.<void>}

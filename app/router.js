@@ -10,12 +10,13 @@ module.exports = app => {
 
     //get
     router.get('node-list', '/v1/nodes/list', node.v1.list)
-    router.get('presentable-list', '/v1/presentables/list', presentable.v1.list)
     router.get('node-detail', '/v1/nodes/detail', node.v1.detail)
-    router.get('presentable-auth-tree', '/v1/presentables/:presentableId/authChainInfo', presentable.v1.presentableAuthChainInfo)
+    router.get('presentable-list', '/v1/presentables/list', presentable.v1.list)
+    router.get('presentable-auth-tree', '/v1/presentables/:presentableId/authTree', presentable.v1.presentableAuthTree)
+    router.get('presentable-auth-chain', '/v1/presentables/:presentableId/authChainInfo', presentable.v1.presentableAuthChainInfo)
     router.get('release-subordinate-node', '/v1/presentables/releaseSubordinateNodes', presentable.v1.releaseSubordinateNodes)
-    //此接口已终止提供
-    router.get('presentable-resolve-release-contracts', '/v1/presentables/contractInfos', presentable.v1.contractInfos)
+    router.get('batch-get-presentable-auth-tree', '/v1/presentables/authTrees', presentable.v1.batchPresentableAuthTrees)
+
 
     //post
     router.post('create-or-update-custom-store', '/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)

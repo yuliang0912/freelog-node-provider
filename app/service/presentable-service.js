@@ -264,8 +264,6 @@ class PresentableSchemeService extends Service {
         }
 
         const {ctx} = this
-        //const releasePolicies = lodash.chain(resolveReleases).map(x => x.contracts.map(m => `${x.releaseId}-${m.policyId}`)).flattenDeep().value()
-
         const releaseIds = [], policyIds = []
         for (let i = 0, j = resolveReleases.length; i < j; i++) {
             let {releaseId, contracts} = resolveReleases
@@ -275,8 +273,8 @@ class PresentableSchemeService extends Service {
             }
         }
 
-        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?nodeId=${nodeId}&releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
-        const identityAuthFailedPolices = authResults.filter(x => x.status !== 1)
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releases/batchPolicyIdentityAuthentication?releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
+        const identityAuthFailedPolices = authResults.filter(x => x.authenticationResult < 1)
         if (identityAuthFailedPolices.length) {
             throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})
         }
