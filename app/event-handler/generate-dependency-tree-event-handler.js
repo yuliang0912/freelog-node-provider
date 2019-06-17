@@ -37,8 +37,8 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
         const {presentableId, nodeId, releaseInfo} = presentableInfo
         const {releaseId, version} = releaseInfo
         const dependencyTree = await this._generateRecursionDependencyTree(presentableInfo, dependencyTreeInfo.dependencyTree)
-        const presentableResolveReleases = this._getPresentableResolveReleases(presentableInfo, dependencyTree[0])
         const releaseSchemeMap = await this._getReleaseSchemeMap(dependencyTreeInfo, presentableInfo.userId)
+        const presentableResolveReleases = this._getPresentableResolveReleases(presentableInfo, dependencyTree[0])
 
         /**
          * 如果某个具体发行在依赖中实际没有使用,即使上抛签约了.也不在授权树中验证合同的有效性

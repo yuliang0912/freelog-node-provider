@@ -266,7 +266,7 @@ class PresentableSchemeService extends Service {
         const {ctx} = this
         const releaseIds = [], policyIds = []
         for (let i = 0, j = resolveReleases.length; i < j; i++) {
-            let {releaseId, contracts} = resolveReleases
+            let {releaseId, contracts} = resolveReleases[i]
             for (let x = 0; x < contracts.length; x++) {
                 releaseIds.push(releaseId)
                 policyIds.push(contracts[x].policyId)
