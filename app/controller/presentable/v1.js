@@ -39,6 +39,7 @@ module.exports = class PresentableController extends Controller {
         const asc = ctx.checkQuery("asc").optional().default(0).in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
+        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validate()
 
         const condition = {nodeId}
@@ -64,6 +65,36 @@ module.exports = class PresentableController extends Controller {
         if (totalItem > (page - 1) * pageSize) {
             presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
         }
+        if (!presentableList.length || !isLoadingResourceInfo) {
+            return ctx.success({page, pageSize, totalItem, dataList: presentableList})
+        }
+
+        const allReleaseIds = lodash.chain(presentableList).map(x => x.releaseInfo.releaseId).uniq().value()
+        const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${allReleaseIds}&projection=resourceVersions`)
+            .then(releases => new Map(releases.map(({releaseId, resourceVersions}) => [releaseId, resourceVersions])))
+
+        const presentableMap = new Map(), resourceIds = []
+        presentableList.forEach(({presentableId, releaseInfo}) => {
+            let releaseResourceVersions = releaseMap.get(releaseInfo.releaseId)
+            let {resourceId} = releaseResourceVersions.find(x => x.version === releaseInfo.version) || {}
+            if (resourceId) {
+                presentableMap.set(presentableId, resourceId)
+                resourceIds.push(resourceId)
+            }
+        })
+
+        const resourceMap = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${resourceIds.toString()}`)
+            .then(resources => new Map(resources.map(resourceInfo => [resourceInfo.resourceId, resourceInfo])))
+
+        const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'previewImages', 'createDate', 'updateDate']
+
+        presentableList = presentableList.map(presentableInfo => {
+            let model = presentableInfo.toObject()
+            let resourceId = presentableMap.get(presentableInfo.presentableId)
+            model.resourceInfo = lodash.pick(resourceMap.get(resourceId), resourceFiled)
+            return model
+        })
+
         ctx.success({page, pageSize, totalItem, dataList: presentableList})
     }
 
@@ -281,16 +312,6 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}}).then(ctx.success)
-
-    }
-
-    /**
-     * 删除节点消费方案
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
-    async destroy(ctx) {
-        throw new ApplicationError('接口已过期')
     }
 
     /**
