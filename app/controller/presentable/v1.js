@@ -109,9 +109,22 @@ module.exports = class PresentableController extends Controller {
     async show(ctx) {
 
         const presentableId = ctx.checkParams("id").isPresentableId().value
+        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validate()
 
-        await this.presentableProvider.findById(presentableId).then(ctx.success)
+        var presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullObjectCheck(model))
+
+        const {releaseId, version} = presentableInfo.releaseInfo || {}
+
+        if (presentableInfo && isLoadingResourceInfo) {
+            const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'previewImages', 'createDate', 'updateDate']
+            await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}/versions/${version}/resource`).then(resourceInfo => {
+                presentableInfo = presentableInfo.toObject()
+                presentableInfo.resourceInfo = lodash.pick(resourceInfo, resourceFiled)
+            })
+        }
+
+        ctx.success(presentableInfo)
     }
 
     /**
@@ -277,81 +290,6 @@ module.exports = class PresentableController extends Controller {
      * @returns {Promise.<void>}
      */
     async destroy(ctx) {
-        throw new ApplicationError('接口已过期')
-    }
-
-    /**
-     * 发行所挂载的节点
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async releaseSubordinateNodes(ctx) {
-
-        throw new ApplicationError('接口已过期')
-        // const releaseId = ctx.checkQuery('releaseId').isReleaseId().value
-        // const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        // ctx.validate()
-        //
-        // const condition = {
-        //     'releaseInfo.releaseId': releaseId, userId: ctx.request.userId
-        // }
-        //
-        // await this.presentableProvider.find(condition, projection.join(' ')).then(ctx.success)
-    }
-
-    /**
-     * presentable下的节点合同状况
-     * 此接口考虑终止提供.前端可以调用presentable/list和contracts/list即可组合完成.
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async contractInfos(ctx) {
-
-        throw new ApplicationError('接口已过期')
-        // const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(1).value
-        // const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
-        // ctx.validate()
-        //
-        // var presentableContractMap = new Map()
-        // const presentableInfos = await this.presentableProvider.find({nodeId, _id: {$in: presentableIds}})
-        //
-        // const contractIds = lodash.chain(presentableInfos).map(x => x.resolveReleases).flattenDeep().map(x => x.contracts)
-        //     .flattenDeep().map(x => x.contractId).uniq().value()
-        //
-        // if (contractIds.length) {
-        //     presentableContractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
-        //         .then(contractInfos => new Map(contractInfos.map(x => [x.contractId, x])))
-        // }
-        //
-        // const results = []
-        // for (let i = 0, j = presentableInfos.length; i < j; i++) {
-        //     let presentable = presentableInfos[i]
-        //     let model = lodash.pick(presentable, ['presentableId', 'presentableName', 'status', 'isOnline', 'createDate'])
-        //     model.resolveReleases = presentable.resolveReleases.map(release => Object({
-        //         releaseId: release.releaseId,
-        //         releaseName: release.releaseName,
-        //         isMasterRelease: release.releaseId === presentable.releaseInfo.releaseId,
-        //         contracts: release.contracts.map(item => {
-        //             let contractInfo = presentableContractMap.get(item.contractId)
-        //             return {
-        //                 contractId: item.contractId,
-        //                 policyId: item.policyId,
-        //                 status: contractInfo.status
-        //             }
-        //         })
-        //     }))
-        //     results.push(model)
-        // }
-        //
-        // ctx.success(results)
-    }
-
-    /**
-     * 批量获取presentable合同状态
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async getPresentableContractState(ctx) {
         throw new ApplicationError('接口已过期')
     }
 

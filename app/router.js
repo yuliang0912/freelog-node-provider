@@ -14,7 +14,6 @@ module.exports = app => {
     router.get('presentable-list', '/v1/presentables/list', presentable.v1.list)
     router.get('presentable-auth-tree', '/v1/presentables/:presentableId/authTree', presentable.v1.presentableAuthTree)
     router.get('presentable-auth-chain', '/v1/presentables/:presentableId/authChainInfo', presentable.v1.presentableAuthChainInfo)
-    router.get('release-subordinate-node', '/v1/presentables/releaseSubordinateNodes', presentable.v1.releaseSubordinateNodes)
     router.get('batch-get-presentable-auth-tree', '/v1/presentables/authTrees', presentable.v1.batchPresentableAuthTrees)
 
 
@@ -22,8 +21,6 @@ module.exports = app => {
     router.post('create-or-update-custom-store', '/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
     //put
     router.put('switch-presentable-online-state', '/v1/presentables/:presentableId/switchOnlineState', presentable.v1.switchOnlineState)
-
-    router.get('/v1/presentables/getPresentableContractState', presentable.v1.getPresentableContractState)
 
     //restful api
     router.resources('node-info', '/v1/nodes', node.v1)
