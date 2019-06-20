@@ -13,6 +13,7 @@ module.exports = app => {
         releaseSchemeId: {type: String, required: true},
         deep: {type: Number, required: true},
         parentReleaseId: {type: String, required: false},
+        parentReleaseVersion: {type: String, required: false},
     }, {_id: false})
 
     const PresentableVersionLockSchema = new mongoose.Schema({

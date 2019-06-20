@@ -30,13 +30,15 @@ module.exports = class PresentableLockVersionEventHandler {
         const releaseDependencyTree = await app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&isContainRootNode=1&omitFields=`, {}, identityInfo)
 
         const flattenDependencyTree = [], releaseIds = [], versions = []
-        const recursion = (children, parentReleaseId = '', deep = 1) => {
+        const recursion = (children, parentReleaseId = '', parentReleaseVersion, deep = 1) => {
             for (let i = 0, j = children.length; i < j; i++) {
                 let model = children[i]
                 versions.push(model.version)
                 releaseIds.push(model.releaseId)
-                flattenDependencyTree.push(Object.assign(lodash.omit(model, ['dependencies']), {deep, parentReleaseId}))
-                recursion(model.dependencies, model.releaseId, deep + 1)
+                flattenDependencyTree.push(Object.assign(lodash.omit(model, ['dependencies']), {
+                    deep, parentReleaseId, parentReleaseVersion
+                }))
+                recursion(model.dependencies, model.releaseId, model.version, deep + 1)
             }
         }
         recursion(releaseDependencyTree)

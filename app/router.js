@@ -12,6 +12,8 @@ module.exports = app => {
     router.get('node-list', '/v1/nodes/list', node.v1.list)
     router.get('node-detail', '/v1/nodes/detail', node.v1.detail)
     router.get('presentable-list', '/v1/presentables/list', presentable.v1.list)
+    router.get('presentable-dependency-release', '/v1/presentables/:presentableId/subDependencies', presentable.v1.presentableSubDependReleases)
+    router.get('presentable-dependencyTree-tree', '/v1/presentables/:presentableId/dependencyTree', presentable.v1.presentableDependencyTree)
     router.get('presentable-auth-tree', '/v1/presentables/:presentableId/authTree', presentable.v1.presentableAuthTree)
     router.get('presentable-auth-chain', '/v1/presentables/:presentableId/authChainInfo', presentable.v1.presentableAuthChainInfo)
     router.get('batch-get-presentable-auth-tree', '/v1/presentables/authTrees', presentable.v1.batchPresentableAuthTrees)

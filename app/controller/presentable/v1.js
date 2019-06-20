@@ -19,6 +19,7 @@ module.exports = class PresentableController extends Controller {
         this.nodeProvider = app.dal.nodeProvider
         this.presentableProvider = app.dal.presentableProvider
         this.presentableAuthTreeProvider = app.dal.presentableAuthTreeProvider
+        this.presentableDependencyTreeProvider = app.dal.presentableDependencyTreeProvider
     }
 
     /**
@@ -138,7 +139,6 @@ module.exports = class PresentableController extends Controller {
      * @returns {Promise.<void>}
      */
     async show(ctx) {
-
         const presentableId = ctx.checkParams("id").isPresentableId().value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validate()
@@ -299,6 +299,53 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         await this.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success)
+    }
+
+    /**
+     * presentable依赖树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async presentableDependencyTree(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        ctx.validate()
+
+        const condition = {presentableId}
+        if (version) {
+            condition.version = version
+        }
+
+        await this.presentableDependencyTreeProvider.findOne(condition, null, {sort: {updateDate: -1}}).then(ctx.success)
+    }
+
+    /**
+     * 获取presentable依赖树中指定发行的依赖项
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async presentableSubDependReleases(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+        const subReleaseId = ctx.checkQuery('subReleaseId').optional().isReleaseId().value
+        const subReleaseVersion = ctx.checkQuery('subReleaseVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subReleaseVersion')).value
+        ctx.validate()
+
+        if (subReleaseId && !subReleaseVersion) {
+            throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'subReleaseId,subReleaseVersion'))
+        }
+
+        let dependencyReleases = []
+        const {masterReleaseId, version, dependencyTree} = await this.presentableDependencyTreeProvider.findOne({presentableId}, null, {sort: {updateDate: -1}})
+        if (!subReleaseId) {
+            dependencyReleases = dependencyTree.filter(x => x.deep === 2 && x.parentReleaseId === masterReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === version))
+        } else {
+            const {deep} = dependencyTree.find(x => x.releaseId === subReleaseId && x.version === subReleaseVersion) || []
+            dependencyReleases = dependencyTree.filter(x => x.deep === deep + 1 && x.parentReleaseId === subReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === subReleaseVersion))
+        }
+
+        ctx.success(dependencyReleases)
     }
 
     /**

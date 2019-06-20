@@ -80,13 +80,15 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
             userInfo: {userId: presentableInfo.userId}
         }).then(list => new Map(list.map(x => [x.releaseId, x.baseUpcastReleases])))
 
-        const recursion = (parentReleaseId = '', deep = 0) => {
-            return dependencyTree.filter(x => x.parentReleaseId === parentReleaseId && x.deep === deep + 1).map(item => {
+        const recursion = (parentReleaseId = '', parentReleaseVersion = '', deep = 0) => {
+
+            return dependencyTree.filter(x => x.parentReleaseId === parentReleaseId && x.deep === deep + 1 &&
+                (!x.parentReleaseVersion || x.parentReleaseVersion && x.parentReleaseVersion === parentReleaseVersion)).map(item => {
                 let {releaseId, releaseName, version, deep, releaseSchemeId} = item
                 return {
                     releaseId, releaseName, version, deep, releaseSchemeId,
                     baseUpcastReleases: releaseBaseUpcastMap.get(releaseId),
-                    dependencies: recursion(releaseId, deep)
+                    dependencies: recursion(releaseId, version, deep)
                 }
             })
         }
