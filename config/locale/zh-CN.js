@@ -62,13 +62,17 @@ module.exports = {
 
     'presentable-policy-offline-validate-error': '已上线的节点资源最少需要一个有效的授权策略',
 
+    'presentable-online-policy-validate-error': '最少需要一个有效的授权策略才允许上线',
+
     'presentable-update-resolve-release-invalid-error': '解决的发行中存在无效的数据',
 
     'presentable-resolve-release-integrity-validate-failed': 'presentable未全部解决所有上抛的发行',
 
     'release-policy-identity-authorization-failed': '待签约的发行策略身份对象校验不通过',
 
-    'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建'
+    'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建',
+
+    'presentable-online-auth-validate-error': '授权链路未通过,不能上线'
 }
 
 

@@ -172,11 +172,11 @@ class PresentableSchemeService extends Service {
     async switchPresentableOnlineState(presentable, isOnline) {
 
         //TODO:上线逻辑检查(1.包含策略 2:节点资源授权链路需要通过)
+        if (isOnline) {
+            await this._onlineCheck(presentable)
+        }
 
         return presentable.updateOne({isOnline}).then((model) => Boolean(model.ok))
-
-        //presentable.isOnline = isOnline
-        //this.app.emit(presentableOnlineOrOfflineEvent, presentable)
     }
 
     /**
@@ -335,6 +335,27 @@ class PresentableSchemeService extends Service {
         })
 
         return Array.from(oldPolicyMap.values())
+    }
+
+    /**
+     * 上线检测
+     * @param presentable
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _onlineCheck(presentable) {
+
+        const {ctx} = this
+        const {presentableId, policies} = presentable
+        if (!policies.some(x => x.status === 1)) {
+            throw new ApplicationError(ctx.gettext('presentable-online-policy-validate-error'))
+        }
+
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/presentables/batchNodeAndReleaseSideAuth?presentableIds=${presentableId}`)
+        const presentableAuthResult = authResults.find(x => x.presentableId === presentableId)
+        if (!presentableAuthResult || !presentableAuthResult.authResult.isAuth) {
+            throw new ApplicationError(ctx.gettext('presentable-online-auth-validate-error'))
+        }
     }
 }
 

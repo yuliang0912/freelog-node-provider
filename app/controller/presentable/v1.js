@@ -32,6 +32,7 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkQuery("nodeId").exist().isInt().toInt().value
         const userId = ctx.checkQuery("userId").optional().isInt().gt(0).toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value
         const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).value
         const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value
@@ -44,8 +45,11 @@ module.exports = class PresentableController extends Controller {
         ctx.validate()
 
         const condition = {nodeId}
-        if (resourceType) {
+        if (resourceType) { //resourceType 与 omitResourceType互斥
             condition['releaseInfo.resourceType'] = resourceType
+        }
+        else if (omitResourceType) {
+            condition['releaseInfo.resourceType'] = {$ne: resourceType}
         }
         if (tags) {
             condition.userDefinedTags = {$in: tags}
@@ -139,6 +143,7 @@ module.exports = class PresentableController extends Controller {
      * @returns {Promise.<void>}
      */
     async show(ctx) {
+
         const presentableId = ctx.checkParams("id").isPresentableId().value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validate()
