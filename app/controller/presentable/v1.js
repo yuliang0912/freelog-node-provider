@@ -49,7 +49,7 @@ module.exports = class PresentableController extends Controller {
             condition['releaseInfo.resourceType'] = resourceType
         }
         else if (omitResourceType) {
-            condition['releaseInfo.resourceType'] = {$ne: resourceType}
+            condition['releaseInfo.resourceType'] = {$ne: omitResourceType}
         }
         if (tags) {
             condition.userDefinedTags = {$in: tags}
