@@ -58,7 +58,7 @@ module.exports = class NodeController extends Controller {
      */
     async create(ctx) {
 
-        const nodeName = ctx.checkBody('nodeName').exist().type('string').trim().len(4, 20).value
+        const nodeName = ctx.checkBody('nodeName').exist().type('string').isNodeName().value
         const nodeDomain = ctx.checkBody('nodeDomain').exist().type('string').isNodeDomain().toLowercase().value
         ctx.validate()
 
@@ -125,7 +125,7 @@ module.exports = class NodeController extends Controller {
     async detail(ctx) {
 
         const nodeDomain = ctx.checkQuery('nodeDomain').optional().isNodeDomain().toLowercase().value
-        const nodeName = ctx.checkQuery('nodeName').optional().notBlank().type('string').trim().len(4, 20).value
+        const nodeName = ctx.checkQuery('nodeName').optional().isNodeName().value
         ctx.validate(false)
 
         if (nodeDomain === undefined && nodeName === undefined) {
