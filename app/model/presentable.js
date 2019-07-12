@@ -55,7 +55,7 @@ module.exports = app => {
         intro: {type: String, default: ''},//presentable简介
         isOnline: {type: Number, default: 0, required: true}, //是否上线 0:否 1:是
         contractStatus: {type: Number, default: 0, required: true}, //合同状态 0:签约中 1:签约成功 2:签约失败 11:全部激活 12:未全部激活
-        status: {type: Number, default: 0, required: true}, //状态 0:初始态  1:合约已全部签订  2:策略已存在
+        status: {type: Number, default: 0, required: true}, //状态 0:初始态 1:节点侧合约授权失败 2:发行侧合约授权失败 4:节点侧合约授权通过 8:发行侧合约授权通过
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

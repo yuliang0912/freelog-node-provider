@@ -70,34 +70,42 @@ module.exports = class PresentableController extends Controller {
         if (totalItem > (page - 1) * pageSize) {
             presentableList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
         }
-        if (!presentableList.length || !isLoadingResourceInfo) {
+        if (!presentableList.length) {
             return ctx.success({page, pageSize, totalItem, dataList: presentableList})
         }
 
         const allReleaseIds = lodash.chain(presentableList).map(x => x.releaseInfo.releaseId).uniq().value()
-        const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${allReleaseIds}&projection=resourceVersions`)
-            .then(releases => new Map(releases.map(({releaseId, resourceVersions}) => [releaseId, resourceVersions])))
+        const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${allReleaseIds}&projection=resourceVersions,previewImages`)
+            .then(releases => new Map(releases.map(x => [x.releaseId, x])))
 
         const presentableMap = new Map(), resourceIds = []
-        presentableList.forEach(({presentableId, releaseInfo}) => {
-            let releaseResourceVersions = releaseMap.get(releaseInfo.releaseId)
-            let {resourceId} = releaseResourceVersions.find(x => x.version === releaseInfo.version) || {}
+        presentableList = presentableList.map(presentableInfo => {
+
+            let model = presentableInfo.toObject()
+            let {presentableId, releaseInfo} = model
+            let {previewImages, resourceVersions} = releaseMap.get(releaseInfo.releaseId)
+
+            let {resourceId} = resourceVersions.find(x => x.version === releaseInfo.version) || {}
+            releaseInfo.previewImages = previewImages
             if (resourceId) {
                 presentableMap.set(presentableId, resourceId)
                 resourceIds.push(resourceId)
             }
+            return model
         })
+
+        if (!isLoadingResourceInfo) {
+            return ctx.success({page, pageSize, totalItem, dataList: presentableList})
+        }
 
         const resourceMap = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfo}/list?resourceIds=${resourceIds.toString()}`)
             .then(resources => new Map(resources.map(resourceInfo => [resourceInfo.resourceId, resourceInfo])))
 
         const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'previewImages', 'createDate', 'updateDate']
 
-        presentableList = presentableList.map(presentableInfo => {
-            let model = presentableInfo.toObject()
+        presentableList.forEach(presentableInfo => {
             let resourceId = presentableMap.get(presentableInfo.presentableId)
-            model.resourceInfo = lodash.pick(resourceMap.get(resourceId), resourceFiled)
-            return model
+            presentableInfo.resourceInfo = lodash.pick(resourceMap.get(resourceId), resourceFiled)
         })
 
         ctx.success({page, pageSize, totalItem, dataList: presentableList})
