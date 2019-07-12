@@ -76,15 +76,14 @@ module.exports = class PresentableController extends Controller {
 
         const allReleaseIds = lodash.chain(presentableList).map(x => x.releaseInfo.releaseId).uniq().value()
         const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${allReleaseIds}&projection=resourceVersions,previewImages`)
-            .then(releases => new Map(releases.map(x => [x.releaseId, x])))
+            .then(dataList => new Map(dataList.map(x => [x.releaseId, x])))
 
         const presentableMap = new Map(), resourceIds = []
         presentableList = presentableList.map(presentableInfo => {
-
+            
             let model = presentableInfo.toObject()
             let {presentableId, releaseInfo} = model
-            let {previewImages, resourceVersions} = releaseMap.get(releaseInfo.releaseId)
-
+            let {previewImages = [], resourceVersions = []} = releaseMap.get(releaseInfo.releaseId)
             let {resourceId} = resourceVersions.find(x => x.version === releaseInfo.version) || {}
             releaseInfo.previewImages = previewImages
             if (resourceId) {
