@@ -80,7 +80,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableMap = new Map(), resourceIds = []
         presentableList = presentableList.map(presentableInfo => {
-            
+
             let model = presentableInfo.toObject()
             let {presentableId, releaseInfo} = model
             let {previewImages = [], resourceVersions = []} = releaseMap.get(releaseInfo.releaseId)
@@ -155,14 +155,20 @@ module.exports = class PresentableController extends Controller {
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validate()
 
-        var presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullObjectCheck(model))
+        var presentableInfo = await this.presentableProvider.findById(presentableId)
+        if (!presentableInfo) {
+            return ctx.success(presentableInfo)
+        }
 
         const {releaseId, version} = presentableInfo.releaseInfo || {}
+        await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`).then(releaseInfo => {
+            presentableInfo = presentableInfo.toObject()
+            presentableInfo.releaseInfo.previewImages = releaseInfo.previewImages
+        })
 
-        if (presentableInfo && isLoadingResourceInfo) {
+        if (isLoadingResourceInfo) {
             const resourceFiled = ['userId', 'userName', 'resourceName', 'resourceType', 'meta', 'previewImages', 'createDate', 'updateDate']
             await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}/versions/${version}/resource`).then(resourceInfo => {
-                presentableInfo = presentableInfo.toObject()
                 presentableInfo.resourceInfo = lodash.pick(resourceInfo, resourceFiled)
             })
         }
