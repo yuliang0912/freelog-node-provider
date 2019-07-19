@@ -12,11 +12,10 @@ module.exports = class PresentableSignContractEventHandler {
 
     /**
      * 签约合同事件处理
-     * @param eventName
      * @param args
      * @returns {Promise<void>}
      */
-    async handle(eventName, {presentableId, contracts}) {
+    async handle({presentableId, contracts}) {
 
         if (lodash.isEmpty(contracts)) {
             return

@@ -19,11 +19,10 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
 
     /**
      * 依赖树生成事件(根据依赖树生成授权树)
-     * @param eventName
      * @param presentableInfo
      * @returns {Promise<void>}
      */
-    async handle(eventName, presentableInfo, dependencyTreeInfo) {
+    async handle(presentableInfo, dependencyTreeInfo) {
         return this.generateAuthTreeHandle(presentableInfo, dependencyTreeInfo)
     }
 

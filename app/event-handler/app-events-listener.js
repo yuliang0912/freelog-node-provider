@@ -6,6 +6,7 @@ const PresentableEvents = require('../enum/presentable-events')
 const PresentableLockVersionEventHandler = require('./presentable-lock-version-event-handler')
 const PresentableSignContractEventHandler = require('./presentable-sign-contract-event-handler')
 const GeneratePresentableDependencyTreeEventHandler = require('./generate-dependency-tree-event-handler')
+const PresentableSwitchOnlineStateEventHandler = require('./presentable-switch-online-state-event-handler')
 
 module.exports = class AppEventsListener {
 
@@ -23,6 +24,7 @@ module.exports = class AppEventsListener {
         this.registerEventAndHandler(PresentableEvents.signReleaseContractEvent)
         this.registerEventAndHandler(PresentableEvents.presentableVersionLockEvent)
         this.registerEventAndHandler(PresentableEvents.generatePresentableDependencyTreeEvent)
+        this.registerEventAndHandler(PresentableEvents.presentableSwitchOnlineStateEvent)
     }
 
     /**
@@ -36,7 +38,7 @@ module.exports = class AppEventsListener {
             throw new ApplicationError(`尚未注册事件${eventName}的处理者`)
         }
 
-        this.app.on(eventName, (...args) => eventHandler.handle(eventName, ...args))
+        this.app.on(eventName, (...args) => eventHandler.handle(...args))
     }
 
     /**
@@ -48,6 +50,7 @@ module.exports = class AppEventsListener {
 
         patrun.add({event: PresentableEvents.signReleaseContractEvent.toString()}, new PresentableSignContractEventHandler(app))
         patrun.add({event: PresentableEvents.presentableVersionLockEvent.toString()}, new PresentableLockVersionEventHandler(app))
+        patrun.add({event: PresentableEvents.presentableSwitchOnlineStateEvent.toString()}, new PresentableSwitchOnlineStateEventHandler(app))
         patrun.add({event: PresentableEvents.generatePresentableDependencyTreeEvent.toString()}, new GeneratePresentableDependencyTreeEventHandler(app))
 
     }

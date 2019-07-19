@@ -3,8 +3,8 @@
 const lodash = require('lodash')
 const Service = require('egg').Service
 const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
-const {signReleaseContractEvent, presentableVersionLockEvent} = require('../enum/presentable-events')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
+const {signReleaseContractEvent, presentableVersionLockEvent, presentableSwitchOnlineStateEvent} = require('../enum/presentable-events')
 
 class PresentableSchemeService extends Service {
 
@@ -176,7 +176,10 @@ class PresentableSchemeService extends Service {
             await this._onlineCheck(presentable)
         }
 
-        return presentable.updateOne({isOnline}).then((model) => Boolean(model.ok))
+        return this.presentableProvider.findOneAndUpdate({_id: presentable.presentableId}, {isOnline}, {new: true}).then(model => {
+            this.app.emit(presentableSwitchOnlineStateEvent, model)
+            return true
+        })
     }
 
     /**

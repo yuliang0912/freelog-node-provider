@@ -16,4 +16,10 @@ module.exports = {
      * 生成presentable依赖树事件(锁定版本)
      */
     generatePresentableDependencyTreeEvent: Symbol('node#generatePresentableDependencyTreeEvent'),
+
+    /**
+     * presentable上下线状态
+     */
+    presentableSwitchOnlineStateEvent: Symbol('node#presentableSwitchOnlineStateEvent'),
+
 }

@@ -16,11 +16,10 @@ module.exports = class PresentableLockVersionEventHandler {
 
     /**
      * presentable事件处理入口
-     * @param eventName
-     * @param args
+     * @param presentableInfo
      * @returns {Promise<void>}
      */
-    async handle(eventName, presentableInfo) {
+    async handle(presentableInfo) {
 
         const {app} = this
         const {presentableId, nodeId, releaseInfo, userId} = presentableInfo
