@@ -112,7 +112,7 @@ class PresentableSchemeService extends Service {
         }
 
         return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true}).then(presentable => {
-            beSignedContractReleases.length && this.batchSignReleaseContracts(presentableInfo.nodeId, beSignedContractReleases).then(contracts => {
+            beSignedContractReleases.length && this.batchSignReleaseContracts(presentableInfo.nodeId, presentableInfo.id, beSignedContractReleases).then(contracts => {
                 app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
             })
             return presentable
