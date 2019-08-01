@@ -345,7 +345,16 @@ module.exports = class PresentableController extends Controller {
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
         ctx.validate()
 
-        await this.presentableAuthTreeProvider.findOne({presentableId}).then(ctx.success)
+        const presentableAuthTree = await this.presentableAuthTreeProvider.findOne({presentableId})
+
+        if (!presentableAuthTree) {
+            const presentableInfo = await this.presentableProvider.findById(presentableId)
+            if (presentableInfo) { //如果生成失败,则获取的时候再次构建
+                ctx.app.emit(presentableVersionLockEvent, presentableInfo)
+            }
+        }
+
+        ctx.success(presentableAuthTree)
     }
 
     /**
@@ -405,7 +414,18 @@ module.exports = class PresentableController extends Controller {
         const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         ctx.validate()
 
-        await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}}).then(ctx.success)
+        const presentableAuthTrees = await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}})
+
+        const losePresentableIds = lodash.differenceWith(presentableIds, presentableAuthTrees, (x, y) => x === y.presentableId)
+        if (losePresentableIds.length) {
+            this.presentableProvider.find({_id: {$in: losePresentableIds}}).then(list => {
+                list.forEach(presentableInfo => {
+                    ctx.app.emit(presentableVersionLockEvent, presentableInfo)
+                })
+            })
+        }
+
+        ctx.success(presentableAuthTrees)
     }
 
     /**
