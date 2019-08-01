@@ -4,7 +4,7 @@ const lodash = require('lodash')
 const Service = require('egg').Service
 const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
-const {signReleaseContractEvent, presentableVersionLockEvent, presentableSwitchOnlineStateEvent} = require('../enum/presentable-events')
+const {presentableVersionLockEvent, presentableSwitchOnlineStateEvent} = require('../enum/presentable-events')
 
 class PresentableSchemeService extends Service {
 
@@ -44,15 +44,11 @@ class PresentableSchemeService extends Service {
             model.policies = this._compilePolicies(policies)
         }
 
-        return this.presentableProvider.create(model).tap(presentableInfo => {
-            app.emit(presentableVersionLockEvent, presentableInfo)
-            this.batchSignReleaseContracts(nodeInfo.nodeId, presentableInfo.id, resolveReleases).then(contracts => {
-                app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
-            }).catch(error => {
-                console.error('presentable签约失败', error)
-                presentableInfo.updateOne({contractStatus: 2}).exec()
-            })
-        })
+        const presentableInfo = await this.presentableProvider.create(model)
+
+        app.emit(presentableVersionLockEvent, presentableInfo)
+
+        return this.batchSignReleaseContracts(presentableInfo)
     }
 
     /**
@@ -90,35 +86,22 @@ class PresentableSchemeService extends Service {
             if (invalidResolveReleases.length) {
                 throw new ApplicationError(ctx.gettext('presentable-update-resolve-release-invalid-error'), {invalidResolveReleases})
             }
-            model.resolveReleases = presentableInfo.toObject().resolveReleases
+            const updatedResolveReleases = presentableInfo.toObject().resolveReleases
             for (let i = 0, j = resolveReleases.length; i < j; i++) {
                 let {releaseId, contracts} = resolveReleases[i]
-                let intrinsicResolve = model.resolveReleases.find(x => x.releaseId === releaseId)
-                //考虑到现有的合约有过期的可能,所以先注释此段代码
-                // for (let x = 0; x < contracts.length; x++) {
-                //     let changedPolicy = contracts[x]
-                //     let oldContractInfo = intrinsicResolve.contracts.find(x => x.policyId === changedPolicy.policyId)
-                //     if (oldContractInfo) {
-                //         changedPolicy.contractId = oldContractInfo.contractId
-                //     }
-                // }
-                // if (contracts.some(x => !x.contractId)) {
-                //     beSignedContractReleases.push(intrinsicResolve)
-                // }
+                let intrinsicResolve = updatedResolveReleases.find(x => x.releaseId === releaseId)
                 intrinsicResolve.contracts = contracts
                 beSignedContractReleases.push(intrinsicResolve)
             }
             await this._validatePolicyIdentityAndSignAuth(presentableInfo.nodeId, beSignedContractReleases, true)
         }
 
-        return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true}).then(presentable => {
-            beSignedContractReleases.length && this.batchSignReleaseContracts(presentableInfo.nodeId, presentableInfo.id, beSignedContractReleases).then(contracts => {
-                app.emit(signReleaseContractEvent, {presentableId: presentableInfo.id, contracts})
-            })
-            return presentable
-        })
+        const presentable = await this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true})
+        if (beSignedContractReleases.length) {
+            return this.batchSignReleaseContracts(presentable, beSignedContractReleases)
+        }
+        return presentable
     }
-
 
     /**
      * 生成授权树
@@ -189,27 +172,48 @@ class PresentableSchemeService extends Service {
      * @param resolveReleases
      * @returns {Promise<*>}
      */
-    async batchSignReleaseContracts(nodeId, presentableId, resolveReleases) {
+    async batchSignReleaseContracts(presentableInfo, changedResolveRelease = []) {
 
         const {ctx, app, userId} = this
-        if (!resolveReleases.length) {
+        const {nodeId, presentableId, resolveReleases} = presentableInfo
+
+        const beSignReleases = changedResolveRelease.length ? changedResolveRelease : resolveReleases
+        if (!beSignReleases.length) {
             return []
         }
 
-        const batchSignReleaseContractParams = {
-            partyTwoId: nodeId,
-            targetId: presentableId,
-            partyTwoUserId: userId,
-            contractType: app.contractType.ResourceToNode,
-            signReleases: resolveReleases.map(item => Object({
-                releaseId: item.releaseId,
-                policyIds: item.contracts.map(x => x.policyId)
-            }))
-        }
-
-        return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
-            method: 'post', contentType: 'json', data: batchSignReleaseContractParams
+        const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
+            method: 'post', contentType: 'json', data: {
+                partyTwoId: nodeId,
+                targetId: presentableId,
+                partyTwoUserId: userId,
+                contractType: app.contractType.ResourceToNode,
+                signReleases: beSignReleases.map(item => Object({
+                    releaseId: item.releaseId,
+                    policyIds: item.contracts.map(x => x.policyId)
+                }))
+            }
         })
+
+        const contractMap = new Map(contracts.map(x => [`${x.partyOne}_${x.policyId}`, x]))
+
+        const updatedResolveReleases = resolveReleases.map(resolveRelease => {
+            let changedResolveRelease = beSignReleases.find(x => x.releaseId === resolveRelease.releaseId)
+            if (changedResolveRelease) {
+                resolveRelease.contracts = changedResolveRelease.contracts.map(contractInfo => {
+                    let signedContractInfo = contractMap.get(`${changedResolveRelease.releaseId}_${contractInfo.policyId}`)
+                    if (signedContractInfo) {
+                        contractInfo.contractId = signedContractInfo.contractId
+                    }
+                    return contractInfo
+                })
+            }
+            return resolveRelease
+        })
+
+        return this.presentableProvider.findOneAndUpdate({_id: presentableId}, {
+            resolveReleases: updatedResolveReleases, contractStatus: 2
+        }, {new: true})
     }
 
     /**
