@@ -11,6 +11,7 @@ const Controller = require('egg').Controller
 const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
 const PresentablePolicyValidator = require('../../extend/json-schema/presentable-policy-validator')
 const PresentableResolveReleaseValidator = require('../../extend/json-schema/presentable-resolve-release-validator')
+const {presentableVersionLockEvent} = require('../../enum/presentable-events')
 
 module.exports = class PresentableController extends Controller {
 
@@ -281,6 +282,34 @@ module.exports = class PresentableController extends Controller {
         }
 
         await ctx.service.presentableService.switchPresentableOnlineState(presentableInfo, onlineState).then(ctx.success)
+    }
+
+    /**
+     * 切换presentable版本
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async switchPresentableVersion(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
+        const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        ctx.validate()
+
+        const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId'),
+        }))
+
+        const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${presentableInfo.releaseInfo.releaseId}`)
+        if (!releaseInfo.resourceVersions.some(x => x.version === version)) {
+            throw new ApplicationError(ctx.gettext('params-validate-failed', 'version'), {version})
+        }
+
+        await presentableInfo.updateOne({'releaseInfo.version': version}).then(() => {
+            presentableInfo.releaseInfo.version = version
+            ctx.app.emit(presentableVersionLockEvent, presentableInfo)
+        })
+
+        ctx.success(true)
     }
 
     /**

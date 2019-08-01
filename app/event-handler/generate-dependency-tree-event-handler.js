@@ -57,7 +57,9 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
             masterReleaseId: releaseId, authTree: authTreeNodes
         }
 
-        return this.presentableAuthTreeProvider.findOneAndUpdate({presentableId}, authTreeInfo).then(model => {
+        return this.presentableAuthTreeProvider.findOneAndUpdate({presentableId}, {
+            version, authTree: authTreeNodes
+        }).then(model => {
             return model || this.presentableAuthTreeProvider.create(authTreeInfo)
         }).catch(error => {
             console.log('生成授权树失败', presentableId, version, error)

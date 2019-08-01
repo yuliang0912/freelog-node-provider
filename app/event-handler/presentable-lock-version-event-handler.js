@@ -58,8 +58,12 @@ module.exports = class PresentableLockVersionEventHandler {
             nodeId, presentableId, version, masterReleaseId: releaseId, dependencyTree: flattenDependencyTree
         }
 
-        return this.presentableDependencyTreeProvider.create(presentableDependencyTree).tap(model => {
-            app.emit(generatePresentableDependencyTreeEvent, presentableInfo, model)
+        const dependTree = this.presentableDependencyTreeProvider.findOneAndUpdate({
+            presentableId, version
+        }, {dependencyTree: flattenDependencyTree}, {new: true}).tap(model => {
+            return model || this.presentableDependencyTreeProvider.create(presentableDependencyTree)
         })
+
+        app.emit(generatePresentableDependencyTreeEvent, presentableInfo, dependTree)
     }
 }

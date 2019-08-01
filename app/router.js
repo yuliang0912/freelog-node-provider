@@ -22,6 +22,7 @@ module.exports = app => {
     //post
     router.post('create-or-update-custom-store', '/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
     //put
+    router.put('switch-presentable-version', '/v1/presentables/:presentableId/switchPresentableVersion', presentable.v1.switchPresentableVersion)
     router.put('switch-presentable-online-state', '/v1/presentables/:presentableId/switchOnlineState', presentable.v1.switchOnlineState)
 
     //restful api
