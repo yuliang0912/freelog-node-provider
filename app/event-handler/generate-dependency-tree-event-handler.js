@@ -59,7 +59,7 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
 
         return this.presentableAuthTreeProvider.findOneAndUpdate({presentableId}, {
             version, authTree: authTreeNodes
-        }).then(model => {
+        }, {new: true}).then(model => {
             return model || this.presentableAuthTreeProvider.create(authTreeInfo)
         }).catch(error => {
             console.log('生成授权树失败', presentableId, version, error)
