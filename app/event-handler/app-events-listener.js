@@ -38,7 +38,9 @@ module.exports = class AppEventsListener {
             throw new ApplicationError(`尚未注册事件${eventName}的处理者`)
         }
 
-        this.app.on(eventName, (...args) => eventHandler.handle(...args))
+        this.app.on(eventName, (...args) => eventHandler.handle(...args).catch(err => {
+            console.log(...args, eventName, err)
+        }))
     }
 
     /**

@@ -72,14 +72,19 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
      * @returns {Promise<void>}
      */
     async sendPresentableVersionChangedEventToMQ(presentableInfo, presentableAuthTreeInfo, isCreated = false) {
+
         if (isCreated) {
             this.app.rabbitClient.publish(Object.assign({}, PresentableCreatedEvent, {
                 body: {presentableInfo, presentableAuthTreeInfo}
-            }))
+            })).then(() => {
+                console.log('发送创建presentable事件')
+            }).catch(console.error)
         } else {
             this.app.rabbitClient.publish(Object.assign({}, PresentableVersionLockedEvent, {
                 body: {presentableAuthTreeInfo}
-            }))
+            })).then(() => {
+                console.log('发送presentable切换版本事件')
+            }).catch(console.error)
         }
     }
 
