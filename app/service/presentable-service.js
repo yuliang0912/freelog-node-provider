@@ -5,6 +5,7 @@ const Service = require('egg').Service
 const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
 const {presentableVersionLockEvent, presentableSwitchOnlineStateEvent} = require('../enum/presentable-events')
+const {PresentableBindContractEvent} = require('../enum/rabbit-mq-publish-event')
 
 class PresentableSchemeService extends Service {
 
@@ -46,9 +47,10 @@ class PresentableSchemeService extends Service {
 
         const presentableInfo = await this.presentableProvider.create(model)
 
-        app.emit(presentableVersionLockEvent, presentableInfo)
-
-        return this.batchSignReleaseContracts(presentableInfo)
+        return this.batchSignReleaseContracts(presentableInfo).then(model => {
+            app.emit(presentableVersionLockEvent, model)
+            return model
+        })
     }
 
     /**
@@ -98,7 +100,12 @@ class PresentableSchemeService extends Service {
 
         const presentable = await this.presentableProvider.findOneAndUpdate({_id: presentableInfo.id}, model, {new: true})
         if (beSignedContractReleases.length) {
-            return this.batchSignReleaseContracts(presentable, beSignedContractReleases)
+            return this.batchSignReleaseContracts(presentable, beSignedContractReleases).then(model => {
+                app.rabbitClient.publish(Object.assign({}, PresentableBindContractEvent, {
+                    body: {presentableInfo: model}
+                }))
+                return model
+            })
         }
         return presentable
     }
@@ -185,7 +192,6 @@ class PresentableSchemeService extends Service {
         const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
             method: 'post', contentType: 'json', data: {
                 partyTwoId: nodeId,
-                targetId: presentableId,
                 partyTwoUserId: userId,
                 contractType: app.contractType.ResourceToNode,
                 signReleases: beSignReleases.map(item => Object({

@@ -22,4 +22,8 @@ module.exports = {
      */
     presentableSwitchOnlineStateEvent: Symbol('node#presentableSwitchOnlineStateEvent'),
 
+    /**
+     * presentable授权结果发生变更事件
+     */
+    presentableAuthChangedEvent: Symbol('node#presentableAuthChangedEvent')
 }

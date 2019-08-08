@@ -2,7 +2,7 @@
 
 const Patrun = require('patrun')
 const rabbit = require('../extend/helper/rabbit_mq_client')
-const {presentableOnlineAuthEvent} = require('../enum/presentable-events')
+const {presentableAuthChangedEvent} = require('../enum/presentable-events')
 
 module.exports = class RabbitMessageQueueEventHandler {
 
@@ -19,7 +19,7 @@ module.exports = class RabbitMessageQueueEventHandler {
     subscribe() {
         new rabbit(this.app.config.rabbitMq).connect().then(client => {
             const handlerFunc = this.handleMessage.bind(this)
-            client.subscribe('node#presentable-event-receive-queue', handlerFunc)
+            client.subscribe('node#presentable-auth-changed-queue', handlerFunc)
         }).catch(console.error)
     }
 
@@ -55,12 +55,10 @@ module.exports = class RabbitMessageQueueEventHandler {
 
         const {patrun, app} = this
 
-        //支付中心支付订单状态变更事件
         patrun.add({
-            routingKey: 'presentable.onlineAuth.event',
-            eventName: 'presentableOnlineAuthEvent'
+            routingKey: 'auth.presentable.authStatus.changed', eventName: 'presentableAuthChangedEvent'
         }, ({message}) => {
-            app.emit(presentableOnlineAuthEvent, message)
+            app.emit(presentableAuthChangedEvent, message)
         })
     }
 }

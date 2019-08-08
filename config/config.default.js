@@ -60,12 +60,12 @@ module.exports = app => {
             },
             queues: [
                 {
-                    name: 'node#presentable-event-receive-queue',
+                    name: 'node#presentable-auth-changed-queue',
                     options: {autoDelete: false, durable: true},
                     routingKeys: [
                         {
                             exchange: 'freelog-contract-exchange',
-                            routingKey: 'presentable.onlineAuth.event'
+                            routingKey: 'auth.presentable.authStatus.changed'
                         }
                     ]
                 },

@@ -1,6 +1,7 @@
 'use strict'
 
 const lodash = require('lodash')
+const {PresentableCreatedEvent, PresentableVersionLockedEvent} = require('../enum/rabbit-mq-publish-event')
 
 module.exports = class GeneratePresentableDependencyTreeEventHandler {
 
@@ -9,12 +10,6 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
         this.presentableProvider = app.dal.presentableProvider
         this.presentableAuthTreeProvider = app.dal.presentableAuthTreeProvider
         this.presentableDependencyTreeProvider = app.dal.presentableDependencyTreeProvider
-    }
-
-    static get registry() {
-        return {
-            eventName: ""
-        }
     }
 
     /**
@@ -57,13 +52,35 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
             masterReleaseId: releaseId, authTree: authTreeNodes
         }
 
-        return this.presentableAuthTreeProvider.findOneAndUpdate({presentableId}, {
+        let isCreated = true
+        const presentableAuthTreeInfo = await this.presentableAuthTreeProvider.findOneAndUpdate({presentableId}, {
             version, authTree: authTreeNodes
         }, {new: true}).then(model => {
+            if (model) {
+                isCreated = false
+            }
             return model || this.presentableAuthTreeProvider.create(authTreeInfo)
         }).catch(error => {
             console.log('生成授权树失败', presentableId, version, error)
         })
+
+        await this.sendPresentableVersionChangedEventToMQ(presentableInfo, presentableAuthTreeInfo, isCreated)
+    }
+
+    /**
+     * 发送创建presentable事件到mq
+     * @returns {Promise<void>}
+     */
+    async sendPresentableVersionChangedEventToMQ(presentableInfo, presentableAuthTreeInfo, isCreated = false) {
+        if (isCreated) {
+            this.app.rabbitClient.publish(Object.assign({}, PresentableCreatedEvent, {
+                body: {presentableInfo, presentableAuthTreeInfo}
+            }))
+        } else {
+            this.app.rabbitClient.publish(Object.assign({}, PresentableVersionLockedEvent, {
+                body: {presentableAuthTreeInfo}
+            }))
+        }
     }
 
     /**
