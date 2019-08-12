@@ -102,7 +102,7 @@ class PresentableSchemeService extends Service {
         if (beSignedContractReleases.length) {
             return this.batchSignReleaseContracts(presentable, beSignedContractReleases).then(model => {
                 app.rabbitClient.publish(Object.assign({}, PresentableBindContractEvent, {
-                    body: {presentableInfo: model}
+                    body: model
                 }))
                 return model
             })
@@ -186,7 +186,7 @@ class PresentableSchemeService extends Service {
 
         const beSignReleases = changedResolveRelease.length ? changedResolveRelease : resolveReleases
         if (!beSignReleases.length) {
-            return []
+            return presentableInfo
         }
 
         const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
