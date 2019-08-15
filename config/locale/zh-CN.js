@@ -68,7 +68,7 @@ module.exports = {
 
     'presentable-resolve-release-integrity-validate-failed': 'presentable未全部解决所有上抛的发行',
 
-    'release-policy-identity-authorization-failed': '待签约的发行策略身份对象校验不通过',
+    'release-policy-identity-authorization-failed': '待签约的发行策略未启用或身份对象校验不通过',
 
     'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建',
 

@@ -286,7 +286,7 @@ class PresentableSchemeService extends Service {
             }
         }
 
-        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releases/batchPolicyIdentityAuthentication?releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releases/batchPolicyIdentityAuthentication?nodeId=${nodeId}&&releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
         const identityAuthFailedPolices = authResults.filter(x => x.authenticationResult < 1)
         if (identityAuthFailedPolices.length) {
             throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})
