@@ -128,7 +128,7 @@ module.exports = class NodeController extends Controller {
         const nodeDomain = ctx.checkQuery('nodeDomain').optional().isNodeDomain().toLowercase().value
         const nodeName = ctx.checkQuery('nodeName').optional().isNodeName().value
 
-        console.log(JSON.stringify(ctx.request.identityInfo)
+        console.log(JSON.stringify(ctx.request.identityInfo))
 
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
