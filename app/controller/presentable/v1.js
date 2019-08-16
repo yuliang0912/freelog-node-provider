@@ -45,7 +45,7 @@ module.exports = class PresentableController extends Controller {
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
 
-        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+        ctx.validateParams()
 
         const condition = {nodeId}
         if (resourceType) { //resourceType 与 omitResourceType互斥
@@ -125,7 +125,7 @@ module.exports = class PresentableController extends Controller {
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+        ctx.validateParams()
 
         const condition = {}
         if (userId) {
@@ -156,7 +156,8 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("id").isPresentableId().value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
-        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+        ctx.validateParams()
+        ctx.validateParams()
 
         var presentableInfo = await this.presentableProvider.findById(presentableId)
         if (!presentableInfo) {
