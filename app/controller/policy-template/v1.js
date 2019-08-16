@@ -2,6 +2,7 @@
 
 const Controller = require('egg').Controller;
 const {ArgumentError} = require('egg-freelog-base/error')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class PolicyTemplateController extends Controller {
 
@@ -21,7 +22,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         const templateType = ctx.checkQuery("templateType").exist().toInt().in([1, 2]).value
         const isShare = ctx.checkQuery('isShare').default(0).toInt().in([0, 1]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const condition = {templateType, isShare, status: 0}
         if (!isShare) {
@@ -48,7 +49,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const template = ctx.checkBody('template').exist().isBase64().decodeBase64().len(1, 3000).value
         const templateType = ctx.checkBody('templateType').toInt().in([1, 2]).value
         const isShare = ctx.checkBody('isShare').optional().toInt().in([0, 1]).default(0).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.policyTemplateProvider.create({
             name, template, templateType, isShare,
@@ -64,7 +65,7 @@ module.exports = class PolicyTemplateController extends Controller {
     async show(ctx) {
 
         const id = ctx.checkParams("id").isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.policyTemplateProvider.findById(id).then(ctx.success)
     }
@@ -79,7 +80,7 @@ module.exports = class PolicyTemplateController extends Controller {
         const id = ctx.checkParams("id").isMongoObjectId().value
         const name = ctx.checkBody('name').optional().trim().len(3, 40).value
         const template = ctx.checkBody('template').optional().isBase64().decodeBase64().len(1, 3000).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if (name === undefined && template === undefined) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))

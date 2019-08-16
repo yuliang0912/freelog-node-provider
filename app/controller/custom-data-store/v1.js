@@ -20,7 +20,7 @@ module.exports = class CustomDataStoreController extends Controller {
         const nodeId = ctx.checkBody('nodeId').exist().isInt().gt(0).value
         const key = ctx.checkBody('key').exist().match(/^node_\d{5,9}_[a-z0-9_-|]{6,50}$/).value
         const value = ctx.checkBody('value').exist().value
-        ctx.validate(false)
+        ctx.validateParams()
 
         if (!key.startsWith(`node_${nodeId}_`)) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'key'))
@@ -46,7 +46,7 @@ module.exports = class CustomDataStoreController extends Controller {
     async show(ctx) {
 
         const key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
-        ctx.validate(false)
+        ctx.validateParams()
 
         await this.customStoreProvider.findOne({key}).then(ctx.success)
     }
@@ -60,7 +60,7 @@ module.exports = class CustomDataStoreController extends Controller {
 
         const key = ctx.checkParams('id').match(/^[a-z0-9_-|]{6,50}$/).value
         const value = ctx.checkBody('value').exist().isObject().value
-        ctx.validate()
+        ctx.validateParams()
 
         const storeInfo = await this.customStoreProvider.findOne({key}).tap(model => ctx.entityNullObjectCheck(model))
 
@@ -78,7 +78,7 @@ module.exports = class CustomDataStoreController extends Controller {
         const key = ctx.checkBody('key').exist().match(/^[a-z0-9_-|]{6,50}$/).value
         const value = ctx.checkBody('value').exist().isObject().value
         const userId = ctx.request.userId || 0
-        ctx.allowContentType({type: 'json'}).validate()
+        ctx.allowContentType({type: 'json'}).validateParams()
 
         if (!key.startsWith(`node_${nodeId}_`)) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'key'))

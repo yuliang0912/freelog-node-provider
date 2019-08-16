@@ -12,6 +12,7 @@ const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
 const PresentablePolicyValidator = require('../../extend/json-schema/presentable-policy-validator')
 const PresentableResolveReleaseValidator = require('../../extend/json-schema/presentable-resolve-release-validator')
 const {presentableVersionLockEvent} = require('../../enum/presentable-events')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class PresentableController extends Controller {
 
@@ -43,7 +44,8 @@ module.exports = class PresentableController extends Controller {
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
-        ctx.validate(false)
+
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const condition = {nodeId}
         if (resourceType) { //resourceType 与 omitResourceType互斥
@@ -123,7 +125,7 @@ module.exports = class PresentableController extends Controller {
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const condition = {}
         if (userId) {
@@ -154,7 +156,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("id").isPresentableId().value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         var presentableInfo = await this.presentableProvider.findById(presentableId)
         if (!presentableInfo) {
@@ -192,7 +194,7 @@ module.exports = class PresentableController extends Controller {
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
         const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         this._validateResolveReleasesParamFormat(resolveReleases)
         const policiesValidateResult = new PresentablePolicyValidator().createReleasePoliciesValidate(policies)
@@ -239,7 +241,7 @@ module.exports = class PresentableController extends Controller {
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
         const resolveReleases = ctx.checkBody('resolveReleases').optional().isArray().value
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 500).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if ([policyInfo, presentableName, userDefinedTags, resolveReleases, intro].every(x => x === undefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
@@ -271,7 +273,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
         const onlineState = ctx.checkBody("onlineState").exist().toInt().in([0, 1]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'presentableId')
@@ -293,7 +295,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'presentableId'),
@@ -319,7 +321,7 @@ module.exports = class PresentableController extends Controller {
     async presentableAuthChainInfo(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const presentableInfo = await this.presentableProvider.findById(presentableId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'presentableId'),
@@ -343,7 +345,7 @@ module.exports = class PresentableController extends Controller {
     async presentableAuthTree(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const presentableAuthTree = await this.presentableAuthTreeProvider.findOne({presentableId})
 
@@ -366,7 +368,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const condition = {presentableId}
         if (version) {
@@ -386,7 +388,7 @@ module.exports = class PresentableController extends Controller {
         const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
         const subReleaseId = ctx.checkQuery('subReleaseId').optional().isReleaseId().value
         const subReleaseVersion = ctx.checkQuery('subReleaseVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subReleaseVersion')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         if (subReleaseId && !subReleaseVersion) {
             throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'subReleaseId,subReleaseVersion'))
@@ -412,7 +414,7 @@ module.exports = class PresentableController extends Controller {
     async batchPresentableAuthTrees(ctx) {
 
         const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const presentableAuthTrees = await this.presentableAuthTreeProvider.find({presentableId: {$in: presentableIds}})
 

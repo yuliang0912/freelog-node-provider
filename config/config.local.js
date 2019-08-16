@@ -26,7 +26,7 @@ module.exports = {
      * 本地开发环境身份信息
      */
     localIdentity: {
-        userId: 50003,
+        userId: 0, //50003,
         userName: "余亮",
         nickname: "烟雨落叶",
         email: "4896819@qq.com",
