@@ -1,16 +1,20 @@
-
 FROM node:10.5.0
+
+MAINTAINER yuliang <yu.liang@freelog.com>
+
+RUN mkdir -p /data/freelog-node-provider
 
 WORKDIR /data/freelog-node-provider
 
 COPY . /data/freelog-node-provider
 
-ENV NODE_ENV prod \
-    EGG_SERVER_ENV prod \
-    PORT 7005 \
-    TZ=Asia/Shanghai \
+RUN npm install
 
-RUN npm install /data/freelog-node-provider && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV NODE_ENV prod
+ENV EGG_SERVER_ENV prod
+ENV PORT 7005
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 7005
 
