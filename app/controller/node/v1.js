@@ -127,7 +127,7 @@ module.exports = class NodeController extends Controller {
 
         const nodeDomain = ctx.checkQuery('nodeDomain').optional().isNodeDomain().toLowercase().value
         const nodeName = ctx.checkQuery('nodeName').optional().isNodeName().value
-        
+
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         if (nodeDomain === undefined && nodeName === undefined) {
