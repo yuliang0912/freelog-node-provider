@@ -38,7 +38,6 @@ module.exports = class TestNodeController extends Controller {
         const testRuleText = ctx.checkBody('testRuleText').exist().type('string').isBase64().decodeBase64().value
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
-        ctx.request.userId = 50017
         await this._validateNodeIdentity(ctx, nodeId)
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, testRuleText).then(ctx.success)
     }

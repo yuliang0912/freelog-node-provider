@@ -6,7 +6,6 @@ const Service = require('egg').Service
 const NodeTestRuleHandler = require('../test-rule-handler/index')
 const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
 
-
 module.exports = class TestRuleService extends Service {
 
     constructor({app, request}) {
@@ -17,7 +16,6 @@ module.exports = class TestRuleService extends Service {
         this.nodeTestResourceDependencyTreeProvider = app.dal.nodeTestResourceDependencyTreeProvider
     }
 
-
     /**
      * 匹配并保持节点的测试资源
      * @param nodeId
@@ -26,11 +24,12 @@ module.exports = class TestRuleService extends Service {
      */
     async matchAndSaveNodeTestRule(nodeId, testRuleText) {
 
+        const {ctx, app} = this
         const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, testRuleText)
 
         const nodeTestRuleInfo = {
             nodeId, ruleText: testRuleText,
-            userId: this.ctx.request.userId,
+            userId: ctx.request.userId,
             testRules: testRules.map(testRuleInfo => {
                 let {id, text, effectiveMatchCount, matchErrors} = testRuleInfo
                 return {
@@ -41,7 +40,7 @@ module.exports = class TestRuleService extends Service {
         }
 
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let testResourceId = this.app.mongoose.getNewObjectId()
+            let testResourceId = app.mongoose.getNewObjectId()
             let {testResourceName, type, version, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             return {
                 _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree,
