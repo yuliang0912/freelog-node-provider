@@ -380,6 +380,53 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * 检索presentable树节点
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async searchPresentableDependency(ctx) {
+
+        const nodeId = ctx.checkQuery('nodeId').toInt().gt(0).value
+        const page = ctx.checkQuery("page").optional().default(1).gt(0).toInt().value
+        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
+        const releaseName = ctx.checkQuery("releaseName").exist().isFullReleaseName().value
+        const versionRange = ctx.checkQuery('versionRange').optional().toVersionRange(ctx.gettext('params-format-validate-failed', 'versionRange')).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/detail?releaseName=${releaseName}`)
+        ctx.entityNullObjectCheck(releaseInfo, ctx.gettext('params-validate-failed', 'releaseName'))
+
+        const {releaseId, resourceVersions} = releaseInfo
+        const matchedVersions = (!versionRange ? resourceVersions : resourceVersions.filter(x => semver.satisfies(x.version, versionRange))).map(x => x.version)
+        if (!matchedVersions.length) {
+            throw new ArgumentError(ctx.gettext('params-validate-error', 'versionRange'))
+        }
+
+        const searchCondition = {
+            nodeId, 'dependencyTree.releaseId': releaseId, 'dependencyTree.version': {$in: matchedVersions}
+        }
+
+        var matchedPresentables = []
+        const totalItem = await this.presentableDependencyTreeProvider.count(searchCondition)
+        if (totalItem > (page - 1) * pageSize) {
+            matchedPresentables = await this.presentableDependencyTreeProvider.findPageList(searchCondition, page, pageSize, 'presentableId', {createDate: -1})
+        }
+        if (!matchedPresentables.length) {
+            return ctx.success({page, pageSize, totalItem, dataList: []})
+        }
+
+        const presentables = await this.presentableProvider.find({_id: {$in: matchedPresentables.map(x => x.presentableId)}}, 'presentableName releaseInfo')
+
+        const dataList = presentables.map(x => Object({
+            presentableId: x.presentableId,
+            presentableName: x.presentableName,
+            version: x.releaseInfo.version
+        }))
+
+        ctx.success({page, pageSize, totalItem, dataList})
+    }
+
+    /**
      * 获取presentable依赖树中指定发行的依赖项
      * @param ctx
      * @returns {Promise<void>}

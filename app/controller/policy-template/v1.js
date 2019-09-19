@@ -52,8 +52,7 @@ module.exports = class PolicyTemplateController extends Controller {
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.policyTemplateProvider.create({
-            name, template, templateType, isShare,
-            userId: ctx.request.userId
+            name, template, templateType, isShare, userId: ctx.request.userId
         }).then(ctx.success)
     }
 

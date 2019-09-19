@@ -72,7 +72,9 @@ module.exports = {
 
     'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建',
 
-    'presentable-online-auth-validate-error': '授权链路未通过,不能上线'
+    'presentable-online-auth-validate-error': '授权链路未通过,不能上线',
+
+    'node-test-rule-compile-failed': '测试节点的测试规则编译失败'
 }
 
 

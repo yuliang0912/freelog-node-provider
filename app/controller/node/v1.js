@@ -47,7 +47,7 @@ module.exports = class NodeController extends Controller {
      */
     async show(ctx) {
 
-        const nodeId = ctx.checkParams('id').isInt().gt(0).value
+        const nodeId = ctx.checkParams('id').toInt().gt(0).value
 
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
