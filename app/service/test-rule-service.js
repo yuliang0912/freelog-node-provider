@@ -93,7 +93,7 @@ module.exports = class TestRuleService extends Service {
      * @returns {Promise<*>}
      */
     async _compileAndMatchTestRule(nodeId, testRuleText) {
-        
+
         const {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})

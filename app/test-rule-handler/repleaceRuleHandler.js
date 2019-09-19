@@ -53,6 +53,9 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
+                if(currTestResource.dependencyTree===undefined){
+                    console.log(1,JSON.stringify(currTestResource))
+                }
                 await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo)
             }
         }
@@ -70,6 +73,9 @@ module.exports = class ReplaceRuleHandler {
             let currNodeInfo = dependencies[i]
             let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo)
             if (!replacerDependencyInfo) {
+                if(currNodeInfo.dependencies===undefined){
+                    console.log(12)
+                }
                 await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo)
                 continue
             }

@@ -54,7 +54,7 @@ module.exports = class NodeTestRuleHandler {
         await new GenerateDependencyTreeHandler(app).handle(validTestResources)
 
         //后置处理替换规则的异步请求
-        await this.replaceRuleHandler.postpositionTaskHandle(testRules, testResources)
+        await this.replaceRuleHandler.postpositionTaskHandle(testRules, validTestResources)
 
         return validTestResources
     }
