@@ -65,7 +65,7 @@ module.exports = class ImportRuleHandler {
                 efficientRules: [],
                 _originModel: presentable.toObject(),
                 asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
-                    testResourceInfo.previewImages = releaseInfo.previewImages
+                    testResourceInfo.previewImages = []// releaseInfo.previewImages
                 })
             }
             return testResourceInfo
