@@ -13,8 +13,9 @@ module.exports = class ImportRuleHandler {
      * 导入资源规则处理
      * @param ruleInfo
      * @param testResources
+     * @param userId
      */
-    handle(ruleInfo, testResources = []) {
+    handle(ruleInfo, testResources, userId) {
 
         const {type, name, versionRange = null} = ruleInfo.candidate
 
@@ -39,7 +40,7 @@ module.exports = class ImportRuleHandler {
 
         testResources.push(testResourceInfo)
 
-        testResourceInfo.asyncTask = this.importTestResource(ruleInfo, testResourceInfo)
+        testResourceInfo.asyncTask = this.importTestResource(ruleInfo, testResourceInfo, userId)
     }
 
     /**
@@ -72,7 +73,7 @@ module.exports = class ImportRuleHandler {
      * @param testResourceInfo
      * @returns {Promise<*>}
      */
-    async importTestResource(ruleInfo, testResourceInfo) {
+    async importTestResource(ruleInfo, testResourceInfo, userId) {
 
         const {name, type, versionRange = null} = ruleInfo.candidate
         const getModelFunc = type == "mock" ? this.getMockResourceInfo : this.getReleaseInfo
@@ -82,6 +83,12 @@ module.exports = class ImportRuleHandler {
         if (!originModel) {
             ruleInfo.isValid = testResourceInfo.isValid = false
             ruleInfo.matchErrors.push(`未找到名称为${name}的${type}`)
+            return
+        }
+
+        if (type === "mock" && originModel.userId !== userId) {
+            ruleInfo.isValid = testResourceInfo.isValid = false
+            ruleInfo.matchErrors.push(`没有权限导入mock资源`)
             return
         }
 

@@ -11,7 +11,7 @@ module.exports = class SetDefinedTagRuleHandler {
      * @param ruleInfo
      * @param testResources
      */
-    handle(ruleInfo, testResources = []) {
+    handle(ruleInfo, testResources) {
 
         const {id, presentation, tags} = ruleInfo
         for (let i = 0, j = testResources.length; i < j; i++) {

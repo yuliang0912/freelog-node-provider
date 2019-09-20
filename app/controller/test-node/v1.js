@@ -106,7 +106,6 @@ module.exports = class TestNodeController extends Controller {
         ctx.success({page, pageSize, totalItem, dataList: nodeTestResources})
     }
 
-
     /**
      * 搜索测试资源的依赖树
      * @param ctx
@@ -125,7 +124,13 @@ module.exports = class TestNodeController extends Controller {
             'dependencyTree.name': new RegExp(dependentEntityName, 'i')
         }
 
-        await this.nodeTestResourceDependencyTreeProvider.find(condition, 'testResourceId testResourceName').then(ctx.success)
+        var nodeTestResources = []
+        const totalItem = await this.nodeTestResourceDependencyTreeProvider.count(condition)
+        if (totalItem > (page - 1) * pageSize) {
+            nodeTestResources = await this.nodeTestResourceDependencyTreeProvider.findPageList(condition, page, pageSize, 'testResourceId testResourceName', {createDate: -1})
+        }
+        ctx.success({page, pageSize, totalItem, dataList: nodeTestResources})
+
     }
 
     /**

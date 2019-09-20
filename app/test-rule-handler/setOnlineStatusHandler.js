@@ -11,7 +11,7 @@ module.exports = class SetOnlineStatusHandler {
      * @param ruleInfo
      * @param testResources
      */
-    handle(ruleInfo, testResources = []) {
+    handle(ruleInfo, testResources) {
 
         const {id, operation, presentation} = ruleInfo
         for (let i = 0, j = testResources.length; i < j; i++) {

@@ -28,7 +28,7 @@ module.exports = class NodeTestRuleHandler {
      * step4.批量生成所有测试资源对应的依赖树
      * step5.执行第2步中已经预置好的替换规则后置处理函数(替换规则处理时只是标记规则替换的作用范围,直到此时基础数据完备才真正执行替换)
      */
-    async matchTestRuleResults(nodeId, testRules = []) {
+    async matchTestRuleResults(nodeId, userId, testRules = []) {
 
         const {app} = this
         const testResources = await this.importRuleHandler.importNodePresentables(nodeId)
@@ -42,7 +42,7 @@ module.exports = class NodeTestRuleHandler {
                 console.error(`无效的处理规则,`, ruleInfo)
                 return
             }
-            handler.handle(ruleInfo, testResources)
+            handler.handle(ruleInfo, testResources, userId)
         })
 
         //批量执行所有异步获取mock/release实体信息的请求
@@ -82,7 +82,9 @@ module.exports = class NodeTestRuleHandler {
         if (testRuleText === null || testRuleText === undefined || testRuleText === "") {
             return {errors: [], rules: []}
         }
-
+        testRuleText = `+ new_presentation_name_1 => $:yanghongtian/FreelogText@0.1.0
+* $:ww-zh/音乐专辑-Test => #:1234/json07`
+        console.log(1)
         return nmrTranslator.compile(testRuleText)
     }
 }

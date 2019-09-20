@@ -19,7 +19,6 @@ module.exports = class ReplaceRuleHandler {
      * @param testResources
      */
     handle(ruleInfo, testResources) {
-
         //记录下当前规则生效时的作用范围.然后在依赖树生成完以后,做后置处理
         ruleInfo._abortIndex = testResources.length - 1
     }
@@ -53,8 +52,8 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
-                if(currTestResource.dependencyTree===undefined){
-                    console.log(1,JSON.stringify(currTestResource))
+                if (currTestResource.dependencyTree === undefined) {
+                    console.log(1, JSON.stringify(currTestResource))
                 }
                 await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo)
             }
@@ -73,7 +72,7 @@ module.exports = class ReplaceRuleHandler {
             let currNodeInfo = dependencies[i]
             let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo)
             if (!replacerDependencyInfo) {
-                if(currNodeInfo.dependencies===undefined){
+                if (currNodeInfo.dependencies === undefined) {
                     console.log(12)
                 }
                 await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo)
@@ -81,7 +80,7 @@ module.exports = class ReplaceRuleHandler {
             }
             let {ret, deep} = this._checkCycleDependency(dependencies, replacerDependencyInfo)
             if (ret) {
-                ruleInfo.matchErrors.push(`规则作用于${rootInfo.testResourceName}时,检查到${deep == 1 ? "重复" : "循环"}依赖`)
+                ruleInfo.matchErrors.push(`规则作用于${rootInfo.testResourceName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`)
                 continue
             }
             rootInfo.efficientRules.push(ruleInfo)

@@ -25,11 +25,11 @@ module.exports = class TestRuleService extends Service {
     async matchAndSaveNodeTestRule(nodeId, testRuleText) {
 
         const {ctx, app} = this
-        const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, testRuleText)
+        const userId = ctx.request.userId
+        const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
 
         const nodeTestRuleInfo = {
-            nodeId, ruleText: testRuleText,
-            userId: ctx.request.userId,
+            nodeId, userId, ruleText: testRuleText,
             testRules: testRules.map(testRuleInfo => {
                 let {id, text, effectiveMatchCount, matchErrors} = testRuleInfo
                 return {
@@ -88,17 +88,18 @@ module.exports = class TestRuleService extends Service {
     /**
      * 编译并匹配测试结果
      * @param nodeId
+     * @param userId
      * @param testRuleText
      * @returns {Promise<*>}
      */
-    async _compileAndMatchTestRule(nodeId, testRuleText) {
+    async _compileAndMatchTestRule(nodeId, userId, testRuleText) {
 
         const {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
         }
 
-        const matchedTestResources = await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, rules)
+        const matchedTestResources = await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, rules)
 
         return {matchedTestResources, testRules: rules}
     }
