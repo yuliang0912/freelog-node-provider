@@ -51,6 +51,7 @@ module.exports = app => {
     const TestResourceSchema = new mongoose.Schema({
         nodeId: {type: Number, required: true}, //节点ID
         testResourceName: {type: String, required: true},
+        previewImages: {type: [String], required: true},
         resourceType: {type: String, required: true}, //资源类型
         originInfo: {type: OriginInfoSchema, required: true},
         differenceInfo: {type: DifferenceInfoSchema, required: true},

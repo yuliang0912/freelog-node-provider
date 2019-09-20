@@ -1,6 +1,5 @@
 'use strict'
 
-const lodash = require('lodash')
 const Controller = require('egg').Controller
 const {LoginUser, UnLoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 

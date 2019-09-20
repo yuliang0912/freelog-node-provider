@@ -49,21 +49,27 @@ module.exports = class ImportRuleHandler {
      * @returns {Promise<*>}
      */
     async importNodePresentables(nodeId) {
-        return this.presentableProvider.find({nodeId}).map(presentable => Object({
-            testResourceName: presentable.presentableName,
-            type: "presentable",
-            version: presentable.releaseInfo.version,
-            onlineInfo: {
-                isOnline: presentable.isOnline,
-                source: 'default'
-            },
-            definedTagInfo: {
-                definedTags: presentable.userDefinedTags,
-                source: 'default'
-            },
-            efficientRules: [],
-            _originModel: presentable.toObject()
-        }))
+        return this.presentableProvider.find({nodeId}).map(presentable => {
+            let testResourceInfo = {
+                testResourceName: presentable.presentableName,
+                type: "presentable",
+                version: presentable.releaseInfo.version,
+                onlineInfo: {
+                    isOnline: presentable.isOnline,
+                    source: 'default'
+                },
+                definedTagInfo: {
+                    definedTags: presentable.userDefinedTags,
+                    source: 'default'
+                },
+                efficientRules: [],
+                _originModel: presentable.toObject(),
+                asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
+                    testResourceInfo.previewImages = releaseInfo.previewImages
+                })
+            }
+            return testResourceInfo
+        })
     }
 
     /**
@@ -92,6 +98,7 @@ module.exports = class ImportRuleHandler {
             return
         }
 
+        testResourceInfo.previewImages = originModel.previewImages
         testResourceInfo._originModel = originModel
         ruleInfo.effectiveMatchCount += 1
 

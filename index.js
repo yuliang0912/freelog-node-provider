@@ -10,7 +10,6 @@ require('egg').startCluster({
     workers: 1
 });
 
-
 // const nmrTranslator = require('@freelog/nmr_translator');
 //
 // const testRuleText = `
