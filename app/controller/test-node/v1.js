@@ -121,7 +121,7 @@ module.exports = class TestNodeController extends Controller {
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const condition = {
-            'dependencyTree.name': new RegExp(dependentEntityName, 'i')
+            nodeId, 'dependencyTree.name': new RegExp(dependentEntityName, 'i')
         }
 
         var nodeTestResources = []
