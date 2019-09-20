@@ -82,9 +82,7 @@ module.exports = class NodeTestRuleHandler {
         if (testRuleText === null || testRuleText === undefined || testRuleText === "") {
             return {errors: [], rules: []}
         }
-        testRuleText = `+ new_presentation_name_1 => $:yanghongtian/FreelogText@0.1.0
-* $:ww-zh/音乐专辑-Test => #:1234/json07`
-        console.log(1)
+        
         return nmrTranslator.compile(testRuleText)
     }
 }

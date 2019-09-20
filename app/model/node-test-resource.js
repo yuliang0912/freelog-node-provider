@@ -36,6 +36,7 @@ module.exports = app => {
         version: {type: String, required: false, default: null},
     }, {_id: false})
 
+
     const DifferenceInfoSchema = new mongoose.Schema({
         onlineStatusInfo: {
             isOnline: {type: Number, required: true},
