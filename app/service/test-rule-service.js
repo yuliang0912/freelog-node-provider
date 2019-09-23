@@ -40,8 +40,7 @@ module.exports = class TestRuleService extends Service {
         }
 
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let testResourceId = app.mongoose.getNewObjectId()
-            let {testResourceName, type, version, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+            let {testResourceId, testResourceName, type, version, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             return {
                 _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,

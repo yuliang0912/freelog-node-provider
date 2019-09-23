@@ -31,7 +31,7 @@ module.exports = class NodeTestRuleHandler {
     async matchTestRuleResults(nodeId, userId, testRules = []) {
 
         const {app} = this
-        const testResources = await this.importRuleHandler.importNodePresentables(nodeId)
+        const testResources = []
 
         testRules.forEach(ruleInfo => {
             ruleInfo.id = uuid.v4().replace(/-/g, '')
@@ -44,6 +44,8 @@ module.exports = class NodeTestRuleHandler {
             }
             handler.handle(ruleInfo, testResources, userId)
         })
+
+        await this.importRuleHandler.importNodePresentables(nodeId, testResources)
 
         //批量执行所有异步获取mock/release实体信息的请求
         await Promise.all(testResources.filter(x => x.asyncTask).map(x => x.asyncTask))
@@ -82,7 +84,7 @@ module.exports = class NodeTestRuleHandler {
         if (testRuleText === null || testRuleText === undefined || testRuleText === "") {
             return {errors: [], rules: []}
         }
-        
+
         return nmrTranslator.compile(testRuleText)
     }
 }

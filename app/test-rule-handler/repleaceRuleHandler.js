@@ -52,9 +52,6 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
-                if (currTestResource.dependencyTree === undefined) {
-                    console.log(1, JSON.stringify(currTestResource))
-                }
                 await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo)
             }
         }
@@ -93,10 +90,10 @@ module.exports = class ReplaceRuleHandler {
      * 根据当前树的节点信息获取替换品信息
      * @param ruleInfo
      * @param targetModel
-     * @param parentIds
+     * @param parents
      * @private
      * */
-    async _getReplacerDependencies(targetInfo, ruleInfo, parentIds = []) {
+    async _getReplacerDependencies(targetInfo, ruleInfo, parents = []) {
 
         const {replaced, replacer, scope = []} = ruleInfo
 
@@ -137,8 +134,8 @@ module.exports = class ReplaceRuleHandler {
             deep: targetInfo.deep,
             dependencies: replacerDependencies,
             version: releaseVersion,
-            id: replacerInfo.mockResourceId || replacerInfo.releaseId,
-            name: replacerInfo.fullName || replacerInfo.releaseName
+            id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
+            name: replacerInfo['fullName'] || replacerInfo['releaseName']
         }
 
         return replacerDependencyTreeInfo

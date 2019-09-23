@@ -26,6 +26,7 @@ module.exports = class ImportRuleHandler {
         }
 
         const testResourceInfo = {
+            testResourceId: this._getTestResourceId(),
             testResourceName: ruleInfo.presentation, versionRange, type,
             definedTagInfo: {
                 definedTags: ruleInfo.tags ? ruleInfo.tags : [],
@@ -48,9 +49,10 @@ module.exports = class ImportRuleHandler {
      * @param nodeId
      * @returns {Promise<*>}
      */
-    async importNodePresentables(nodeId) {
-        return this.presentableProvider.find({nodeId}).map(presentable => {
+    async importNodePresentables(nodeId, testResources) {
+        return this.presentableProvider.find({nodeId}).each(presentable => {
             let testResourceInfo = {
+                testResourceId: this._getTestResourceId(),
                 testResourceName: presentable.presentableName,
                 type: "presentable",
                 version: presentable.releaseInfo.version,
@@ -68,7 +70,7 @@ module.exports = class ImportRuleHandler {
                     testResourceInfo.previewImages = []// releaseInfo.previewImages
                 })
             }
-            return testResourceInfo
+            testResources.push(testResourceInfo)
         })
     }
 
@@ -164,5 +166,14 @@ module.exports = class ImportRuleHandler {
         return type === 'release' && testResources.some(item => {
             return item.type === 'presentable' && item._originModel.releaseInfo.releaseName.toLowerCase() === name.toLowerCase()
         })
+    }
+
+    /**
+     * 获取测试资源ID
+     * @returns {*}
+     * @private
+     */
+    _getTestResourceId() {
+        return this.app.mongoose.getNewObjectId()
     }
 }
