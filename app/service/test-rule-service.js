@@ -82,7 +82,9 @@ module.exports = class TestRuleService extends Service {
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
         const task3 = this.nodeTestResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
 
-        return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo)
+        return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo).catch(error => {
+            console.log('测试节点规则,匹配结果数据保存失败', error)
+        })
     }
 
     /**
@@ -103,7 +105,6 @@ module.exports = class TestRuleService extends Service {
 
         return {matchedTestResources, testRules: rules}
     }
-
 
     /**
      * 拍平依赖树
