@@ -69,14 +69,11 @@ module.exports = class ReplaceRuleHandler {
             let currNodeInfo = dependencies[i]
             let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo)
             if (!replacerDependencyInfo) {
-                if (currNodeInfo.dependencies === undefined) {
-                    console.log(12)
-                }
                 await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo)
                 continue
             }
-            let {ret, deep} = this._checkCycleDependency(dependencies, replacerDependencyInfo)
-            if (ret) {
+            let {result, deep} = this._checkCycleDependency(dependencies, replacerDependencyInfo)
+            if (result) {
                 ruleInfo.matchErrors.push(`规则作用于${rootInfo.testResourceName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`)
                 continue
             }
@@ -149,14 +146,14 @@ module.exports = class ReplaceRuleHandler {
 
         const {id, type} = targetInfo
         if (lodash.isEmpty(dependencies)) {
-            return {ret: false, deep}
+            return {result: false, deep}
         }
         if (dependencies.some(x => x.id === id && x.type === type)) {
-            return {ret: true, deep}
+            return {result: true, deep}
         }
         if (deep > 100) { //内部限制最大依赖树深度
             //throw new Error()
-            //return {ret: false, deep}
+            //return {result: false, deep}
         }
 
         const subDependencies = lodash.chain(dependencies).map(m => m.dependencies).flattenDeep().value()

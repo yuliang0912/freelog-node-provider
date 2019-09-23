@@ -89,14 +89,19 @@ module.exports = class TestNodeController extends Controller {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
 
         var condition = {nodeId}
-        if (resourceType) {
+        if (resourceType) { //resourceType 与 omitResourceType互斥
             condition.resourceType = resourceType
         }
+        else if (omitResourceType) {
+            condition.resourceType = {$ne: omitResourceType}
+        }
+
         var nodeTestResources = []
         const totalItem = await this.nodeTestResourceProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) {

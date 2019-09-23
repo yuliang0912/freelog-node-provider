@@ -12,7 +12,8 @@ require('egg').startCluster({
 
 // const nmrTranslator = require('@freelog/nmr_translator');
 //
-// const testRuleText = `+ 1234567813244234234 => #:12345678/13244234234`
+// const testRuleText = `+ new_presentation_name_1 => $:yanghongtian/FreelogText@0.1.0
+// * $:ww-zh/音乐专辑-Test => #:1234/json07`
 //
 // const {errors, rules} = nmrTranslator.compile(testRuleText)
 //

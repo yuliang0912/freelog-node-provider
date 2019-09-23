@@ -24,7 +24,7 @@ module.exports = class TestRuleService extends Service {
      */
     async matchAndSaveNodeTestRule(nodeId, testRuleText) {
 
-        const {ctx, app} = this
+        const {ctx} = this
         const userId = ctx.request.userId
         const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
 
