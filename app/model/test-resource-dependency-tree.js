@@ -16,7 +16,7 @@ module.exports = app => {
         id: {type: String, required: true},
         name: {type: String, required: true},
         type: {type: String, required: true},
-        deep: {type: String, required: true},
+        deep: {type: Number, required: true},
         version: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},

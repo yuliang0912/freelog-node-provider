@@ -1,6 +1,6 @@
 'use strict'
 
-const uuid = require('uuid')
+const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
 const NodeTestRuleHandler = require('../test-rule-handler/index')
@@ -84,6 +84,64 @@ module.exports = class TestRuleService extends Service {
         return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo).catch(error => {
             console.log('测试节点规则,匹配结果数据保存失败', error)
         })
+    }
+
+    /**
+     * 过滤特使资源依赖树
+     * @returns {Promise<void>}
+     */
+    filterTestResourceDependency(dependencyTree, dependentEntityName, dependentEntityType, dependentEntityVersionRange) {
+
+        const rootDependencies = dependencyTree.filter(x => x.deep === 1)
+
+        function recursionSetMatchResult(dependencies) {
+            for (let i = 0; i < dependencies.length; i++) {
+                let currentDependInfo = dependencies[i]
+                if (entityIsMatched(currentDependInfo)) {
+                    currentDependInfo.isMatched = true
+                    continue
+                }
+                let subDependencies = getDependencies(currentDependInfo)
+                currentDependInfo.isMatched = recursionMatchResult(subDependencies)
+                recursionSetMatchResult(subDependencies)
+            }
+        }
+
+        function recursionMatchResult(dependencies) {
+            if (!dependencies.length) {
+                return false
+            }
+            for (let i = 0; i < dependencies.length; i++) {
+                let currentDependInfo = dependencies[i]
+                if (entityIsMatched(currentDependInfo)) {
+                    return true
+                }
+                return recursionMatchResult(getDependencies(currentDependInfo))
+            }
+        }
+
+        function getDependencies(dependInfo) {
+            return dependencyTree.filter(x => x.deep === dependInfo.deep + 1 && x.parentId === dependInfo.id && x.parentVersion === dependInfo.version)
+        }
+
+        function entityIsMatched(dependInfo) {
+            let {name, type, version} = dependInfo
+            let nameAndVersionIsMatched = name === dependentEntityName && type === dependentEntityType
+            let versionIsMatched = dependentEntityType === 'mock' ? true : semver.satisfies(version, dependentEntityVersionRange)
+            return nameAndVersionIsMatched && versionIsMatched
+        }
+
+        function recursionBuildDependencyTree(dependencies) {
+            return dependencies.filter(x => x.isMatched).map(item => {
+                let model = lodash.pick(item, ['id', 'name', 'type', 'version'])
+                model.dependencies = recursionBuildDependencyTree(getDependencies(item), item.deep, item.id, item.parentVersion)
+                return model
+            })
+        }
+
+        recursionSetMatchResult(rootDependencies)
+
+        return recursionBuildDependencyTree(rootDependencies)
     }
 
     /**

@@ -132,7 +132,10 @@ module.exports = class ReplaceRuleHandler {
             dependencies: replacerDependencies,
             version: releaseVersion,
             id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
-            name: replacerInfo['fullName'] || replacerInfo['releaseName']
+            name: replacerInfo['fullName'] || replacerInfo['releaseName'],
+            _data: {
+
+            }
         }
 
         return replacerDependencyTreeInfo

@@ -1,5 +1,6 @@
 'use strict'
 
+const semver = require('semver')
 const Controller = require('egg').Controller
 const {LoginUser, UnLoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
@@ -111,6 +112,19 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
+     * 测试资源依赖树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async testResourceDetail(ctx) {
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMongoObjectId().value
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+
+        await this.nodeTestResourceProvider.findById(testResourceId).then(ctx.success)
+    }
+
+    /**
      * 搜索测试资源的依赖树
      * @param ctx
      * @returns {Promise<void>}
@@ -148,6 +162,29 @@ module.exports = class TestNodeController extends Controller {
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         await this.nodeTestResourceDependencyTreeProvider.findById(testResourceId).then(ctx.success)
+    }
+
+    /**
+     * 过滤测试资源依赖树
+     * @returns {Promise<void>}
+     */
+    async filterTestResourceDependencyTree(ctx) {
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMongoObjectId().value
+        const dependentEntityName = ctx.checkQuery('dependentEntityName').exist().type('string').value
+        const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+
+        const testResourceDependencyTree = await this.nodeTestResourceDependencyTreeProvider.findById(testResourceId)
+        if (!testResourceDependencyTree) {
+            return ctx.success(null)
+        }
+
+        const {dependencyTree} = testResourceDependencyTree.toObject()
+        const dependentEntityType = dependentEntityVersionRange === undefined ? 'mock' : 'release'
+
+        const filteredDependencyTree = ctx.service.testRuleService.filterTestResourceDependency(dependencyTree, dependentEntityName, dependentEntityType, dependentEntityVersionRange)
+        ctx.success(filteredDependencyTree)
     }
 
     /**
