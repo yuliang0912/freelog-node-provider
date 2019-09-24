@@ -36,7 +36,6 @@ module.exports = app => {
         version: {type: String, required: false, default: null},
     }, {_id: false})
 
-
     const DifferenceInfoSchema = new mongoose.Schema({
         onlineStatusInfo: {
             isOnline: {type: Number, required: true},
@@ -56,6 +55,7 @@ module.exports = app => {
         resourceType: {type: String, required: true}, //资源类型
         originInfo: {type: OriginInfoSchema, required: true},
         differenceInfo: {type: DifferenceInfoSchema, required: true},
+        sortIndex: {type: Number, required: false},
         rules: {type: [BaseRuleInfo], default: []}, //结果匹配所用到的所有规则ID
         status: {type: Number, default: 0, required: true}
     }, {

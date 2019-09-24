@@ -3,8 +3,8 @@
 const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
+const {ApplicationError} = require('egg-freelog-base/error')
 const NodeTestRuleHandler = require('../test-rule-handler/index')
-const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
 
 module.exports = class TestRuleService extends Service {
 
@@ -27,6 +27,7 @@ module.exports = class TestRuleService extends Service {
         const {ctx} = this
         const userId = ctx.request.userId
         const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
+
 
         const nodeTestRuleInfo = {
             nodeId, userId, ruleText: testRuleText,
@@ -120,8 +121,8 @@ module.exports = class TestRuleService extends Service {
             }
         }
 
-        function getDependencies(dependInfo) {
-            return dependencyTree.filter(x => x.deep === dependInfo.deep + 1 && x.parentId === dependInfo.id && x.parentVersion === dependInfo.version)
+        function getDependencies(dependInfo, isFilterMatched = false) {
+            return dependencyTree.filter(x => x.deep === dependInfo.deep + 1 && x.parentId === dependInfo.id && x.parentVersion === dependInfo.version && (!isFilterMatched || x.isMatched))
         }
 
         function entityIsMatched(dependInfo) {

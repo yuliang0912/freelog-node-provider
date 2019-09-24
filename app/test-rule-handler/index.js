@@ -1,6 +1,7 @@
 'use strict'
 
 const uuid = require('uuid')
+const lodash = require('lodash')
 const Patrun = require('patrun')
 const nmrTranslator = require('@freelog/nmr_translator')
 const ImportRuleHandler = require('./importRuleHandler')
@@ -31,9 +32,9 @@ module.exports = class NodeTestRuleHandler {
     async matchTestRuleResults(nodeId, userId, testRules = []) {
 
         const {app} = this
-        const testResources = []
+        const testResources = await this.importRuleHandler.importNodePresentables(nodeId, testRules.length)
 
-        testRules.forEach(ruleInfo => {
+        testRules.forEach((ruleInfo, index) => {
             ruleInfo.id = uuid.v4().replace(/-/g, '')
             ruleInfo.effectiveMatchCount = 0
             ruleInfo.matchErrors = []
@@ -42,10 +43,8 @@ module.exports = class NodeTestRuleHandler {
                 console.error(`无效的处理规则,`, ruleInfo)
                 return
             }
-            handler.handle(ruleInfo, testResources, userId)
+            handler.handle(ruleInfo, testResources, userId, index)
         })
-
-        await this.importRuleHandler.importNodePresentables(nodeId, testResources)
 
         //批量执行所有异步获取mock/release实体信息的请求
         await Promise.all(testResources.filter(x => x.asyncTask).map(x => x.asyncTask))
@@ -58,7 +57,7 @@ module.exports = class NodeTestRuleHandler {
         //后置处理替换规则的异步请求
         await this.replaceRuleHandler.postpositionTaskHandle(testRules, validTestResources)
 
-        return validTestResources
+        return lodash.sortBy(validTestResources, x => x.sortIndex)
     }
 
 

@@ -15,7 +15,7 @@ module.exports = class ImportRuleHandler {
      * @param testResources
      * @param userId
      */
-    handle(ruleInfo, testResources, userId) {
+    handle(ruleInfo, testResources, userId, sortIndex) {
 
         const {type, name, versionRange = null} = ruleInfo.candidate
 
@@ -26,7 +26,6 @@ module.exports = class ImportRuleHandler {
         }
 
         const testResourceInfo = {
-            testResourceId: this._getTestResourceId(),
             testResourceName: ruleInfo.presentation, versionRange, type,
             definedTagInfo: {
                 definedTags: ruleInfo.tags ? ruleInfo.tags : [],
@@ -36,6 +35,8 @@ module.exports = class ImportRuleHandler {
                 isOnline: 1, //非presentable默认直接上线
                 source: 'default'
             },
+            sortIndex,
+            resolveReleases: [],
             efficientRules: [ruleInfo]
         }
 
@@ -49,10 +50,10 @@ module.exports = class ImportRuleHandler {
      * @param nodeId
      * @returns {Promise<*>}
      */
-    async importNodePresentables(nodeId, testResources) {
-        return this.presentableProvider.find({nodeId}).each(presentable => {
+    async importNodePresentables(nodeId, sortIndex) {
+        return this.presentableProvider.find({nodeId}).map(presentable => {
             let testResourceInfo = {
-                testResourceId: this._getTestResourceId(),
+                testResourceId: presentable.presentableId,
                 testResourceName: presentable.presentableName,
                 type: "presentable",
                 version: presentable.releaseInfo.version,
@@ -64,13 +65,15 @@ module.exports = class ImportRuleHandler {
                     definedTags: presentable.userDefinedTags,
                     source: 'default'
                 },
+                sortIndex: sortIndex++,
+                resolveReleases: [],
                 efficientRules: [],
                 _originModel: presentable.toObject(),
                 asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
                     testResourceInfo.previewImages = []// releaseInfo.previewImages
                 })
             }
-            testResources.push(testResourceInfo)
+            return testResourceInfo
         })
     }
 
@@ -100,6 +103,7 @@ module.exports = class ImportRuleHandler {
             return
         }
 
+        testResourceInfo.testResourceId = originModel['releaseId'] || originModel['mockResourceId']
         testResourceInfo.previewImages = originModel.previewImages
         testResourceInfo._originModel = originModel
         ruleInfo.effectiveMatchCount += 1

@@ -49,6 +49,7 @@ module.exports = class ReplaceRuleHandler {
     async _rangeReplace(testResources, ruleInfo) {
 
         const operantTestResourceNames = (ruleInfo.scope || []).map(x => x[0].name)
+
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
@@ -134,7 +135,7 @@ module.exports = class ReplaceRuleHandler {
             id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
             name: replacerInfo['fullName'] || replacerInfo['releaseName'],
             _data: {
-
+                replaced: targetInfo
             }
         }
 

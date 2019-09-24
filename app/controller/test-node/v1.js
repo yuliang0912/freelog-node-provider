@@ -148,6 +148,14 @@ module.exports = class TestNodeController extends Controller {
             nodeTestResources = await this.nodeTestResourceDependencyTreeProvider.findPageList(condition, page, pageSize, 'testResourceId testResourceName', {createDate: -1})
         }
         ctx.success({page, pageSize, totalItem, dataList: nodeTestResources})
+    }
+
+    /**
+     * 搜索测试资源依赖树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async searchTestResourceDependencyTree(ctx) {
 
     }
 
