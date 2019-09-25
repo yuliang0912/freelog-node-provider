@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
 const {LoginUser, UnLoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
@@ -87,6 +88,7 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value
+        const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(2).in([0, 1, 2]).value
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
@@ -105,6 +107,10 @@ module.exports = class TestNodeController extends Controller {
         }
         if (isOnline === 1 || isOnline === 0) {
             condition['differenceInfo.onlineStatusInfo.isOnline'] = isOnline
+        }
+        if (lodash.isString(keywords)) {
+            let searchExp = {$regex: keywords, $options: 'i'}
+            condition.$or = [{testResourceName: searchExp}, {'originInfo.name': searchExp}]
         }
 
         var nodeTestResources = []
