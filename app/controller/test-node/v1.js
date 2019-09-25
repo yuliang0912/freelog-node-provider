@@ -88,6 +88,7 @@ module.exports = class TestNodeController extends Controller {
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
+        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(2).in([0, 1, 2]).value
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value
@@ -101,6 +102,9 @@ module.exports = class TestNodeController extends Controller {
         }
         else if (omitResourceType) {
             condition.resourceType = {$ne: omitResourceType}
+        }
+        if (isOnline === 1 || isOnline === 0) {
+            condition['differenceInfo.onlineStatusInfo.isOnline'] = isOnline
         }
 
         var nodeTestResources = []
