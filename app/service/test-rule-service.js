@@ -158,7 +158,7 @@ module.exports = class TestRuleService extends Service {
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
         }
-
+        
         const matchedTestResources = await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, rules)
 
         return {matchedTestResources, testRules: rules}
