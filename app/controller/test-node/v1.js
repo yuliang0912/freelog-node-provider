@@ -55,7 +55,7 @@ module.exports = class TestNodeController extends Controller {
 
         await this._validateNodeIdentity(ctx, nodeId)
         const nodeTestRule = await this.nodeTestRuleProvider.findOne({nodeId}, 'ruleText')
-        const currentRuleText = (nodeTestRule ? nodeTestRule.ruleText : " ") + `${testRuleText}`
+        const currentRuleText = nodeTestRule ? nodeTestRule.ruleText + ` ${testRuleText}` : testRuleText
 
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success)
     }
@@ -69,7 +69,7 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
-        
+
         await this._validateNodeIdentity(ctx, nodeId)
         const nodeTestRule = await this.nodeTestRuleProvider.findOne({nodeId}, 'ruleText')
         const ruleText = nodeTestRule ? nodeTestRule.ruleText : ''
