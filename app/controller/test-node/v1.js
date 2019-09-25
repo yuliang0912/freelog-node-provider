@@ -69,9 +69,7 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
-
-        ctx.request.userId = 50029
-
+        
         await this._validateNodeIdentity(ctx, nodeId)
         const nodeTestRule = await this.nodeTestRuleProvider.findOne({nodeId}, 'ruleText')
         const ruleText = nodeTestRule ? nodeTestRule.ruleText : ''
