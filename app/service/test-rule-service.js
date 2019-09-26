@@ -5,6 +5,7 @@ const lodash = require('lodash')
 const Service = require('egg').Service
 const {ApplicationError} = require('egg-freelog-base/error')
 const NodeTestRuleHandler = require('../test-rule-handler/index')
+const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
 module.exports = class TestRuleService extends Service {
 
@@ -40,16 +41,17 @@ module.exports = class TestRuleService extends Service {
 
         var sortIndex = 1
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let {testResourceId, testResourceName, previewImages, type, version, intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+            let {testResourceName, previewImages, type, version, intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+            let originInfo = {
+                id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
+                name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
+                type, version
+            }
+            let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             return {
-                _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree, previewImages, intro,
+                testResourceId, testResourceName, nodeId, dependencyTree, previewImages, intro, originInfo,
                 sortIndex: sortIndex++,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
-                originInfo: {
-                    id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
-                    name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
-                    type, version
-                },
                 differenceInfo: {
                     onlineStatusInfo: {
                         isOnline: onlineInfo.isOnline,
@@ -67,7 +69,8 @@ module.exports = class TestRuleService extends Service {
         })
 
         const nodeTestResourceDependencyTrees = nodeTestResources.map(testResource => Object({
-            _id: testResource.testResourceId, nodeId,
+            nodeId,
+            testResourceId: testResource.testResourceId,
             testResourceName: testResource.testResourceName,
             dependencyTree: this._flattenDependencyTree(testResource.dependencyTree)
         }))
@@ -78,13 +81,13 @@ module.exports = class TestRuleService extends Service {
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3])
 
+        console.log(JSON.stringify(nodeTestResourceDependencyTrees))
+
         const task1 = this.nodeTestRuleProvider.create(nodeTestRuleInfo)
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
         const task3 = this.nodeTestResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
 
-        return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo).catch(error => {
-            console.log('测试节点规则,匹配结果数据保存失败', error)
-        })
+        return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo)
     }
 
     /**
@@ -178,6 +181,16 @@ module.exports = class TestRuleService extends Service {
             this._flattenDependencyTree(dependencies, id, version, results)
         }
         return results
+    }
+
+    /**
+     * 生成测试资源ID
+     * @param nodeId
+     * @param originInfo
+     * @private
+     */
+    _generateTestResourceId(nodeId, originInfo) {
+        return cryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`)
     }
 }
 

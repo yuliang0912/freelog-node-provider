@@ -8,7 +8,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return Object.assign({testResourceId: doc.id}, lodash.omit(ret, ['_id']))
+            return lodash.omit(ret, ['_id'])
         }
     }
 
@@ -23,6 +23,7 @@ module.exports = app => {
     }, {_id: false})
 
     const TestResourceDependencyTreeSchema = new mongoose.Schema({
+        testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         nodeId: {type: Number, required: true},
         dependencyTree: {type: [DependencyTreeSchema], default: []},
@@ -35,10 +36,6 @@ module.exports = app => {
     })
 
     DependencyTreeSchema.index({name: 1})
-
-    TestResourceDependencyTreeSchema.virtual("testResourceId").get(function () {
-        return this.id
-    })
 
     return mongoose.model('test-resource-dependency-trees', TestResourceDependencyTreeSchema)
 }

@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const semver = require('semver')
 
+
 module.exports = class ImportRuleHandler {
 
     constructor(app) {
@@ -54,7 +55,6 @@ module.exports = class ImportRuleHandler {
     async importNodePresentables(nodeId, sortIndex) {
         return this.presentableProvider.find({nodeId}).map(presentable => {
             let testResourceInfo = {
-                testResourceId: presentable.presentableId,
                 testResourceName: presentable.presentableName,
                 type: "presentable",
                 version: presentable.releaseInfo.version,
@@ -106,7 +106,6 @@ module.exports = class ImportRuleHandler {
             return
         }
 
-        testResourceInfo.testResourceId = originModel['releaseId'] || originModel['mockResourceId']
         testResourceInfo.previewImages = originModel.previewImages
         testResourceInfo._originModel = originModel
         ruleInfo.effectiveMatchCount += 1
@@ -178,14 +177,5 @@ module.exports = class ImportRuleHandler {
         return type === 'release' && testResources.some(item => {
             return item.type === 'presentable' && item._originModel.releaseInfo.releaseName.toLowerCase() === name.toLowerCase()
         })
-    }
-
-    /**
-     * 获取测试资源ID
-     * @returns {*}
-     * @private
-     */
-    _getTestResourceId() {
-        return this.app.mongoose.getNewObjectId()
     }
 }

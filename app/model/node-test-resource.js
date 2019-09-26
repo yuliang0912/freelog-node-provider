@@ -8,7 +8,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return Object.assign({testResourceId: doc.id}, lodash.omit(ret, ['_id']))
+            return lodash.omit(ret, ['_id'])
         }
     }
 
@@ -50,6 +50,7 @@ module.exports = app => {
 
     const TestResourceSchema = new mongoose.Schema({
         nodeId: {type: Number, required: true}, //节点ID
+        testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         previewImages: {type: [String], required: true},
         resourceType: {type: String, required: true}, //资源类型
@@ -64,10 +65,6 @@ module.exports = app => {
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
         toJSON: toObjectOptions,
         toObject: toObjectOptions
-    })
-
-    TestResourceSchema.virtual('testResourceId').get(function () {
-        return this.id
     })
 
     TestResourceSchema.index({userId: 1, nodeId: 1});

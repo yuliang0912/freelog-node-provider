@@ -39,6 +39,7 @@ module.exports = class TestNodeController extends Controller {
         const testRuleText = ctx.checkBody('testRuleText').exist().type('string').isBase64().decodeBase64().value
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
+        ctx.request.userId = 50018
         await this._validateNodeIdentity(ctx, nodeId)
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, testRuleText).then(ctx.success)
     }
@@ -128,10 +129,10 @@ module.exports = class TestNodeController extends Controller {
      */
     async testResourceDetail(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMongoObjectId().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        await this.nodeTestResourceProvider.findById(testResourceId).then(ctx.success)
+        await this.nodeTestResourceProvider.findOne({testResourceId}).then(ctx.success)
     }
 
     /**
@@ -195,10 +196,10 @@ module.exports = class TestNodeController extends Controller {
      */
     async testResourceDependencyTree(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMongoObjectId().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        await this.nodeTestResourceDependencyTreeProvider.findById(testResourceId).then(ctx.success)
+        await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
     }
 
     /**
@@ -207,12 +208,12 @@ module.exports = class TestNodeController extends Controller {
      */
     async filterTestResourceDependencyTree(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMongoObjectId().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
         const dependentEntityName = ctx.checkQuery('dependentEntityName').exist().type('string').value
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        const testResourceDependencyTree = await this.nodeTestResourceDependencyTreeProvider.findById(testResourceId)
+        const testResourceDependencyTree = await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId})
         if (!testResourceDependencyTree) {
             return ctx.success(null)
         }
