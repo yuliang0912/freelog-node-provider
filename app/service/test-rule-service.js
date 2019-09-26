@@ -40,10 +40,12 @@ module.exports = class TestRuleService extends Service {
             })
         }
 
+        var sortIndex = 1
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
             let {testResourceId, testResourceName, type, version, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             return {
                 _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree,
+                sortIndex: sortIndex++,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
                 originInfo: {
                     id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
