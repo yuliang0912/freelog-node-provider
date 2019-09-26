@@ -94,7 +94,7 @@ module.exports = class TestRuleService extends Service {
      * 过滤特使资源依赖树
      * @returns {Promise<void>}
      */
-    filterTestResourceDependency(dependencyTree, dependentEntityName, dependentEntityType, dependentEntityVersionRange) {
+    filterTestResourceDependency(dependencyTree, dependentEntityId, dependentEntityVersionRange) {
 
         const rootDependencies = dependencyTree.filter(x => x.deep === 1)
 
@@ -129,10 +129,8 @@ module.exports = class TestRuleService extends Service {
         }
 
         function entityIsMatched(dependInfo) {
-            let {name, type, version} = dependInfo
-            let nameAndVersionIsMatched = name === dependentEntityName && type === dependentEntityType
-            let versionIsMatched = dependentEntityType === 'mock' ? true : semver.satisfies(version, dependentEntityVersionRange)
-            return nameAndVersionIsMatched && versionIsMatched
+            let {id, type, version} = dependInfo
+            return id === dependentEntityId && (type === 'mock' || semver.satisfies(version, dependentEntityVersionRange))
         }
 
         function recursionBuildDependencyTree(dependencies) {

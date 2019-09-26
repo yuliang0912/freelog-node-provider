@@ -39,7 +39,6 @@ module.exports = class TestNodeController extends Controller {
         const testRuleText = ctx.checkBody('testRuleText').exist().type('string').isBase64().decodeBase64().value
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
-        ctx.request.userId = 50018
         await this._validateNodeIdentity(ctx, nodeId)
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, testRuleText).then(ctx.success)
     }
@@ -142,23 +141,24 @@ module.exports = class TestNodeController extends Controller {
      */
     async searchTestResource(ctx) {
 
-        const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value
-        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
-        const dependentEntityName = ctx.checkQuery('dependentEntityName').exist().type('string').value
-
+        const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value
+        const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const condition = {
-            nodeId, 'dependencyTree.name': new RegExp(dependentEntityName, 'i')
+            nodeId, 'dependencyTree.id': dependentEntityId
         }
 
-        var nodeTestResources = []
-        const totalItem = await this.nodeTestResourceDependencyTreeProvider.count(condition)
-        if (totalItem > (page - 1) * pageSize) {
-            nodeTestResources = await this.nodeTestResourceDependencyTreeProvider.findPageList(condition, page, pageSize, 'testResourceId testResourceName', {createDate: -1})
+        var testResourceDependencyTrees = await this.nodeTestResourceDependencyTreeProvider.find(condition)
+
+        if (dependentEntityVersionRange && dependentEntityVersionRange !== "*") {
+            testResourceDependencyTrees = testResourceDependencyTrees.filter(item => {
+                return item.dependencyTree.some(x => x.id === dependentEntityId && semver.satisfies(dependentEntityVersionRange, x.version))
+            })
         }
-        ctx.success({page, pageSize, totalItem, dataList: nodeTestResources})
+
+        ctx.success(testResourceDependencyTrees.map(x => lodash.pick(x, ['testResourceId', 'testResourceName'])))
     }
 
     /**
@@ -170,6 +170,7 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         const keywords = ctx.checkQuery('keywords').exist().type('string').value
+
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         let searchRegexp = new RegExp(keywords, 'i')
@@ -209,7 +210,7 @@ module.exports = class TestNodeController extends Controller {
     async filterTestResourceDependencyTree(ctx) {
 
         const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
-        const dependentEntityName = ctx.checkQuery('dependentEntityName').exist().type('string').value
+        const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
@@ -219,9 +220,7 @@ module.exports = class TestNodeController extends Controller {
         }
 
         const {dependencyTree} = testResourceDependencyTree.toObject()
-        const dependentEntityType = dependentEntityVersionRange === undefined ? 'mock' : 'release'
-
-        const filteredDependencyTree = ctx.service.testRuleService.filterTestResourceDependency(dependencyTree, dependentEntityName, dependentEntityType, dependentEntityVersionRange)
+        const filteredDependencyTree = ctx.service.testRuleService.filterTestResourceDependency(dependencyTree, dependentEntityId, dependentEntityVersionRange)
         ctx.success(filteredDependencyTree)
     }
 
