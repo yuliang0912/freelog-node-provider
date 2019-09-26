@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const semver = require('semver')
 
 module.exports = class ImportRuleHandler {
@@ -65,12 +66,14 @@ module.exports = class ImportRuleHandler {
                     definedTags: presentable.userDefinedTags,
                     source: 'default'
                 },
+                previewImages: [],
                 sortIndex: sortIndex++,
                 resolveReleases: [],
                 efficientRules: [],
                 _originModel: presentable.toObject(),
                 asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
-                    testResourceInfo.previewImages = []// releaseInfo.previewImages
+                    testResourceInfo.intro = releaseInfo ? releaseInfo.intro : ''
+                    testResourceInfo.previewImages = releaseInfo ? releaseInfo.previewImages : []
                 })
             }
             return testResourceInfo
@@ -109,9 +112,14 @@ module.exports = class ImportRuleHandler {
         ruleInfo.effectiveMatchCount += 1
 
         if (type === "mock") {
+            testResourceInfo.intro = lodash.truncate(lodash.unescape(originModel.description), {
+                length: 100,
+                omission: '...'
+            })
             return
         }
 
+        testResourceInfo.intro = originModel.intro
         const matchedVersion = this.matchReleaseVersion(originModel, versionRange)
         if (!matchedVersion) {
             ruleInfo.effectiveMatchCount -= 1

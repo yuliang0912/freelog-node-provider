@@ -28,10 +28,8 @@ module.exports = class TestRuleService extends Service {
         const userId = ctx.request.userId
         const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
 
-
         const nodeTestRuleInfo = {
-            nodeId, userId, ruleText: testRuleText,
-            testRules: testRules.map(testRuleInfo => {
+            nodeId, userId, ruleText: testRuleText, testRules: testRules.map(testRuleInfo => {
                 let {id, text, effectiveMatchCount, matchErrors} = testRuleInfo
                 return {
                     id, text, effectiveMatchCount, matchErrors,
@@ -42,9 +40,9 @@ module.exports = class TestRuleService extends Service {
 
         var sortIndex = 1
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let {testResourceId, testResourceName, type, version, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+            let {testResourceId, testResourceName, previewImages, type, version, intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             return {
-                _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree,
+                _id: testResourceId, testResourceId, testResourceName, nodeId, dependencyTree, previewImages, intro,
                 sortIndex: sortIndex++,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
                 originInfo: {
