@@ -128,7 +128,7 @@ module.exports = class TestNodeController extends Controller {
      */
     async testResourceDetail(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         await this.nodeTestResourceProvider.findOne({testResourceId}).then(ctx.success)
@@ -197,7 +197,7 @@ module.exports = class TestNodeController extends Controller {
      */
     async testResourceDependencyTree(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
@@ -209,12 +209,13 @@ module.exports = class TestNodeController extends Controller {
      */
     async filterTestResourceDependencyTree(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().md5().value
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
         const testResourceDependencyTree = await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId})
+
         if (!testResourceDependencyTree) {
             return ctx.success(null)
         }

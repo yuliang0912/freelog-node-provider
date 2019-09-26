@@ -130,7 +130,7 @@ module.exports = class TestRuleService extends Service {
 
         function entityIsMatched(dependInfo) {
             let {id, type, version} = dependInfo
-            return id === dependentEntityId && (type === 'mock' || semver.satisfies(version, dependentEntityVersionRange))
+            return id === dependentEntityId && (type === 'mock' || !dependentEntityVersionRange || semver.satisfies(version, dependentEntityVersionRange))
         }
 
         function recursionBuildDependencyTree(dependencies) {
