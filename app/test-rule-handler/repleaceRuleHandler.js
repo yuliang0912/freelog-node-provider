@@ -53,7 +53,8 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
-                await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo)
+                let parents = [lodash.pick(currTestResource, ['name', 'type', 'version'])]
+                await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo, parents)
             }
         }
     }
@@ -65,10 +66,11 @@ module.exports = class ReplaceRuleHandler {
      * @returns {Promise<void>}
      * @private
      */
-    async _recursionReplace(rootInfo, dependencies, ruleInfo) {
+    async _recursionReplace(rootInfo, dependencies, ruleInfo, parents = []) {
         for (let i = 0; i < dependencies.length; i++) {
             let currNodeInfo = dependencies[i]
-            let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo)
+            parents.push(lodash.pick(currNodeInfo, ['name', 'type', 'version']))
+            let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo, parents)
             if (!replacerDependencyInfo) {
                 await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo)
                 continue
@@ -80,7 +82,7 @@ module.exports = class ReplaceRuleHandler {
             }
             rootInfo.efficientRules.push(ruleInfo)
             dependencies.splice(i, 1, replacerDependencyInfo)
-            await this._recursionReplace(rootInfo, (replacerDependencyInfo || currNodeInfo).dependencies, ruleInfo)
+            await this._recursionReplace(rootInfo, (replacerDependencyInfo || currNodeInfo).dependencies, ruleInfo, parents)
         }
     }
 
@@ -140,6 +142,48 @@ module.exports = class ReplaceRuleHandler {
         }
 
         return replacerDependencyTreeInfo
+    }
+
+    /**
+     * 检查scope是否符合
+     * @param scope
+     * @param parents
+     * @private
+     */
+    _checkScope(scopes, parents) {
+
+        if (lodash.isEmpty(scopes)) { //空数组即全局替换
+            return true
+        }
+
+        for (let i = 0; i < scopes.length; i++) {
+            let subScopes = scopes[i]
+            if (subScopes.length <= parents.length) {
+                for (let x = 0; x < subScopes.length; x++) {
+                    if (this._entityIsMatched(subScopes[x], parents[x])) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * 检查是否匹配作用域中的项
+     * @param scopeInfo
+     * @param dependInfo
+     * @returns {boolean|*}
+     * @private
+     */
+    _entityIsMatched(scopeInfo, dependInfo) {
+
+        let {name, type, version} = scopeInfo
+        let nameAndVersionIsMatched = name === dependInfo.name && type === dependInfo.type
+        let versionIsMatched = type === 'mock' ? true : Semver.satisfies(version, dependInfo.version)
+
+        return nameAndVersionIsMatched && versionIsMatched
     }
 
     /**

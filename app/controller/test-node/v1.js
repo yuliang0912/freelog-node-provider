@@ -167,6 +167,25 @@ module.exports = class TestNodeController extends Controller {
      */
     async searchTestResourceDependencyTree(ctx) {
 
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
+        const keywords = ctx.checkQuery('keywords').exist().type('string').value
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+
+        let searchRegexp = new RegExp(keywords, 'i')
+        const condition = {
+            nodeId, 'dependencyTree.name': searchRegexp
+        }
+
+        const nodeTestResources = await this.nodeTestResourceDependencyTreeProvider.find(condition, 'dependencyTree.name dependencyTree.id dependencyTree.type dependencyTree.version')
+
+        const searchResults = []
+        lodash.chain(nodeTestResources).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
+            let model = lodash.pick(values[0], ['id', 'name', 'type'])
+            model.versions = lodash.uniq(values.map(x => x.version))
+            searchResults.push(model)
+        }).value()
+
+        ctx.success(searchResults)
     }
 
     /**

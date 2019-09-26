@@ -19,7 +19,8 @@ module.exports = app => {
     router.get('batch-get-presentable-auth-tree', '/v1/presentables/authTrees', presentable.v1.batchPresentableAuthTrees)
     router.get('search-presentable-dependency', '/v1/presentables/searchDependency', presentable.v1.searchPresentableDependency)
     router.get('node-test-resource', '/v1/testNodes/:nodeId/testResources', testNode.v1.testResources)
-    router.get('search-test-resource-dependency', '/v1/testNodes/:nodeId/searchTestResource', testNode.v1.searchTestResource)
+    router.get('search-test-resource', '/v1/testNodes/:nodeId/searchTestResource', testNode.v1.searchTestResource)
+    router.get('search-test-resource-dependency', '/v1/testNodes/:nodeId/searchTestResourceDependencyTree', testNode.v1.searchTestResourceDependencyTree)
     router.get('get-test-resource-dependency', '/v1/testNodes/testResources/:testResourceId/dependencyTree', testNode.v1.testResourceDependencyTree)
     router.get('filter-test-resource-dependency', '/v1/testNodes/testResources/:testResourceId/filterDependencyTree', testNode.v1.filterTestResourceDependencyTree)
 
