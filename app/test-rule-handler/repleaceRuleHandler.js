@@ -95,7 +95,16 @@ module.exports = class ReplaceRuleHandler {
      * */
     async _getReplacerDependencies(targetInfo, ruleInfo, parents = []) {
 
+        const result = {isGoOn: false, replacerDependencyInfo: null}
         const {replaced, replacer, scope = []} = ruleInfo
+
+        //作用域检查不符合
+        if (!this._checkScope(scope, parents)) {
+            return result
+        }
+
+        //作用域符合,但是其他需要接着校验
+        result.isGoOn = true
 
         if (targetInfo.type !== replaced.type || targetInfo.name !== replaced.name) {
             return
