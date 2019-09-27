@@ -13,10 +13,10 @@ module.exports = class SetOnlineStatusHandler {
      */
     handle(ruleInfo, testResources) {
 
-        const {id, operation, presentation} = ruleInfo
+        const {id, operation, presentableName} = ruleInfo
         for (let i = 0, j = testResources.length; i < j; i++) {
             let current = testResources[i]
-            if (current.testResourceName === presentation) {
+            if (current.testResourceName === presentableName) {
                 current.onlineInfo = {
                     source: id, isOnline: operation.toLowerCase() === "online" ? 1 : 0,
                 }
