@@ -13,10 +13,10 @@ module.exports = class SetDefinedTagRuleHandler {
      */
     handle(ruleInfo, testResources) {
 
-        const {id, presentation, tags} = ruleInfo
+        const {id, presentableName, tags} = ruleInfo
         for (let i = 0, j = testResources.length; i < j; i++) {
             let current = testResources[i]
-            if (current.testResourceName === presentation) {
+            if (current.testResourceName === presentableName) {
                 current.definedTagInfo = {
                     source: id, definedTags: tags
                 }
