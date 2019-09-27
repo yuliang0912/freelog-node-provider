@@ -53,8 +53,12 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < testResources.length; i++) {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
-                let parents = [lodash.pick(currTestResource, ['name', 'type', 'version'])]
-                await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo, parents)
+                let simpleRootInfo = {
+                    name: currTestResource.testResourceName,
+                    type: currTestResource.type,
+                    version: currTestResource.version
+                }
+                await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo, [simpleRootInfo])
             }
         }
     }
@@ -69,7 +73,6 @@ module.exports = class ReplaceRuleHandler {
     async _recursionReplace(rootInfo, dependencies, ruleInfo, parents = []) {
 
         if (lodash.isEmpty(dependencies)) {
-            console.log(rootInfo)
             return
         }
 
@@ -78,7 +81,7 @@ module.exports = class ReplaceRuleHandler {
             parents.push(lodash.pick(currNodeInfo, ['name', 'type', 'version']))
             let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo, parents)
             if (!replacerDependencyInfo) {
-                await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo)
+                await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo, parents)
                 continue
             }
             let {result, deep} = this._checkCycleDependency(dependencies, replacerDependencyInfo)
@@ -88,7 +91,6 @@ module.exports = class ReplaceRuleHandler {
             }
             rootInfo.efficientRules.push(ruleInfo)
             dependencies.splice(i, 1, replacerDependencyInfo)
-            await this._recursionReplace(rootInfo, (replacerDependencyInfo || currNodeInfo).dependencies, ruleInfo, parents)
         }
     }
 
@@ -101,21 +103,13 @@ module.exports = class ReplaceRuleHandler {
      * */
     async _getReplacerDependencies(targetInfo, ruleInfo, parents = []) {
 
-        //const result = {isGoOn: false, replacerDependencyInfo: null}
         const {replaced, replacer, scope = []} = ruleInfo
 
-        // //作用域检查不符合
-        // if (!this._checkScope(scope, parents)) {
-        //     return result
-        // }
-        //
-        // //作用域符合,但是其他需要接着校验
-        // result.isGoOn = true
-
-        if (targetInfo.type !== replaced.type || targetInfo.name !== replaced.name) {
+        //作用域检查不符合
+        if (!this._checkScope(scope, parents)) {
             return
         }
-        if (replaced.version && !Semver.satisfies(targetInfo.version, replaced.version)) {
+        if (!this._entityIsMatched(replaced, targetInfo)) {
             return
         }
 
@@ -144,7 +138,7 @@ module.exports = class ReplaceRuleHandler {
             ? await this.generateDependencyTreeHandler.generateMockDependencyTree(replacerInfo)
             : await this.generateDependencyTreeHandler.generateReleaseDependencyTree(replacerInfo, releaseVersion)
 
-        const replacerDependencyTreeInfo = {
+        return {
             type: replacer.type,
             deep: targetInfo.deep,
             dependencies: replacerDependencies,
@@ -155,8 +149,6 @@ module.exports = class ReplaceRuleHandler {
                 replaced: targetInfo
             }
         }
-
-        return replacerDependencyTreeInfo
     }
 
     /**
@@ -172,13 +164,18 @@ module.exports = class ReplaceRuleHandler {
             return true
         }
 
+        //多个scopes中如果有任意一个是满足的
         for (let i = 0; i < scopes.length; i++) {
-            let subScopes = scopes[i]
-            if (subScopes.length <= parents.length) {
-                for (let x = 0; x < subScopes.length; x++) {
-                    if (this._entityIsMatched(subScopes[x], parents[x])) {
-                        return true
-                    }
+            let subScopes = scopes[i], subScopesLength = scopes[i].length
+            if (subScopesLength > parents.length) {
+                continue
+            }
+            for (let x = 0; x < subScopesLength; x++) {
+                if (!this._entityIsMatched(subScopes[x], parents[x])) {
+                    break
+                }
+                if (x === subScopesLength - 1) {
+                    return true
                 }
             }
         }
@@ -197,9 +194,9 @@ module.exports = class ReplaceRuleHandler {
 
         let {name, type, version} = scopeInfo
         let nameAndVersionIsMatched = name === dependInfo.name && type === dependInfo.type
-        let versionIsMatched = type === 'mock' ? true : Semver.satisfies(version, dependInfo.version)
+        //let versionIsMatched = type === 'mock' ? true : Semver.satisfies(version, dependInfo.version)
 
-        return nameAndVersionIsMatched && versionIsMatched
+        return nameAndVersionIsMatched //&& versionIsMatched
     }
 
     /**

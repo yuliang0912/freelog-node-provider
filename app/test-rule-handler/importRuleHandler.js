@@ -28,7 +28,7 @@ module.exports = class ImportRuleHandler {
         }
 
         const testResourceInfo = {
-            testResourceName: ruleInfo.presentation, versionRange, type,
+            testResourceName: ruleInfo.presentableName, versionRange, type,
             definedTagInfo: {
                 definedTags: ruleInfo.tags ? ruleInfo.tags : [],
                 source: ruleInfo.tags ? ruleInfo.id : "default"
@@ -102,7 +102,7 @@ module.exports = class ImportRuleHandler {
 
         if (type === "mock" && originModel.userId !== userId) {
             ruleInfo.isValid = testResourceInfo.isValid = false
-            ruleInfo.matchErrors.push(`没有权限导入mock资源`)
+            ruleInfo.matchErrors.push(`没有权限导入mock资源:${ruleInfo.candidate.name}`)
             return
         }
 

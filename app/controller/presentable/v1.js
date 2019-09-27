@@ -193,7 +193,7 @@ module.exports = class PresentableController extends Controller {
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().len(0, 20).value
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
-        const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
+        const presentableName = ctx.checkBody('presentableName').optional().type('string').isReleaseName().value
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 

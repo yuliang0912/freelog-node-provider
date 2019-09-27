@@ -81,8 +81,6 @@ module.exports = class TestRuleService extends Service {
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3])
 
-        console.log(JSON.stringify(nodeTestResourceDependencyTrees))
-
         const task1 = this.nodeTestRuleProvider.create(nodeTestRuleInfo)
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
         const task3 = this.nodeTestResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)

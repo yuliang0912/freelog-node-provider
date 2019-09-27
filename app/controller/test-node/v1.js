@@ -35,8 +35,11 @@ module.exports = class TestNodeController extends Controller {
      */
     async create(ctx) {
 
-        const nodeId = ctx.checkBody('nodeId').exist().toInt().gt(0).value
-        const testRuleText = ctx.checkBody('testRuleText').exist().type('string').isBase64().decodeBase64().value
+        var nodeId = ctx.checkBody('nodeId').exist().toInt().gt(0).value
+        var testRuleText = ctx.checkBody('testRuleText').exist().type('string').value
+        if (testRuleText !== "") {
+            testRuleText = ctx.checkBody('testRuleText').isBase64().decodeBase64().value
+        }
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)

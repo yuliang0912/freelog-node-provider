@@ -32,23 +32,9 @@ module.exports = {
 
     'contract-invalid': '未找到有效合同',
 
-    'auth-contract-notActivated': '未获得合同授权',
-
-    'policy-authorization-failed': '未获得策略授权',
-
-    'auth-recontractable-failed': '资源未获得再签约授权',
-
-    'auth-presentable-failed': '资源未获得零售授权',
-
-    'auth-policy-authorizationObject-failed': '未获得策略身份授权',
-
     'user-entity-not-found': '未找到用户信息',
 
     'user-invalid': '未找到有效用户信息',
-
-    'jwt-signature-validate-failed': 'JWT签名校验失败',
-
-    'jwt-format-validate-failed': 'JWT数据格式校验失败',
 
     'user-node-count-limit-error': '用户可创建的节点数量超出限制',
 

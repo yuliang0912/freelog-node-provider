@@ -23,7 +23,7 @@ module.exports = app => {
     const NodeTestRuleSchema = new mongoose.Schema({
         nodeId: {type: Number, required: true}, //节点ID
         userId: {type: Number, required: true}, //节点用户ID
-        ruleText: {type: String, required: true},
+        ruleText: {type: String, required: false, default: ''},
         testRules: {
             type: [TestRuleInfo], required: true
         },
