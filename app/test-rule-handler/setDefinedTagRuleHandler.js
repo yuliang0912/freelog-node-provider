@@ -20,9 +20,25 @@ module.exports = class SetDefinedTagRuleHandler {
                 current.definedTagInfo = {
                     source: id, definedTags: tags
                 }
-                ruleInfo.effectiveMatchCount += 1
                 current.definedTagInfo.source = id
                 current.efficientRules.push(ruleInfo)
+            }
+        }
+    }
+
+    /**
+     * 后置处理
+     * @param testRules
+     * @param testResources
+     */
+    postpositionTaskHandle(testRules, testResources) {
+
+        const allSetDefinedTagRules = testRules.filter(x => x.operation === "set")
+
+        for (let i = 0; i < allSetDefinedTagRules.length; i++) {
+            let currRule = allSetDefinedTagRules[i]
+            if (testResources.some(x => x.efficientRules.some(m => m.id === currRule.id))) {
+                currRule.effectiveMatchCount += 1
             }
         }
     }

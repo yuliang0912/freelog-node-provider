@@ -20,8 +20,24 @@ module.exports = class SetOnlineStatusHandler {
                 current.onlineInfo = {
                     source: id, isOnline: operation.toLowerCase() === "online" ? 1 : 0,
                 }
-                ruleInfo.effectiveMatchCount += 1
                 current.efficientRules.push(ruleInfo)
+            }
+        }
+    }
+
+    /**
+     * 后置处理
+     * @param testRules
+     * @param testResources
+     */
+    postpositionTaskHandle(testRules, testResources) {
+
+        const allOnlineOfflineRules = testRules.filter(x => x.operation === "online" || x.operation == "offline")
+
+        for (let i = 0; i < allOnlineOfflineRules.length; i++) {
+            let currRule = allOnlineOfflineRules[i]
+            if (testResources.some(x => x.efficientRules.some(m => m.id === currRule.id))) {
+                currRule.effectiveMatchCount += 1
             }
         }
     }

@@ -41,11 +41,11 @@ module.exports = class TestRuleService extends Service {
 
         var sortIndex = 1
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let {testResourceName, previewImages, type, version, intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+            let {testResourceName, previewImages, type, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             let originInfo = {
                 id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
                 name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
-                type, version
+                type, version, versions
             }
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             return {

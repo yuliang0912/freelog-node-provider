@@ -3,7 +3,6 @@
 const lodash = require('lodash')
 const semver = require('semver')
 
-
 module.exports = class ImportRuleHandler {
 
     constructor(app) {
@@ -72,8 +71,10 @@ module.exports = class ImportRuleHandler {
                 efficientRules: [],
                 _originModel: presentable.toObject(),
                 asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
-                    testResourceInfo.intro = releaseInfo ? releaseInfo.intro : ''
-                    testResourceInfo.previewImages = releaseInfo ? releaseInfo.previewImages : []
+                    let {intro = '', resourceVersions = [], previewImages = []} = releaseInfo || {}
+                    testResourceInfo.intro = intro
+                    testResourceInfo.versions = resourceVersions.map(x => x.version)
+                    testResourceInfo.previewImages = previewImages
                 })
             }
             return testResourceInfo
@@ -127,6 +128,7 @@ module.exports = class ImportRuleHandler {
             return
         }
         testResourceInfo.version = matchedVersion
+        testResourceInfo.versions = originModel.resourceVersions.map(x => x.version)
     }
 
     /**

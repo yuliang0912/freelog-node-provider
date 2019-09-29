@@ -34,6 +34,7 @@ module.exports = app => {
         name: {type: String, required: true},
         type: {type: String, required: true},  // release,mock,presentable,resource
         version: {type: String, required: false, default: null},
+        versions: {type: [String], required: false, default: []}
     }, {_id: false})
 
     const DifferenceInfoSchema = new mongoose.Schema({

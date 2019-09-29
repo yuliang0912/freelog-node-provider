@@ -145,9 +145,7 @@ module.exports = class ReplaceRuleHandler {
             version: releaseVersion,
             id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
             name: replacerInfo['fullName'] || replacerInfo['releaseName'],
-            _data: {
-                replaced: targetInfo
-            }
+            replaced: lodash.omit(targetInfo, 'dependencies')
         }
     }
 

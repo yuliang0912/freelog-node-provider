@@ -17,6 +17,8 @@ module.exports = class NodeTestRuleHandler {
         this.patrun = Patrun()
         this.importRuleHandler = new ImportRuleHandler(app)
         this.replaceRuleHandler = new ReplaceRuleHandler(app)
+        this.setOnlineStatusHandler = new SetOnlineStatusHandler(app)
+        this.setDefinedTagRuleHandler = new SetDefinedTagRuleHandler(app)
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this._initialTestRuleHandler()
     }
@@ -51,9 +53,12 @@ module.exports = class NodeTestRuleHandler {
 
         const validTestResources = testResources.filter(x => !Reflect.has(x, 'isValid') || x.isValid)
 
+        //后置设置生效数量
+        this.setOnlineStatusHandler.postpositionTaskHandle(testRules, validTestResources)
+        this.setDefinedTagRuleHandler.postpositionTaskHandle(testRules, validTestResources)
+
         //批量执行所有生成测试资源依赖树的异步请求
         await new GenerateDependencyTreeHandler(app).handle(validTestResources)
-
         //后置处理替换规则的异步请求
         await this.replaceRuleHandler.postpositionTaskHandle(testRules, validTestResources)
 
@@ -69,9 +74,9 @@ module.exports = class NodeTestRuleHandler {
         const {app, patrun} = this
         patrun.add({ruleType: "add"}, this.importRuleHandler)
         patrun.add({ruleType: "replace"}, this.replaceRuleHandler)
-        patrun.add({ruleType: "online"}, new SetOnlineStatusHandler(app))
-        patrun.add({ruleType: "offline"}, new SetOnlineStatusHandler(app))
-        patrun.add({ruleType: "set"}, new SetDefinedTagRuleHandler(app))
+        patrun.add({ruleType: "set"}, this.setDefinedTagRuleHandler)
+        patrun.add({ruleType: "online"}, this.setOnlineStatusHandler)
+        patrun.add({ruleType: "offline"}, this.setOnlineStatusHandler)
     }
 
     /**
