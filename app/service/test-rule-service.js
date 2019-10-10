@@ -172,12 +172,67 @@ module.exports = class TestRuleService extends Service {
      */
     _flattenDependencyTree(dependencyTree, parentId = '', parentVersion = '', results = []) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
-            let {id, name, type, deep, version, dependencies} = dependencyTree[i]
-            results.push({id, name, type, deep, version, parentId, parentVersion})
+            let {id, name, type, deep, version, dependencies, replaced} = dependencyTree[i]
+            results.push({id, name, type, deep, version, parentId, parentVersion, replaced})
             this._flattenDependencyTree(dependencies, id, version, results)
         }
         return results
     }
+
+
+    /**
+     * 生成测试资源授权树
+     * @private
+     */
+    async _generateTestResourceAuthTree({testResourceId, dependencyTree}) {
+
+        //替换的是发行,则上抛当前发行以及发当前发行与被替换的发行的上抛交集.如果发行是作者本人的,可以自动获取授权
+        //替换的是mock,则获取mock的依赖发行以及依赖的mock的依赖发行.然后提取出来一起上抛
+
+        const rootDependency = dependencyTree.find(x => x.deep === 1)
+        const dependSubReleaseIds = rootDependency.dependencies.filter(x => x.type === 'release').map(x => x.releaseId)
+        const dependSubReleases = await this._getReleases(dependSubReleaseIds)
+
+
+    }
+
+    /**
+     * 获取发行列表
+     * @param releaseIds
+     * @returns {*}
+     * @private
+     */
+    async _getReleases(releaseIds) {
+        if (!releaseIds.length) {
+            return []
+        }
+        const {ctx} = this
+        return ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${releaseIds.toString()}`)
+    }
+
+    /**
+     * 根据依赖树查找版本
+     * @param dependencies
+     * @param release
+     * @param list
+     * @returns {*}
+     * @private
+     */
+    _findReleaseVersionFromDependencyTree(dependencies, releaseId, list = []) {
+
+        return dependencies.reduce((acc, dependency) => {
+
+            if (dependency.type === 'release' && dependency.id === releaseId) {
+                acc.push(dependency)
+            }
+            //如果依赖项未上抛该发行,则终止检查子级节点
+            if (!dependency.baseUpcastReleases.some(x => x.releaseId === releaseId)) {
+                return acc
+            }
+            return this._findReleaseVersionFromDependencyTree(dependency.dependencies, release, acc)
+        }, list)
+    }
+
 
     /**
      * 生成测试资源ID

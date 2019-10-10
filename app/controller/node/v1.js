@@ -69,7 +69,7 @@ module.exports = class NodeController extends Controller {
         }
 
         await this.nodeProvider.count({ownerUserId: ctx.request.userId}).then(nodeCount => {
-            if (nodeCount < 5) {
+            if (nodeCount < 15) {
                 return
             }
             throw new ApplicationError(ctx.gettext('user-node-count-limit-error'), {nodeCount})

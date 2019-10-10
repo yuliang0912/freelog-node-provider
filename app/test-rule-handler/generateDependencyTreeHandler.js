@@ -68,7 +68,7 @@ module.exports = class GenerateDependencyTreeHandler {
 
         const {app} = this
 
-        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseInfo.releaseId}/dependencyTree?version=${version}`).then(dependencyTree => {
+        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseInfo.releaseId}/dependencyTree?version=${version}&omitFields=versionRange`).then(dependencyTree => {
             return this._convertMockAndReleaseDependencyTree(dependencyTree)
         })
     }
@@ -124,11 +124,11 @@ module.exports = class GenerateDependencyTreeHandler {
     _convertMockAndReleaseDependencyTree(dependencyTree) {
 
         function authMapping(model, deep) {
-            let {mockResourceId, mockResourceName, releaseId, releaseName, version, resourceId} = model
+            let {mockResourceId, mockResourceName, releaseId, releaseName, version, resourceId, baseUpcastReleases = []} = model
             return mockResourceId ? {
                 id: mockResourceId, name: mockResourceName, version: null, type: "mock", deep
             } : {
-                id: releaseId, name: releaseName, version, type: "release", deep, _data: {resourceId}
+                id: releaseId, name: releaseName, version, type: "release", deep, baseUpcastReleases, _data: {resourceId}
             }
         }
 

@@ -20,6 +20,7 @@ module.exports = app => {
         version: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},
+        replaced: {},
     }, {_id: false})
 
     const TestResourceDependencyTreeSchema = new mongoose.Schema({

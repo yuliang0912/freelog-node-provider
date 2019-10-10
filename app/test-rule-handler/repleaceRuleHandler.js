@@ -103,7 +103,7 @@ module.exports = class ReplaceRuleHandler {
      * */
     async _getReplacerDependencies(targetInfo, ruleInfo, parents = []) {
 
-        const {replaced, replacer, scope = []} = ruleInfo
+        const {id, replaced, replacer, scope = []} = ruleInfo
 
         //作用域检查不符合
         if (!this._checkScope(scope, parents)) {
@@ -145,7 +145,7 @@ module.exports = class ReplaceRuleHandler {
             version: releaseVersion,
             id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
             name: replacerInfo['fullName'] || replacerInfo['releaseName'],
-            replaced: lodash.omit(targetInfo, 'dependencies')
+            replaced: Object.assign(lodash.omit(targetInfo, ['dependencies', '_data', 'deep']), {replacedRuleId: id})
         }
     }
 
@@ -190,11 +190,11 @@ module.exports = class ReplaceRuleHandler {
      */
     _entityIsMatched(scopeInfo, dependInfo) {
 
-        let {name, type, version} = scopeInfo
+        let {name, type, versionRange = "*"} = scopeInfo
         let nameAndVersionIsMatched = name === dependInfo.name && type === dependInfo.type
-        //let versionIsMatched = type === 'mock' ? true : Semver.satisfies(version, dependInfo.version)
+        let versionIsMatched = type === 'release' ? Semver.satisfies(dependInfo.version, versionRange) : true
 
-        return nameAndVersionIsMatched //&& versionIsMatched
+        return nameAndVersionIsMatched && versionIsMatched
     }
 
     /**

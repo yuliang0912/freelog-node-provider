@@ -161,7 +161,7 @@ module.exports = class ImportRuleHandler {
 
         const {resourceVersions, latestVersion} = releaseInfo
 
-        if (!versionRange || versionRange === "latest" || versionRange === "all") {
+        if (!versionRange || versionRange === "latest") {
             return latestVersion.version
         }
 

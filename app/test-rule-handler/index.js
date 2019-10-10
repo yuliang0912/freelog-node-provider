@@ -40,6 +40,9 @@ module.exports = class NodeTestRuleHandler {
             ruleInfo.id = uuid.v4().replace(/-/g, '')
             ruleInfo.effectiveMatchCount = 0
             ruleInfo.matchErrors = []
+            if (ruleInfo.disabled) {
+                return
+            }
             let handler = this.patrun.find({ruleType: ruleInfo.operation})
             if (!handler) {
                 console.error(`无效的处理规则,`, ruleInfo)
