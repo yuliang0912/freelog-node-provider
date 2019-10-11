@@ -157,7 +157,6 @@ module.exports = class PresentableController extends Controller {
         const presentableId = ctx.checkParams("id").isPresentableId().value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
         ctx.validateParams()
-        ctx.validateParams()
 
         var presentableInfo = await this.presentableProvider.findById(presentableId)
         if (!presentableInfo) {
@@ -168,6 +167,7 @@ module.exports = class PresentableController extends Controller {
         await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`).then(releaseInfo => {
             presentableInfo = presentableInfo.toObject()
             presentableInfo.releaseInfo.previewImages = releaseInfo.previewImages
+            presentableInfo.releaseInfo.intro = releaseInfo.intro
         })
 
         if (isLoadingResourceInfo) {
