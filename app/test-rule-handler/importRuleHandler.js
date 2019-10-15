@@ -2,6 +2,7 @@
 
 const lodash = require('lodash')
 const semver = require('semver')
+const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
 module.exports = class ImportRuleHandler {
 
@@ -70,7 +71,7 @@ module.exports = class ImportRuleHandler {
                 resolveReleases: [],
                 efficientRules: [],
                 _originModel: presentable.toObject(),
-                asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseName).then(releaseInfo => {
+                asyncTask: this.getReleaseInfo(presentable.releaseInfo.releaseId).then(releaseInfo => {
                     let {intro = '', resourceVersions = [], previewImages = []} = releaseInfo || {}
                     testResourceInfo.intro = intro
                     testResourceInfo.versions = resourceVersions.map(x => x.version)
@@ -146,9 +147,19 @@ module.exports = class ImportRuleHandler {
      * @param releaseName
      * @returns {*}
      */
-    getReleaseInfo(releaseName) {
-        const {app} = this
-        return app.curlIntranetApi(`${app.webApi.releaseInfo}/detail?releaseName=${releaseName}`)
+    getReleaseInfo(releaseNameOrId) {
+
+        let {app} = this, url = ''
+        if (commonRegex.mongoObjectId.test(releaseNameOrId)) {
+            url = `${app.webApi.releaseInfo}/${releaseNameOrId}`
+        }
+        else if (commonRegex.fullReleaseName.test(releaseNameOrId)) {
+            url = `${app.webApi.releaseInfo}/detail?releaseName=${releaseNameOrId}`
+        } else {
+            return null
+        }
+
+        return app.curlIntranetApi(url)
     }
 
     /**

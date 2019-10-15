@@ -86,7 +86,7 @@ module.exports = class TestRuleService extends Service {
         this.nodeTestRuleHandler = new NodeTestRuleHandler(app)
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this.nodeTestResourceProvider = app.dal.nodeTestResourceProvider
-        this.nodeTestResourceDependencyTreeProvider = app.dal.nodeTestResourceDependencyTreeProvider
+        this.testResourceDependencyTreeProvider = app.dal.testResourceDependencyTreeProvider
     }
 
     /**
@@ -151,13 +151,13 @@ module.exports = class TestRuleService extends Service {
 
         const deleteTask1 = this.nodeTestRuleProvider.deleteOne({nodeId})
         const deleteTask2 = this.nodeTestResourceProvider.deleteMany({nodeId})
-        const deleteTask3 = this.nodeTestResourceDependencyTreeProvider.deleteMany({nodeId})
+        const deleteTask3 = this.testResourceDependencyTreeProvider.deleteMany({nodeId})
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3])
 
         const task1 = this.nodeTestRuleProvider.create(nodeTestRuleInfo)
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
-        const task3 = this.nodeTestResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
+        const task3 = this.testResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
 
         return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo)
     }

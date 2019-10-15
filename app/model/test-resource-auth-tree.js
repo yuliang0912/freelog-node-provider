@@ -8,7 +8,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return Object.assign({testResourceId: doc.id}, lodash.omit(ret, ['_id']))
+            return lodash.omit(ret, ['_id'])
         }
     }
 
@@ -24,6 +24,7 @@ module.exports = app => {
     }, {_id: false})
 
     const TestResourceAuthTreeSchema = new mongoose.Schema({
+        testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         nodeId: {type: Number, required: true},
         authTree: {type: [AuthTreeSchema], default: []},
@@ -36,10 +37,6 @@ module.exports = app => {
     })
 
     TestResourceAuthTreeSchema.index({name: 1})
-
-    TestResourceAuthTreeSchema.virtual("testResourceId").get(function () {
-        return this.id
-    })
 
     //return mongoose.model('test-resource-auth-trees', TestResourceDependencyTreeSchema)
 }

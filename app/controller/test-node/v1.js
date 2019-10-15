@@ -12,7 +12,8 @@ module.exports = class TestNodeController extends Controller {
         this.nodeProvider = app.dal.nodeProvider
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this.nodeTestResourceProvider = app.dal.nodeTestResourceProvider
-        this.nodeTestResourceDependencyTreeProvider = app.dal.nodeTestResourceDependencyTreeProvider
+        this.testResourceAuthTreeProvider = app.dal.testResourceAuthTreeProvider
+        this.testResourceDependencyTreeProvider = app.dal.testResourceDependencyTreeProvider
     }
 
     /**
@@ -80,7 +81,6 @@ module.exports = class TestNodeController extends Controller {
 
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, ruleText).then(ctx.success)
     }
-
 
     /**
      * 分页获取匹配的测试资源
@@ -153,7 +153,7 @@ module.exports = class TestNodeController extends Controller {
             nodeId, 'dependencyTree.id': dependentEntityId
         }
 
-        var testResourceDependencyTrees = await this.nodeTestResourceDependencyTreeProvider.find(condition)
+        var testResourceDependencyTrees = await this.testResourceDependencyTreeProvider.find(condition)
 
         if (dependentEntityVersionRange && dependentEntityVersionRange !== "*") {
             testResourceDependencyTrees = testResourceDependencyTrees.filter(item => {
@@ -181,7 +181,7 @@ module.exports = class TestNodeController extends Controller {
             nodeId, 'dependencyTree.name': searchRegexp
         }
 
-        const nodeTestResources = await this.nodeTestResourceDependencyTreeProvider.find(condition, 'dependencyTree.name dependencyTree.id dependencyTree.type dependencyTree.version')
+        const nodeTestResources = await this.testResourceDependencyTreeProvider.find(condition, 'dependencyTree.name dependencyTree.id dependencyTree.type dependencyTree.version')
 
         const searchResults = []
         lodash.chain(nodeTestResources).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
@@ -203,7 +203,20 @@ module.exports = class TestNodeController extends Controller {
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
+        await this.testResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
+    }
+
+    /**
+     * 测试资源授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async testResourceAuthTree(ctx) {
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+
+        await this.testResourceAuthTreeProvider.findOne({testResourceId}).then(ctx.success)
     }
 
     /**
@@ -217,7 +230,7 @@ module.exports = class TestNodeController extends Controller {
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        const testResourceDependencyTree = await this.nodeTestResourceDependencyTreeProvider.findOne({testResourceId})
+        const testResourceDependencyTree = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
 
         if (!testResourceDependencyTree) {
             return ctx.success(null)

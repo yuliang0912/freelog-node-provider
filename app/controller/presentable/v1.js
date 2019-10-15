@@ -166,8 +166,10 @@ module.exports = class PresentableController extends Controller {
         const {releaseId, version} = presentableInfo.releaseInfo || {}
         await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`).then(releaseInfo => {
             presentableInfo = presentableInfo.toObject()
-            presentableInfo.releaseInfo.previewImages = releaseInfo.previewImages
-            presentableInfo.releaseInfo.intro = releaseInfo.intro
+            let {intro = '', previewImages = [], resourceVersions = []} = releaseInfo
+            presentableInfo.releaseInfo.intro = intro
+            presentableInfo.releaseInfo.previewImages = previewImages
+            presentableInfo.releaseInfo.versions = resourceVersions.map(x => x.version)
         })
 
         if (isLoadingResourceInfo) {

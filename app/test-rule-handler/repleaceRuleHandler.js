@@ -145,8 +145,17 @@ module.exports = class ReplaceRuleHandler {
             version: releaseVersion,
             id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
             name: replacerInfo['fullName'] || replacerInfo['releaseName'],
-            replaced: Object.assign(lodash.omit(targetInfo, ['dependencies', '_data', 'deep']), {replacedRuleId: id})
+            replaced: Object.assign(lodash.omit(targetInfo, ['dependencies', '_data', 'deep']), {replacedRuleId: id}),
         }
+    }
+
+    /**
+     * 获取替换品和被替换品的上抛的差集,然后差集部分不用逐层往上查找,直接抛给节点解决(上层其他路线解决的也不算)
+     * @private
+     */
+    _getReplacedAndReplacerUpcastDifference(replacerInfo, replacedInfo) {
+
+
     }
 
     /**
