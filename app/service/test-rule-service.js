@@ -180,8 +180,10 @@ module.exports = class TestRuleService extends Service {
             return item
         })
 
+        const resolveReleaseSignStatus = updatedResolveReleases.some(x => !x.contracts.length) ? 2 : 1
+
         return this.nodeTestResourceProvider.findOneAndUpdate({testResourceId: testResourceInfo.testResourceId}, {
-            resolveReleases: updatedResolveReleases
+            resolveReleases: updatedResolveReleases, resolveReleaseSignStatus
         }, {new: true})
     }
 
