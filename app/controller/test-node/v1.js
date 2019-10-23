@@ -230,7 +230,7 @@ module.exports = class TestNodeController extends Controller {
      * @param ctx
      * @returns {Promise<void>}
      */
-    async testResourceResolveRelease(ctx) {
+    async updateTestResource(ctx) {
 
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
