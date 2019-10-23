@@ -181,7 +181,7 @@ class PresentableSchemeService extends Service {
      */
     async batchSignReleaseContracts(presentableInfo, changedResolveRelease = []) {
 
-        const {ctx, app, userId} = this
+        const {ctx, app} = this
         const {nodeId, presentableId, resolveReleases} = presentableInfo
 
         const beSignReleases = changedResolveRelease.length ? changedResolveRelease : resolveReleases
@@ -192,7 +192,6 @@ class PresentableSchemeService extends Service {
         const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
             method: 'post', contentType: 'json', data: {
                 partyTwoId: nodeId,
-                partyTwoUserId: userId,
                 contractType: app.contractType.ResourceToNode,
                 signReleases: beSignReleases.map(item => Object({
                     releaseId: item.releaseId,

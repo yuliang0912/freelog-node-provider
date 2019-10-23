@@ -3,7 +3,9 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
+const {ArgumentError} = require('egg-freelog-base/error')
 const {LoginUser, UnLoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
+const PresentableResolveReleaseValidator = require('../../extend/json-schema/presentable-resolve-release-validator')
 
 module.exports = class TestNodeController extends Controller {
 
@@ -91,10 +93,11 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value
+        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
+        const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(2).in([0, 1, 2]).value
-        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
@@ -108,6 +111,9 @@ module.exports = class TestNodeController extends Controller {
         else if (omitResourceType) {
             condition.resourceType = {$ne: omitResourceType}
         }
+        if (tags) {
+            condition['differenceInfo.userDefinedTagInfo.tags'] = {$in: tags}
+        }
         if (isOnline === 1 || isOnline === 0) {
             condition['differenceInfo.onlineStatusInfo.isOnline'] = isOnline
         }
@@ -119,7 +125,7 @@ module.exports = class TestNodeController extends Controller {
         var nodeTestResources = []
         const totalItem = await this.nodeTestResourceProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) {
-            nodeTestResources = await this.nodeTestResourceProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
+            nodeTestResources = await this.nodeTestResourceProvider.findPageList(condition, page, pageSize, projection.join(' '))
         }
         ctx.success({page, pageSize, totalItem, dataList: nodeTestResources})
     }
@@ -220,6 +226,27 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
+     * 测试资源签约
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async testResourceResolveRelease(ctx) {
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
+        const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        this._validateResolveReleasesParamFormat(resolveReleases)
+
+        const testResourceInfo = await this.nodeTestResourceProvider.findOne({testResourceId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'testResourceId')
+        }))
+
+        await ctx.service.testRuleService.setTestResourceResolveRelease(testResourceInfo, resolveReleases).then(ctx.success)
+
+    }
+
+    /**
      * 过滤测试资源依赖树
      * @returns {Promise<void>}
      */
@@ -253,5 +280,21 @@ module.exports = class TestNodeController extends Controller {
             msg: ctx.gettext('params-validate-failed', 'nodeId'),
             property: 'ownerUserId'
         }))
+    }
+
+    /**
+     * 校验处理解决的发行数据格式
+     * @param resolveReleases
+     * @private
+     */
+    _validateResolveReleasesParamFormat(resolveReleases) {
+
+        const {ctx} = this
+        const resolveReleasesValidateResult = new PresentableResolveReleaseValidator().resolveReleasesValidate(resolveReleases)
+        if (resolveReleasesValidateResult.errors.length) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveReleases'), {
+                errors: resolveReleasesValidateResult.errors
+            })
+        }
     }
 }

@@ -7,78 +7,6 @@ const {ApplicationError} = require('egg-freelog-base/error')
 const NodeTestRuleHandler = require('../test-rule-handler/index')
 const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
-const dependencyTree = [{
-    "id": "5d68c7d65544493fe8191440",
-    "name": "readme1",
-    "type": "mock",
-    "deep": 1,
-    "version": null,
-    "parentId": "",
-    "parentVersion": "",
-    "dependCount": 1
-}, {
-    "id": "5d511a69d0bf1aafa06c96b6",
-    "name": "yuliang/发行A",
-    "type": "release",
-    "deep": 2,
-    "version": "0.1.0",
-    "parentId": "5d68c7d65544493fe8191440",
-    "parentVersion": null,
-    "dependCount": 2
-}, {
-    "id": "5d4134738dc89d6e48e2c8ef",
-    "name": "yuliang/发行B",
-    "type": "release",
-    "deep": 3,
-    "version": "0.1.0",
-    "parentId": "5d511a69d0bf1aafa06c96b6",
-    "parentVersion": "0.1.0",
-    "dependCount": 2
-}, {
-    "id": "5d41321f8dc89d6e48e2c8de",
-    "name": "yuliang/单一资源D",
-    "type": "release",
-    "deep": 4,
-    "version": "0.1.0",
-    "parentId": "5d4134738dc89d6e48e2c8ef",
-    "parentVersion": "0.1.0",
-    "dependCount": 0
-}, {
-    "id": "5d4132388dc89d6e48e2c8e1",
-    "name": "yuliang/单一资源E",
-    "type": "release",
-    "deep": 4,
-    "version": "0.1.0",
-    "parentId": "5d4134738dc89d6e48e2c8ef",
-    "parentVersion": "0.1.0",
-    "dependCount": 0,
-    "replaced": {
-        "id": "5d41321f8dc89d6e48e2c8de",
-        "name": "yuliang/单一资源D",
-        "version": "0.1.0",
-        "type": "release",
-        "replacedRuleId": "98a757eeee9641ebb44cd26e4f339147"
-    }
-}, {
-    "id": "5d4146ca565b925d547ed698",
-    "name": "yuliang/复合发行C",
-    "type": "release",
-    "deep": 3,
-    "version": "0.1.0",
-    "parentId": "5d511a69d0bf1aafa06c96b6",
-    "parentVersion": "0.1.0",
-    "dependCount": 1
-}, {
-    "id": "5d4132438dc89d6e48e2c8e4",
-    "name": "yuliang/单一资源F",
-    "type": "release",
-    "deep": 4,
-    "version": "0.1.0",
-    "parentId": "5d4146ca565b925d547ed698",
-    "parentVersion": "0.1.0",
-    "dependCount": 0
-}]
-
 module.exports = class TestRuleService extends Service {
 
     constructor({app, request}) {
@@ -86,6 +14,8 @@ module.exports = class TestRuleService extends Service {
         this.nodeTestRuleHandler = new NodeTestRuleHandler(app)
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this.nodeTestResourceProvider = app.dal.nodeTestResourceProvider
+        this.testResourceAuthTreeProvider = app.dal.testResourceAuthTreeProvider
+        this.testResourceResolveReleaseProvider = app.dal.testResourceResolveReleaseProvider
         this.testResourceDependencyTreeProvider = app.dal.testResourceDependencyTreeProvider
     }
 
@@ -111,18 +41,16 @@ module.exports = class TestRuleService extends Service {
             })
         }
 
-        var sortIndex = 1
         const nodeTestResources = matchedTestResources.map(nodeTestResource => {
             let {testResourceName, previewImages, type, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
             let originInfo = {
                 id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
                 name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
-                type, version, versions
+                type, version, versions, _originModel
             }
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             return {
-                testResourceId, testResourceName, nodeId, dependencyTree, previewImages, intro, originInfo,
-                sortIndex: sortIndex++,
+                testResourceId, testResourceName, nodeId, userId, dependencyTree, previewImages, intro, originInfo,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
                 differenceInfo: {
                     onlineStatusInfo: {
@@ -139,7 +67,6 @@ module.exports = class TestRuleService extends Service {
                 }))
             }
         })
-
         const nodeTestResourceDependencyTrees = nodeTestResources.map(testResource => Object({
             nodeId,
             testResourceId: testResource.testResourceId,
@@ -147,23 +74,119 @@ module.exports = class TestRuleService extends Service {
             dependencyTree: this._flattenDependencyTree(testResource.dependencyTree)
         }))
 
-        //await this._test()
+        const nodeTestResourceAuthTrees = []
+        for (let i = 0; i < nodeTestResourceDependencyTrees.length; i++) {
+            let {testResourceId, testResourceName, dependencyTree} = nodeTestResourceDependencyTrees[i]
+            nodeTestResourceAuthTrees.push({
+                nodeId, testResourceId, testResourceName,
+                authTree: await this._generateTestResourceAuthTree(dependencyTree)
+            })
+        }
+
+        const existingResolveReleases = await this.nodeTestResourceProvider.find({nodeId}, 'testResourceId resolveReleases')
+
+        //const nodeTestResourceResolveReleases = []
+        for (let i = 0; i < nodeTestResources.length; i++) {
+
+            let currentTestResource = nodeTestResources[i]
+            let {testResourceId} = currentTestResource
+            let currentTestResourceAuthTree = nodeTestResourceAuthTrees.find(x => x.testResourceId === testResourceId)
+            let currentTestResourceExistingResolveReleases = existingResolveReleases.find(x => x.testResourceId === testResourceId)
+
+            currentTestResource.resolveReleases = this._getTestResourceResolveRelease(currentTestResource, userId, currentTestResourceAuthTree, currentTestResourceExistingResolveReleases)
+            currentTestResource.resolveReleaseSignStatus = currentTestResource.resolveReleases.some(x => !x.contracts.length) ? 2 : 1
+            // nodeTestResourceResolveReleases.push({
+            //     nodeId, testResourceId, testResourceName, resolveReleases, resolveReleaseSignStatus
+            // })
+
+        }
 
         const deleteTask1 = this.nodeTestRuleProvider.deleteOne({nodeId})
         const deleteTask2 = this.nodeTestResourceProvider.deleteMany({nodeId})
-        const deleteTask3 = this.testResourceDependencyTreeProvider.deleteMany({nodeId})
+        const deleteTask3 = this.testResourceAuthTreeProvider.deleteMany({nodeId})
+        const deleteTask4 = this.testResourceDependencyTreeProvider.deleteMany({nodeId})
+        //const deleteTask5 = this.testResourceResolveReleaseProvider.deleteMany({nodeId})
 
-        await Promise.all([deleteTask1, deleteTask2, deleteTask3])
+        await Promise.all([deleteTask1, deleteTask2, deleteTask3, deleteTask4])
 
         const task1 = this.nodeTestRuleProvider.create(nodeTestRuleInfo)
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
-        const task3 = this.testResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
+        const task3 = this.testResourceAuthTreeProvider.insertMany(nodeTestResourceAuthTrees)
+        const task4 = this.testResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
+        //const task5 = this.testResourceResolveReleaseProvider.insertMany(nodeTestResourceResolveReleases)
 
-        return Promise.all([task1, task2, task3]).then(() => nodeTestRuleInfo)
+        return Promise.all([task1, task2, task3, task4]).then(() => nodeTestRuleInfo)
+    }
+
+
+    /**
+     * 设置测试资源上抛处理情况
+     * @param testResourceInfo
+     * @param resolveReleases
+     * @returns {Promise<void>}
+     */
+    async setTestResourceResolveRelease(testResourceInfo, resolveReleases) {
+
+        const {ctx} = this
+        const invalidResolves = lodash.differenceBy(resolveReleases, testResourceInfo.resolveReleases, x => x.releaseId)
+        if (invalidResolves.length) {
+            throw new ApplicationError(ctx.gettext('node-test-resolve-release-invalid-error'), {invalidResolves})
+        }
+
+        const releaseMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${resolveReleases.map(x => x.releaseId).toString()}&projection=policies`)
+            .then(list => new Map(list.map(x => [x.releaseId, x])))
+
+        const invalidPolicies = [], beSignedContractReleases = []
+        const existingResolveReleases = testResourceInfo.toObject().resolveReleases
+        for (let i = 0, j = resolveReleases.length; i < j; i++) {
+            let {releaseId, contracts} = resolveReleases[i]
+            let releaseInfo = releaseMap.get(releaseId)
+            let existingResolveRelease = existingResolveReleases.find(x => x.releaseId === releaseId)
+            let existingResolveReleasePolicies = existingResolveRelease.contracts.map(x => x.policyId)
+            let latestResolveReleasePolicies = contracts.map(x => x.policyId)
+            if (!lodash.difference(latestResolveReleasePolicies, existingResolveReleasePolicies).length && !lodash.difference(existingResolveReleasePolicies, latestResolveReleasePolicies).length) {
+                continue
+            }
+            contracts.forEach(item => {
+                if (!releaseInfo.policies.some(x => x.policyId === item.policyId)) {
+                    invalidPolicies.push({releaseId: releaseId, policyId: item.policyId})
+                }
+            })
+            existingResolveRelease.contracts = contracts
+            beSignedContractReleases.push(existingResolveRelease)
+        }
+
+        if (invalidPolicies.length) {
+            throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveReleases'), {invalidPolicies})
+        }
+        if (!beSignedContractReleases.length) {
+            return testResourceInfo
+        }
+
+        const contracts = await this._batchSignReleaseContracts(testResourceInfo.nodeId, beSignedContractReleases)
+        const contractMap = new Map(contracts.map(x => [`${x['partyOne']}_${x.policyId}`, x]))
+
+        const updatedResolveReleases = existingResolveReleases.map(item => {
+            let changedResolveRelease = beSignedContractReleases.find(x => x.releaseId === item.releaseId)
+            if (changedResolveRelease) {
+                item.contracts = changedResolveRelease.contracts.map(contractInfo => {
+                    let signedContractInfo = contractMap.get(`${changedResolveRelease.releaseId}_${contractInfo.policyId}`)
+                    if (signedContractInfo) {
+                        contractInfo.contractId = signedContractInfo.contractId
+                    }
+                    return contractInfo
+                })
+            }
+            return item
+        })
+
+        return this.nodeTestResourceProvider.findOneAndUpdate({testResourceId: testResourceInfo.testResourceId}, {
+            resolveReleases: updatedResolveReleases
+        }, {new: true})
     }
 
     /**
-     * 过滤特使资源依赖树
+     * 过滤特定资源依赖树
      * @returns {Promise<void>}
      */
     filterTestResourceDependency(dependencyTree, dependentEntityId, dependentEntityVersionRange) {
@@ -256,65 +279,93 @@ module.exports = class TestRuleService extends Service {
         return results
     }
 
-
     /**
      * 生成测试资源授权树
+     * @param dependencyTree
      * @private
      */
-    async _generateTestResourceAuthTree({testResourceId, dependencyTree}) {
+    async _generateTestResourceAuthTree(dependencyTree) {
 
-        //替换的是发行,则上抛当前发行以及发当前发行与被替换的发行的上抛交集.如果发行是作者本人的,可以自动获取授权
-        //替换的是mock,则获取mock的依赖发行以及依赖的mock的依赖发行.然后提取出来一起上抛
-
-        const rootDependency = dependencyTree.find(x => x.deep === 1)
-        const dependSubReleaseIds = rootDependency.dependencies.filter(x => x.type === 'release').map(x => x.releaseId)
-        const dependSubReleases = await this._getReleases(dependSubReleaseIds)
-
-    }
-
-
-    async getUpcastReleases(rootDependency) {
-        if (rootDependency.type === "mock") {
-            rootDependency.baseUpcastReleases = rootDependency.dependencies
+        var dependReleaseMap = new Map()
+        var dependReleaseIds = dependencyTree.filter(x => x.type === 'release').map(x => x.id)
+        if (dependReleaseIds.length) {
+            dependReleaseMap = await this.ctx.curlIntranetApi(`${this.ctx.webApi.releaseInfo}/list?releaseIds=${dependReleaseIds.toString()}`)
+                .then(list => new Map(list.map(m => [m.releaseId, m])))
         }
+
+        for (let i = 0; i < dependencyTree.length; i++) {
+            let currentDependency = dependencyTree[i]
+            let parent = dependencyTree.find(x => x.deep == currentDependency.deep - 1 && x.id === currentDependency.parentId && x.version === currentDependency.parentVersion)
+            if (currentDependency.type === 'release') {
+                currentDependency.userId = dependReleaseMap.get(currentDependency.id).userId
+            }
+            currentDependency.resolver = this._findResolver(dependencyTree, parent, currentDependency, dependReleaseMap)
+        }
+
+        return this._buildAuthTree(dependencyTree)
     }
 
     /**
-     * 获取发行列表
-     * @param releaseIds
-     * @returns {*}
+     * 构建平铺的授权树
+     * @param dependencyTree
+     * @param results
+     * @param parent
+     * @param deep
+     * @returns {Array}
      * @private
      */
-    async _getReleases(releaseIds) {
-        if (!releaseIds.length) {
-            return []
-        }
-        const {ctx} = this
-        return ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/list?releaseIds=${releaseIds.toString()}`)
+    _buildAuthTree(dependencyTree, results = [], parent = null, deep = 1) {
+
+        let parentId = parent ? parent.id : ''
+        let parentVersion = parent ? parent.version : ''
+
+        dependencyTree.filter(x => this._compareResolver(parent, x.resolver)).map(item => {
+            let model = lodash.pick(item, ['id', 'name', 'userId', 'type', 'version'])
+            results.push(Object.assign(model, {deep, parentId, parentVersion}))
+            this._buildAuthTree(dependencyTree, results, item, deep + 1)
+        })
+
+        return results
     }
 
     /**
-     * 根据依赖树查找版本
-     * @param dependencies
-     * @param release
-     * @param list
-     * @returns {*}
+     * 比较解决方是否一致
+     * @param resolver
+     * @param entity
+     * @returns {boolean|*}
      * @private
      */
-    _findReleaseVersionFromDependencyTree(dependencies, releaseId, list = []) {
-
-        return dependencies.reduce((acc, dependency) => {
-            if (dependency.type === 'release' && dependency.id === releaseId && !dependency.replaced) {
-                acc.push(dependency)
-            }
-            //如果依赖项未上抛该发行,则终止检查子级节点
-            if (!dependency.baseUpcastReleases.some(x => x.releaseId === releaseId)) {
-                return acc
-            }
-            return this._findReleaseVersionFromDependencyTree(dependency.dependencies, releaseId, acc)
-        }, list)
+    _compareResolver(target, resolver) {
+        return resolver == null && target == null || resolver && target && resolver.id === target.id && resolver.version === target.version && resolver.deep === target.deep
     }
 
+    /**
+     * 查找目标实体(release or mock)的解决方
+     * @param dependencyTree
+     * @param parent
+     * @param target
+     * @param releaseMap
+     * @private
+     */
+    _findResolver(dependencyTree, parent, target, releaseMap) {
+
+        if (!parent || target.type === 'mock') {
+            return null
+        }
+
+        let grandfather = dependencyTree.find(x => x.deep == parent.deep - 1 && x.id === parent.parentId && x.version === parent.parentVersion)
+        if (parent.type === 'mock') {
+            return this._findResolver(dependencyTree, grandfather, target, releaseMap)
+        }
+
+        let {baseUpcastReleases} = releaseMap.get(parent.id)
+        //如果上抛中有,则递归接着找,否则代表当前层解决
+        if (baseUpcastReleases.some(x => x.releaseId === target.id)) {
+            return this._findResolver(dependencyTree, grandfather, target, releaseMap)
+        }
+
+        return lodash.pick(parent, ['id', 'type', 'deep', 'version'])
+    }
 
     /**
      * 生成测试资源ID
@@ -326,60 +377,58 @@ module.exports = class TestRuleService extends Service {
         return cryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`)
     }
 
+    /**
+     * 获取测试资源需要解决的上抛
+     * @param testResourceInfo
+     * @param authTreeInfo
+     * @private
+     */
+    _getTestResourceResolveRelease(testResourceInfo, userId, authTreeInfo, existingResolveReleases) {
 
-    async _test() {
+        const {authTree} = authTreeInfo
+        const {originInfo} = testResourceInfo
 
-        for (let i = 0; i < dependencyTree.length; i++) {
-            let currentDependency = dependencyTree[i]
-            let parent = dependencyTree.find(x => x.deep == currentDependency.deep - 1 && x.id === currentDependency.parentId && x.version === currentDependency.parentVersion)
-            await this._findResolver(dependencyTree, parent, currentDependency)
-        }
+        const toBeProcessedReleases = authTree.filter(x => x.deep == 1 && x.type === "release" && x.userId !== userId).map(m => Object({
+            releaseId: m.id, releaseName: m.name, contracts: []
+        }))
 
-        const rootNodes = dependencyTree.filter(x => x.resolver === null).map(item => this._buildAuthTree(dependencyTree, item))
+        const resolveReleases = existingResolveReleases ? existingResolveReleases.resolveReleases :
+            originInfo.type === "presentable" ? originInfo._originModel.resolveReleases : []
 
-        console.log(JSON.stringify(rootNodes))
-    }
+        const resolveReleaseMap = new Map(resolveReleases.map(x => [x.releaseId, x.contracts]))
 
-
-    //递归构建授权树
-    _buildAuthTree(dependencyTree, target) {
-
-        const resolveReleases = dependencyTree.filter(x => x.resolver
-            && x.resolver.id === target.id && x.resolver.version === target.version && x.resolver.deep === target.deep)
-
-        //resolveReleases.forEach(item => this._buildAuthTree(dependencyTree, item))
-
-        return Object.assign(lodash.pick(target, ['id', 'name', 'type', 'deep', 'version']), {
-            dependencies: resolveReleases.map(item => {
-                return this._buildAuthTree(dependencyTree, item)
-            })
+        toBeProcessedReleases.forEach(item => {
+            if (resolveReleaseMap.has(item.releaseId)) {
+                item.contracts = resolveReleaseMap.get(item.releaseId)
+            }
         })
+
+        return toBeProcessedReleases
     }
 
+    /**
+     * 批量签约
+     * @param nodeId
+     * @param targetId
+     * @param resolveReleases
+     * @returns {Promise<*>}
+     */
+    async _batchSignReleaseContracts(nodeId, beSignedContractReleases) {
 
-    //查找谁来解决当前依赖
-    async _findResolver(dependencyTree, parent, target) {
-
-        if (target.replaced) {
-
+        if (!beSignedContractReleases.length) {
+            return []
         }
-        if (!parent || parent.type === "mock" || target.type === "mock") {
-            target.resolver = null
-            return
-        }
-        if (!parent.baseUpcastReleases) {
-            let parentReleaseInfo = await this.ctx.curlIntranetApi(`${this.ctx.webApi.releaseInfo}/${parent.id}`)
-            parent.baseUpcastReleases = parentReleaseInfo.baseUpcastReleases
-        }
-        //如果上抛中有,则递归接着找,否则代表当前层解决
-        if (!parent.baseUpcastReleases.some(x => x.releaseId === target.id)) {
-            target.resolver = lodash.pick(parent, ['id', 'type', 'deep', 'version'])
-            return
-        }
-
-        let grandfather = dependencyTree.find(x => x.deep == parent.deep - 1 && x.id === parent.parentId && x.version === parent.parentVersion)
-
-        await this._findResolver(dependencyTree, grandfather, target)
+        const {ctx, app} = this
+        return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
+            method: 'post', contentType: 'json', data: {
+                partyTwoId: nodeId,
+                contractType: app.contractType.ResourceToNode,
+                signReleases: beSignedContractReleases.map(item => Object({
+                    releaseId: item.releaseId,
+                    policyIds: item.contracts.map(x => x.policyId)
+                }))
+            }
+        })
     }
 }
 

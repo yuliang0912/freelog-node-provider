@@ -35,6 +35,7 @@ module.exports = app => {
     router.put('switch-presentable-version', '/v1/presentables/:presentableId/switchPresentableVersion', presentable.v1.switchPresentableVersion)
     router.put('switch-presentable-online-state', '/v1/presentables/:presentableId/switchOnlineState', presentable.v1.switchOnlineState)
     router.put('additional-node-test-rule', '/v1/testNodes/:nodeId/additionalTestRule', testNode.v1.additionalTestRule)
+    router.put('test-resource-sign-contract', '/v1/testNodes/testResources/:testResourceId/resolveReleases', testNode.v1.testResourceResolveRelease)
 
     //restful api
     router.resources('node-info', '/v1/nodes', node.v1)

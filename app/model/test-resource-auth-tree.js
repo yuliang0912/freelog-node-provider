@@ -20,6 +20,7 @@ module.exports = app => {
         version: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},
+        userId: {type: Number, required: false}, //发行才有此值
         releaseSchemeId: {type: String, required: false}, //如果是发行,才有此值
     }, {_id: false})
 
@@ -36,7 +37,7 @@ module.exports = app => {
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
     })
 
-    TestResourceAuthTreeSchema.index({name: 1})
+    TestResourceAuthTreeSchema.index({testResourceId: 1})
 
-    //return mongoose.model('test-resource-auth-trees', TestResourceDependencyTreeSchema)
+    return mongoose.model('test-resource-auth-trees', TestResourceAuthTreeSchema)
 }

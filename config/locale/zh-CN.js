@@ -60,7 +60,9 @@ module.exports = {
 
     'presentable-online-auth-validate-error': '授权链路未通过,不能上线',
 
-    'node-test-rule-compile-failed': '测试节点的测试规则编译失败'
+    'node-test-rule-compile-failed': '测试节点的测试规则编译失败',
+
+    'node-test-resolve-release-invalid-error': "解决的发行中存在无效的数据"
 }
 
 

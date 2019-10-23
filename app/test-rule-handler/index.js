@@ -74,7 +74,7 @@ module.exports = class NodeTestRuleHandler {
      * @private
      */
     _initialTestRuleHandler() {
-        const {app, patrun} = this
+        const {patrun} = this
         patrun.add({ruleType: "add"}, this.importRuleHandler)
         patrun.add({ruleType: "replace"}, this.replaceRuleHandler)
         patrun.add({ruleType: "set"}, this.setDefinedTagRuleHandler)
