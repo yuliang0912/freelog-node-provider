@@ -54,9 +54,7 @@ module.exports = class ReplaceRuleHandler {
             let currTestResource = testResources[i]
             if (!operantTestResourceNames.length || operantTestResourceNames.some(name => name === currTestResource.testResourceName)) {
                 let simpleRootInfo = {
-                    name: currTestResource.testResourceName,
-                    type: currTestResource.type,
-                    version: currTestResource.version
+                    name: currTestResource.testResourceName, type: 'presentable'
                 }
                 await this._recursionReplace(currTestResource, currTestResource.dependencyTree, ruleInfo, [simpleRootInfo])
             }

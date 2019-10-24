@@ -77,6 +77,7 @@ module.exports = class TestRuleService extends Service {
         const nodeTestResourceAuthTrees = []
         for (let i = 0; i < nodeTestResourceDependencyTrees.length; i++) {
             let {testResourceId, testResourceName, dependencyTree} = nodeTestResourceDependencyTrees[i]
+            await this._setDependencyTreeReleaseSchemeId(testResourceId, dependencyTree)
             nodeTestResourceAuthTrees.push({
                 nodeId, testResourceId, testResourceName,
                 authTree: await this._generateTestResourceAuthTree(dependencyTree)
@@ -85,9 +86,7 @@ module.exports = class TestRuleService extends Service {
 
         const existingResolveReleases = await this.nodeTestResourceProvider.find({nodeId}, 'testResourceId resolveReleases')
 
-        //const nodeTestResourceResolveReleases = []
         for (let i = 0; i < nodeTestResources.length; i++) {
-
             let currentTestResource = nodeTestResources[i]
             let {testResourceId} = currentTestResource
             let currentTestResourceAuthTree = nodeTestResourceAuthTrees.find(x => x.testResourceId === testResourceId)
@@ -95,10 +94,6 @@ module.exports = class TestRuleService extends Service {
 
             currentTestResource.resolveReleases = this._getTestResourceResolveRelease(currentTestResource, userId, currentTestResourceAuthTree, currentTestResourceExistingResolveReleases)
             currentTestResource.resolveReleaseSignStatus = currentTestResource.resolveReleases.some(x => !x.contracts.length) ? 2 : 1
-            // nodeTestResourceResolveReleases.push({
-            //     nodeId, testResourceId, testResourceName, resolveReleases, resolveReleaseSignStatus
-            // })
-
         }
 
         const deleteTask1 = this.nodeTestRuleProvider.deleteOne({nodeId})
@@ -322,7 +317,7 @@ module.exports = class TestRuleService extends Service {
         let parentVersion = parent ? parent.version : ''
 
         dependencyTree.filter(x => this._compareResolver(parent, x.resolver)).map(item => {
-            let model = lodash.pick(item, ['id', 'name', 'userId', 'type', 'version'])
+            let model = lodash.pick(item, ['id', 'name', 'userId', 'type', 'version', 'releaseSchemeId'])
             results.push(Object.assign(model, {deep, parentId, parentVersion}))
             this._buildAuthTree(dependencyTree, results, item, deep + 1)
         })
@@ -431,6 +426,42 @@ module.exports = class TestRuleService extends Service {
                 }))
             }
         })
+    }
+
+    /**
+     * 设置依赖树的发行ID
+     * @param dependencies
+     * @returns {Promise<void>}
+     */
+    async _setDependencyTreeReleaseSchemeId(testResourceId, dependencies) {
+
+        const {ctx} = this
+        const releaseIds = [], versions = []
+        for (let i = 0; i < dependencies.length; i++) {
+            let {id, type, version} = dependencies[i]
+            if (type === "release") {
+                releaseIds.push(id)
+                versions.push(version)
+            }
+        }
+        if (!releaseIds.length) {
+            return
+        }
+
+        const releaseSchemeMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,version`)
+            .then(list => new Map(list.map(x => [`${x.releaseId}_${x.version}`, x])))
+
+        for (let i = 0, j = dependencies.length; i < j; i++) {
+            let {id, type, version} = dependencies[i]
+            if (type !== "release") {
+                continue
+            }
+            if (releaseSchemeMap.has(`${id}_${version}`)) {
+                dependencies[i].releaseSchemeId = releaseSchemeMap.get(`${id}_${version}`).schemeId
+            } else {
+                console.log(`testResourceDependencyTree数据结构缺失,testResourceId:${testResourceId},releaseId:${id},version:${version}`)
+            }
+        }
     }
 }
 

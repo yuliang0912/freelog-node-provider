@@ -18,6 +18,7 @@ module.exports = app => {
         type: {type: String, required: true},
         deep: {type: Number, required: true},
         version: {type: String, required: false},
+        releaseSchemeId: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},
         replaced: {},
