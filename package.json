@@ -7,7 +7,7 @@
     "framework": "egg-freelog-base"
   },
   "dependencies": {
-    "@freelog/nmr_translator": "^2.2.0",
+    "@freelog/nmr_translator": "^2.2.5",
     "@freelog/resource-policy-lang": "0.0.33",
     "ali-oss": "^4.16.0",
     "amqp": "^0.2.7",

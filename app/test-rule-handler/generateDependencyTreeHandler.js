@@ -95,9 +95,7 @@ module.exports = class GenerateDependencyTreeHandler {
         function authMapping(model) {
             let {releaseId, releaseName, version, deep, releaseSchemeId, resourceId} = model
             return {
-                id: releaseId, name: releaseName, version, type: "release", deep, _data: {
-                    schemeId: releaseSchemeId, resourceId
-                }
+                id: releaseId, name: releaseName, version, type: "release", deep
             }
         }
 
@@ -128,7 +126,7 @@ module.exports = class GenerateDependencyTreeHandler {
             return mockResourceId ? {
                 id: mockResourceId, name: mockResourceName, version: null, type: "mock", deep
             } : {
-                id: releaseId, name: releaseName, version, type: "release", deep, baseUpcastReleases, _data: {resourceId}
+                id: releaseId, name: releaseName, version, type: "release", deep, baseUpcastReleases
             }
         }
 

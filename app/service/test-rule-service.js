@@ -41,17 +41,28 @@ module.exports = class TestRuleService extends Service {
             })
         }
 
-        const nodeTestResources = matchedTestResources.map(nodeTestResource => {
-            let {testResourceName, previewImages, type, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = nodeTestResource
+        const nodeTestResources = []
+        for (let i = 0; i < matchedTestResources.length; i++) {
+            let {testResourceName, previewImages, type, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = matchedTestResources[i]
             let originInfo = {
                 id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
                 name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
                 type, version, versions, _originModel
             }
+
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
-            return {
-                testResourceId, testResourceName, nodeId, userId, dependencyTree, previewImages, intro, originInfo,
+            let flattenDependencyTree = this._flattenDependencyTree(dependencyTree)
+            await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
+
+            let rootDependencyInfo = flattenDependencyTree.find(x => x.deep === 1)
+            nodeTestResources.push({
+                testResourceId, testResourceName, nodeId, userId, flattenDependencyTree, dependencyTree,
+                previewImages, intro, originInfo,
                 resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
+                resourceFileInfo: {
+                    type: type === 'mock' ? 'mock' : 'resource',
+                    id: type === 'mock' ? originInfo.id : rootDependencyInfo.resourceId
+                },
                 differenceInfo: {
                     onlineStatusInfo: {
                         isOnline: onlineInfo.isOnline,
@@ -62,22 +73,21 @@ module.exports = class TestRuleService extends Service {
                         ruleId: definedTagInfo.source === 'default' ? "" : definedTagInfo.source
                     }
                 },
-                rules: efficientRules.map(x => Object({
-                    id: x.id, operation: x.operation
-                }))
-            }
-        })
+                rules: efficientRules.map(x => Object({id: x.id, operation: x.operation}))
+            })
+        }
+
         const nodeTestResourceDependencyTrees = nodeTestResources.map(testResource => Object({
             nodeId,
             testResourceId: testResource.testResourceId,
             testResourceName: testResource.testResourceName,
-            dependencyTree: this._flattenDependencyTree(testResource.dependencyTree)
+            masterEntityId: testResource.dependencyTree[0].id,
+            dependencyTree: testResource.flattenDependencyTree
         }))
 
         const nodeTestResourceAuthTrees = []
         for (let i = 0; i < nodeTestResourceDependencyTrees.length; i++) {
             let {testResourceId, testResourceName, dependencyTree} = nodeTestResourceDependencyTrees[i]
-            await this._setDependencyTreeReleaseSchemeId(testResourceId, dependencyTree)
             nodeTestResourceAuthTrees.push({
                 nodeId, testResourceId, testResourceName,
                 authTree: await this._generateTestResourceAuthTree(dependencyTree)
@@ -266,9 +276,9 @@ module.exports = class TestRuleService extends Service {
      */
     _flattenDependencyTree(dependencyTree, parentId = '', parentVersion = '', results = []) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
-            let {id, name, type, deep, version, dependencies, replaced} = dependencyTree[i]
+            let {id, name, type, deep, version, dependencies, replaced, resourceId, releaseSchemeId} = dependencyTree[i]
             results.push({
-                id, name, type, deep, version, parentId, parentVersion, replaced,
+                id, name, type, deep, version, parentId, parentVersion, replaced, resourceId, releaseSchemeId,
                 dependCount: dependencies.length
             })
             this._flattenDependencyTree(dependencies, id, version, results)
@@ -317,7 +327,7 @@ module.exports = class TestRuleService extends Service {
         let parentVersion = parent ? parent.version : ''
 
         dependencyTree.filter(x => this._compareResolver(parent, x.resolver)).map(item => {
-            let model = lodash.pick(item, ['id', 'name', 'userId', 'type', 'version', 'releaseSchemeId'])
+            let model = lodash.pick(item, ['id', 'name', 'userId', 'type', 'version', 'releaseSchemeId', 'resourceId'])
             results.push(Object.assign(model, {deep, parentId, parentVersion}))
             this._buildAuthTree(dependencyTree, results, item, deep + 1)
         })
@@ -448,7 +458,7 @@ module.exports = class TestRuleService extends Service {
             return
         }
 
-        const releaseSchemeMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,version`)
+        const releaseSchemeMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,resourceId,version`)
             .then(list => new Map(list.map(x => [`${x.releaseId}_${x.version}`, x])))
 
         for (let i = 0, j = dependencies.length; i < j; i++) {
@@ -457,6 +467,7 @@ module.exports = class TestRuleService extends Service {
                 continue
             }
             if (releaseSchemeMap.has(`${id}_${version}`)) {
+                dependencies[i].resourceId = releaseSchemeMap.get(`${id}_${version}`).resourceId
                 dependencies[i].releaseSchemeId = releaseSchemeMap.get(`${id}_${version}`).schemeId
             } else {
                 console.log(`testResourceDependencyTree数据结构缺失,testResourceId:${testResourceId},releaseId:${id},version:${version}`)

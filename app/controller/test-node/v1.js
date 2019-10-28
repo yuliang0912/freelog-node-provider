@@ -213,6 +213,38 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
+     * 获取presentable依赖树中指定发行的依赖项
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async testResourceSubDependReleases(ctx) {
+
+        var testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
+        var subEntityId = ctx.checkQuery('subEntityId').optional().isMongoObjectId().value
+        var subReleaseVersion = ctx.checkQuery('subEntityVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subEntityVersion')).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const {masterEntityId, dependencyTree} = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
+
+        var subEntityChain = lodash.chain(dependencyTree).filter(x => x.id === (subEntityId || masterEntityId))
+        if (subReleaseVersion) {
+            subEntityChain.filter(x => x.version === subReleaseVersion)
+        }
+        if (!subEntityId) {
+            subEntityChain.filter(x => x.deep === 1)
+        }
+
+        const subEntityInfo = subEntityChain.first().value()
+        if (!subEntityInfo) {
+            return ctx.success([])
+        }
+
+        const dependencies = dependencyTree.filter(x => x.deep === subEntityInfo.deep + 1 && x.parentId === subEntityInfo.id && x.parentVersion === subEntityInfo.version)
+
+        ctx.success(dependencies)
+    }
+
+    /**
      * 测试资源授权树
      * @param ctx
      * @returns {Promise<void>}

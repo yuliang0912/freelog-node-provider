@@ -19,6 +19,7 @@ module.exports = app => {
         deep: {type: Number, required: true},
         version: {type: String, required: false},
         releaseSchemeId: {type: String, required: false},
+        resourceId: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},
         replaced: {},
@@ -28,6 +29,7 @@ module.exports = app => {
         testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         nodeId: {type: Number, required: true},
+        masterEntityId: {type: String, required: true},
         dependencyTree: {type: [DependencyTreeSchema], default: []},
         status: {type: Number, default: 0, required: true} //状态 0:初始态
     }, {

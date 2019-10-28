@@ -22,6 +22,7 @@ module.exports = app => {
         parentVersion: {type: String, required: false},
         userId: {type: Number, required: false}, //发行才有此值
         releaseSchemeId: {type: String, required: false}, //如果是发行,才有此值
+        resourceId: {type: String, required: false},
     }, {_id: false})
 
     const TestResourceAuthTreeSchema = new mongoose.Schema({

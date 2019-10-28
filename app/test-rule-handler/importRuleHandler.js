@@ -114,8 +114,7 @@ module.exports = class ImportRuleHandler {
 
         if (type === "mock") {
             testResourceInfo.intro = lodash.truncate(lodash.unescape(originModel.description), {
-                length: 100,
-                omission: '...'
+                length: 100, omission: '...'
             })
             return
         }

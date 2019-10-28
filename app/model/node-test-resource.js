@@ -37,6 +37,11 @@ module.exports = app => {
         versions: {type: [String], required: false, default: []}
     }, {_id: false})
 
+    const ResourceFileInfoSchema = new mongoose.Schema({
+        id: {type: String, required: true},
+        type: {type: String, required: true}
+    }, {_id: false})
+
     const DifferenceInfoSchema = new mongoose.Schema({
         onlineStatusInfo: {
             isOnline: {type: Number, required: true},
@@ -57,6 +62,7 @@ module.exports = app => {
         resourceType: {type: String, required: true}, //资源类型
         intro: {type: String, required: false, default: ''}, //测试资源简介
         originInfo: {type: OriginInfoSchema, required: true},
+        resourceFileInfo: {type: ResourceFileInfoSchema, required: true},
         differenceInfo: {type: DifferenceInfoSchema, required: true},
         resolveReleases: {type: [ResolveReleaseSchema], default: [], required: false},
         resolveReleaseSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
