@@ -83,12 +83,12 @@ module.exports = class PresentableController extends Controller {
 
         const presentableMap = new Map(), resourceIds = []
         presentableList = presentableList.map(presentableInfo => {
-
             let model = presentableInfo.toObject()
             let {presentableId, releaseInfo} = model
             let {previewImages = [], resourceVersions = []} = releaseMap.get(releaseInfo.releaseId)
             let {resourceId} = resourceVersions.find(x => x.version === releaseInfo.version) || {}
             releaseInfo.previewImages = previewImages
+            releaseInfo.versions = resourceVersions.map(x => x.version)
             if (resourceId) {
                 presentableMap.set(presentableId, resourceId)
                 resourceIds.push(resourceId)
