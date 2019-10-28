@@ -43,6 +43,8 @@ module.exports = class TestNodeController extends Controller {
         if (testRuleText !== "") {
             testRuleText = ctx.checkBody('testRuleText').isBase64().decodeBase64().value
         }
+        // ctx.request.userId = 50018
+        // ctx.request.identityInfo.userInfo = {userId: 50018, username: 'gu'}
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)

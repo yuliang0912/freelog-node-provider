@@ -66,6 +66,7 @@ module.exports = class ImportRuleHandler {
                     definedTags: presentable.userDefinedTags,
                     source: 'default'
                 },
+                resourceType: presentable.releaseInfo.resourceType,
                 previewImages: [],
                 sortIndex: sortIndex++,
                 resolveReleases: [],
@@ -83,7 +84,7 @@ module.exports = class ImportRuleHandler {
     }
 
     /**
-     * 导入资源
+     * 导入发行或者mock资源
      * @param name
      * @param type
      * @param testResourceInfo
@@ -108,6 +109,7 @@ module.exports = class ImportRuleHandler {
             return
         }
 
+        testResourceInfo.resourceType = originModel.resourceType
         testResourceInfo.previewImages = originModel.previewImages
         testResourceInfo._originModel = originModel
         ruleInfo.effectiveMatchCount += 1

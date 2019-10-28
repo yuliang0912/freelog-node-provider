@@ -43,7 +43,7 @@ module.exports = class TestRuleService extends Service {
 
         const nodeTestResources = []
         for (let i = 0; i < matchedTestResources.length; i++) {
-            let {testResourceName, previewImages, type, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = matchedTestResources[i]
+            let {testResourceName, previewImages, type, resourceType, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = matchedTestResources[i]
             let originInfo = {
                 id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
                 name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
@@ -54,15 +54,10 @@ module.exports = class TestRuleService extends Service {
             let flattenDependencyTree = this._flattenDependencyTree(dependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
-            let rootDependencyInfo = flattenDependencyTree.find(x => x.deep === 1)
             nodeTestResources.push({
                 testResourceId, testResourceName, nodeId, userId, flattenDependencyTree, dependencyTree,
-                previewImages, intro, originInfo,
-                resourceType: _originModel['resourceType'] || _originModel.releaseInfo.resourceType,
-                resourceFileInfo: {
-                    type: type === 'mock' ? 'mock' : 'resource',
-                    id: type === 'mock' ? originInfo.id : rootDependencyInfo.resourceId
-                },
+                previewImages, intro, originInfo, resourceType,
+                resourceFileInfo: this._getTestResourceInfo(originInfo, flattenDependencyTree),
                 differenceInfo: {
                     onlineStatusInfo: {
                         isOnline: onlineInfo.isOnline,
@@ -81,7 +76,7 @@ module.exports = class TestRuleService extends Service {
             nodeId,
             testResourceId: testResource.testResourceId,
             testResourceName: testResource.testResourceName,
-            masterEntityId: testResource.dependencyTree[0].id,
+            masterEntityId: testResource.dependencyTree.length ? testResource.dependencyTree[0].id : "",
             dependencyTree: testResource.flattenDependencyTree
         }))
 
@@ -472,6 +467,23 @@ module.exports = class TestRuleService extends Service {
             } else {
                 console.log(`testResourceDependencyTree数据结构缺失,testResourceId:${testResourceId},releaseId:${id},version:${version}`)
             }
+        }
+    }
+
+
+    _getTestResourceInfo(originInfo, flattenDependencyTree) {
+
+        let {id, version, type, _originModel} = originInfo
+        if (type === 'mock') {
+            return {id, type}
+        }
+        if (type === "release") {
+            let resourceVersion = _originModel.resourceVersions.find(x => x.version === version)
+            return {id: resourceVersion.resourceId, type: 'resource'}
+        }
+        if (type === "presentable") {
+            let rootDependencyInfo = flattenDependencyTree.find(x => x.deep === 1)
+            return {id: rootDependencyInfo.resourceId, type: "resource"}
         }
     }
 }
