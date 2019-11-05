@@ -302,6 +302,14 @@ module.exports = class TestNodeController extends Controller {
         ctx.success(filteredDependencyTree)
     }
 
+
+    async test(ctx) {
+
+        const testResources = await ctx.service.testRuleService.matchAndSaveNodeTestRule(80000000,'')
+
+        ctx.success(testResources)
+    }
+
     /**
      * 校验节点身份
      * @param ctx

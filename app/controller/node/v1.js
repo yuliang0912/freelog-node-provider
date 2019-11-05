@@ -144,4 +144,5 @@ module.exports = class NodeController extends Controller {
 
         await this.nodeProvider.findOne(condition).then(ctx.success)
     }
+
 }

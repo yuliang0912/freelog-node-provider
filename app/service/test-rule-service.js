@@ -6,6 +6,8 @@ const Service = require('egg').Service
 const {ApplicationError} = require('egg-freelog-base/error')
 const NodeTestRuleHandler = require('../test-rule-handler/index')
 const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
+const CommonGenerateDependencyTreeHandler = require('../test-rule-handler/common-generate-dependency-tree-handler')
+const RuleImportTestResourceHandler = require('../test-rule-handler/rule-import-test-resource-handler')
 
 module.exports = class TestRuleService extends Service {
 
@@ -13,64 +15,75 @@ module.exports = class TestRuleService extends Service {
         super(...arguments)
         this.nodeTestRuleHandler = new NodeTestRuleHandler(app)
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
+        this.presentableProvider = app.dal.presentableProvider
         this.nodeTestResourceProvider = app.dal.nodeTestResourceProvider
+        this.ruleImportTestResourceHandler = new RuleImportTestResourceHandler(app)
         this.testResourceAuthTreeProvider = app.dal.testResourceAuthTreeProvider
         this.testResourceResolveReleaseProvider = app.dal.testResourceResolveReleaseProvider
         this.testResourceDependencyTreeProvider = app.dal.testResourceDependencyTreeProvider
+        this.commonGenerateDependencyTreeHandler = new CommonGenerateDependencyTreeHandler(app)
     }
 
     /**
-     * 匹配并保持节点的测试资源
+     * 匹配规则并保存结果
      * @param nodeId
      * @param testRuleText
-     * @returns {Promise<model>}
+     * @returns {Promise<Model>}
      */
     async matchAndSaveNodeTestRule(nodeId, testRuleText) {
 
         const {ctx} = this
         const userId = ctx.request.userId
-        const {matchedTestResources, testRules} = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
+        const testRules = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
 
+        var nodeTestResources = []
         const nodeTestRuleInfo = {
             nodeId, userId, ruleText: testRuleText, testRules: testRules.map(testRuleInfo => {
-                let {id, text, effectiveMatchCount, matchErrors} = testRuleInfo
+                let {id, text, matchErrors} = testRuleInfo
                 return {
-                    id, text, effectiveMatchCount, matchErrors,
-                    ruleInfo: lodash.omit(testRuleInfo, ['id', '_abortIndex', 'text', 'effectiveMatchCount', 'isValid', 'matchErrors'])
+                    id, text, matchErrors,
+                    ruleInfo: lodash.pick(testRuleInfo, ['tags', 'replaces', 'online', 'operation', 'presentableName', 'candidate'])
                 }
             })
         }
 
-        const nodeTestResources = []
-        for (let i = 0; i < matchedTestResources.length; i++) {
-            let {testResourceName, previewImages, type, resourceType, version, versions = [], intro, definedTagInfo, onlineInfo, efficientRules, dependencyTree, _originModel} = matchedTestResources[i]
+        for (let i = 0; i < testRules.length; i++) {
+
+            let testRuleInfo = testRules[i]
+            let {presentableName, entityInfo, entityDependencyTree, onlineStatus, userDefinedTags} = testRuleInfo
+            let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages} = entityInfo
+
             let originInfo = {
-                id: _originModel['presentableId'] || _originModel['releaseId'] || _originModel['mockResourceId'],
-                name: _originModel['presentableName'] || _originModel['releaseName'] || _originModel['fullName'],
-                type, version, versions, _originModel
+                id: entityId, name: entityName,
+                type: entityType, version: entityVersion, versions: entityVersions, _originModel: entityInfo
             }
 
-            let testResourceId = this._generateTestResourceId(nodeId, originInfo)
-            let flattenDependencyTree = this._flattenDependencyTree(dependencyTree)
+            let testResourceId = this._generateTestResourceId(nodeId, entityId, entityType)
+            let flattenDependencyTree = this._flattenDependencyTree(entityDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             nodeTestResources.push({
-                testResourceId, testResourceName, nodeId, userId, flattenDependencyTree, dependencyTree,
-                previewImages, intro, originInfo, resourceType,
-                resourceFileInfo: this._getTestResourceInfo(originInfo, flattenDependencyTree),
+                testResourceId, nodeId, userId, flattenDependencyTree, intro, previewImages, originInfo, resourceType,
+                testResourceName: presentableName,
+                dependencyTree: entityDependencyTree,
+                resourceFileInfo: this._getTestResourceFileInfo(originInfo, flattenDependencyTree),
                 differenceInfo: {
                     onlineStatusInfo: {
-                        isOnline: onlineInfo.isOnline,
-                        ruleId: onlineInfo.source === 'default' ? "" : onlineInfo.source
+                        isOnline: onlineStatus,
+                        ruleId: testRuleInfo.online === null ? "default" : testRuleInfo.id
                     },
                     userDefinedTagInfo: {
-                        tags: definedTagInfo.definedTags,
-                        ruleId: definedTagInfo.source === 'default' ? "" : definedTagInfo.source
+                        tags: userDefinedTags,
+                        ruleId: testRuleInfo.tags === null ? 'default' : testRuleInfo.id
                     }
                 },
-                rules: efficientRules.map(x => Object({id: x.id, operation: x.operation}))
+                rules: [{id: testRuleInfo.id, operation: testRuleInfo.operation}]
             })
         }
+
+        const UnOperantNodePresentableTestResources = await this.getUnOperantNodePresentableTestResources(nodeId, userId, testRules)
+
+        nodeTestResources = nodeTestResources.concat(UnOperantNodePresentableTestResources)
 
         const nodeTestResourceDependencyTrees = nodeTestResources.map(testResource => Object({
             nodeId,
@@ -105,7 +118,6 @@ module.exports = class TestRuleService extends Service {
         const deleteTask2 = this.nodeTestResourceProvider.deleteMany({nodeId})
         const deleteTask3 = this.testResourceAuthTreeProvider.deleteMany({nodeId})
         const deleteTask4 = this.testResourceDependencyTreeProvider.deleteMany({nodeId})
-        //const deleteTask5 = this.testResourceResolveReleaseProvider.deleteMany({nodeId})
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3, deleteTask4])
 
@@ -113,11 +125,10 @@ module.exports = class TestRuleService extends Service {
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
         const task3 = this.testResourceAuthTreeProvider.insertMany(nodeTestResourceAuthTrees)
         const task4 = this.testResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
-        //const task5 = this.testResourceResolveReleaseProvider.insertMany(nodeTestResourceResolveReleases)
+
 
         return Promise.all([task1, task2, task3, task4]).then(() => nodeTestRuleInfo)
     }
-
 
     /**
      * 设置测试资源上抛处理情况
@@ -188,6 +199,62 @@ module.exports = class TestRuleService extends Service {
     }
 
     /**
+     * 获取未被规则操作过的节点presentables
+     * @param nodeId
+     * @param testRules
+     * @returns {Promise<Array>}
+     */
+    async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
+
+        const testResources = []
+        const operantPresentableIds = testRules.filter(x => x.operation === 'set').map(x => x.entityInfo.entityId)
+        const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: [operantPresentableIds]}})
+
+        for (let i = 0; i < nodePresentables.length; i++) {
+            let presentable = nodePresentables[i]
+            let {presentableId, isOnline, userDefinedTags, presentableName, releaseInfo} = presentable
+
+            let originInfo = {
+                id: presentableId, name: presentableName,
+                type: 'presentable', version: releaseInfo.version, _originModel: presentable,
+                versions: [],
+            }
+
+            let releaseTask = this.ruleImportTestResourceHandler.getReleaseInfo(releaseInfo.releaseId)
+            let presentableDependencyTreeTask = this.commonGenerateDependencyTreeHandler.generatePresentableDependencyTree(presentableId, releaseInfo.version)
+            let [release, presentableDependencyTree] = await Promise.all([releaseTask, presentableDependencyTreeTask])
+
+            let testResourceId = this._generateTestResourceId(nodeId, presentableId, 'presentable')
+            let flattenDependencyTree = this._flattenDependencyTree(presentableDependencyTree)
+            await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
+
+            testResources.push({
+                testResourceId, nodeId, userId, flattenDependencyTree, originInfo,
+                intro: release.intro,
+                previewImages: release.previewImages,
+                resourceType: releaseInfo.resourceType,
+                testResourceName: presentableName,
+                dependencyTree: presentableDependencyTree,
+                resourceFileInfo: this._getTestResourceFileInfo(originInfo, flattenDependencyTree),
+                differenceInfo: {
+                    onlineStatusInfo: {
+                        isOnline: isOnline,
+                        ruleId: 'default'
+                    },
+                    userDefinedTagInfo: {
+                        tags: userDefinedTags,
+                        ruleId: 'default'
+                    }
+                },
+                rules: []  //efficientRules.map(x => Object({id: x.id, operation: x.operation}))
+            })
+        }
+
+        return testResources
+    }
+
+
+    /**
      * 过滤特定资源依赖树
      * @returns {Promise<void>}
      */
@@ -243,12 +310,14 @@ module.exports = class TestRuleService extends Service {
         return recursionBuildDependencyTree(rootDependencies)
     }
 
+
     /**
-     * 编译并匹配测试结果
+     * 编译并且匹配规则
      * @param nodeId
      * @param userId
      * @param testRuleText
      * @returns {Promise<*>}
+     * @private
      */
     async _compileAndMatchTestRule(nodeId, userId, testRuleText) {
 
@@ -256,10 +325,16 @@ module.exports = class TestRuleService extends Service {
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
         }
+        if (!rules.length) {
+            return rules
+        }
 
-        const matchedTestResources = await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, rules)
+        const testRuleChunks = lodash.chunk(rules, 200)
+        for (let i = 0; i < testRuleChunks.length; i++) {
+            await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, testRuleChunks[i])
+        }
 
-        return {matchedTestResources, testRules: rules}
+        return rules
     }
 
     /**
@@ -271,9 +346,9 @@ module.exports = class TestRuleService extends Service {
      */
     _flattenDependencyTree(dependencyTree, parentId = '', parentVersion = '', results = []) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
-            let {id, name, type, deep, version, dependencies, replaced, resourceId, releaseSchemeId} = dependencyTree[i]
+            let {id, name, type, deep, version, dependencies, replaceRecords, resourceId, releaseSchemeId} = dependencyTree[i]
             results.push({
-                id, name, type, deep, version, parentId, parentVersion, replaced, resourceId, releaseSchemeId,
+                id, name, type, deep, version, parentId, parentVersion, replaceRecords, resourceId, releaseSchemeId,
                 dependCount: dependencies.length
             })
             this._flattenDependencyTree(dependencies, id, version, results)
@@ -375,8 +450,8 @@ module.exports = class TestRuleService extends Service {
      * @param originInfo
      * @private
      */
-    _generateTestResourceId(nodeId, originInfo) {
-        return cryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`)
+    _generateTestResourceId(nodeId, entityId, entityType) {
+        return cryptoHelper.md5(`${nodeId}-${entityId}-${entityType}`)
     }
 
     /**
@@ -470,8 +545,14 @@ module.exports = class TestRuleService extends Service {
         }
     }
 
-
-    _getTestResourceInfo(originInfo, flattenDependencyTree) {
+    /**
+     * 获取资源文件的ID数据
+     * @param originInfo
+     * @param flattenDependencyTree
+     * @returns {*}
+     * @private
+     */
+    _getTestResourceFileInfo(originInfo, flattenDependencyTree) {
 
         let {id, version, type, _originModel} = originInfo
         if (type === 'mock') {

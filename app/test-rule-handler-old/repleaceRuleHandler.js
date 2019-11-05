@@ -78,18 +78,18 @@ module.exports = class ReplaceRuleHandler {
         for (let i = 0; i < dependencies.length; i++) {
             let currNodeInfo = dependencies[i]
             parents.push(lodash.pick(currNodeInfo, ['name', 'type', 'version']))
-            let replacerDependencyInfo = await this._getReplacerDependencies(currNodeInfo, ruleInfo, parents)
-            if (!replacerDependencyInfo) {
+            let replacerInfo = await this._getReplacerAndDependencies(currNodeInfo, ruleInfo, parents)
+            if (!replacerInfo) {
                 await this._recursionReplace(rootInfo, currNodeInfo.dependencies, ruleInfo, parents)
                 continue
             }
-            let {result, deep} = this._checkCycleDependency(dependencies, replacerDependencyInfo)
+            let {result, deep} = this._checkCycleDependency(dependencies, replacerInfo)
             if (result) {
                 ruleInfo.matchErrors.push(`规则作用于${rootInfo.testResourceName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`)
                 continue
             }
             rootInfo.efficientRules.push(ruleInfo)
-            dependencies.splice(i, 1, replacerDependencyInfo)
+            dependencies.splice(i, 1, replacerInfo)
         }
     }
 
@@ -100,15 +100,12 @@ module.exports = class ReplaceRuleHandler {
      * @param parents
      * @private
      * */
-    async _getReplacerDependencies(targetInfo, ruleInfo, parents = []) {
+    async _getReplacerAndDependencies(targetInfo, ruleInfo, parents = []) {
 
         const {id, replaced, replacer, scope = []} = ruleInfo
 
-        //作用域检查不符合
-        if (!this._checkScope(scope, parents)) {
-            return
-        }
-        if (!this._entityIsMatched(replaced, targetInfo)) {
+        //作用域检查不符合或目标实体与规则预定的实体不符合
+        if (!this._checkRuleScope(scope, parents) || !this._entityIsMatched(replaced, targetInfo)) {
             return
         }
 
@@ -137,14 +134,18 @@ module.exports = class ReplaceRuleHandler {
             ? await this.generateDependencyTreeHandler.generateMockDependencyTree(replacerInfo)
             : await this.generateDependencyTreeHandler.generateReleaseDependencyTree(replacerInfo, releaseVersion)
 
+        const replaceRecords = targetInfo.replaceRecords || []
+
+        replaceRecords.push(Object.assign(lodash.pick(targetInfo, ['id', 'name', 'version', 'type']), {ruleId: id}))
+
         return {
+            id: replacerInfo[isMock ? 'mockResourceId' : 'releaseId'],
+            name: replacerInfo[isMock ? 'fullName' : 'releaseName'],
+            version: releaseVersion,
             type: replacer.type,
             deep: targetInfo.deep,
             dependencies: replacerDependencies,
-            version: releaseVersion,
-            id: replacerInfo['mockResourceId'] || replacerInfo['releaseId'],
-            name: replacerInfo['fullName'] || replacerInfo['releaseName'],
-            replaced: Object.assign(lodash.omit(targetInfo, ['dependencies', 'deep']), {replacedRuleId: id}),
+            replaceRecords: replaceRecords
         }
     }
 
@@ -155,7 +156,7 @@ module.exports = class ReplaceRuleHandler {
      * @returns Boolean 1:不符合  2:局部符合  3:完全符合
      * @private
      */
-    _checkScope(scopes, parents) {
+    _checkRuleScope(scopes, parents) {
 
         if (lodash.isEmpty(scopes)) { //空数组即全局替换
             return true
@@ -190,10 +191,10 @@ module.exports = class ReplaceRuleHandler {
     _entityIsMatched(scopeInfo, dependInfo) {
 
         let {name, type, versionRange = "*"} = scopeInfo
-        let nameAndVersionIsMatched = name === dependInfo.name && type === dependInfo.type
+        let nameAndTypeIsMatched = name === dependInfo.name && type === dependInfo.type
         let versionIsMatched = type === 'release' ? Semver.satisfies(dependInfo.version, versionRange) : true
 
-        return nameAndVersionIsMatched && versionIsMatched
+        return nameAndTypeIsMatched && versionIsMatched
     }
 
     /**

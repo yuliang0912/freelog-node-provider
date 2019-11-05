@@ -22,7 +22,7 @@ module.exports = app => {
         resourceId: {type: String, required: false},
         parentId: {type: String, required: false},
         parentVersion: {type: String, required: false},
-        replaced: {},
+        replaceRecords: {},
     }, {_id: false})
 
     const TestResourceDependencyTreeSchema = new mongoose.Schema({

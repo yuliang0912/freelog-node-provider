@@ -1,85 +1,74 @@
 'use strict'
 
 const uuid = require('uuid')
-const lodash = require('lodash')
 const Patrun = require('patrun')
+const {ArgumentError} = require('egg-freelog-base/error')
 const nmrTranslator = require('@freelog/nmr_translator')
-const ImportRuleHandler = require('./importRuleHandler')
-const ReplaceRuleHandler = require('./repleaceRuleHandler')
-const SetOnlineStatusHandler = require('./setOnlineStatusHandler')
-const SetDefinedTagRuleHandler = require('./setDefinedTagRuleHandler')
-const GenerateDependencyTreeHandler = require('./generateDependencyTreeHandler')
+const TagsOptionHandler = require('./option-tags-handler')
+const ReplaceOptionHandler = require('./option-replace-handler')
+const OnlineStatusOptionHandler = require('./option-online-status-handler')
+
+const ImportTestResourceRuleHandler = require('./rule-import-test-resource-handler')
+const SetPresentablePropertyHandler = require('./rule-set-presentable-property-handler')
+const GenerateDependencyTreeHandler = require('./common-generate-dependency-tree-handler')
 
 module.exports = class NodeTestRuleHandler {
 
     constructor(app) {
+
         this.app = app
         this.patrun = Patrun()
-        this.importRuleHandler = new ImportRuleHandler(app)
-        this.replaceRuleHandler = new ReplaceRuleHandler(app)
-        this.setOnlineStatusHandler = new SetOnlineStatusHandler(app)
-        this.setDefinedTagRuleHandler = new SetDefinedTagRuleHandler(app)
+        this.presentableProvider = app.dal.presentableProvider
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
+        this.tagsOptionHandler = new TagsOptionHandler(app)
+        this.replaceOptionHandler = new ReplaceOptionHandler(app)
+        this.onlineStatusOptionHandler = new OnlineStatusOptionHandler(app)
+        this.generateDependencyTreeHandler = new GenerateDependencyTreeHandler(app)
+        this.importTestResourceRuleHandler = new ImportTestResourceRuleHandler(app)
+        this.setPresentablePropertyHandler = new SetPresentablePropertyHandler(app)
         this._initialTestRuleHandler()
     }
 
     /**
      * 匹配测试规则结果
-     * step1.导入正式节点的presentables
-     * step2.遍历按序执行所有的规则
-     * step3.等待所有导入规则的异步任务执行完毕
-     * step4.批量生成所有测试资源对应的依赖树
-     * step5.执行第2步中已经预置好的替换规则后置处理函数(替换规则处理时只是标记规则替换的作用范围,直到此时基础数据完备才真正执行替换)
+     * step1.筛选出规则中所有操作正式节点的规则(operation=set)
+     * step2.执行对应的set属性操作,例如online,tags,replace等
+     * step3.执行导入测试资源操作的规则(operation=add)
+     * step4.基础校验规则,例如presentableName是否存在,releaseName是否已使用
+     * step5.执行导入测试资源操作的规则的设置项.例如online,tags,replace等
      */
-    async matchTestRuleResults(nodeId, userId, testRules = []) {
+    async matchTestRuleResults(nodeId, userId, testRules) {
 
-        const {app} = this
-        const testResources = await this.importRuleHandler.importNodePresentables(nodeId, testRules.length)
+        if (testRules.length > 200) {
+            throw new ArgumentError('规则一批次最多支持200条')
+        }
 
-        testRules.forEach((ruleInfo, index) => {
-            ruleInfo.id = uuid.v4().replace(/-/g, '')
-            ruleInfo.effectiveMatchCount = 0
-            ruleInfo.matchErrors = []
-            if (ruleInfo.disabled) {
-                return
-            }
-            let handler = this.patrun.find({ruleType: ruleInfo.operation})
-            if (!handler) {
-                console.error(`无效的处理规则,`, ruleInfo)
-                return
-            }
-            handler.handle(ruleInfo, testResources, userId, index)
+        this._expandRuleInfoProperty(testRules, userId)
+
+        await this._checkImportNameAndEntityIsExist(testRules, nodeId)
+
+        testRules.forEach(ruleInfo => {
+            let operationHandler = this.patrun.find({type: "rule", operation: ruleInfo.operation})
+            operationHandler && operationHandler.handle(ruleInfo)
         })
 
-        //批量执行所有异步获取mock/release实体信息的请求
-        await Promise.all(testResources.filter(x => x.asyncTask).map(x => x.asyncTask))
+        //批量执行异步获取实体的操作
+        await Promise.all(testRules.filter(x => x._asyncGetEntityTask).map(x => x._asyncGetEntityTask))
 
-        const validTestResources = testResources.filter(x => !Reflect.has(x, 'isValid') || x.isValid)
+        //生成实体对应的依赖树(此处为了后续的replace操作服务)
+        await this.generateDependencyTreeHandler.handle(testRules)
 
-        //后置设置生效数量
-        this.setOnlineStatusHandler.postpositionTaskHandle(testRules, validTestResources)
-        this.setDefinedTagRuleHandler.postpositionTaskHandle(testRules, validTestResources)
+        const replaceTasks = []
+        for (let i = 0; i < testRules.length; i++) {
+            let ruleInfo = testRules[i]
+            this.tagsOptionHandler.handle(ruleInfo)
+            this.onlineStatusOptionHandler.handle(ruleInfo)
+            replaceTasks.push(this.replaceOptionHandler.handle(ruleInfo))
+        }
 
-        //批量执行所有生成测试资源依赖树的异步请求
-        await new GenerateDependencyTreeHandler(app).handle(validTestResources)
-        //后置处理替换规则的异步请求
-        await this.replaceRuleHandler.postpositionTaskHandle(testRules, validTestResources)
+        await Promise.all(replaceTasks)
 
-        return lodash.sortBy(validTestResources, x => x.sortIndex)
-    }
-
-
-    /**
-     * 初始化测试规则对应的处理函数
-     * @private
-     */
-    _initialTestRuleHandler() {
-        const {patrun} = this
-        patrun.add({ruleType: "add"}, this.importRuleHandler)
-        patrun.add({ruleType: "replace"}, this.replaceRuleHandler)
-        patrun.add({ruleType: "set"}, this.setDefinedTagRuleHandler)
-        patrun.add({ruleType: "online"}, this.setOnlineStatusHandler)
-        patrun.add({ruleType: "offline"}, this.setOnlineStatusHandler)
+        return testRules
     }
 
     /**
@@ -93,5 +82,69 @@ module.exports = class NodeTestRuleHandler {
         }
 
         return nmrTranslator.compile(testRuleText)
+    }
+
+    /**
+     * 批量检测导入规则中的presentableName是否已存在.以及导入的发行是否已经签约到正式节点中
+     * @private
+     */
+    async _checkImportNameAndEntityIsExist(testRules, nodeId) {
+
+        const condition = {nodeId}
+        const allAddPresentableNames = testRules.filter(x => x.operation === 'add').map(x => new RegExp(`^${x.presentableName}$`, 'i'))
+        const allAddReleaseNames = testRules.filter(x => x.operation === 'add' && x.candidate.type === 'release').map(x => new RegExp(`^${x.candidate.name}$`, 'i'))
+
+        if (allAddPresentableNames.length) {
+            condition.presentableName = {$in: allAddPresentableNames}
+        }
+        if (allAddReleaseNames.length) {
+            condition['releaseInfo.releaseName'] = {$in: allAddReleaseNames}
+        }
+        if (Object.keys(condition).length < 2) {
+            return
+        }
+
+        const presentables = await this.presentableProvider.find(condition, 'presentableName releaseInfo')
+        for (let i = 0; i < presentables.length; i++) {
+            let {presentableName, releaseInfo} = presentables[i]
+            let existingPresentableNameRule = testRules.find(x => x.presentableName.toLowerCase() === presentableName.toLowerCase())
+            if (existingPresentableNameRule) {
+                existingPresentableNameRule.isValid = false
+                existingPresentableNameRule.matchErrors.push(`节点的presentable中已存在${existingPresentableNameRule.presentableName},规则无法生效`)
+            }
+            let existingReleaseNameRule = testRules.find(x => x.candidate.name.toLowerCase() === releaseInfo.releaseName.toLowerCase() && x.candidate.type === "release")
+            if (existingReleaseNameRule) {
+                existingPresentableNameRule.isValid = false
+                existingPresentableNameRule.matchErrors.push(`节点的presentable中已存在发行${existingReleaseNameRule.candidate.name},规则无法生效`)
+            }
+        }
+    }
+
+    /**
+     * 拓展测试规则的属性
+     * @param testRules
+     * @param userId
+     * @returns {*}
+     * @private
+     */
+    _expandRuleInfoProperty(testRules, userId) {
+        testRules.forEach(ruleInfo => {
+            ruleInfo.isValid = true
+            ruleInfo.id = uuid.v4().replace(/-/g, '')
+            ruleInfo.userId = userId
+            ruleInfo.matchErrors = []
+        })
+        return testRules
+    }
+
+    /**
+     * 初始化测试规则对应的处理函数
+     * @private
+     */
+    _initialTestRuleHandler() {
+
+        const {patrun} = this
+        patrun.add({type: "rule", operation: "add"}, this.importTestResourceRuleHandler)
+        patrun.add({type: "rule", operation: "set"}, this.setPresentablePropertyHandler)
     }
 }

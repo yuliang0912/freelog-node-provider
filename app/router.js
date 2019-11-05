@@ -27,6 +27,8 @@ module.exports = app => {
     router.get('test-resource-sub-dependency', '/v1/testNodes/testResources/:testResourceId/subDependencies', testNode.v1.testResourceSubDependReleases)
 
     router.get('get-test-resource-detail', '/v1/testNodes/testResources/:testResourceId', testNode.v1.testResourceDetail)
+    router.get('get-test-resource-detail', '/v1/testNodes/test', testNode.v1.test)
+
 
     //post
     router.post('match-test-resource', '/v1/testNodes/:nodeId/matchTestResources', testNode.v1.matchTestResources)
