@@ -60,6 +60,8 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
         const testRuleText = ctx.checkBody('testRuleText').exist().type('string').isBase64().decodeBase64().value
+        ctx.request.userId = 50028
+
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
@@ -305,7 +307,7 @@ module.exports = class TestNodeController extends Controller {
 
     async test(ctx) {
 
-        const testResources = await ctx.service.testRuleService.matchAndSaveNodeTestRule(80000000,'')
+        const testResources = await ctx.service.testRuleService.matchAndSaveNodeTestRule(80000000, '')
 
         ctx.success(testResources)
     }

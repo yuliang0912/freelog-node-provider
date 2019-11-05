@@ -48,8 +48,10 @@ module.exports = class TestRuleService extends Service {
         }
 
         for (let i = 0; i < testRules.length; i++) {
-
             let testRuleInfo = testRules[i]
+            if (!testRuleInfo.isValid) {
+                continue
+            }
             let {presentableName, entityInfo, entityDependencyTree, onlineStatus, userDefinedTags} = testRuleInfo
             let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages} = entityInfo
 
@@ -125,7 +127,6 @@ module.exports = class TestRuleService extends Service {
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
         const task3 = this.testResourceAuthTreeProvider.insertMany(nodeTestResourceAuthTrees)
         const task4 = this.testResourceDependencyTreeProvider.insertMany(nodeTestResourceDependencyTrees)
-
 
         return Promise.all([task1, task2, task3, task4]).then(() => nodeTestRuleInfo)
     }
@@ -207,7 +208,8 @@ module.exports = class TestRuleService extends Service {
     async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
 
         const testResources = []
-        const operantPresentableIds = testRules.filter(x => x.operation === 'set').map(x => x.entityInfo.entityId)
+        const operantPresentableIds = testRules.filter(x => x.operation === 'alter').map(x => x.entityInfo.entityId)
+
         const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: [operantPresentableIds]}})
 
         for (let i = 0; i < nodePresentables.length; i++) {
@@ -322,6 +324,7 @@ module.exports = class TestRuleService extends Service {
     async _compileAndMatchTestRule(nodeId, userId, testRuleText) {
 
         const {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
+        
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
         }

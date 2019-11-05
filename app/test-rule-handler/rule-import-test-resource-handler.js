@@ -72,7 +72,7 @@ module.exports = class RuleImportTestResourceHandler {
      * @param mockName
      * @returns {*}
      */
-    getMockResourceInfo(mockName) {
+    async getMockResourceInfo(mockName) {
         const {app} = this
         return app.curlIntranetApi(`${app.webApi.releaseInfo}/mocks/detail?mockName=${mockName}`)
     }
@@ -82,7 +82,7 @@ module.exports = class RuleImportTestResourceHandler {
      * @param releaseName
      * @returns {*}
      */
-    getReleaseInfo(releaseNameOrId) {
+    async getReleaseInfo(releaseNameOrId) {
 
         let {app} = this, url = ''
         if (commonRegex.mongoObjectId.test(releaseNameOrId)) {

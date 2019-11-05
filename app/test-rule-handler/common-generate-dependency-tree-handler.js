@@ -32,6 +32,7 @@ module.exports = class CommonGenerateDependencyTreeHandler {
 
         var dependencyTreeTask = null
         const {candidate = {}, entityInfo} = ruleInfo
+
         switch (candidate.type) {
             case "mock":
                 dependencyTreeTask = this.generateMockDependencyTree(entityInfo['mockResourceId'])

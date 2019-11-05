@@ -145,6 +145,6 @@ module.exports = class NodeTestRuleHandler {
 
         const {patrun} = this
         patrun.add({type: "rule", operation: "add"}, this.importTestResourceRuleHandler)
-        patrun.add({type: "rule", operation: "set"}, this.setPresentablePropertyHandler)
+        patrun.add({type: "rule", operation: "alter"}, this.setPresentablePropertyHandler)
     }
 }
