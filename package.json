@@ -17,7 +17,7 @@
     "egg-scripts": "^2.11.0",
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.15",
-    "mongoose": "^5.6.9",
+    "mongoose": "^5.7.5",
     "patrun": "^1.0.0",
     "semver": "^6.3.0",
     "uuid": "^3.3.2",
