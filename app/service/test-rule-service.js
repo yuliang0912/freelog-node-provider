@@ -207,10 +207,11 @@ module.exports = class TestRuleService extends Service {
      */
     async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
 
+
         const testResources = []
         const operantPresentableIds = testRules.filter(x => x.operation === 'alter').map(x => x.entityInfo.entityId)
 
-        const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: [operantPresentableIds]}})
+        const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: operantPresentableIds}})
 
         for (let i = 0; i < nodePresentables.length; i++) {
             let presentable = nodePresentables[i]
@@ -324,7 +325,7 @@ module.exports = class TestRuleService extends Service {
     async _compileAndMatchTestRule(nodeId, userId, testRuleText) {
 
         const {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
-        
+
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
         }
