@@ -133,6 +133,18 @@ module.exports = class NodeTestRuleHandler {
             ruleInfo.id = uuid.v4().replace(/-/g, '')
             ruleInfo.userId = userId
             ruleInfo.matchErrors = []
+            ruleInfo.options = {}
+            if (ruleInfo.tags !== null) {
+                ruleInfo.options.setTags = {effectiveMatchCount: 1}
+            }
+            if (ruleInfo.online !== null) {
+                ruleInfo.options.setOnlineStatus = {effectiveMatchCount: 1}
+            }
+            if (ruleInfo.replaces.length) {
+                ruleInfo.options.replace = {
+                    effectiveMatchCount: 0
+                }
+            }
         })
         return testRules
     }

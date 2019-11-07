@@ -20,7 +20,7 @@ module.exports = class ReplaceOptionHandler {
      */
     async handle(ruleInfo) {
 
-        if (!ruleInfo.isValid) {
+        if (!ruleInfo.isValid || !ruleInfo.replaces.length) {
             return ruleInfo
         }
 
@@ -113,6 +113,8 @@ module.exports = class ReplaceOptionHandler {
             return
         }
 
+        ruleInfo.options.replace.effectiveMatchCount += efficientReplaceCount
+
         //重新获取的依赖树和已经被替换过的依赖树对比,可能会存在循环依赖的情况.目前检查机制未避免此BUG
         const replacerDependencies = comparableTarget.type === "mock"
             ? await this.generateDependencyTreeHandler.generateMockDependencyTree(comparableTarget.id)
@@ -151,6 +153,7 @@ module.exports = class ReplaceOptionHandler {
                 if (x === subScopesLength - 1) {
                     return true
                 }
+
             }
         }
 
