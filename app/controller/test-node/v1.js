@@ -79,6 +79,9 @@ module.exports = class TestNodeController extends Controller {
     async matchTestResources(ctx) {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
+
+        ctx.request.userId = 50029
+
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
@@ -211,7 +214,8 @@ module.exports = class TestNodeController extends Controller {
     async testResourceDependencyTree(ctx) {
 
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
-        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
+
+        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser | 1)
 
         await this.testResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
     }
@@ -224,26 +228,17 @@ module.exports = class TestNodeController extends Controller {
     async testResourceSubDependReleases(ctx) {
 
         var testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
-        var subEntityId = ctx.checkQuery('subEntityId').optional().isMongoObjectId().value
-        var subReleaseVersion = ctx.checkQuery('subEntityVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subEntityVersion')).value
+        var entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
-        const {masterEntityId, dependencyTree} = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
+        const {dependencyTree} = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
 
-        var subEntityChain = lodash.chain(dependencyTree).filter(x => x.id === (subEntityId || masterEntityId))
-        if (subReleaseVersion) {
-            subEntityChain.filter(x => x.version === subReleaseVersion)
-        }
-        if (!subEntityId) {
-            subEntityChain.filter(x => x.deep === 1)
-        }
-
-        const subEntityInfo = subEntityChain.first().value()
+        const subEntityInfo = dependencyTree.find(x => (entityNid && x.nid === entityNid) || (!entityNid && x.deep === 1))
         if (!subEntityInfo) {
             return ctx.success([])
         }
 
-        const dependencies = dependencyTree.filter(x => x.deep === subEntityInfo.deep + 1 && x.parentId === subEntityInfo.id && x.parentVersion === subEntityInfo.version)
+        const dependencies = dependencyTree.filter(x => x.parentNid === subEntityInfo.nid)
 
         ctx.success(dependencies)
     }

@@ -8,8 +8,9 @@ const TagsOptionHandler = require('./option-tags-handler')
 const ReplaceOptionHandler = require('./option-replace-handler')
 const OnlineStatusOptionHandler = require('./option-online-status-handler')
 
+const SetGlobalPropertyHandler = require('./rule-set-global-property-handler')
 const ImportTestResourceRuleHandler = require('./rule-import-test-resource-handler')
-const SetPresentablePropertyHandler = require('./rule-set-presentable-property-handler')
+const AlterPresentablePropertyHandler = require('./rule-alter-presentable-property-handler')
 const GenerateDependencyTreeHandler = require('./common-generate-dependency-tree-handler')
 
 module.exports = class NodeTestRuleHandler {
@@ -22,10 +23,11 @@ module.exports = class NodeTestRuleHandler {
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this.tagsOptionHandler = new TagsOptionHandler(app)
         this.replaceOptionHandler = new ReplaceOptionHandler(app)
+        this.setGlobalPropertyHandler = new SetGlobalPropertyHandler(app)
         this.onlineStatusOptionHandler = new OnlineStatusOptionHandler(app)
         this.generateDependencyTreeHandler = new GenerateDependencyTreeHandler(app)
         this.importTestResourceRuleHandler = new ImportTestResourceRuleHandler(app)
-        this.setPresentablePropertyHandler = new SetPresentablePropertyHandler(app)
+        this.alterPresentablePropertyHandler = new AlterPresentablePropertyHandler(app)
         this._initialTestRuleHandler()
     }
 
@@ -43,7 +45,7 @@ module.exports = class NodeTestRuleHandler {
             throw new ArgumentError('规则一批次最多支持200条')
         }
 
-        this._expandRuleInfoProperty(testRules, userId)
+        this._expandRuleInfoProperty(testRules, nodeId, userId)
 
         await this._checkImportNameAndEntityIsExist(testRules, nodeId)
 
@@ -58,6 +60,7 @@ module.exports = class NodeTestRuleHandler {
         //生成实体对应的依赖树(此处为了后续的replace操作服务)
         await this.generateDependencyTreeHandler.handle(testRules)
 
+
         const replaceTasks = []
         for (let i = 0; i < testRules.length; i++) {
             let ruleInfo = testRules[i]
@@ -67,6 +70,8 @@ module.exports = class NodeTestRuleHandler {
         }
 
         await Promise.all(replaceTasks)
+
+        //await this.setGlobalPropertyHandler.handle(testRules)
 
         return testRules
     }
@@ -127,11 +132,12 @@ module.exports = class NodeTestRuleHandler {
      * @returns {*}
      * @private
      */
-    _expandRuleInfoProperty(testRules, userId) {
+    _expandRuleInfoProperty(testRules, nodeId, userId) {
         testRules.forEach(ruleInfo => {
             ruleInfo.isValid = true
             ruleInfo.id = uuid.v4().replace(/-/g, '')
             ruleInfo.userId = userId
+            ruleInfo.nodeId = nodeId
             ruleInfo.matchErrors = []
             ruleInfo.options = {}
             if (ruleInfo.tags !== null) {
@@ -157,6 +163,6 @@ module.exports = class NodeTestRuleHandler {
 
         const {patrun} = this
         patrun.add({type: "rule", operation: "add"}, this.importTestResourceRuleHandler)
-        patrun.add({type: "rule", operation: "alter"}, this.setPresentablePropertyHandler)
+        patrun.add({type: "rule", operation: "alter"}, this.alterPresentablePropertyHandler)
     }
 }

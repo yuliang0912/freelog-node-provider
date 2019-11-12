@@ -42,12 +42,12 @@ module.exports = class ReplaceOptionHandler {
             return
         }
 
-        for (let i = 0; i < dependencies.length; i++) {
+        for (let i = 0, j = dependencies.length; i < j; i++) {
             let currTreeNodeInfo = dependencies[i]
-            parents.push(lodash.pick(currTreeNodeInfo, ['name', 'type', 'version']))
-            let replacerInfo = await this._getReplacerAndDependencies(currTreeNodeInfo, ruleInfo, parents)
+            let currChain = parents.concat([lodash.pick(currTreeNodeInfo, ['name', 'type', 'version'])])
+            let replacerInfo = await this._getReplacerAndDependencies(currTreeNodeInfo, ruleInfo, currChain)
             if (!replacerInfo) {
-                await this._recursionReplace(currTreeNodeInfo.dependencies, ruleInfo, parents)
+                await this._recursionReplace(currTreeNodeInfo.dependencies, ruleInfo, currChain)
                 continue
             }
             let {result, deep} = this._checkCycleDependency(dependencies, replacerInfo)
@@ -121,7 +121,7 @@ module.exports = class ReplaceOptionHandler {
             : await this.generateDependencyTreeHandler.generateReleaseDependencyTree(comparableTarget.id, comparableTarget.version)
 
         return Object.assign({}, comparableTarget, {
-            deep: targetInfo.deep,
+            nid: this.generateDependencyTreeHandler.generateRandomStr(),
             dependencies: replacerDependencies,
             replaceRecords: replaceRecords
         })
@@ -153,7 +153,6 @@ module.exports = class ReplaceOptionHandler {
                 if (x === subScopesLength - 1) {
                     return true
                 }
-
             }
         }
 
@@ -175,7 +174,6 @@ module.exports = class ReplaceOptionHandler {
 
         return nameAndTypeIsMatched && versionIsMatched
     }
-
 
     /**
      * 检查重复依赖或者循环依赖(deep=1的循环依赖则为重复依赖)

@@ -57,6 +57,9 @@ module.exports = class RuleImportTestResourceHandler {
             ruleInfo.matchErrors.push(`没有权限导入mock资源:${name}`)
             return
         }
+        if (type === "release") {
+            //this.presentableProvider.findOne({})
+        }
 
         entityInfo.entityType = type
         entityInfo.entityId = entityInfo[isMock ? 'mockResourceId' : 'releaseId']

@@ -44,7 +44,6 @@ module.exports = class PresentableController extends Controller {
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
         const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value
-
         ctx.validateParams()
 
         const condition = {nodeId}

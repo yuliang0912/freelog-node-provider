@@ -1,7 +1,7 @@
 'use strict'
 const ImportRuleHandler = require('./rule-import-test-resource-handler')
 
-module.exports = class RuleSetPresentablePropertyHandler {
+module.exports = class RuleAlterPresentablePropertyHandler {
 
     constructor(app) {
         this.app = app

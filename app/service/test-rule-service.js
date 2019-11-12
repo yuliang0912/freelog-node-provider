@@ -37,24 +37,14 @@ module.exports = class TestRuleService extends Service {
         const testRules = await this._compileAndMatchTestRule(nodeId, userId, testRuleText)
 
         var nodeTestResources = []
-        const nodeTestRuleInfo = {
-            nodeId, userId, ruleText: testRuleText, testRules: testRules.map(testRuleInfo => {
-                let {id, text, matchErrors} = testRuleInfo
-                return {
-                    id, text, matchErrors,
-                    ruleInfo: lodash.pick(testRuleInfo, ['tags', 'replaces', 'online', 'operation', 'presentableName', 'candidate'])
-                }
-            })
-        }
 
         for (let i = 0; i < testRules.length; i++) {
             let testRuleInfo = testRules[i]
-            if (!testRuleInfo.isValid) {
+            if (!testRuleInfo.isValid || !['alter', 'add'].includes(testRuleInfo.operation)) {
                 continue
             }
             let {presentableName, entityInfo, entityDependencyTree, onlineStatus, userDefinedTags} = testRuleInfo
             let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages} = entityInfo
-
             let originInfo = {
                 id: entityId, name: entityName,
                 type: entityType, version: entityVersion, versions: entityVersions, _originModel: entityInfo
@@ -83,9 +73,9 @@ module.exports = class TestRuleService extends Service {
             })
         }
 
-        const UnOperantNodePresentableTestResources = await this.getUnOperantNodePresentableTestResources(nodeId, userId, testRules)
+        const unOperantNodePresentableTestResources = await this.getUnOperantNodePresentableTestResources(nodeId, userId, testRules)
 
-        nodeTestResources = nodeTestResources.concat(UnOperantNodePresentableTestResources)
+        nodeTestResources = nodeTestResources.concat(unOperantNodePresentableTestResources)
 
         const nodeTestResourceDependencyTrees = nodeTestResources.map(testResource => Object({
             nodeId,
@@ -122,6 +112,16 @@ module.exports = class TestRuleService extends Service {
         const deleteTask4 = this.testResourceDependencyTreeProvider.deleteMany({nodeId})
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3, deleteTask4])
+
+        const nodeTestRuleInfo = {
+            nodeId, userId, ruleText: testRuleText, testRules: testRules.map(testRuleInfo => {
+                let {id, text, matchErrors} = testRuleInfo
+                return {
+                    id, text, matchErrors,
+                    ruleInfo: lodash.pick(testRuleInfo, ['tags', 'replaces', 'online', 'operation', 'presentableName', 'candidate'])
+                }
+            })
+        }
 
         const task1 = this.nodeTestRuleProvider.create(nodeTestRuleInfo)
         const task2 = this.nodeTestResourceProvider.insertMany(nodeTestResources)
@@ -207,7 +207,6 @@ module.exports = class TestRuleService extends Service {
      */
     async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
 
-
         const testResources = []
         const operantPresentableIds = testRules.filter(x => x.operation === 'alter').map(x => x.entityInfo.entityId)
 
@@ -256,7 +255,6 @@ module.exports = class TestRuleService extends Service {
         return testResources
     }
 
-
     /**
      * 过滤特定资源依赖树
      * @returns {Promise<void>}
@@ -291,8 +289,8 @@ module.exports = class TestRuleService extends Service {
             }
         }
 
-        function getDependencies(dependInfo, isFilterMatched = false) {
-            return dependencyTree.filter(x => x.deep === dependInfo.deep + 1 && x.parentId === dependInfo.id && x.parentVersion === dependInfo.version && (!isFilterMatched || x.isMatched))
+        function getDependencies(treeNodeInfo, isFilterMatched = false) {
+            return dependencyTree.filter(x => x.parentNid === treeNodeInfo.nid && (!isFilterMatched || x.isMatched))
         }
 
         function entityIsMatched(dependInfo) {
@@ -303,7 +301,7 @@ module.exports = class TestRuleService extends Service {
         function recursionBuildDependencyTree(dependencies) {
             return dependencies.filter(x => x.isMatched).map(item => {
                 let model = lodash.pick(item, ['id', 'name', 'type', 'version'])
-                model.dependencies = recursionBuildDependencyTree(getDependencies(item), item.deep, item.id, item.parentVersion)
+                model.dependencies = recursionBuildDependencyTree(getDependencies(item))
                 return model
             })
         }
@@ -312,7 +310,6 @@ module.exports = class TestRuleService extends Service {
 
         return recursionBuildDependencyTree(rootDependencies)
     }
-
 
     /**
      * 编译并且匹配规则
@@ -348,14 +345,14 @@ module.exports = class TestRuleService extends Service {
      * @param parentReleaseVersion
      * @private
      */
-    _flattenDependencyTree(dependencyTree, parentId = '', parentVersion = '', results = []) {
+    _flattenDependencyTree(dependencyTree, parentNid = '', results = [], deep = 1) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
-            let {id, name, type, deep, version, dependencies, replaceRecords, resourceId, releaseSchemeId} = dependencyTree[i]
+            let {nid, id, name, type, version, dependencies, replaceRecords, resourceId, releaseSchemeId} = dependencyTree[i]
             results.push({
-                id, name, type, deep, version, parentId, parentVersion, replaceRecords, resourceId, releaseSchemeId,
-                dependCount: dependencies.length
+                nid, id, name, type, deep, version, parentNid, replaceRecords,
+                resourceId, releaseSchemeId, dependCount: dependencies.length
             })
-            this._flattenDependencyTree(dependencies, id, version, results)
+            this._flattenDependencyTree(dependencies, nid, results, deep + 1)
         }
         return results
     }
@@ -376,7 +373,7 @@ module.exports = class TestRuleService extends Service {
 
         for (let i = 0; i < dependencyTree.length; i++) {
             let currentDependency = dependencyTree[i]
-            let parent = dependencyTree.find(x => x.deep == currentDependency.deep - 1 && x.id === currentDependency.parentId && x.version === currentDependency.parentVersion)
+            let parent = dependencyTree.find(x => x.nid == currentDependency.parentNid)
             if (currentDependency.type === 'release') {
                 currentDependency.userId = dependReleaseMap.get(currentDependency.id).userId
             }
@@ -417,7 +414,7 @@ module.exports = class TestRuleService extends Service {
      * @private
      */
     _compareResolver(target, resolver) {
-        return resolver == null && target == null || resolver && target && resolver.id === target.id && resolver.version === target.version && resolver.deep === target.deep
+        return (resolver == null && target == null) || (resolver && target && resolver.nid === target.nid)
     }
 
     /**
@@ -434,7 +431,7 @@ module.exports = class TestRuleService extends Service {
             return null
         }
 
-        let grandfather = dependencyTree.find(x => x.deep == parent.deep - 1 && x.id === parent.parentId && x.version === parent.parentVersion)
+        let grandfather = dependencyTree.find(x => x.nid === parent.parentNid)
         if (parent.type === 'mock') {
             return this._findResolver(dependencyTree, grandfather, target, releaseMap)
         }
@@ -445,7 +442,7 @@ module.exports = class TestRuleService extends Service {
             return this._findResolver(dependencyTree, grandfather, target, releaseMap)
         }
 
-        return lodash.pick(parent, ['id', 'type', 'deep', 'version'])
+        return lodash.pick(parent, ['nid', 'id', 'type', 'version'])
     }
 
     /**

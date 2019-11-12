@@ -1,5 +1,8 @@
 'use strict'
 
+const uuid = require('uuid')
+const {ArgumentError} = require('egg-freelog-base/error')
+
 module.exports = class CommonGenerateDependencyTreeHandler {
 
     constructor(app) {
@@ -94,19 +97,22 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      */
     _convertPresentableDependencyTree(dependencyTree) {
 
+        let that = this
+
         function authMapping(model) {
-            let {releaseId, releaseName, version, deep, releaseSchemeId, resourceId} = model
+            let {releaseId, releaseName, version} = model
             return {
-                id: releaseId, name: releaseName, version, type: "release", deep
+                id: releaseId, name: releaseName, version, type: "release"
             }
         }
 
-        function recursionConvertSubNodes(parentNode) {
-            let {deep, id, version} = parentNode
+        function recursionConvertSubNodes(parentNode, deep = 1) {
+            let {id, version} = parentNode
             parentNode.dependencies = dependencyTree.filter(item => {
                 return item.deep == deep + 1 && item.parentReleaseId === id && item.parentReleaseVersion === version
             }).map(authMapping)
-            parentNode.dependencies.forEach(recursionConvertSubNodes)
+            parentNode.nid = that.generateRandomStr()
+            parentNode.dependencies.forEach(x => recursionConvertSubNodes(x, deep + 1))
         }
 
         return dependencyTree.filter(x => x.deep === 1).map(item => {
@@ -123,23 +129,38 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      */
     _convertMockAndReleaseDependencyTree(dependencyTree) {
 
-        function authMapping(model, deep) {
-            let {mockResourceId, mockResourceName, releaseId, releaseName, version, resourceId, baseUpcastReleases = []} = model
+        let that = this
+
+        function authMapping(model) {
+            let {mockResourceId, mockResourceName, releaseId, releaseName, version, baseUpcastReleases = []} = model
             return mockResourceId ? {
-                id: mockResourceId, name: mockResourceName, version: null, type: "mock", deep
+                id: mockResourceId, name: mockResourceName, version: null, type: "mock"
             } : {
-                id: releaseId, name: releaseName, version, type: "release", deep, baseUpcastReleases
+                id: releaseId, name: releaseName, version, type: "release", baseUpcastReleases
             }
         }
 
-        function recursionConvertSubNodes(dependencies, deep = 1) {
+        function recursionConvertSubNodes(dependencies) {
             return dependencies.map(item => {
-                let treeNode = authMapping(item, deep)
-                treeNode.dependencies = recursionConvertSubNodes(item.dependencies, deep + 1)
+                let treeNode = authMapping(item)
+                treeNode.nid = that.generateRandomStr()
+                treeNode.dependencies = recursionConvertSubNodes(item.dependencies)
                 return treeNode
             })
         }
 
         return recursionConvertSubNodes(dependencyTree)
+    }
+
+    /**
+     * 生成随机字符串
+     * @param length
+     * @returns {string}
+     */
+    generateRandomStr(length = 12) {
+        if (length < 1) {
+            throw new ArgumentError('param:length must be great than 0')
+        }
+        return uuid.v4().replace(/-/g, '').substr(0, length > 0 ? length : 32)
     }
 }

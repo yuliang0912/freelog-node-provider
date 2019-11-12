@@ -13,6 +13,7 @@ module.exports = app => {
     }
 
     const DependencyTreeSchema = new mongoose.Schema({
+        nid: {type: String, required: true},
         id: {type: String, required: true},
         name: {type: String, required: true},
         type: {type: String, required: true},
@@ -20,8 +21,7 @@ module.exports = app => {
         version: {type: String, required: false},
         releaseSchemeId: {type: String, required: false},
         resourceId: {type: String, required: false},
-        parentId: {type: String, required: false},
-        parentVersion: {type: String, required: false},
+        parentNid: {type: String, required: false},
         replaceRecords: {},
     }, {_id: false})
 
