@@ -79,7 +79,7 @@ module.exports = class TestNodeController extends Controller {
     async matchTestResources(ctx) {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
-
+        
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)

@@ -114,7 +114,7 @@ module.exports = class TestRuleService extends Service {
         await Promise.all([deleteTask1, deleteTask2, deleteTask3, deleteTask4])
 
         const themeResourceInfo = this.nodeTestRuleHandler.getSchemeInfo(testRules, nodeTestResources)
-        console.log(themeResourceInfo)
+
         const nodeTestRuleInfo = {
             nodeId, userId, ruleText: testRuleText,
             themeId: themeResourceInfo ? themeResourceInfo.testResourceId : '',
