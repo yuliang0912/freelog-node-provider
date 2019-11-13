@@ -9,7 +9,7 @@ module.exports = class SetOnlineStatusOptionHandler {
      */
     handle(ruleInfo) {
 
-        if (!ruleInfo.isValid) {
+        if (!ruleInfo.isValid || !['alter', 'add'].includes(ruleInfo.operation)) {
             return ruleInfo
         }
 

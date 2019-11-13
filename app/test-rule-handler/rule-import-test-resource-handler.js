@@ -24,16 +24,6 @@ module.exports = class RuleImportTestResourceHandler {
         }
 
         return ruleInfo
-
-        // if (nodePresentables.some(x => x.presentableName.toLowerCase() === ruleInfo.presentableName.toLowerCase())) {
-        //     ruleInfo.isValid = false
-        //     ruleInfo.matchErrors.push(`节点的presentable中已存在${ruleInfo.presentableName},规则无法生效`)
-        // }
-        // else if (type === "release" && nodePresentables.some(x => x.releaseInfo.releaseName.toLowerCase() === name.toLowerCase())) {
-        //     ruleInfo.isValid = false
-        //     ruleInfo.matchErrors.push(`节点的presentable中已存在发行${name},规则无法生效`)
-        // }
-        // else {
     }
 
     /**
@@ -56,9 +46,6 @@ module.exports = class RuleImportTestResourceHandler {
             ruleInfo.isValid = false
             ruleInfo.matchErrors.push(`没有权限导入mock资源:${name}`)
             return
-        }
-        if (type === "release") {
-            //this.presentableProvider.findOne({})
         }
 
         entityInfo.entityType = type

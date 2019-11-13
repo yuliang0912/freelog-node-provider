@@ -20,7 +20,7 @@ module.exports = class ReplaceOptionHandler {
      */
     async handle(ruleInfo) {
 
-        if (!ruleInfo.isValid || !ruleInfo.replaces.length) {
+        if (!ruleInfo.isValid || !['alter', 'add'].includes(ruleInfo.operation) || lodash.isEmpty(ruleInfo.replaces)) {
             return ruleInfo
         }
 

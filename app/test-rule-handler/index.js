@@ -8,7 +8,7 @@ const TagsOptionHandler = require('./option-tags-handler')
 const ReplaceOptionHandler = require('./option-replace-handler')
 const OnlineStatusOptionHandler = require('./option-online-status-handler')
 
-const SetGlobalPropertyHandler = require('./rule-set-global-property-handler')
+const SetThemeRuleHandler = require('./rule-set-theme-handler')
 const ImportTestResourceRuleHandler = require('./rule-import-test-resource-handler')
 const AlterPresentablePropertyHandler = require('./rule-alter-presentable-property-handler')
 const GenerateDependencyTreeHandler = require('./common-generate-dependency-tree-handler')
@@ -23,7 +23,7 @@ module.exports = class NodeTestRuleHandler {
         this.nodeTestRuleProvider = app.dal.nodeTestRuleProvider
         this.tagsOptionHandler = new TagsOptionHandler(app)
         this.replaceOptionHandler = new ReplaceOptionHandler(app)
-        this.setGlobalPropertyHandler = new SetGlobalPropertyHandler(app)
+        this.setThemeRuleHandler = new SetThemeRuleHandler(app)
         this.onlineStatusOptionHandler = new OnlineStatusOptionHandler(app)
         this.generateDependencyTreeHandler = new GenerateDependencyTreeHandler(app)
         this.importTestResourceRuleHandler = new ImportTestResourceRuleHandler(app)
@@ -60,7 +60,6 @@ module.exports = class NodeTestRuleHandler {
         //生成实体对应的依赖树(此处为了后续的replace操作服务)
         await this.generateDependencyTreeHandler.handle(testRules)
 
-
         const replaceTasks = []
         for (let i = 0; i < testRules.length; i++) {
             let ruleInfo = testRules[i]
@@ -71,9 +70,24 @@ module.exports = class NodeTestRuleHandler {
 
         await Promise.all(replaceTasks)
 
-        //await this.setGlobalPropertyHandler.handle(testRules)
-
         return testRules
+    }
+
+    /**
+     * 获取主题信息
+     * @param testRules
+     * @param testResources
+     * @returns {*}
+     */
+    getSchemeInfo(testRules, testResources) {
+
+        const setThemeRuleInfo = this.setThemeRuleHandler.handle(testRules, testResources)
+        if (!setThemeRuleInfo) {
+            return testResources.find(x => x.resourceType === 'page_build' && x.originInfo.type === 'presentable' && x.differenceInfo.onlineStatusInfo.isOnline)
+        }
+        if (setThemeRuleInfo) {
+            return setThemeRuleInfo.isValid ? setThemeRuleInfo.entityInfo : null
+        }
     }
 
     /**
@@ -146,7 +160,7 @@ module.exports = class NodeTestRuleHandler {
             if (ruleInfo.online !== null) {
                 ruleInfo.options.setOnlineStatus = {effectiveMatchCount: 1}
             }
-            if (ruleInfo.replaces.length) {
+            if (ruleInfo.replaces && ruleInfo.replaces.length) {
                 ruleInfo.options.replace = {
                     effectiveMatchCount: 0
                 }

@@ -113,8 +113,12 @@ module.exports = class TestRuleService extends Service {
 
         await Promise.all([deleteTask1, deleteTask2, deleteTask3, deleteTask4])
 
+        const themeResourceInfo = this.nodeTestRuleHandler.getSchemeInfo(testRules, nodeTestResources)
+        console.log(themeResourceInfo)
         const nodeTestRuleInfo = {
-            nodeId, userId, ruleText: testRuleText, testRules: testRules.map(testRuleInfo => {
+            nodeId, userId, ruleText: testRuleText,
+            themeId: themeResourceInfo ? themeResourceInfo.testResourceId : '',
+            testRules: testRules.map(testRuleInfo => {
                 let {id, text, matchErrors} = testRuleInfo
                 return {
                     id, text, matchErrors,
@@ -309,6 +313,16 @@ module.exports = class TestRuleService extends Service {
         recursionSetMatchResult(rootDependencies)
 
         return recursionBuildDependencyTree(rootDependencies)
+    }
+
+    /**
+     * 获取设定的主题
+     * @param testRules
+     * @param testResources
+     * @returns {Promise<void>}
+     */
+    async getSchemeInfo(testRules, testResources) {
+
     }
 
     /**

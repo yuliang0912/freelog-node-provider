@@ -24,6 +24,7 @@ module.exports = app => {
         nodeId: {type: Number, required: true}, //节点ID
         userId: {type: Number, required: true}, //节点用户ID
         ruleText: {type: String, required: false, default: ''},
+        themeId: {type: String, required: false, default: ''}, //节点用户ID
         testRules: {
             type: [TestRuleInfo], required: true
         },

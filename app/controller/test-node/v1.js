@@ -80,8 +80,6 @@ module.exports = class TestNodeController extends Controller {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
 
-        ctx.request.userId = 50029
-
         ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
