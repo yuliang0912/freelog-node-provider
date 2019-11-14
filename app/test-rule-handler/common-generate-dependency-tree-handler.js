@@ -60,7 +60,7 @@ module.exports = class CommonGenerateDependencyTreeHandler {
 
         const {app} = this
 
-        return app.curlIntranetApi(`${app.webApi.resourceInfo}/mocks/${mockResourceId}/dependencyTree`).then(dependencyTree => {
+        return app.curlIntranetApi(`${app.webApi.resourceInfo}/mocks/${mockResourceId}/dependencyTree?isContainRootNode=true`).then(dependencyTree => {
             return this._convertMockAndReleaseDependencyTree(dependencyTree)
         })
     }
@@ -73,7 +73,7 @@ module.exports = class CommonGenerateDependencyTreeHandler {
 
         const {app} = this
 
-        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&omitFields=versionRange`).then(dependencyTree => {
+        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&omitFields=versionRange&isContainRootNode=true`).then(dependencyTree => {
             return this._convertMockAndReleaseDependencyTree(dependencyTree)
         })
     }

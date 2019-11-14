@@ -29,7 +29,6 @@ module.exports = app => {
         testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         nodeId: {type: Number, required: true},
-        masterEntityId: {type: String, required: false},
         dependencyTree: {type: [DependencyTreeSchema], default: []},
         status: {type: Number, default: 0, required: true} //状态 0:初始态
     }, {

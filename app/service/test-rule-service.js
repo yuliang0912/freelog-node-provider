@@ -51,7 +51,7 @@ module.exports = class TestRuleService extends Service {
             }
 
             let testResourceId = this._generateTestResourceId(nodeId, entityId, entityType)
-            let flattenDependencyTree = this._flattenDependencyTree(entityDependencyTree)
+            let flattenDependencyTree = this._flattenDependencyTree(testResourceId, entityDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             nodeTestResources.push({
@@ -81,7 +81,6 @@ module.exports = class TestRuleService extends Service {
             nodeId,
             testResourceId: testResource.testResourceId,
             testResourceName: testResource.testResourceName,
-            masterEntityId: testResource.dependencyTree.length ? testResource.dependencyTree[0].id : "",
             dependencyTree: testResource.flattenDependencyTree
         }))
 
@@ -231,7 +230,7 @@ module.exports = class TestRuleService extends Service {
             let [release, presentableDependencyTree] = await Promise.all([releaseTask, presentableDependencyTreeTask])
 
             let testResourceId = this._generateTestResourceId(nodeId, presentableId, 'presentable')
-            let flattenDependencyTree = this._flattenDependencyTree(presentableDependencyTree)
+            let flattenDependencyTree = this._flattenDependencyTree(testResourceId, presentableDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             testResources.push({
@@ -359,14 +358,17 @@ module.exports = class TestRuleService extends Service {
      * @param parentReleaseVersion
      * @private
      */
-    _flattenDependencyTree(dependencyTree, parentNid = '', results = [], deep = 1) {
+    _flattenDependencyTree(testResourceId, dependencyTree, parentNid = '', results = [], deep = 1) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
             let {nid, id, name, type, version, dependencies, replaceRecords, resourceId, releaseSchemeId} = dependencyTree[i]
+            if (deep == 1) {
+                nid = testResourceId.substr(0, 12)
+            }
             results.push({
                 nid, id, name, type, deep, version, parentNid, replaceRecords,
                 resourceId, releaseSchemeId, dependCount: dependencies.length
             })
-            this._flattenDependencyTree(dependencies, nid, results, deep + 1)
+            this._flattenDependencyTree(testResourceId, dependencies, nid, results, deep + 1)
         }
         return results
     }
