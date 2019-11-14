@@ -117,8 +117,8 @@ module.exports = class ReplaceOptionHandler {
 
         //重新获取的依赖树和已经被替换过的依赖树对比,可能会存在循环依赖的情况.目前检查机制未避免此BUG
         const replacerDependencies = comparableTarget.type === "mock"
-            ? await this.generateDependencyTreeHandler.generateMockDependencyTree(comparableTarget.id)
-            : await this.generateDependencyTreeHandler.generateReleaseDependencyTree(comparableTarget.id, comparableTarget.version)
+            ? await this.generateDependencyTreeHandler.generateMockDependencyTree(comparableTarget.id, false)
+            : await this.generateDependencyTreeHandler.generateReleaseDependencyTree(comparableTarget.id, comparableTarget.version, false)
 
         return Object.assign({}, comparableTarget, {
             nid: this.generateDependencyTreeHandler.generateRandomStr(),

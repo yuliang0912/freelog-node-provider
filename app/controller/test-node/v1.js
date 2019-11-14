@@ -44,9 +44,7 @@ module.exports = class TestNodeController extends Controller {
             testRuleText = ctx.checkBody('testRuleText').isBase64().decodeBase64().value
         }
 
-        //ctx.request.userId = 50028
-
-        ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
         await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, testRuleText).then(ctx.success)
@@ -79,8 +77,7 @@ module.exports = class TestNodeController extends Controller {
     async matchTestResources(ctx) {
 
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
-
-        ctx.validateParams().validateVisitorIdentity(UnLoginUser | InternalClient | LoginUser)
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this._validateNodeIdentity(ctx, nodeId)
         const nodeTestRule = await this.nodeTestRuleProvider.findOne({nodeId}, 'ruleText')
@@ -211,23 +208,9 @@ module.exports = class TestNodeController extends Controller {
      */
     async testResourceDependencyTree(ctx) {
 
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
-
-        ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser | 1)
-
-        await this.testResourceDependencyTreeProvider.findOne({testResourceId}).then(ctx.success)
-    }
-
-    /**
-     * 获取presentable依赖树中指定发行的依赖项
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async testResourceSubDependReleases(ctx) {
-
         var testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         var entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).default("").value
-        var maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(1).lt(100).value
+        var maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const dependencyTreeInfo = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
@@ -235,20 +218,7 @@ module.exports = class TestNodeController extends Controller {
             return ctx.success([])
         }
         const {dependencyTree} = dependencyTreeInfo.toObject()
-
-        function recursionBuildDependencyTree(dependencies, currDeep = 1) {
-            if (!dependencies.length || currDeep++ >= maxDeep) {
-                return
-            }
-            dependencies.forEach(item => {
-                item.dependencies = dependencyTree.filter(x => x.parentNid === item.nid)
-                recursionBuildDependencyTree(item.dependencies, currDeep)
-            })
-        }
-
-        const dependencies = dependencyTree.filter(x => x.parentNid === entityNid)
-
-        recursionBuildDependencyTree(dependencies)
+        const dependencies = ctx.service.testRuleService.buildTestResourceDependencyTree(dependencyTree, entityNid, maxDeep)
 
         ctx.success(dependencies)
     }

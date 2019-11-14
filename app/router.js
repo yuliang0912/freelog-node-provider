@@ -24,7 +24,6 @@ module.exports = app => {
     router.get('test-resource-auth-tree', '/v1/testNodes/testResources/:testResourceId/authTree', testNode.v1.testResourceAuthTree)
     router.get('test-resource-dependency-tree', '/v1/testNodes/testResources/:testResourceId/dependencyTree', testNode.v1.testResourceDependencyTree)
     router.get('filter-test-resource-dependency', '/v1/testNodes/testResources/:testResourceId/filterDependencyTree', testNode.v1.filterTestResourceDependencyTree)
-    router.get('test-resource-sub-dependency', '/v1/testNodes/testResources/:testResourceId/subDependencies', testNode.v1.testResourceSubDependReleases)
     router.get('get-test-resource-detail', '/v1/testNodes/testResources/:testResourceId', testNode.v1.testResourceDetail)
 
     //post

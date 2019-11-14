@@ -259,41 +259,58 @@ module.exports = class TestRuleService extends Service {
     }
 
     /**
+     * 构建依赖树
+     * @param flattenDependencies
+     * @param startNid
+     * @param maxDeep
+     * @returns {*}
+     */
+    buildTestResourceDependencyTree(flattenDependencies, startNid = "", maxDeep = 100) {
+
+        function recursionBuildDependencyTree(dependencies, currDeep = 1) {
+            if (!dependencies.length || currDeep++ >= maxDeep) {
+                return
+            }
+            dependencies.forEach(item => {
+                item.dependencies = flattenDependencies.filter(x => x.parentNid === item.nid)
+                recursionBuildDependencyTree(item.dependencies, currDeep)
+            })
+        }
+
+        const rootDependencies = flattenDependencies.filter(x => x.parentNid === startNid)
+
+        recursionBuildDependencyTree(rootDependencies)
+
+        return rootDependencies
+    }
+
+    /**
      * 过滤特定资源依赖树
      * @returns {Promise<void>}
      */
-    filterTestResourceDependency(dependencyTree, dependentEntityId, dependentEntityVersionRange) {
+    filterTestResourceDependency(flattenDependencies, dependentEntityId, dependentEntityVersionRange) {
 
-        const rootDependencies = dependencyTree.filter(x => x.deep === 1)
+        const testResourceDependencies = this.buildTestResourceDependencyTree(flattenDependencies)
 
         function recursionSetMatchResult(dependencies) {
-            for (let i = 0; i < dependencies.length; i++) {
+            if (lodash.isEmpty(dependencies)) {
+                return false
+            }
+            for (let i = 0, j = dependencies.length; i < j; i++) {
                 let currentDependInfo = dependencies[i]
                 if (entityIsMatched(currentDependInfo)) {
                     currentDependInfo.isMatched = true
-                    continue
-                }
-                let subDependencies = getDependencies(currentDependInfo)
-                currentDependInfo.isMatched = recursionMatchResult(subDependencies)
-                recursionSetMatchResult(subDependencies)
-            }
-        }
-
-        function recursionMatchResult(dependencies) {
-            if (!dependencies.length) {
-                return false
-            }
-            for (let i = 0; i < dependencies.length; i++) {
-                let currentDependInfo = dependencies[i]
-                if (entityIsMatched(currentDependInfo)) {
                     return true
                 }
-                return recursionMatchResult(getDependencies(currentDependInfo))
+                if (recursionSetMatchResult(currentDependInfo.dependencies)) {
+                    currentDependInfo.isMatched = true
+                    return true
+                }
+                if (i + 1 === j) { //当前依赖的全部子依赖全部遍历完依然没有匹配的,则当前依赖不匹配
+                    currentDependInfo.isMatched = false
+                    return false
+                }
             }
-        }
-
-        function getDependencies(treeNodeInfo, isFilterMatched = false) {
-            return dependencyTree.filter(x => x.parentNid === treeNodeInfo.nid && (!isFilterMatched || x.isMatched))
         }
 
         function entityIsMatched(dependInfo) {
@@ -304,24 +321,14 @@ module.exports = class TestRuleService extends Service {
         function recursionBuildDependencyTree(dependencies) {
             return dependencies.filter(x => x.isMatched).map(item => {
                 let model = lodash.pick(item, ['id', 'name', 'type', 'version'])
-                model.dependencies = recursionBuildDependencyTree(getDependencies(item))
+                model.dependencies = recursionBuildDependencyTree(item.dependencies)
                 return model
             })
         }
 
-        recursionSetMatchResult(rootDependencies)
+        recursionSetMatchResult(testResourceDependencies)
 
-        return recursionBuildDependencyTree(rootDependencies)
-    }
-
-    /**
-     * 获取设定的主题
-     * @param testRules
-     * @param testResources
-     * @returns {Promise<void>}
-     */
-    async getSchemeInfo(testRules, testResources) {
-
+        return recursionBuildDependencyTree(testResourceDependencies)
     }
 
     /**

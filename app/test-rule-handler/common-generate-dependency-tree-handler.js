@@ -56,11 +56,11 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      * @param mockName
      * @returns {Promise<void>}
      */
-    async generateMockDependencyTree(mockResourceId) {
+    async generateMockDependencyTree(mockResourceId, isContainRootNode = true) {
 
         const {app} = this
 
-        return app.curlIntranetApi(`${app.webApi.resourceInfo}/mocks/${mockResourceId}/dependencyTree?isContainRootNode=true`).then(dependencyTree => {
+        return app.curlIntranetApi(`${app.webApi.resourceInfo}/mocks/${mockResourceId}/dependencyTree?isContainRootNode=${isContainRootNode.toString()}`).then(dependencyTree => {
             return this._convertMockAndReleaseDependencyTree(dependencyTree)
         })
     }
@@ -69,11 +69,11 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      * 生成发行依赖树
      * @returns {Promise<void>}
      */
-    async generateReleaseDependencyTree(releaseId, version) {
+    async generateReleaseDependencyTree(releaseId, version, isContainRootNode = true) {
 
         const {app} = this
 
-        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&omitFields=versionRange&isContainRootNode=true`).then(dependencyTree => {
+        return app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&omitFields=versionRange&isContainRootNode=${isContainRootNode.toString()}`).then(dependencyTree => {
             return this._convertMockAndReleaseDependencyTree(dependencyTree)
         })
     }
