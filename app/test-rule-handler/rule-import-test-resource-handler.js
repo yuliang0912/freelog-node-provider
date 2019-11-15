@@ -47,12 +47,21 @@ module.exports = class RuleImportTestResourceHandler {
             ruleInfo.matchErrors.push(`没有权限导入mock资源:${name}`)
             return
         }
+        if (!isMock) {
+            const resourceVersion = this.matchReleaseVersion(entityInfo, versionRange)
+            if (!resourceVersion) {
+                ruleInfo.isValid = false
+                ruleInfo.matchErrors.push(`版本范围匹配失败`)
+                return
+            }
+            entityInfo.entityVersion = resourceVersion.version
+            entityInfo.resourceId = resourceVersion.resourceId
+        }
 
         entityInfo.entityType = type
         entityInfo.entityId = entityInfo[isMock ? 'mockResourceId' : 'releaseId']
         entityInfo.entityName = entityInfo[isMock ? 'fullName' : 'releaseName']
         entityInfo.entityVersions = isMock ? [] : entityInfo.resourceVersions.map(x => x.version)
-        entityInfo.entityVersion = isMock ? null : this.matchReleaseVersion(entityInfo, versionRange)
 
         ruleInfo.entityInfo = entityInfo
     }
@@ -98,9 +107,11 @@ module.exports = class RuleImportTestResourceHandler {
         const {resourceVersions, latestVersion} = releaseInfo
 
         if (!versionRange || versionRange === "latest") {
-            return latestVersion.version
+            return latestVersion
         }
 
-        return semver.maxSatisfying(resourceVersions.map(x => x.version), versionRange)
+        const version = semver.maxSatisfying(resourceVersions.map(x => x.version), versionRange)
+
+        return resourceVersions.find(x => x.version === version)
     }
 }

@@ -23,8 +23,10 @@ module.exports = class ReplaceOptionHandler {
         if (!ruleInfo.isValid || !['alter', 'add'].includes(ruleInfo.operation) || lodash.isEmpty(ruleInfo.replaces)) {
             return ruleInfo
         }
+        console.log(JSON.stringify(ruleInfo.entityDependencyTree))
 
         await this._recursionReplace(ruleInfo.entityDependencyTree, ruleInfo)
+
 
         return ruleInfo
     }
@@ -69,8 +71,8 @@ module.exports = class ReplaceOptionHandler {
     async _getReplacerAndDependencies(targetInfo, ruleInfo, parents = []) {
 
         var efficientReplaceCount = 0
-        var {id, name, type, version, replaceRecords = []} = targetInfo
-        var comparableTarget = {id, name, type, version}
+        var {id, name, type, resourceType, version, replaceRecords = []} = targetInfo
+        var comparableTarget = {id, name, type, resourceType, version}
 
         for (let i = 0; i < ruleInfo.replaces.length; i++) {
 
@@ -91,9 +93,9 @@ module.exports = class ReplaceOptionHandler {
                 return
             }
 
-            const version = isMock ? null : this.importRuleHandler.matchReleaseVersion(replacerInfo, replacer.versionRange)
+            const resourceVersion = isMock ? null : this.importRuleHandler.matchReleaseVersion(replacerInfo, replacer.versionRange)
 
-            if (!isMock && !version) {
+            if (!isMock && !resourceVersion) {
                 ruleInfo.isValid = false
                 ruleInfo.matchErrors.push(`替换品版本${replacer.versionRange}无效`)
                 return
@@ -105,7 +107,10 @@ module.exports = class ReplaceOptionHandler {
             comparableTarget = {
                 id: replacerInfo[isMock ? 'mockResourceId' : 'releaseId'],
                 name: replacerInfo[isMock ? 'fullName' : 'releaseName'],
-                version, type: replacer.type
+                resourceType: replacerInfo.resourceType,
+                version: resourceVersion ? resourceVersion.version : null,
+                resourceId: resourceVersion ? resourceVersion.resourceId : null,
+                type: replacer.type
             }
         }
 

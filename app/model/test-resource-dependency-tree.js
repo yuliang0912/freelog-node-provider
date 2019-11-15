@@ -21,6 +21,7 @@ module.exports = app => {
         version: {type: String, required: false},
         releaseSchemeId: {type: String, required: false},
         resourceId: {type: String, required: false},
+        resourceType: {type: String, required: false},
         parentNid: {type: String, required: false},
         replaceRecords: {},
     }, {_id: false})

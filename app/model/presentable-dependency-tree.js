@@ -10,6 +10,7 @@ module.exports = app => {
         version: {type: String, required: true},
         versionRange: {type: String, required: true},
         resourceId: {type: String, required: true},
+        resourceType: {type: String, required: false},
         releaseSchemeId: {type: String, required: true},
         deep: {type: Number, required: true},
         parentReleaseId: {type: String, required: false},

@@ -368,12 +368,12 @@ module.exports = class TestRuleService extends Service {
      */
     _flattenDependencyTree(testResourceId, dependencyTree, parentNid = '', results = [], deep = 1) {
         for (let i = 0, j = dependencyTree.length; i < j; i++) {
-            let {nid, id, name, type, version, dependencies, replaceRecords, resourceId, releaseSchemeId} = dependencyTree[i]
+            let {nid, id, name, type, version, dependencies, replaceRecords, resourceId, resourceType, releaseSchemeId} = dependencyTree[i]
             if (deep == 1) {
                 nid = testResourceId.substr(0, 12)
             }
             results.push({
-                nid, id, name, type, deep, version, parentNid, replaceRecords,
+                nid, id, name, type, deep, version, parentNid, replaceRecords, resourceType,
                 resourceId, releaseSchemeId, dependCount: dependencies.length
             })
             this._flattenDependencyTree(testResourceId, dependencies, nid, results, deep + 1)

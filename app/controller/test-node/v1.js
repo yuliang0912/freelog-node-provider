@@ -140,10 +140,18 @@ module.exports = class TestNodeController extends Controller {
     async findTestResourceByReleaseName(ctx) {
 
         const nodeId = ctx.checkParams('nodeId').isInt().gt(0).value
-        const releaseName = ctx.checkQuery('releaseName').exist().isFullReleaseName().value
+        const releaseId = ctx.checkQuery('releaseId').optional().isReleaseId().value
+        const releaseName = ctx.checkQuery('releaseName').optional().isFullReleaseName().value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
-        const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/detail?releaseName=${releaseName}`)
+        if (!releaseId && !releaseName) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'releaseId,releaseName'))
+        }
+
+        const releaseInfo = releaseId ?
+            await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`) :
+            await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/detail?releaseName=${releaseName}`)
+
         if (!releaseInfo) {
             return ctx.success(null)
         }

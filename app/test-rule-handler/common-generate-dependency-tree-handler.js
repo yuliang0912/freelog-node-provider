@@ -100,9 +100,9 @@ module.exports = class CommonGenerateDependencyTreeHandler {
         let that = this
 
         function authMapping(model) {
-            let {releaseId, releaseName, version} = model
+            let {releaseId, releaseName, version, resourceType} = model
             return {
-                id: releaseId, name: releaseName, version, type: "release"
+                id: releaseId, name: releaseName, version, type: "release", resourceType
             }
         }
 
@@ -132,11 +132,11 @@ module.exports = class CommonGenerateDependencyTreeHandler {
         let that = this
 
         function authMapping(model) {
-            let {mockResourceId, mockResourceName, releaseId, releaseName, version} = model
+            let {mockResourceId, mockResourceName, releaseId, resourceType, releaseName, version} = model
             return mockResourceId ? {
-                id: mockResourceId, name: mockResourceName, version: null, type: "mock"
+                id: mockResourceId, name: mockResourceName, version: null, type: "mock", resourceType
             } : {
-                id: releaseId, name: releaseName, version, type: "release"
+                id: releaseId, name: releaseName, version, type: "release", resourceType
             }
         }
 

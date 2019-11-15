@@ -40,6 +40,7 @@ module.exports = class PresentableLockVersionEventHandler {
                 recursion(model.dependencies, model.releaseId, model.version, deep + 1)
             }
         }
+
         recursion(releaseDependencyTree)
 
         const releaseSchemeMap = await app.curlIntranetApi(`${app.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,version`, {}, identityInfo)
