@@ -21,10 +21,12 @@ module.exports = app => {
     router.get('node-test-resource', '/v1/testNodes/:nodeId/testResources', testNode.v1.testResources)
     router.get('search-test-resource', '/v1/testNodes/:nodeId/searchTestResource', testNode.v1.searchTestResource)
     router.get('search-test-resource-dependency', '/v1/testNodes/:nodeId/searchTestResourceDependencyTree', testNode.v1.searchTestResourceDependencyTree)
+    router.get('find-test-resource-by-release-name', '/v1/testNodes/:nodeId/testResources/findByReleaseName', testNode.v1.findTestResourceByReleaseName)
     router.get('test-resource-auth-tree', '/v1/testNodes/testResources/:testResourceId/authTree', testNode.v1.testResourceAuthTree)
     router.get('test-resource-dependency-tree', '/v1/testNodes/testResources/:testResourceId/dependencyTree', testNode.v1.testResourceDependencyTree)
     router.get('filter-test-resource-dependency', '/v1/testNodes/testResources/:testResourceId/filterDependencyTree', testNode.v1.filterTestResourceDependencyTree)
     router.get('get-test-resource-detail', '/v1/testNodes/testResources/:testResourceId', testNode.v1.testResourceDetail)
+
 
     //post
     router.post('match-test-resource', '/v1/testNodes/:nodeId/matchTestResources', testNode.v1.matchTestResources)

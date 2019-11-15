@@ -49,7 +49,9 @@ module.exports = class RuleAlterPresentablePropertyHandler {
         entityInfo.entityVersion = entityInfo.releaseInfo.version
         entityInfo.entityVersions = resourceVersions.map(x => x.version)
         entityInfo.resourceType = resourceType
-
+        entityInfo._referencedRelease = {
+            id: entityInfo.releaseInfo.releaseId, name: entityInfo.releaseInfo.releaseName
+        }
         ruleInfo.entityInfo = entityInfo
     }
 }

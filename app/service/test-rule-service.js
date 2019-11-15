@@ -46,11 +46,11 @@ module.exports = class TestRuleService extends Service {
             let {presentableName, entityInfo, entityDependencyTree, onlineStatus, userDefinedTags} = testRuleInfo
             let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages} = entityInfo
             let originInfo = {
-                id: entityId, name: entityName,
-                type: entityType, version: entityVersion, versions: entityVersions, _originModel: entityInfo
+                id: entityId, name: entityName, type: entityType,
+                version: entityVersion, versions: entityVersions, _originModel: entityInfo
             }
 
-            let testResourceId = this._generateTestResourceId(nodeId, entityId, entityType)
+            let testResourceId = this._generateTestResourceId(nodeId, entityInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, entityDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
@@ -221,15 +221,18 @@ module.exports = class TestRuleService extends Service {
 
             let originInfo = {
                 id: presentableId, name: presentableName,
-                type: 'presentable', version: releaseInfo.version, _originModel: presentable,
-                versions: [],
+                type: 'presentable', version: releaseInfo.version, _originModel: presentable, versions: []
             }
 
             let releaseTask = this.ruleImportTestResourceHandler.getReleaseInfo(releaseInfo.releaseId)
             let presentableDependencyTreeTask = this.commonGenerateDependencyTreeHandler.generatePresentableDependencyTree(presentableId, releaseInfo.version)
             let [release, presentableDependencyTree] = await Promise.all([releaseTask, presentableDependencyTreeTask])
 
-            let testResourceId = this._generateTestResourceId(nodeId, presentableId, 'presentable')
+            let testResourceId = this._generateTestResourceId(nodeId, {
+                entityId: presentableId,
+                entityType: "presentable",
+                releaseInfo
+            })
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, presentableDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
@@ -298,15 +301,13 @@ module.exports = class TestRuleService extends Service {
             }
             for (let i = 0, j = dependencies.length; i < j; i++) {
                 let currentDependInfo = dependencies[i]
-                if (entityIsMatched(currentDependInfo)) {
+                //自身匹配或者子依赖有匹配的
+                if (entityIsMatched(currentDependInfo) || recursionSetMatchResult(currentDependInfo.dependencies)) {
                     currentDependInfo.isMatched = true
                     return true
                 }
-                if (recursionSetMatchResult(currentDependInfo.dependencies)) {
-                    currentDependInfo.isMatched = true
-                    return true
-                }
-                if (i + 1 === j) { //当前依赖的全部子依赖全部遍历完依然没有匹配的,则当前依赖不匹配
+                //当前依赖的全部子依赖全部遍历完依然没有匹配的,则当前依赖不匹配
+                if (i + 1 === j) {
                     currentDependInfo.isMatched = false
                     return false
                 }
@@ -474,7 +475,9 @@ module.exports = class TestRuleService extends Service {
      * @param originInfo
      * @private
      */
-    _generateTestResourceId(nodeId, entityId, entityType) {
+    _generateTestResourceId(nodeId, entityInfo) {
+        let entityId = entityInfo.entityType === "presentable" ? entityInfo.releaseInfo.releaseId : entityInfo.entityId
+        let entityType = entityInfo.entityType === "presentable" ? "release" : entityInfo.entityType
         return cryptoHelper.md5(`${nodeId}-${entityId}-${entityType}`)
     }
 

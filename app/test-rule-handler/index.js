@@ -109,32 +109,33 @@ module.exports = class NodeTestRuleHandler {
      */
     async _checkImportNameAndEntityIsExist(testRules, nodeId) {
 
-        const condition = {nodeId}
+        var condition = {nodeId, $or: []}
         const allAddPresentableNames = testRules.filter(x => x.operation === 'add').map(x => new RegExp(`^${x.presentableName}$`, 'i'))
         const allAddReleaseNames = testRules.filter(x => x.operation === 'add' && x.candidate.type === 'release').map(x => new RegExp(`^${x.candidate.name}$`, 'i'))
 
         if (allAddPresentableNames.length) {
-            condition.presentableName = {$in: allAddPresentableNames}
+            condition.$or.push({"presentableName": {"$in": allAddPresentableNames}})
         }
         if (allAddReleaseNames.length) {
-            condition['releaseInfo.releaseName'] = {$in: allAddReleaseNames}
+            condition.$or.push({"releaseInfo.releaseName": {"$in": allAddReleaseNames}})
         }
-        if (Object.keys(condition).length < 2) {
+        if (!condition.$or.length) {
             return
         }
 
         const presentables = await this.presentableProvider.find(condition, 'presentableName releaseInfo')
+
         for (let i = 0; i < presentables.length; i++) {
             let {presentableName, releaseInfo} = presentables[i]
-            let existingPresentableNameRule = testRules.find(x => x.presentableName.toLowerCase() === presentableName.toLowerCase())
+            let existingPresentableNameRule = testRules.find(x => x.operation === 'add' && x.presentableName.toLowerCase() === presentableName.toLowerCase())
             if (existingPresentableNameRule) {
                 existingPresentableNameRule.isValid = false
                 existingPresentableNameRule.matchErrors.push(`节点的presentable中已存在${existingPresentableNameRule.presentableName},规则无法生效`)
             }
-            let existingReleaseNameRule = testRules.find(x => x.candidate.name.toLowerCase() === releaseInfo.releaseName.toLowerCase() && x.candidate.type === "release")
+            let existingReleaseNameRule = testRules.find(x => x.operation === 'add' && x.candidate.name.toLowerCase() === releaseInfo.releaseName.toLowerCase() && x.candidate.type === "release")
             if (existingReleaseNameRule) {
-                existingPresentableNameRule.isValid = false
-                existingPresentableNameRule.matchErrors.push(`节点的presentable中已存在发行${existingReleaseNameRule.candidate.name},规则无法生效`)
+                existingReleaseNameRule.isValid = false
+                existingReleaseNameRule.matchErrors.push(`节点的presentable中已存在发行${existingReleaseNameRule.candidate.name},规则无法生效`)
             }
         }
     }

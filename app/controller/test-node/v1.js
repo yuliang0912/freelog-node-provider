@@ -133,6 +133,29 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
+     * 根据发行名称获取测试资源
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async findTestResourceByReleaseName(ctx) {
+
+        const nodeId = ctx.checkParams('nodeId').isInt().gt(0).value
+        const releaseName = ctx.checkQuery('releaseName').exist().isFullReleaseName().value
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/detail?releaseName=${releaseName}`)
+        if (!releaseInfo) {
+            return ctx.success(null)
+        }
+
+        const testResourceId = ctx.service.testRuleService._generateTestResourceId(nodeId, {
+            entityId: releaseInfo.releaseId, entityType: 'release'
+        })
+
+        await this.nodeTestResourceProvider.findOne({testResourceId}).then(ctx.success)
+    }
+
+    /**
      * 测试资源依赖树
      * @param ctx
      * @returns {Promise<void>}
