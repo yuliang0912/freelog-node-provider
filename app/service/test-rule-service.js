@@ -211,7 +211,7 @@ module.exports = class TestRuleService extends Service {
     async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
 
         const testResources = []
-        const operantPresentableIds = testRules.filter(x => x.operation === 'alter').map(x => x.entityInfo.entityId)
+        const operantPresentableIds = testRules.filter(x => x.isValid && x.operation === 'alter').map(x => x.entityInfo.entityId)
 
         const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: operantPresentableIds}})
 
