@@ -342,7 +342,7 @@ module.exports = class TestRuleService extends Service {
      */
     async _compileAndMatchTestRule(nodeId, userId, testRuleText) {
 
-        const {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
+        var {errors, rules} = this.nodeTestRuleHandler.compileTestRule(testRuleText)
 
         if (!lodash.isEmpty(errors)) {
             throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
@@ -351,12 +351,16 @@ module.exports = class TestRuleService extends Service {
             return rules
         }
 
-        const testRuleChunks = lodash.chunk(rules, 200)
-        for (let i = 0; i < testRuleChunks.length; i++) {
-            await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, testRuleChunks[i])
-        }
+        await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, rules.reverse())
 
         return rules
+
+        // const testRuleChunks = lodash.chunk(rules, 200)
+        // for (let i = 0; i < testRuleChunks.length; i++) {
+        //     await this.nodeTestRuleHandler.matchTestRuleResults(nodeId, userId, testRuleChunks[i])
+        // }
+        //
+        // return rules
     }
 
     /**

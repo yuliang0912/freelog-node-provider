@@ -479,6 +479,21 @@ module.exports = class PresentableController extends Controller {
         ctx.success(presentableAuthTrees)
     }
 
+
+    async rebuildPresentableDependencyTree(ctx) {
+
+        const nodeId = ctx.checkBody('nodeId').toInt().gt(0).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        const presentables = await this.presentableProvider.find({nodeId})
+
+        presentables.forEach(presentable => {
+            ctx.app.emit(presentableVersionLockEvent, presentable)
+        })
+
+        ctx.success(true)
+    }
+
     /**
      * 校验处理解决的发行数据格式
      * @param resolveReleases

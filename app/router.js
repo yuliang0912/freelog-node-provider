@@ -27,10 +27,10 @@ module.exports = app => {
     router.get('filter-test-resource-dependency', '/v1/testNodes/testResources/:testResourceId/filterDependencyTree', testNode.v1.filterTestResourceDependencyTree)
     router.get('get-test-resource-detail', '/v1/testNodes/testResources/:testResourceId', testNode.v1.testResourceDetail)
 
-
     //post
     router.post('match-test-resource', '/v1/testNodes/:nodeId/matchTestResources', testNode.v1.matchTestResources)
     router.post('create-or-update-custom-store', '/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)
+    router.post('rebuild-presentable-dependency-tree', '/v1/presentables/rebuildDependencyTree', presentable.v1.rebuildPresentableDependencyTree)
 
     //put
     router.put('switch-presentable-version', '/v1/presentables/:presentableId/switchPresentableVersion', presentable.v1.switchPresentableVersion)
