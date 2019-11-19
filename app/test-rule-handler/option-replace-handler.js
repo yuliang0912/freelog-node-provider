@@ -190,7 +190,8 @@ module.exports = class ReplaceOptionHandler {
         if (lodash.isEmpty(dependencies)) {
             return {result: false, deep}
         }
-        if (dependencies.some(x => x.id === id && x.type === type)) {
+        //如果只有一个元素,自己替换自己的不同版本可以被允许,检测的目的是防止多个依赖一致
+        if (dependencies.length > 1 && dependencies.some(x => x.id === id && x.type === type)) {
             return {result: true, deep}
         }
         if (deep > 100) { //内部限制最大依赖树深度
