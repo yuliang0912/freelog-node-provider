@@ -163,7 +163,8 @@ module.exports = class NodeTestRuleHandler {
             }
             if (ruleInfo.replaces && ruleInfo.replaces.length) {
                 ruleInfo.options.replace = {
-                    effectiveMatchCount: 0
+                    effectiveMatchCount: 0,
+                    replaceRecords: []
                 }
             }
         })

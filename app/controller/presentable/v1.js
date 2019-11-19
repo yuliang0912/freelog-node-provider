@@ -209,11 +209,10 @@ module.exports = class PresentableController extends Controller {
             msg: ctx.gettext('params-validate-failed', 'nodeId'),
         }))
 
-        await this.presentableProvider.findOne({'releaseInfo.releaseId': releaseId, nodeId}, 'id').then(exist => {
-            if (!exist) {
-                return
+        await this.presentableProvider.findOne({'releaseInfo.releaseId': releaseId, nodeId}, '_id').then(exist => {
+            if (exist) {
+                throw new ApplicationError(ctx.gettext('presentable-release-repetition-create-error'))
             }
-            throw new ApplicationError(ctx.gettext('presentable-release-repetition-create-error'))
         })
 
         const releaseInfo = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}`)
@@ -223,6 +222,14 @@ module.exports = class PresentableController extends Controller {
         if (!releaseInfo.resourceVersions.some(x => x.version === version)) {
             throw new ApplicationError(ctx.gettext('params-validate-failed', 'version'), {version})
         }
+
+        await this.presentableProvider.findOne({
+            nodeId, presentableName: new RegExp(`^${presentableName.trim()}$`, 'i')
+        }, '_id').then(exist => {
+            if (exist) {
+                throw new ApplicationError(ctx.gettext('presentable-name-has-already-existed', presentableName))
+            }
+        })
 
         await ctx.service.presentableService.createPresentable({
             releaseInfo, presentableName, resolveReleases,
@@ -482,16 +489,15 @@ module.exports = class PresentableController extends Controller {
 
     async rebuildPresentableDependencyTree(ctx) {
 
-        const nodeId = ctx.checkBody('nodeId').toInt().gt(0).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
-        const presentables = await this.presentableProvider.find({nodeId})
+        const presentables = await this.presentableProvider.find({})
 
         presentables.forEach(presentable => {
             ctx.app.emit(presentableVersionLockEvent, presentable)
         })
 
-        ctx.success(true)
+        ctx.success(presentables.map(x => x.presentableId))
     }
 
     /**

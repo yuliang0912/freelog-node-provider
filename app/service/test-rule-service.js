@@ -121,7 +121,7 @@ module.exports = class TestRuleService extends Service {
                 let {id, text, matchErrors} = testRuleInfo
                 return {
                     id, text, matchErrors,
-                    ruleInfo: lodash.pick(testRuleInfo, ['tags', 'replaces', 'online', 'operation', 'presentableName', 'candidate'])
+                    ruleInfo: lodash.pick(testRuleInfo, ['tags', 'replaces', 'online', 'operation', 'presentableName', 'candidate', 'themeName'])
                 }
             })
         }

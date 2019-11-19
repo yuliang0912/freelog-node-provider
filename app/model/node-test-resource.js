@@ -32,7 +32,7 @@ module.exports = app => {
     const OriginInfoSchema = new mongoose.Schema({
         id: {type: String, required: true},
         name: {type: String, required: true},
-        type: {type: String, required: true},  // release,mock,presentable,resource
+        type: {type: String, required: true},  // release,mock,presentable
         version: {type: String, required: false, default: null},
         versions: {type: [String], required: false, default: []}
     }, {_id: false})
@@ -59,6 +59,7 @@ module.exports = app => {
         testResourceId: {type: String, required: true, unique: true},
         testResourceName: {type: String, required: true},
         previewImages: {type: [String], required: true},
+        //nodePresentableId: {type: String, required: false},
         resourceType: {type: String, required: true}, //资源类型
         intro: {type: String, required: false, default: ''}, //测试资源简介
         originInfo: {type: OriginInfoSchema, required: true},

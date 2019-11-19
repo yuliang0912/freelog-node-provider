@@ -23,10 +23,8 @@ module.exports = class ReplaceOptionHandler {
         if (!ruleInfo.isValid || !['alter', 'add'].includes(ruleInfo.operation) || lodash.isEmpty(ruleInfo.replaces)) {
             return ruleInfo
         }
-        console.log(JSON.stringify(ruleInfo.entityDependencyTree))
 
         await this._recursionReplace(ruleInfo.entityDependencyTree, ruleInfo)
-
 
         return ruleInfo
     }
@@ -58,6 +56,7 @@ module.exports = class ReplaceOptionHandler {
                 continue
             }
             dependencies.splice(i, 1, replacerInfo)
+            ruleInfo.options.replace.replaceRecords.push(replacerInfo.replaceRecords)
         }
     }
 

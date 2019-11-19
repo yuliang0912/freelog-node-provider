@@ -44,6 +44,8 @@ module.exports = {
 
     'custom-store-key-has-already-existed': '当前key已经存在,不能重复创建',
 
+    'presentable-name-has-already-existed': '展品%s已经存在,不能重复创建',
+
     'presentable-release-repetition-create-error': '当前发行已经创建成节点资源,无法重复创建',
 
     'presentable-policy-offline-validate-error': '已上线的节点资源最少需要一个有效的授权策略',
