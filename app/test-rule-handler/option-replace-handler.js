@@ -52,6 +52,7 @@ module.exports = class ReplaceOptionHandler {
             }
             let {result, deep} = this._checkCycleDependency(dependencies, replacerInfo)
             if (result) {
+                ruleInfo.isValid = false
                 ruleInfo.matchErrors.push(`规则作用于${ruleInfo.presentableName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`)
                 continue
             }
