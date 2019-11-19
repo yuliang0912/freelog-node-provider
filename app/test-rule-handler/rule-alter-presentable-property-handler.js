@@ -1,4 +1,6 @@
 'use strict'
+
+const lodash = require('lodash')
 const ImportRuleHandler = require('./rule-import-test-resource-handler')
 
 module.exports = class RuleAlterPresentablePropertyHandler {
@@ -18,7 +20,7 @@ module.exports = class RuleAlterPresentablePropertyHandler {
     async handle(ruleInfo) {
 
         ruleInfo._asyncGetEntityTask = this.presentableProvider.findOne({presentableName: ruleInfo.presentableName})
-            .then(entityInfo => this._fillRuleEntityInfo(ruleInfo, entityInfo))
+            .then(presentableInfo => this._fillRuleEntityInfo(ruleInfo, presentableInfo))
 
         return ruleInfo
     }
@@ -29,29 +31,24 @@ module.exports = class RuleAlterPresentablePropertyHandler {
      * @param entityInfo
      * @private
      */
-    async _fillRuleEntityInfo(ruleInfo, entityInfo) {
+    async _fillRuleEntityInfo(ruleInfo, presentableInfo) {
 
-        if (!entityInfo) {
+        if (!presentableInfo) {
             ruleInfo.isValid = false
             ruleInfo.matchErrors.push(`节点中不存在名称为${ruleInfo.presentableName}的节点发行`)
             return
         }
 
-        const releaseInfo = await this.importRuleHandler.getReleaseInfo(entityInfo.releaseInfo.releaseId)
-        const {resourceType = '', intro = '', resourceVersions = [], previewImages = []} = releaseInfo || {}
+        const releaseInfo = await this.importRuleHandler.getReleaseInfo(presentableInfo.releaseInfo.releaseId)
 
-        entityInfo = entityInfo.toObject()
-        entityInfo.intro = intro
-        entityInfo.entityId = entityInfo.presentableId
-        entityInfo.entityName = entityInfo.presentableName
-        entityInfo.previewImages = previewImages
-        entityInfo.entityType = "presentable"
-        entityInfo.entityVersion = entityInfo.releaseInfo.version
-        entityInfo.entityVersions = resourceVersions.map(x => x.version)
-        entityInfo.resourceType = resourceType
-        entityInfo._referencedRelease = {
-            id: entityInfo.releaseInfo.releaseId, name: entityInfo.releaseInfo.releaseName
-        }
+        const entityInfo = lodash.pick(releaseInfo, ['resourceType', 'intro', 'previewImages'])
+        entityInfo.entityId = releaseInfo.releaseId
+        entityInfo.entityName = releaseInfo.releaseName
+        entityInfo.entityType = "release"
+        entityInfo.entityVersion = presentableInfo.releaseInfo.version
+        entityInfo.entityVersions = releaseInfo['resourceVersions'].map(x => x.version)
+        entityInfo.presentableInfo = presentableInfo.toObject()
+
         ruleInfo.entityInfo = entityInfo
     }
 }

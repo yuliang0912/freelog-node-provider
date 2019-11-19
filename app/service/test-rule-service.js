@@ -44,21 +44,22 @@ module.exports = class TestRuleService extends Service {
                 continue
             }
             let {presentableName, entityInfo, entityDependencyTree, onlineStatus, userDefinedTags} = testRuleInfo
-            let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages} = entityInfo
+            let {entityId, entityName, entityType, entityVersion, entityVersions, resourceType, intro, previewImages, presentableInfo} = entityInfo
+
             let originInfo = {
-                id: entityId, name: entityName, type: entityType,
-                version: entityVersion, versions: entityVersions, _originModel: entityInfo
+                id: entityId, name: entityName, type: entityType, presentableInfo,
+                version: entityVersion, versions: entityVersions
             }
 
-            let testResourceId = this._generateTestResourceId(nodeId, entityInfo)
+            let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, entityDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             nodeTestResources.push({
                 testResourceId, nodeId, userId, flattenDependencyTree, intro, previewImages, originInfo, resourceType,
+                nodePresentableId: presentableInfo ? presentableInfo.presentableId : '',
                 testResourceName: presentableName,
                 dependencyTree: entityDependencyTree,
-                resourceFileInfo: this._getTestResourceFileInfo(originInfo, flattenDependencyTree),
                 differenceInfo: {
                     onlineStatusInfo: {
                         isOnline: onlineStatus,
@@ -211,39 +212,38 @@ module.exports = class TestRuleService extends Service {
     async getUnOperantNodePresentableTestResources(nodeId, userId, testRules) {
 
         const testResources = []
-        const operantPresentableIds = testRules.filter(x => x.isValid && x.operation === 'alter').map(x => x.entityInfo.entityId)
+        const operantPresentableIds = testRules.filter(x => x.isValid && x.operation === 'alter').map(x => x.entityInfo.presentableInfo.presentableId)
 
         const nodePresentables = await this.presentableProvider.find({nodeId, _id: {$nin: operantPresentableIds}})
 
         for (let i = 0; i < nodePresentables.length; i++) {
-            let presentable = nodePresentables[i]
-            let {presentableId, isOnline, userDefinedTags, presentableName, releaseInfo} = presentable
+            let presentableInfo = nodePresentables[i]
+            let {presentableId, isOnline, userDefinedTags, presentableName} = presentableInfo
 
+            let getReleaseInfoTask = this.ruleImportTestResourceHandler.getReleaseInfo(presentableInfo.releaseInfo.releaseId)
+            let getPresentableDependencyTreeTask = this.commonGenerateDependencyTreeHandler.generatePresentableDependencyTree(presentableId, presentableInfo.releaseInfo.version)
+            let [releaseInfo, presentableDependencyTree] = await Promise.all([getReleaseInfoTask, getPresentableDependencyTreeTask])
             let originInfo = {
-                id: presentableId, name: presentableName,
-                type: 'presentable', version: releaseInfo.version, _originModel: presentable, versions: []
+                id: releaseInfo.releaseId,
+                name: releaseInfo.releaseName,
+                type: 'release',
+                version: presentableInfo.releaseInfo.version,
+                presentableInfo,
+                versions: releaseInfo['resourceVersions'].map(x => x.version)
             }
 
-            let releaseTask = this.ruleImportTestResourceHandler.getReleaseInfo(releaseInfo.releaseId)
-            let presentableDependencyTreeTask = this.commonGenerateDependencyTreeHandler.generatePresentableDependencyTree(presentableId, releaseInfo.version)
-            let [release, presentableDependencyTree] = await Promise.all([releaseTask, presentableDependencyTreeTask])
-
-            let testResourceId = this._generateTestResourceId(nodeId, {
-                entityId: presentableId,
-                entityType: "presentable",
-                releaseInfo
-            })
+            let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, presentableDependencyTree)
-            await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
+            //await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             testResources.push({
                 testResourceId, nodeId, userId, flattenDependencyTree, originInfo,
-                intro: release.intro,
-                previewImages: release.previewImages,
+                intro: releaseInfo.intro,
+                previewImages: releaseInfo.previewImages,
                 resourceType: releaseInfo.resourceType,
                 testResourceName: presentableName,
                 dependencyTree: presentableDependencyTree,
-                resourceFileInfo: this._getTestResourceFileInfo(originInfo, flattenDependencyTree),
+                nodePresentableId: presentableId,
                 differenceInfo: {
                     onlineStatusInfo: {
                         isOnline: isOnline,
@@ -479,10 +479,8 @@ module.exports = class TestRuleService extends Service {
      * @param originInfo
      * @private
      */
-    _generateTestResourceId(nodeId, entityInfo) {
-        let entityId = entityInfo.entityType === "presentable" ? entityInfo.releaseInfo.releaseId : entityInfo.entityId
-        let entityType = entityInfo.entityType === "presentable" ? "release" : entityInfo.entityType
-        return cryptoHelper.md5(`${nodeId}-${entityId}-${entityType}`)
+    _generateTestResourceId(nodeId, originInfo) {
+        return cryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`)
     }
 
     /**
@@ -501,7 +499,7 @@ module.exports = class TestRuleService extends Service {
         }))
 
         const resolveReleases = existingResolveReleases ? existingResolveReleases.resolveReleases :
-            originInfo.type === "presentable" ? originInfo._originModel.resolveReleases : []
+            originInfo.presentableInfo ? originInfo.presentableInfo.resolveReleases : []
 
         const resolveReleaseMap = new Map(resolveReleases.map(x => [x.releaseId, x.contracts]))
 
@@ -573,29 +571,6 @@ module.exports = class TestRuleService extends Service {
             } else {
                 console.log(`testResourceDependencyTree数据结构缺失,testResourceId:${testResourceId},releaseId:${id},version:${version}`)
             }
-        }
-    }
-
-    /**
-     * 获取资源文件的ID数据
-     * @param originInfo
-     * @param flattenDependencyTree
-     * @returns {*}
-     * @private
-     */
-    _getTestResourceFileInfo(originInfo, flattenDependencyTree) {
-
-        let {id, version, type, _originModel} = originInfo
-        if (type === 'mock') {
-            return {id, type}
-        }
-        if (type === "release") {
-            let resourceVersion = _originModel.resourceVersions.find(x => x.version === version)
-            return {id: resourceVersion.resourceId, type: 'resource'}
-        }
-        if (type === "presentable") {
-            let rootDependencyInfo = flattenDependencyTree.find(x => x.deep === 1)
-            return {id: rootDependencyInfo.resourceId, type: "resource"}
         }
     }
 }

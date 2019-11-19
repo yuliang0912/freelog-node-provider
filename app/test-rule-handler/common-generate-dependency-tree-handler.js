@@ -44,7 +44,7 @@ module.exports = class CommonGenerateDependencyTreeHandler {
                 dependencyTreeTask = this.generateReleaseDependencyTree(entityInfo['releaseId'], entityInfo.entityVersion)
                 break
             default:
-                dependencyTreeTask = this.generatePresentableDependencyTree(entityInfo['presentableId'], entityInfo.entityVersion)
+                dependencyTreeTask = this.generatePresentableDependencyTree(entityInfo.presentableInfo.presentableId, entityInfo.entityVersion)
                 break
         }
 
