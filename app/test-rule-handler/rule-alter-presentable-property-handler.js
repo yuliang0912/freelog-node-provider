@@ -19,8 +19,10 @@ module.exports = class RuleAlterPresentablePropertyHandler {
      */
     async handle(ruleInfo) {
 
-        ruleInfo._asyncGetEntityTask = this.presentableProvider.findOne({presentableName: ruleInfo.presentableName})
-            .then(presentableInfo => this._fillRuleEntityInfo(ruleInfo, presentableInfo))
+        ruleInfo._asyncGetEntityTask = this.presentableProvider.findOne({
+            nodeId: ruleInfo.nodeId,
+            presentableName: new RegExp(`^${ruleInfo.presentableName}$`, 'i')
+        }).then(presentableInfo => this._fillRuleEntityInfo(ruleInfo, presentableInfo))
 
         return ruleInfo
     }
