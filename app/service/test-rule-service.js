@@ -51,6 +51,11 @@ module.exports = class TestRuleService extends Service {
                 version: entityVersion, versions: entityVersions
             }
 
+            //如果原始依赖的版本被替换了,则整个测试资源的版本也跟随改变
+            if (entityType === 'release' && !lodash.isEmpty(entityDependencyTree)) {
+                originInfo.version = entityDependencyTree[0].version
+            }
+
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, entityDependencyTree)
             await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
