@@ -45,7 +45,7 @@ module.exports = app => {
     }, {_id: false})
 
     const PresentableSchema = new mongoose.Schema({
-        presentableName: {type: String, default: ''},
+        presentableName: {type: String, required: true},
         policies: {type: [PolicySchema], default: []}, //引用策略段
         nodeId: {type: Number, required: true}, //节点ID
         userId: {type: Number, required: true}, //创建者ID
@@ -67,8 +67,9 @@ module.exports = app => {
         return this.id
     })
 
-    PresentableSchema.index({userId: 1, nodeId: 1});
+    PresentableSchema.index({nodeId: 1, presentableName: 1}, {unique: true});
     PresentableSchema.index({nodeId: 1, 'releaseInfo.releaseId': 1}, {unique: true});
+
 
     return mongoose.model('presentables', PresentableSchema)
 }
