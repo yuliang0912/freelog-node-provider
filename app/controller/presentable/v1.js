@@ -223,17 +223,10 @@ module.exports = class PresentableController extends Controller {
             throw new ApplicationError(ctx.gettext('params-validate-failed', 'version'), {version})
         }
 
-        await this.presentableProvider.findOne({
-            nodeId, presentableName: new RegExp(`^${presentableName.trim()}$`, 'i')
-        }, '_id').then(exist => {
-            if (exist) {
-                throw new ApplicationError(ctx.gettext('presentable-name-has-already-existed', presentableName))
-            }
-        })
-
+        const newPresentableName = await this._generatePresentableName(nodeId, presentableName)
         await ctx.service.presentableService.createPresentable({
-            releaseInfo, presentableName, resolveReleases,
-            version, policies, nodeInfo, intro, userDefinedTags
+            releaseInfo, resolveReleases, version, policies, nodeInfo, intro, userDefinedTags,
+            presentableName: newPresentableName
         }).then(ctx.success)
     }
 
@@ -486,7 +479,11 @@ module.exports = class PresentableController extends Controller {
         ctx.success(presentableAuthTrees)
     }
 
-
+    /**
+     * 重新构建presentable依赖树,授权树(开发使用)
+     * @param ctx
+     * @returns {Promise<void>}
+     */
     async rebuildPresentableDependencyTree(ctx) {
 
         ctx.validateParams().validateVisitorIdentity(LoginUser)
@@ -498,6 +495,31 @@ module.exports = class PresentableController extends Controller {
         })
 
         ctx.success(presentables.map(x => x.presentableId))
+    }
+
+    /**
+     * 生成presentableName
+     * @param nodeId
+     * @param presentableName
+     * @private
+     */
+    async _generatePresentableName(nodeId, releaseName) {
+
+        const presentableNames = await this.presentableProvider.find({
+            nodeId, presentableName: new RegExp(`^${releaseName.trim()}`, 'i')
+        }, 'presentableName')
+
+        if (!presentableNames.length || !presentableNames.some(x => x.presentableName.toUpperCase() === releaseName.toUpperCase())) {
+            return releaseName
+        }
+
+        for (let i = 0; i < presentableNames.length; i++) {
+            let newReleaseName = `${releaseName}(${i + 1})`
+            if (presentableNames.some(x => x.presentableName.toUpperCase() === newReleaseName.toUpperCase())) {
+                continue
+            }
+            return newReleaseName
+        }
     }
 
     /**

@@ -8,21 +8,21 @@
 
 module.exports = {
 
-    gatewayUrl: 'http://api.testfreelog.com',
+    //gatewayUrl: 'http://api.testfreelog.com',
 
     //gatewayUrl: 'http://192.168.164.165:8895',
 
     middleware: ['errorHandler', 'localUserIdentity'],
 
-    mongoose: {
-        url: "mongodb://119.23.45.143:27018/node"
-    },
+    // mongoose: {
+    //     url: "mongodb://119.23.45.143:27018/node"
+    // },
 
     /**
      * 本地开发环境身份信息
      */
     localIdentity: {
-        userId: 50022,
+        userId: 50003,
         userName: "余亮",
         nickname: "烟雨落叶",
         email: "4896819@qq.com",
