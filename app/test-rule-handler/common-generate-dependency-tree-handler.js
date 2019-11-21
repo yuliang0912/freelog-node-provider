@@ -1,6 +1,7 @@
 'use strict'
 
 const uuid = require('uuid')
+const lodash = require('lodash')
 const {ArgumentError} = require('egg-freelog-base/error')
 
 module.exports = class CommonGenerateDependencyTreeHandler {
@@ -85,8 +86,13 @@ module.exports = class CommonGenerateDependencyTreeHandler {
     async generatePresentableDependencyTree(presentableId, version) {
         return this.presentableDependencyTreeProvider.findOne({
             presentableId, version
-        }).then(dependencyTree => {
-            return this._convertPresentableDependencyTree(dependencyTree.toObject().dependencyTree)
+        }).then(dependencyTreeInfo => {
+            if (!dependencyTreeInfo) {
+                console.log('presentable依赖树数据缺失,presentableId:'+presentableId)
+                return []
+            }
+            let {dependencyTree} = dependencyTreeInfo.toObject()
+            return this._convertPresentableDependencyTree(dependencyTree)
         })
     }
 
@@ -95,28 +101,29 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      * @param dependencyTree
      * @private
      */
-    _convertPresentableDependencyTree(dependencyTree) {
+    _convertPresentableDependencyTree(dependencies) {
 
-        let that = this
+        const targetDependencyInfo = dependencies.find(x => x.parentNid === '')
+        if (!targetDependencyInfo) {
+            return []
+        }
 
         function authMapping(model) {
-            let {releaseId, releaseName, version, resourceType} = model
-            return {
-                id: releaseId, name: releaseName, version, type: "release", resourceType
-            }
+            let {releaseId, releaseName} = model
+            return Object.assign(lodash.omit(model, ['releaseId', 'releaseName']), {
+                id: releaseId, name: releaseName, type: 'release'
+            })
         }
 
-        function recursionConvertSubNodes(parentNode) {
-            parentNode.dependencies = dependencyTree.filter(item => item.parentNid === parentNode.nid).map(authMapping)
-            parentNode.nid = that.generateRandomStr()
-            parentNode.dependencies.forEach(x => recursionConvertSubNodes(x))
+        function recursionBuildDependencyTree(dependencies, currDeep = 1) {
+            return dependencies.map(item => {
+                let treeNode = authMapping(item)
+                treeNode.dependencies = recursionBuildDependencyTree(dependencies.filter(x => x.parentNid === item.nid))
+                return treeNode
+            })
         }
 
-        return dependencyTree.filter(x => x.deep === 1).map(item => {
-            let model = authMapping(item)
-            recursionConvertSubNodes(model)
-            return model
-        })
+        return recursionBuildDependencyTree([targetDependencyInfo])
     }
 
     /**
@@ -129,11 +136,11 @@ module.exports = class CommonGenerateDependencyTreeHandler {
         let that = this
 
         function authMapping(model) {
-            let {mockResourceId, mockResourceName, releaseId, resourceType, releaseName, version} = model
+            let {mockResourceId, mockResourceName, releaseSchemeId, releaseId, resourceId, resourceType, releaseName, version} = model
             return mockResourceId ? {
                 id: mockResourceId, name: mockResourceName, version: null, type: "mock", resourceType
             } : {
-                id: releaseId, name: releaseName, version, type: "release", resourceType
+                id: releaseId, name: releaseName, releaseSchemeId, resourceId, version, type: "release", resourceType
             }
         }
 

@@ -186,7 +186,7 @@ class PresentableSchemeService extends Service {
      * @param maxDeep
      * @returns {*}
      */
-    buildPresentableDependencyTree(flattenDependencies, startNid = "", isContainRootNode = true, maxDeep = 100) {
+    buildPresentableDependencyTree(flattenDependencies, startNid, isContainRootNode = true, maxDeep = 100) {
 
         const targetDependencyInfo = flattenDependencies.find(x => x.nid === startNid)
         if (!targetDependencyInfo) {
