@@ -70,6 +70,5 @@ module.exports = app => {
     PresentableSchema.index({nodeId: 1, presentableName: 1}, {unique: true});
     PresentableSchema.index({nodeId: 1, 'releaseInfo.releaseId': 1}, {unique: true});
 
-
     return mongoose.model('presentables', PresentableSchema)
 }

@@ -25,46 +25,33 @@ module.exports = class PresentableLockVersionEventHandler {
         const {presentableId, nodeId, releaseInfo, userId} = presentableInfo
         const {releaseId, version} = releaseInfo
         const identityInfo = {userInfo: {userId}}
+        const ctx = app.createAnonymousContext()
 
-        const releaseDependencyTree = await app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&isContainRootNode=1&omitFields=`, {}, identityInfo)
+        const releaseDependencyTree = await app.curlIntranetApi(`${app.webApi.releaseInfo}/${releaseId}/dependencyTree?version=${version}&isContainRootNode=1`, {}, identityInfo)
 
-        const flattenDependencyTree = [], releaseIds = [], versions = []
-        const recursion = (children, parentReleaseId = '', parentReleaseVersion, deep = 1) => {
+        const flattenDependencyTree = []
+
+        const recursionFillAttribute = (children, parentNid = '', deep = 1) => {
             for (let i = 0, j = children.length; i < j; i++) {
                 let model = children[i]
-                versions.push(model.version)
-                releaseIds.push(model.releaseId)
-                flattenDependencyTree.push(Object.assign(lodash.omit(model, ['dependencies']), {
-                    deep, parentReleaseId, parentReleaseVersion
-                }))
-                recursion(model.dependencies, model.releaseId, model.version, deep + 1)
+                let nid = deep == 1 ? presentableId.substr(0, 12) : ctx.helper.generateRandomStr()
+                flattenDependencyTree.push(Object.assign(lodash.omit(model, ['dependencies']), {deep, parentNid, nid}))
+                recursionFillAttribute(model.dependencies, nid, deep + 1)
             }
         }
 
-        recursion(releaseDependencyTree)
-
-        const releaseSchemeMap = await app.curlIntranetApi(`${app.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,version`, {}, identityInfo)
-            .then(list => new Map(list.map(x => [`${x.releaseId}_${x.version}`, x])))
-
-        for (let i = 0, j = flattenDependencyTree.length; i < j; i++) {
-            let key = `${flattenDependencyTree[i].releaseId}_${flattenDependencyTree[i].version}`
-            if (releaseSchemeMap.has(key)) {
-                flattenDependencyTree[i].releaseSchemeId = releaseSchemeMap.get(key).schemeId
-            } else {
-                console.log('presentableDependencyTree数据结构缺失', presentableInfo.presentableId)
-            }
-        }
+        recursionFillAttribute(releaseDependencyTree)
 
         const presentableDependencyTree = {
             nodeId, presentableId, version, masterReleaseId: releaseId, dependencyTree: flattenDependencyTree
         }
 
-        const dependTree = await this.presentableDependencyTreeProvider.findOneAndUpdate({presentableId}, {
+        await this.presentableDependencyTreeProvider.findOneAndUpdate({presentableId}, {
             version, dependencyTree: flattenDependencyTree
         }, {new: true}).then(model => {
             return model || this.presentableDependencyTreeProvider.create(presentableDependencyTree)
         })
 
-        app.emit(generatePresentableDependencyTreeEvent, presentableInfo, dependTree)
+        app.emit(generatePresentableDependencyTreeEvent, presentableInfo, releaseDependencyTree)
     }
 }

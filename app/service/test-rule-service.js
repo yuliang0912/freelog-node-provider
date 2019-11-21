@@ -58,7 +58,6 @@ module.exports = class TestRuleService extends Service {
 
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, entityDependencyTree)
-            await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             nodeTestResources.push({
                 testResourceId, nodeId, userId, flattenDependencyTree, intro, previewImages, originInfo, resourceType,
@@ -239,7 +238,6 @@ module.exports = class TestRuleService extends Service {
 
             let testResourceId = this._generateTestResourceId(nodeId, originInfo)
             let flattenDependencyTree = this._flattenDependencyTree(testResourceId, presentableDependencyTree)
-            //await this._setDependencyTreeReleaseSchemeId(testResourceId, flattenDependencyTree)
 
             testResources.push({
                 testResourceId, nodeId, userId, flattenDependencyTree, originInfo,
@@ -273,7 +271,13 @@ module.exports = class TestRuleService extends Service {
      * @param maxDeep
      * @returns {*}
      */
-    buildTestResourceDependencyTree(flattenDependencies, startNid = "", maxDeep = 100) {
+    buildTestResourceDependencyTree(flattenDependencies, startNid = "", maxDeep = 100, isContainRootNode = true) {
+
+        const targetDependencyInfo = flattenDependencies.find(x => x.nid === startNid)
+        if (!targetDependencyInfo) {
+            return []
+        }
+        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1
 
         function recursionBuildDependencyTree(dependencies, currDeep = 1) {
             if (!dependencies.length || currDeep++ >= maxDeep) {
@@ -285,11 +289,9 @@ module.exports = class TestRuleService extends Service {
             })
         }
 
-        const rootDependencies = flattenDependencies.filter(x => x.parentNid === startNid)
+        recursionBuildDependencyTree([targetDependencyInfo])
 
-        recursionBuildDependencyTree(rootDependencies)
-
-        return rootDependencies
+        return isContainRootNode ? [targetDependencyInfo] : targetDependencyInfo.dependencies
     }
 
     /**
@@ -540,43 +542,6 @@ module.exports = class TestRuleService extends Service {
                 }))
             }
         })
-    }
-
-    /**
-     * 设置依赖树的发行ID
-     * @param dependencies
-     * @returns {Promise<void>}
-     */
-    async _setDependencyTreeReleaseSchemeId(testResourceId, dependencies) {
-
-        const {ctx} = this
-        const releaseIds = [], versions = []
-        for (let i = 0; i < dependencies.length; i++) {
-            let {id, type, version} = dependencies[i]
-            if (type === "release") {
-                releaseIds.push(id)
-                versions.push(version)
-            }
-        }
-        if (!releaseIds.length) {
-            return
-        }
-
-        const releaseSchemeMap = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/versions/list?releaseIds=${releaseIds.toString()}&versions=${versions.toString()}&projection=releaseId,resourceId,version`)
-            .then(list => new Map(list.map(x => [`${x.releaseId}_${x.version}`, x])))
-
-        for (let i = 0, j = dependencies.length; i < j; i++) {
-            let {id, type, version} = dependencies[i]
-            if (type !== "release") {
-                continue
-            }
-            if (releaseSchemeMap.has(`${id}_${version}`)) {
-                dependencies[i].resourceId = releaseSchemeMap.get(`${id}_${version}`).resourceId
-                dependencies[i].releaseSchemeId = releaseSchemeMap.get(`${id}_${version}`).schemeId
-            } else {
-                console.log(`testResourceDependencyTree数据结构缺失,testResourceId:${testResourceId},releaseId:${id},version:${version}`)
-            }
-        }
     }
 }
 

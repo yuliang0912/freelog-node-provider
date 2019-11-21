@@ -164,7 +164,7 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
-     * 测试资源依赖树
+     * 测试资源详情
      * @param ctx
      * @returns {Promise<void>}
      */
@@ -242,14 +242,19 @@ module.exports = class TestNodeController extends Controller {
         var testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
         var entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).default("").value
         var maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value
+        var isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const dependencyTreeInfo = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
         if (!dependencyTreeInfo) {
             return ctx.success([])
         }
+        if (!entityNid) {
+            entityNid = testResourceId.substr(0, 12)
+        }
+
         const {dependencyTree} = dependencyTreeInfo.toObject()
-        const dependencies = ctx.service.testRuleService.buildTestResourceDependencyTree(dependencyTree, entityNid, maxDeep)
+        const dependencies = ctx.service.testRuleService.buildTestResourceDependencyTree(dependencyTree, entityNid, maxDeep, isContainRootNode)
 
         ctx.success(dependencies)
     }

@@ -106,13 +106,10 @@ module.exports = class CommonGenerateDependencyTreeHandler {
             }
         }
 
-        function recursionConvertSubNodes(parentNode, deep = 1) {
-            let {id, version} = parentNode
-            parentNode.dependencies = dependencyTree.filter(item => {
-                return item.deep == deep + 1 && item.parentReleaseId === id && item.parentReleaseVersion === version
-            }).map(authMapping)
+        function recursionConvertSubNodes(parentNode) {
+            parentNode.dependencies = dependencyTree.filter(item => item.parentNid === parentNode.nid).map(authMapping)
             parentNode.nid = that.generateRandomStr()
-            parentNode.dependencies.forEach(x => recursionConvertSubNodes(x, deep + 1))
+            parentNode.dependencies.forEach(x => recursionConvertSubNodes(x))
         }
 
         return dependencyTree.filter(x => x.deep === 1).map(item => {

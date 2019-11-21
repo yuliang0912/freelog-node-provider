@@ -268,6 +268,37 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
+     * 通过发行查找节点的presentable
+     * @returns {Promise<void>}
+     */
+    async detail(ctx) {
+
+        const nodeId = ctx.checkQuery('nodeId').isInt().gt(0).value
+        const releaseId = ctx.checkQuery('releaseId').optional().isReleaseId().value
+        const releaseName = ctx.checkQuery('releaseName').optional().isFullReleaseName().value
+        const presentableName = ctx.checkQuery('presentableName').optional().type('string').len(2, 50).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        if (!releaseId && !releaseName && !presentableName) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'releaseId,releaseName,presentableName'))
+        }
+
+        const condition = {nodeId}
+        if (releaseId) {
+            condition['releaseInfo.releaseId'] = releaseId
+        }
+        if (releaseName) {
+            condition['releaseInfo.releaseName'] = new RegExp(`^${releaseName.trim()}$`, 'i')
+        }
+        if (presentableName) {
+            condition['presentableName'] = new RegExp(`^${presentableName.trim()}$`, 'i')
+        }
+
+        await this.presentableProvider.findOne(condition).then(ctx.success)
+    }
+
+
+    /**
      * 切换presentable上线状态(上线或下线)
      * @returns {Promise<void>}
      */
@@ -368,16 +399,35 @@ module.exports = class PresentableController extends Controller {
      */
     async presentableDependencyTree(ctx) {
 
-        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
-        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        var presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+        var maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value
+        //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
+        var entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).default("").value
+        var isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value
+        var version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const condition = {presentableId}
         if (version) {
             condition.version = version
+        } else {
+            let presentableInfo = await this.presentableProvider.findById(presentableId, 'releaseInfo').tap(model => ctx.entityNullObjectCheck(model))
+            condition.version = presentableInfo.releaseInfo.version
+        }
+        if (!entityNid) {
+            entityNid = presentableId.substr(0, 12)
         }
 
-        await this.presentableDependencyTreeProvider.findOne(condition, null, {sort: {updateDate: -1}}).then(ctx.success)
+        const dependencyTreeInfo = await this.presentableDependencyTreeProvider.findOne(condition)
+        if (!dependencyTreeInfo) {
+            return ctx.success([])
+        }
+
+        const {dependencyTree} = dependencyTreeInfo.toObject()
+        const dependencies = ctx.service.presentableService.buildPresentableDependencyTree(dependencyTree, entityNid, isContainRootNode, maxDeep)
+
+        ctx.success(dependencies)
     }
 
     /**
@@ -429,31 +479,33 @@ module.exports = class PresentableController extends Controller {
 
     /**
      * 获取presentable依赖树中指定发行的依赖项
+     * 直接调用依赖树接口即可实现(2019-11-21)
      * @param ctx
      * @returns {Promise<void>}
      */
-    async presentableSubDependReleases(ctx) {
-
-        const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
-        const subReleaseId = ctx.checkQuery('subReleaseId').optional().isReleaseId().value
-        const subReleaseVersion = ctx.checkQuery('subReleaseVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subReleaseVersion')).value
-        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
-
-        if (subReleaseId && !subReleaseVersion) {
-            throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'subReleaseId,subReleaseVersion'))
-        }
-
-        let dependencyReleases = []
-        const {masterReleaseId, version, dependencyTree} = await this.presentableDependencyTreeProvider.findOne({presentableId}, null, {sort: {updateDate: -1}})
-        if (!subReleaseId) {
-            dependencyReleases = dependencyTree.filter(x => x.deep === 2 && x.parentReleaseId === masterReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === version))
-        } else {
-            const {deep} = dependencyTree.find(x => x.releaseId === subReleaseId && x.version === subReleaseVersion) || []
-            dependencyReleases = dependencyTree.filter(x => x.deep === deep + 1 && x.parentReleaseId === subReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === subReleaseVersion))
-        }
-
-        ctx.success(dependencyReleases)
-    }
+    // async presentableSubDependReleases(ctx) {
+    //
+    //     const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
+    //     const subReleaseId = ctx.checkQuery('subReleaseId').optional().isReleaseId().value
+    //     const subReleaseVersion = ctx.checkQuery('subReleaseVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subReleaseVersion')).value
+    //     ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+    //
+    //     if (subReleaseId && !subReleaseVersion) {
+    //         throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'subReleaseId,subReleaseVersion'))
+    //     }
+    //
+    //     let dependencyReleases = []
+    //     const {masterReleaseId, version, dependencyTree} = await this.presentableDependencyTreeProvider.findOne({presentableId}, null, {sort: {updateDate: -1}})
+    //     if (!subReleaseId) {
+    //         let rootEntityNid = presentableId.substr(0, 12)
+    //         dependencyReleases = dependencyTree.filter(x => x.parentNid === rootEntityNid)
+    //     } else {
+    //         const {deep} = dependencyTree.find(x => x.releaseId === subReleaseId && x.version === subReleaseVersion) || []
+    //         dependencyReleases = dependencyTree.filter(x => x.deep === deep + 1 && x.parentReleaseId === subReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === subReleaseVersion))
+    //     }
+    //
+    //     ctx.success(dependencyReleases)
+    // }
 
     /**
      * 批量获取presentable授权树

@@ -3,9 +3,9 @@
 const lodash = require('lodash')
 const Service = require('egg').Service
 const {AuthorizationError, ApplicationError} = require('egg-freelog-base/error')
+const {PresentableBindContractEvent} = require('../enum/rabbit-mq-publish-event')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
 const {presentableVersionLockEvent, presentableSwitchOnlineStateEvent} = require('../enum/presentable-events')
-const {PresentableBindContractEvent} = require('../enum/rabbit-mq-publish-event')
 
 class PresentableSchemeService extends Service {
 
@@ -111,48 +111,6 @@ class PresentableSchemeService extends Service {
     }
 
     /**
-     * 生成授权树
-     * @returns {Promise<void>}
-     */
-    async generatePresentableAuthTree(presentableInfo) {
-
-        const {ctx} = this
-        const {releaseId, version} = presentableInfo.releaseInfo
-
-        const presentableResolveReleases = presentableInfo.resolveReleases.map(item => {
-            return {
-                releaseId: item.releaseId,
-                releaseName: item.releaseName,
-                contracts: item.contracts,
-                versions: item.releaseId === releaseId ? [{version}] : []
-            }
-        })
-
-        //获取presentable所直接引用的发行的上抛树(用于分析presentable解决的上抛的具体版本集合)
-        if (presentableResolveReleases.length > 1) {
-            const releaseUpcastTree = await ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${releaseId}/upcastTree?version=${version}&maxDeep=1`)
-            for (let i = 0, j = presentableResolveReleases.length; i < j; i++) {
-                let presentableResolveRelease = presentableResolveReleases[i]
-                let releaseUpcast = releaseUpcastTree.find(x => x.releaseId === presentableResolveRelease.releaseId)
-                if (releaseUpcast) {
-                    presentableResolveRelease.versions = releaseUpcast.versions.map(x => Object({version: x.version}))
-                }
-            }
-        }
-
-        const allTasks = presentableResolveReleases.reduce((tasks, current) => {
-            for (let i = 0, j = current.versions.length; i < j; i++) {
-                let task = ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${current.releaseId}/authTree?version=${current.versions[i].version}`)
-                    .then(list => current.versions[i].resolveReleases = list)
-                tasks.push(task)
-            }
-            return tasks
-        }, [])
-
-        return Promise.all(allTasks).then(() => presentableResolveReleases)
-    }
-
-    /**
      * presentable上下线操作
      * @param presentable
      * @param isOnline
@@ -219,6 +177,36 @@ class PresentableSchemeService extends Service {
         return this.presentableProvider.findOneAndUpdate({_id: presentableId}, {
             resolveReleases: updatedResolveReleases, contractStatus: 2
         }, {new: true})
+    }
+
+    /**
+     * 构建presentable递归结构的依赖树
+     * @param flattenDependencies
+     * @param startNid
+     * @param maxDeep
+     * @returns {*}
+     */
+    buildPresentableDependencyTree(flattenDependencies, startNid = "", isContainRootNode = true, maxDeep = 100) {
+
+        const targetDependencyInfo = flattenDependencies.find(x => x.nid === startNid)
+        if (!targetDependencyInfo) {
+            return []
+        }
+        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1
+
+        function recursionBuildDependencyTree(dependencies, currDeep = 1) {
+            if (!dependencies.length || currDeep++ >= maxDeep) {
+                return
+            }
+            dependencies.forEach(item => {
+                item.dependencies = flattenDependencies.filter(x => x.parentNid === item.nid)
+                recursionBuildDependencyTree(item.dependencies, currDeep)
+            })
+        }
+
+        recursionBuildDependencyTree([targetDependencyInfo])
+
+        return isContainRootNode ? [targetDependencyInfo] : targetDependencyInfo.dependencies
     }
 
     /**
@@ -369,6 +357,7 @@ class PresentableSchemeService extends Service {
             throw new ApplicationError(ctx.gettext('presentable-online-auth-validate-error'))
         }
     }
+
 }
 
 module.exports = PresentableSchemeService

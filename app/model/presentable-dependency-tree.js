@@ -5,6 +5,7 @@ module.exports = app => {
     const mongoose = app.mongoose;
 
     const DependencyTreeSchema = new mongoose.Schema({
+        nid: {type: String, required: true},
         releaseId: {type: String, required: true},
         releaseName: {type: String, required: true},
         version: {type: String, required: true},
@@ -13,8 +14,9 @@ module.exports = app => {
         resourceType: {type: String, required: false},
         releaseSchemeId: {type: String, required: true},
         deep: {type: Number, required: true},
-        parentReleaseId: {type: String, required: false},
-        parentReleaseVersion: {type: String, required: false},
+        parentNid: {type: String, required: true},
+        //parentReleaseId: {type: String, required: false},
+        //parentReleaseVersion: {type: String, required: false},
     }, {_id: false})
 
     const PresentableVersionLockSchema = new mongoose.Schema({

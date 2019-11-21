@@ -17,8 +17,8 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
      * @param presentableInfo
      * @returns {Promise<void>}
      */
-    async handle(presentableInfo, dependencyTreeInfo) {
-        return this.generateAuthTreeHandle(presentableInfo, dependencyTreeInfo)
+    async handle(presentableInfo, releaseDependencies) {
+        return this.generateAuthTreeHandle(presentableInfo, releaseDependencies)
     }
 
     /**
@@ -26,13 +26,12 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
      * @param presentableInfo
      * @returns {Promise<void>}
      */
-    async generateAuthTreeHandle(presentableInfo, dependencyTreeInfo) {
+    async generateAuthTreeHandle(presentableInfo, releaseDependencies) {
 
         const {presentableId, nodeId, releaseInfo} = presentableInfo
         const {releaseId, version} = releaseInfo
-        const dependencyTree = await this._generateRecursionDependencyTree(presentableInfo, dependencyTreeInfo.dependencyTree)
-        const releaseSchemeMap = await this._getReleaseSchemeMap(dependencyTreeInfo, presentableInfo.userId)
-        const presentableResolveReleases = this._getPresentableResolveReleases(presentableInfo, dependencyTree[0])
+        let releaseSchemeMap = await this._getReleaseSchemeMap(releaseDependencies, presentableInfo.userId)
+        const presentableResolveReleases = this._getPresentableResolveReleases(presentableInfo, releaseDependencies[0])
 
         /**
          * 如果某个具体发行在依赖中实际没有使用,即使上抛签约了.也不在授权树中验证合同的有效性
@@ -48,8 +47,7 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
         const authTreeNodes = this._flattenPresentableAuthTree(presentableResolveReleases)
 
         const authTreeInfo = {
-            presentableId, nodeId, version,
-            masterReleaseId: releaseId, authTree: authTreeNodes
+            presentableId, nodeId, version, masterReleaseId: releaseId, authTree: authTreeNodes
         }
 
         let isCreated = true
@@ -89,51 +87,27 @@ module.exports = class GeneratePresentableDependencyTreeEventHandler {
     }
 
     /**
-     * 生成递归结构的授权树
-     * @param presentableInfo
-     * @param dependencyTree
-     * @returns {Promise<*>}
-     * @private
-     */
-    async _generateRecursionDependencyTree(presentableInfo, dependencyTree) {
-
-        const releaseIds = lodash.chain(dependencyTree).map(x => x.releaseId).uniq().join(',').value()
-
-        const releaseBaseUpcastMap = await this.app.curlIntranetApi(`${this.app.webApi.releaseInfo}/list?releaseIds=${releaseIds}&projection=baseUpcastReleases`, {}, {
-            userInfo: {userId: presentableInfo.userId}
-        }).then(list => new Map(list.map(x => [x.releaseId, x.baseUpcastReleases])))
-
-        const recursion = (parentReleaseId = '', parentReleaseVersion = '', deep = 0) => {
-
-            return dependencyTree.filter(x => x.parentReleaseId === parentReleaseId && x.deep === deep + 1 &&
-                (!x.parentReleaseVersion || x.parentReleaseVersion && x.parentReleaseVersion === parentReleaseVersion)).map(item => {
-                let {releaseId, releaseName, version, deep, releaseSchemeId} = item
-                return {
-                    releaseId, releaseName, version, deep, releaseSchemeId,
-                    baseUpcastReleases: releaseBaseUpcastMap.get(releaseId),
-                    dependencies: recursion(releaseId, version, deep)
-                }
-            })
-        }
-
-        return recursion()
-    }
-
-    /**
      * 根据依赖树获取全部的发行方案信息
      * @param dependencyTreeInfo
      * @param userId
      * @returns {Promise<*>}
      * @private
      */
-    async _getReleaseSchemeMap(dependencyTreeInfo, userId) {
+    async _getReleaseSchemeMap(releaseDependencies, userId) {
+
+        const schemeIds = []
+        const recursionFillAttribute = (children) => {
+            for (let i = 0, j = children.length; i < j; i++) {
+                let model = children[i]
+                schemeIds.push(model.releaseSchemeId)
+                recursionFillAttribute(model.dependencies)
+            }
+        }
+        recursionFillAttribute(releaseDependencies)
 
         const {app} = this
-
-        const schemeIds = dependencyTreeInfo.dependencyTree.map(x => x.releaseSchemeId).toString()
-
-        return app.curlIntranetApi(`${app.webApi.releaseInfo}/versions/list?schemeIds=${schemeIds}&projection=resolveReleases`, {}, {userInfo: {userId}})
-            .then(list => new Map(list.map(x => [x.schemeId, x.resolveReleases])))
+        return app.curlIntranetApi(`${app.webApi.releaseInfo}/versions/list?schemeIds=${schemeIds}&projection=schemeId,resolveReleases`, {}, {userInfo: {userId}})
+            .then(list => new Map(list.map(x => [x['schemeId'], x.resolveReleases])))
     }
 
     /**
