@@ -66,7 +66,7 @@ module.exports = app => {
         differenceInfo: {type: DifferenceInfoSchema, required: true},
         resolveReleases: {type: [ResolveReleaseSchema], default: [], required: false},
         resolveReleaseSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
-        rules: {type: [BaseRuleInfo], default: []}, //结果匹配所用到的所有规则ID
+        ruleId: {type: String, required: false, default: ''},
         status: {type: Number, default: 0, required: true}
     }, {
         versionKey: false,

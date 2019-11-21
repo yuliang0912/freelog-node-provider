@@ -62,6 +62,7 @@ module.exports = class TestRuleService extends Service {
             nodeTestResources.push({
                 testResourceId, nodeId, userId, flattenDependencyTree, intro, previewImages, originInfo, resourceType,
                 nodePresentableId: presentableInfo ? presentableInfo.presentableId : '',
+                ruleId: testRuleInfo.id,
                 testResourceName: presentableName,
                 dependencyTree: entityDependencyTree,
                 differenceInfo: {
@@ -73,8 +74,7 @@ module.exports = class TestRuleService extends Service {
                         tags: userDefinedTags,
                         ruleId: testRuleInfo.tags === null ? 'default' : testRuleInfo.id
                     }
-                },
-                rules: [{id: testRuleInfo.id, operation: testRuleInfo.operation}]
+                }
             })
         }
 
