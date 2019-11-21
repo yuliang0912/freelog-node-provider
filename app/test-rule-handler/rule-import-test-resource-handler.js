@@ -64,6 +64,7 @@ module.exports = class RuleImportTestResourceHandler {
         entityInfo.entityVersions = isMock ? [] : entityInfo.resourceVersions.map(x => x.version)
 
         ruleInfo.entityInfo = entityInfo
+        ruleInfo.candidate.resourceType = entityInfo.resourceType
     }
 
     /**
