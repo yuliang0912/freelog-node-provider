@@ -14,7 +14,7 @@ module.exports = app => {
         resourceType: {type: String, required: false},
         releaseSchemeId: {type: String, required: true},
         deep: {type: Number, required: true},
-        parentNid: {type: String, required: true},
+        parentNid: {type: String, default: '', required: false},
         //parentReleaseId: {type: String, required: false},
         //parentReleaseVersion: {type: String, required: false},
     }, {_id: false})
