@@ -157,7 +157,7 @@ module.exports = class TestNodeController extends Controller {
         }
 
         const testResourceId = ctx.service.testRuleService._generateTestResourceId(nodeId, {
-            entityId: releaseInfo.releaseId, entityType: 'release'
+            id: releaseInfo.releaseId, type: 'release'
         })
 
         await this.nodeTestResourceProvider.findOne({testResourceId}).then(ctx.success)
