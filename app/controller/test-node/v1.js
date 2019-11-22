@@ -133,6 +133,37 @@ module.exports = class TestNodeController extends Controller {
     }
 
     /**
+     * 批量查询
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async testResourceList(ctx) {
+
+        const nodeId = ctx.checkParams('nodeId').isInt().gt(0).value
+        const entityType = ctx.checkQuery('entityType').optional().in(['release', 'mock']).value
+        const entityIds = ctx.checkQuery('entityIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        const entityNames = ctx.checkQuery('entityNames').optional().toSplitArray().len(1, 100).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        if (!entityType && !entityIds && !entityNames) {
+            throw new ArgumentError('params-required-validate-failed', 'entityType,entityIds,entityNames')
+        }
+
+        const condition = {nodeId}
+        if (entityType) {
+            condition['originInfo.type'] = entityType
+        }
+        if (entityIds) {
+            condition['originInfo.id'] = {$in: entityIds}
+        }
+        if (entityNames) {
+            condition['originInfo.name'] = {$in: entityNames}
+        }
+
+        await this.nodeTestResourceProvider.find(condition).then(ctx.success)
+    }
+
+    /**
      * 根据发行名称获取测试资源
      * @param ctx
      * @returns {Promise<void>}

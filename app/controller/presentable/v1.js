@@ -143,8 +143,9 @@ module.exports = class PresentableController extends Controller {
         if (releaseNames) {
             condition['releaseInfo.releaseName'] = {$in: releaseNames}
         }
-        if (!releaseIds && !presentableIds) {
-            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,releaseIds'))
+
+        if (!releaseIds && !presentableIds && !releaseNames) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,releaseIds,releaseNames'))
         }
 
         await this.presentableProvider.find(condition, projection.join(' ')).then(ctx.success)
