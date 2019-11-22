@@ -123,6 +123,7 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value
+        const releaseNames = ctx.checkQuery('releaseNames').optional().toSplitArray().len(1, 100).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validateParams()
 
@@ -138,6 +139,9 @@ module.exports = class PresentableController extends Controller {
         }
         if (releaseIds) {
             condition['releaseInfo.releaseId'] = {$in: releaseIds}
+        }
+        if (releaseNames) {
+            condition['releaseInfo.releaseName'] = {$in: releaseNames}
         }
         if (!releaseIds && !presentableIds) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,releaseIds'))
