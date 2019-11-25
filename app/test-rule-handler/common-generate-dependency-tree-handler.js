@@ -88,11 +88,11 @@ module.exports = class CommonGenerateDependencyTreeHandler {
             presentableId, version
         }).then(dependencyTreeInfo => {
             if (!dependencyTreeInfo) {
-                console.log('presentable依赖树数据缺失,presentableId:'+presentableId)
+                console.log('presentable依赖树数据缺失,presentableId:' + presentableId)
                 return []
             }
             let {dependencyTree} = dependencyTreeInfo.toObject()
-            return this._convertPresentableDependencyTree(dependencyTree)
+            return this._convertPresentableDependencyTree(dependencyTree, presentableId)
         })
     }
 
@@ -101,9 +101,9 @@ module.exports = class CommonGenerateDependencyTreeHandler {
      * @param dependencyTree
      * @private
      */
-    _convertPresentableDependencyTree(dependencies) {
+    _convertPresentableDependencyTree(presentableDependencies, presentableId) {
 
-        const targetDependencyInfo = dependencies.find(x => x.parentNid === '')
+        const targetDependencyInfo = presentableDependencies.find(x => x.parentNid === '')
         if (!targetDependencyInfo) {
             return []
         }
@@ -118,7 +118,7 @@ module.exports = class CommonGenerateDependencyTreeHandler {
         function recursionBuildDependencyTree(dependencies, currDeep = 1) {
             return dependencies.map(item => {
                 let treeNode = authMapping(item)
-                treeNode.dependencies = recursionBuildDependencyTree(dependencies.filter(x => x.parentNid === item.nid))
+                treeNode.dependencies = recursionBuildDependencyTree(presentableDependencies.filter(x => x.parentNid === item.nid))
                 return treeNode
             })
         }
