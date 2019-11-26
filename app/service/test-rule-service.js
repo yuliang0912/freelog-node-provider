@@ -274,6 +274,7 @@ module.exports = class TestRuleService extends Service {
     buildTestResourceDependencyTree(flattenDependencies, startNid = "", maxDeep = 100, isContainRootNode = true) {
 
         const targetDependencyInfo = flattenDependencies.find(x => x.nid === startNid)
+
         if (!targetDependencyInfo) {
             return []
         }

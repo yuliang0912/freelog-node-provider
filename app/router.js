@@ -30,6 +30,8 @@ module.exports = app => {
     router.get('get-test-resource-list', '/v1/testNodes/:nodeId/testResources/list', testNode.v1.testResourceList)
     router.get('get-test-resource-detail', '/v1/testNodes/testResources/:testResourceId', testNode.v1.testResourceDetail)
 
+    router.get('rebuildPresentablePreviewImages', '/v1/presentables/rebuildPresentablePreviewImages', presentable.v1.rebuildPresentablePreviewImages)
+
     //post
     router.post('match-test-resource', '/v1/testNodes/:nodeId/matchTestResources', testNode.v1.matchTestResources)
     router.post('create-or-update-custom-store', '/v1/customStores/createOrUpdate', customDataStore.v1.createOrUpdate)

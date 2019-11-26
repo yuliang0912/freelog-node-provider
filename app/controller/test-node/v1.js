@@ -277,6 +277,7 @@ module.exports = class TestNodeController extends Controller {
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const dependencyTreeInfo = await this.testResourceDependencyTreeProvider.findOne({testResourceId})
+
         if (!dependencyTreeInfo) {
             return ctx.success([])
         }
@@ -285,6 +286,7 @@ module.exports = class TestNodeController extends Controller {
         }
 
         const {dependencyTree} = dependencyTreeInfo.toObject()
+
         const dependencies = ctx.service.testRuleService.buildTestResourceDependencyTree(dependencyTree, entityNid, maxDeep, isContainRootNode)
 
         ctx.success(dependencies)

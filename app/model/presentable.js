@@ -53,6 +53,7 @@ module.exports = app => {
         resolveReleases: {type: [ResolveReleaseSchema], required: true}, //声明解决的发行资源,
         userDefinedTags: {type: [String], default: []},//用户自定义tags
         intro: {type: String, default: ''},//presentable简介
+        previewImages: {type: [String], required: false},
         isOnline: {type: Number, default: 0, required: true}, //是否上线 0:否 1:是
         contractStatus: {type: Number, default: 0, required: true}, //合同状态 0:签约中 1:签约成功 2:签约失败 11:全部激活 12:未全部激活
         status: {type: Number, default: 0, required: true}, //状态 0:初始态 1:节点侧合约授权失败 2:发行侧合约授权失败 4:节点侧合约授权通过 8:发行侧合约授权通过

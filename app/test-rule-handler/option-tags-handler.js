@@ -15,8 +15,8 @@ module.exports = class SetOnlineStatusOptionHandler {
 
         const {tags = null, entityInfo} = ruleInfo
 
-        if (tags === null && entityInfo.entityType === "presentable") {
-            ruleInfo.userDefinedTags = entityInfo.userDefinedTags
+        if (tags === null && entityInfo.presentableInfo) {
+            ruleInfo.userDefinedTags = entityInfo.presentableInfo.userDefinedTags
         }
         else {
             ruleInfo.userDefinedTags = tags || []

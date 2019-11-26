@@ -199,7 +199,7 @@ module.exports = class PresentableController extends Controller {
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().len(0, 20).value
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
-        const presentableName = ctx.checkBody('presentableName').optional().type('string').isReleaseName().value
+        const presentableName = ctx.checkBody('presentableName').optional().type('string').isPresentableName().value
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
@@ -244,7 +244,7 @@ module.exports = class PresentableController extends Controller {
 
         const presentableId = ctx.checkParams("id").exist().isMongoObjectId().value
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
-        const presentableName = ctx.checkBody('presentableName').optional().type('string').len(2, 50).value
+        const presentableName = ctx.checkBody('presentableName').optional().isPresentableName().value
         const userDefinedTags = ctx.checkBody('userDefinedTags').optional().isArray().value
         const resolveReleases = ctx.checkBody('resolveReleases').optional().isArray().value
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 500).value
@@ -281,7 +281,7 @@ module.exports = class PresentableController extends Controller {
         const nodeId = ctx.checkQuery('nodeId').isInt().gt(0).value
         const releaseId = ctx.checkQuery('releaseId').optional().isReleaseId().value
         const releaseName = ctx.checkQuery('releaseName').optional().isFullReleaseName().value
-        const presentableName = ctx.checkQuery('presentableName').optional().type('string').len(2, 50).value
+        const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if (!releaseId && !releaseName && !presentableName) {
@@ -301,7 +301,6 @@ module.exports = class PresentableController extends Controller {
 
         await this.presentableProvider.findOne(condition).then(ctx.success)
     }
-
 
     /**
      * 切换presentable上线状态(上线或下线)
@@ -483,36 +482,6 @@ module.exports = class PresentableController extends Controller {
     }
 
     /**
-     * 获取presentable依赖树中指定发行的依赖项
-     * 直接调用依赖树接口即可实现(2019-11-21)
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    // async presentableSubDependReleases(ctx) {
-    //
-    //     const presentableId = ctx.checkParams("presentableId").exist().isMongoObjectId().value
-    //     const subReleaseId = ctx.checkQuery('subReleaseId').optional().isReleaseId().value
-    //     const subReleaseVersion = ctx.checkQuery('subReleaseVersion').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'subReleaseVersion')).value
-    //     ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
-    //
-    //     if (subReleaseId && !subReleaseVersion) {
-    //         throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'subReleaseId,subReleaseVersion'))
-    //     }
-    //
-    //     let dependencyReleases = []
-    //     const {masterReleaseId, version, dependencyTree} = await this.presentableDependencyTreeProvider.findOne({presentableId}, null, {sort: {updateDate: -1}})
-    //     if (!subReleaseId) {
-    //         let rootEntityNid = presentableId.substr(0, 12)
-    //         dependencyReleases = dependencyTree.filter(x => x.parentNid === rootEntityNid)
-    //     } else {
-    //         const {deep} = dependencyTree.find(x => x.releaseId === subReleaseId && x.version === subReleaseVersion) || []
-    //         dependencyReleases = dependencyTree.filter(x => x.deep === deep + 1 && x.parentReleaseId === subReleaseId && (!x.parentReleaseVersion || x.parentReleaseVersion === subReleaseVersion))
-    //     }
-    //
-    //     ctx.success(dependencyReleases)
-    // }
-
-    /**
      * 批量获取presentable授权树
      * @param ctx
      * @returns {Promise<void>}
@@ -543,12 +512,47 @@ module.exports = class PresentableController extends Controller {
      */
     async rebuildPresentableDependencyTree(ctx) {
 
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value
+        const presentableId = ctx.checkQuery('presentableId').optional().isPresentableId().value
+        const ownerUserId = ctx.checkQuery('ownerUserId').optional().toInt().gt(0).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
+
+        const condition = {}
+        if (nodeId) {
+            condition.nodeId = nodeId
+        }
+        if (presentableId) {
+            condition['_id'] = presentableId
+        }
+        if (ownerUserId) {
+            condition.ownerUserId = ownerUserId
+        }
+
+        await this.presentableProvider.find(condition).each(presentable => {
+            ctx.app.emit(presentableVersionLockEvent, presentable)
+        }).then(x => ctx.success(x.map(m => m.presentableId)))
+    }
+
+    /**
+     * 修复数据
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async rebuildPresentablePreviewImages(ctx) {
 
         const presentables = await this.presentableProvider.find({})
 
         presentables.forEach(presentable => {
-            ctx.app.emit(presentableVersionLockEvent, presentable)
+            ctx.curlIntranetApi(`${ctx.webApi.releaseInfo}/${presentable.releaseInfo.releaseId}`).then(releaseInfo => {
+                if (releaseInfo) {
+                    let startIndex = presentable.presentableName.indexOf('/')
+                    let model = {previewImages: releaseInfo.previewImages}
+                    if (startIndex > -1) {
+                        model.presentableName = presentable.presentableName.substr(startIndex + 1)
+                    }
+                    presentable.updateOne(model).then()
+                }
+            })
         })
 
         ctx.success(presentables.map(x => x.presentableId))

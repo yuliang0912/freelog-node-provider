@@ -33,9 +33,9 @@ class PresentableSchemeService extends Service {
         await this._validateResolveReleases(releaseInfo, resolveReleases)
         await this._validatePolicyIdentityAndSignAuth(nodeInfo.nodeId, resolveReleases, false)
 
-        const {releaseId, releaseName, resourceType} = releaseInfo
+        const {releaseId, releaseName, resourceType, previewImages} = releaseInfo
         const model = {
-            userId, presentableName, intro, userDefinedTags, resolveReleases, policies: [],
+            userId, presentableName, intro, userDefinedTags, resolveReleases, previewImages, policies: [],
             nodeId: nodeInfo.nodeId,
             releaseInfo: {
                 releaseId, releaseName, resourceType, version
