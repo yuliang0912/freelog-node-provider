@@ -302,7 +302,7 @@ module.exports = class TestRuleService extends Service {
     filterTestResourceDependency(entityNid, flattenDependencies, dependentEntityId, dependentEntityVersionRange) {
 
         const testResourceDependencies = this.buildTestResourceDependencyTree(flattenDependencies, entityNid)
-        
+
         function recursionSetMatchResult(dependencies) {
             if (lodash.isEmpty(dependencies)) {
                 return false
