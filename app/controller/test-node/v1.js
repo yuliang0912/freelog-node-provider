@@ -343,8 +343,9 @@ module.exports = class TestNodeController extends Controller {
             return ctx.success(null)
         }
 
+        const entityNid = testResourceId.substr(0, 12)
         const {dependencyTree} = testResourceDependencyTree.toObject()
-        const filteredDependencyTree = ctx.service.testRuleService.filterTestResourceDependency(dependencyTree, dependentEntityId, dependentEntityVersionRange)
+        const filteredDependencyTree = ctx.service.testRuleService.filterTestResourceDependency(entityNid, dependencyTree, dependentEntityId, dependentEntityVersionRange)
         ctx.success(filteredDependencyTree)
     }
 

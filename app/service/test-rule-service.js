@@ -299,10 +299,10 @@ module.exports = class TestRuleService extends Service {
      * 过滤特定资源依赖树
      * @returns {Promise<void>}
      */
-    filterTestResourceDependency(flattenDependencies, dependentEntityId, dependentEntityVersionRange) {
+    filterTestResourceDependency(entityNid, flattenDependencies, dependentEntityId, dependentEntityVersionRange) {
 
-        const testResourceDependencies = this.buildTestResourceDependencyTree(flattenDependencies)
-
+        const testResourceDependencies = this.buildTestResourceDependencyTree(flattenDependencies, entityNid)
+        
         function recursionSetMatchResult(dependencies) {
             if (lodash.isEmpty(dependencies)) {
                 return false
