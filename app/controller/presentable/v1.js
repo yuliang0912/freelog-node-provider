@@ -293,10 +293,10 @@ module.exports = class PresentableController extends Controller {
             condition['releaseInfo.releaseId'] = releaseId
         }
         if (releaseName) {
-            condition['releaseInfo.releaseName'] = new RegExp(`^${releaseName.trim()}$`, 'i')
+            condition['releaseInfo.releaseName'] = releaseName
         }
         if (presentableName) {
-            condition['presentableName'] = new RegExp(`^${presentableName.trim()}$`, 'i')
+            condition['presentableName'] = presentableName
         }
 
         await this.presentableProvider.findOne(condition).then(ctx.success)

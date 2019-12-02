@@ -76,7 +76,7 @@ module.exports = class ReplaceOptionHandler {
 
         for (let i = 0; i < ruleInfo.replaces.length; i++) {
 
-            let {replaced, replacer, scopes} = ruleInfo.replaces[i]
+            let {replaced, replacer, scopes, efficientCount} = ruleInfo.replaces[i]
             let isMock = replacer.type === "mock"
 
             if (!this._checkRuleScope(scopes, parents) || !this._entityIsMatched(replaced, comparableTarget)) {
@@ -101,7 +101,13 @@ module.exports = class ReplaceOptionHandler {
                 return
             }
 
-            efficientReplaceCount += 1
+            if (!efficientCount) {
+                ruleInfo.replaces[i].efficientCount = 1
+            } else {
+                ruleInfo.replaces[i].efficientCount = efficientCount + 1
+            }
+
+            efficientReplaceCount++
             replaceRecords.push(comparableTarget)
 
             comparableTarget = {
