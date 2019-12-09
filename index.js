@@ -22,9 +22,11 @@ require('egg').startCluster({
 
 // const nmrTranslator = require('@freelog/nmr_translator');
 //
-// var testRuleText =`
-//     + new_presentation_name_1 => #:yuliang/readme2 online tags=[t1,t2,t3]  replace=[$:yuliang/单一资源D => $:yuliang/单一资源E@0.1.0 ]
-//     & my-presentable tags=[t4,t5,t6]  replace=[$:yuliang/单一资源D => $:yuliang/单一资源E@0.1.0*[$:yuliang/发行B>$:yuliang/发行C] ]`
+
+// const nmrTranslator = require('@freelog/nmr_translator')
+//
+// var testRuleText =`add $freelog/iconfont[]@0.1.0 as iconfont[]_h1ks
+//                  do end`
 //
 // const {errors, rules} = nmrTranslator.compile(testRuleText)
 //
