@@ -99,7 +99,7 @@ module.exports = class TestNodeController extends Controller {
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
-        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(2).in([0, 1, 2]).value
+        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).in([0, 1, 2]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
