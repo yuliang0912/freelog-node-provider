@@ -70,15 +70,19 @@ module.exports = class ReplaceOptionHandler {
      * */
     async _getReplacerAndDependencies(targetInfo, ruleInfo, parents = []) {
 
-        var efficientReplaceCount = 0
+        var totalEfficientReplaceCount = 0
         var {id, name, type, resourceType, version, replaceRecords = []} = targetInfo
         var comparableTarget = {id, name, type, resourceType, version}
 
         for (let i = 0; i < ruleInfo.replaces.length; i++) {
 
-            let {replaced, replacer, scopes, efficientCount} = ruleInfo.replaces[i]
+            let replaceItem = ruleInfo.replaces[i]
+            let {replaced, replacer, scopes} = replaceItem
             let isMock = replacer.type === "mock"
 
+            if (!Reflect.has(replaceItem, 'efficientCount')) {
+                replaceItem.efficientCount = 0
+            }
             if (!this._checkRuleScope(scopes, parents) || !this._entityIsMatched(replaced, comparableTarget)) {
                 continue
             }
@@ -101,13 +105,9 @@ module.exports = class ReplaceOptionHandler {
                 return
             }
 
-            if (!efficientCount) {
-                ruleInfo.replaces[i].efficientCount = 1
-            } else {
-                ruleInfo.replaces[i].efficientCount = efficientCount + 1
-            }
+            replaceItem.efficientCount = replaceItem.efficientCount + 1
 
-            efficientReplaceCount++
+            totalEfficientReplaceCount++
             replaceRecords.push(comparableTarget)
 
             comparableTarget = {
@@ -120,11 +120,11 @@ module.exports = class ReplaceOptionHandler {
             }
         }
 
-        if (efficientReplaceCount === 0) {
+        if (totalEfficientReplaceCount === 0) {
             return
         }
 
-        ruleInfo.options.replace.effectiveMatchCount += efficientReplaceCount
+        ruleInfo.options.replace.effectiveMatchCount += totalEfficientReplaceCount
 
         //重新获取的依赖树和已经被替换过的依赖树对比,可能会存在循环依赖的情况.目前检查机制未避免此BUG
         const replacerDependencies = comparableTarget.type === "mock"
