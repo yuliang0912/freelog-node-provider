@@ -94,8 +94,6 @@ module.exports = class RuleImportTestResourceHandler {
             return null
         }
 
-        console.log(url)
-
         return app.curlIntranetApi(url)
     }
 
