@@ -14,7 +14,7 @@ module.exports = {
      * mongodb连接
      */
     mongoose: {
-        url: "mongodb://172.18.215.231:27018/node"
+        url: "mongodb://mongo-test.common:27017/node"
     },
 
     rabbitMq: {
