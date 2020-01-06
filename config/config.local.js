@@ -21,6 +21,7 @@ module.exports = {
     // mongoose: {
     //     url: "mongodb://119.23.45.143:27017/node"
     // },
+
     /**
      * 本地开发环境身份信息
      */
