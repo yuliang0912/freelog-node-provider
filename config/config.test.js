@@ -21,7 +21,7 @@ module.exports = {
         connOptions: {
             host: 'rabbitmq-test.common',
             port: 5672,
-            login: 'prod_user_node',
+            login: 'test_user_node',
             password: 'rabbit@freelog',
             authMechanism: 'AMQPLAIN'
         },
