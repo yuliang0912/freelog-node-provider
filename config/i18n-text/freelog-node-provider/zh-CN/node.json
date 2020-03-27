@@ -1,0 +1,32 @@
+{
+
+  "user-node-count-limit-error": "用户可创建的节点数量超出限制",
+
+  "node-name-has-already-existed": "节点名已经存在",
+
+  "node-domain-has-already-existed": "节点域名已经存在",
+
+  "custom-store-key-has-already-existed": "当前自定义key已经存在,不能重复创建",
+
+  "presentable-name-has-already-existed": "展品%s已经存在,不能重复创建",
+
+  "presentable-release-repetition-create-error": "当前发行已经创建成节点资源,无法重复创建",
+
+  "presentable-policy-offline-validate-error": "已上线的节点资源最少需要一个有效的授权策略",
+
+  "presentable-online-policy-validate-error": "最少需要一个有效的授权策略才允许上线",
+
+  "presentable-update-resolve-release-invalid-error": "解决的发行中存在无效的数据",
+
+  "presentable-resolve-release-integrity-validate-failed": "展品未全部解决所有上抛的发行",
+
+  "release-policy-identity-authorization-failed": "待签约的发行策略未启用或身份对象校验不通过",
+
+  "presentable-policy-create-duplicate-error": "展品策略不能重复创建",
+
+  "presentable-online-auth-validate-error": "授权链路未通过,不能上线",
+
+  "node-test-rule-compile-failed": "测试节点的测试规则编译失败",
+
+  "node-test-resolve-release-invalid-error": "解决的发行中存在无效的数据"
+}
