@@ -24,7 +24,7 @@ module.exports = app => {
 
         i18n: {
             enable: true,
-            defaultLocale: 'zh-CN'
+            defaultLocale: 'en-US'
         },
 
         logger: {

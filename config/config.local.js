@@ -12,7 +12,7 @@ module.exports = {
 
     //gatewayUrl: 'http://192.168.164.165:8895',
 
-    // middleware: ['errorHandler', 'localUserIdentity'],
+    middleware: ['errorHandler', 'localUserIdentity'],
     //
     // mongoose: {
     //     url: "mongodb://119.23.45.143:27018/node"
