@@ -111,11 +111,24 @@ module.exports = class NodeController extends Controller {
      */
     async list(ctx) {
 
-        const nodeIds = ctx.checkQuery('nodeIds').exist().match(/^[0-9]{5,9}(,[0-9]{5,9})*$/).toSplitArray().len(1, 100).value
+        const nodeIds = ctx.checkQuery('nodeIds').optional().match(/^[0-9]{5,9}(,[0-9]{5,9})*$/).toSplitArray().len(1, 100).value
+        const nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 50).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
 
-        await this.nodeProvider.find({nodeId: {$in: nodeIds}}, projection.join(' ')).then(ctx.success)
+        if (!nodeIds && !nodeDomains) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeIds or nodeDomains'))
+        }
+
+        const condition = {};
+        if (nodeIds) {
+            condition.nodeId = {$in: nodeIds};
+        }
+        if (nodeDomains) {
+            condition.nodeDomain = {$in: nodeDomains};
+        }
+
+        await this.nodeProvider.find(nodeDomains, projection.join(' ')).then(ctx.success)
     }
 
     /**

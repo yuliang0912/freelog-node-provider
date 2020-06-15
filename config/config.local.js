@@ -8,7 +8,7 @@
 
 module.exports = {
 
-    gatewayUrl: 'https://api.freelog.com',
+    //gatewayUrl: 'https://api.freelog.com',
 
     //gatewayUrl: 'http://192.168.164.165:8895',
 

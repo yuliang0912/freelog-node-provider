@@ -19,13 +19,23 @@
 
   "release-not-found-error": "系统无法检索到发行信息",
 
+  "release-auth-scheme-found-error": "系统无法检索到指定的发行版本",
+
+  "mock-resource-not-found-error": "系统无法检索到mock资源信息",
+
   "presentable-not-found-error": "系统无法检索到展品信息",
 
+  "policy-info-not-found-error": "系统无法检索到策略",
+
   "contract-not-found-error": "系统无法检索到合约信息",
+
+  "contract--event-not-found-error": "系统无法检索到合约事件",
 
   "user-info-not-found-error": "系统无法检索到用户信息",
 
   "transaction-account-not-found-error": "系统无法检索到账户信息",
+
+  "transaction-order-not-found-error": "系统无法检索到交易订单信息",
 
   "jwt-signature-validate-failed": "JWT签名校验失败",
 
