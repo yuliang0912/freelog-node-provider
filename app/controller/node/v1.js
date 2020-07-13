@@ -115,7 +115,6 @@ module.exports = class NodeController extends Controller {
         const nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 50).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validateParams().validateVisitorIdentity(InternalClient | LoginUser)
-
         if (!nodeIds && !nodeDomains) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeIds or nodeDomains'))
         }
@@ -127,8 +126,8 @@ module.exports = class NodeController extends Controller {
         if (nodeDomains) {
             condition.nodeDomain = {$in: nodeDomains};
         }
-
-        await this.nodeProvider.find(nodeDomains, projection.join(' ')).then(ctx.success)
+        
+        await this.nodeProvider.find(condition, projection.join(' ')).then(ctx.success)
     }
 
     /**
