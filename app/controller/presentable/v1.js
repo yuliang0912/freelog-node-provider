@@ -282,7 +282,7 @@ module.exports = class PresentableController extends Controller {
         const releaseId = ctx.checkQuery('releaseId').optional().isReleaseId().value
         const releaseName = ctx.checkQuery('releaseName').optional().isFullReleaseName().value
         const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value
-        ctx.validateParams().validateVisitorIdentity(LoginUser)
+        ctx.validateParams()
 
         if (!releaseId && !releaseName && !presentableName) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'releaseId,releaseName,presentableName'))
