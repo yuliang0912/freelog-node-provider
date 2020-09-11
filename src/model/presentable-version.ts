@@ -26,6 +26,7 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
             resourceName: {type: String, required: true},
             version: {type: String, required: true},
             versionId: {type: String, required: true},
+            fileSha1: {type: String, required: true},
             parentVersionId: {type: String, required: false},
             deep: {type: Number, required: true},
         }, {_id: false});
@@ -38,18 +39,20 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
             versionRange: {type: String, required: true},
             resourceType: {type: String, required: false},
             versionId: {type: String, required: true},
+            fileSha1: {type: String, required: true},
             deep: {type: Number, required: true},
             parentNid: {type: String, default: '', required: false},
         }, {_id: false});
 
         const PresentableVersionSchema = new this.mongoose.Schema({
             presentableId: {type: String, required: true}, // 名称节点内唯一
-            version: {type: String, required: true}, // 与资源版本同步,切换版本时,修改此值
+            version: {type: String, required: true}, // 与资源版本同步
             resourceVersionId: {type: String, required: true},
             resourceSystemProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true}, // 资源的原始系统属性
             resourceCustomPropertyDescriptors: {type: [CustomPropertyDescriptorSchema], default: [], required: false},
             presentableRewriteProperty: {type: [PresentableRewritePropertySchema], default: [], required: false}, // 新增或者覆盖的属性
             versionProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true}, // 通过计算resourceSystemProperty,resourceCustomPropertyDescriptors,presentableRewriteProperty获得的最终属性
+            // 由于资源的子依赖是semver约束,所以不同时期资源的依赖结构可能完全不一致.所以此次会保存切换版本时的当下所有依赖树,然后固化下来. 后续升级版本时,才会重新计算.
             authTree: {type: [PresentableAuthTreeSchema], default: [], required: false},
             dependencyTree: {type: [PresentableDependencyTreeSchema], default: [], required: false},
             status: {type: Number, default: 0, required: true}, //状态 0:正常

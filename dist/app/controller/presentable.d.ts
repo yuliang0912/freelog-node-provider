@@ -1,4 +1,4 @@
-import { IJsonSchemaValidate, INodeService, IOutsideApiService, IPresentableService } from '../../interface';
+import { IJsonSchemaValidate, INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService } from '../../interface';
 export declare class PresentableController {
     ctx: any;
     nodeCommonChecker: any;
@@ -6,7 +6,7 @@ export declare class PresentableController {
     nodeService: INodeService;
     outsideApiService: IOutsideApiService;
     presentableService: IPresentableService;
-    presentableVersionService: any;
+    presentableVersionService: IPresentableVersionService;
     resolveResourcesValidator: IJsonSchemaValidate;
     presentablePolicyValidator: IJsonSchemaValidate;
     index(ctx: any): Promise<any>;
@@ -24,6 +24,11 @@ export declare class PresentableController {
      * @returns {Promise.<void>}
      */
     show(ctx: any): Promise<void>;
+    /**
+     * 展品依赖树
+     * @param ctx
+     */
+    dependencyTree(ctx: any): Promise<void>;
     /**
      * 策略格式校验
      * @param policies

@@ -1,5 +1,5 @@
 import {provide, inject} from 'midway';
-import {CreateNodeOptions, INodeService, NodeInfo, UserInfo} from '../../interface';
+import {CreateNodeOptions, INodeService, NodeInfo, PageResult, UserInfo} from '../../interface';
 
 @provide()
 export class NodeService implements INodeService {
@@ -47,8 +47,13 @@ export class NodeService implements INodeService {
         return this.nodeProvider.find(condition, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<NodeInfo[]> {
-        return this.nodeProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.nodeProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1});
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     async count(condition: object): Promise<number> {

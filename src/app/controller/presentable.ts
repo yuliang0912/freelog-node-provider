@@ -3,7 +3,10 @@ import {isString, chain, isUndefined, isEmpty} from 'lodash';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
-import {IJsonSchemaValidate, INodeService, IOutsideApiService, IPresentableService} from '../../interface';
+import {
+    IJsonSchemaValidate, INodeService,
+    IOutsideApiService, IPresentableService, IPresentableVersionService
+} from '../../interface';
 
 @provide()
 @controller('/v2/presentables')
@@ -22,7 +25,7 @@ export class PresentableController {
     @inject()
     presentableService: IPresentableService;
     @inject()
-    presentableVersionService;
+    presentableVersionService: IPresentableVersionService;
     @inject()
     resolveResourcesValidator: IJsonSchemaValidate;
     @inject()
@@ -38,9 +41,9 @@ export class PresentableController {
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
         const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
-        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().default(0).in([0, 1]).value;
+        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const condition: any = {nodeId};
@@ -59,27 +62,24 @@ export class PresentableController {
             const searchExp = {$regex: keywords, $options: 'i'};
             condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}, {'resourceInfo.resourceName': searchExp}];
         }
-        let presentableList = [];
-        const totalItem = await this.presentableService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            presentableList = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1})
-        }
-        if (!presentableList.length || !isLoadingResourceInfo) {
-            return ctx.success({page, pageSize, totalItem, dataList: presentableList});
+        const pageResult = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1})
+
+        if (!pageResult.dataList.length || !isLoadingResourceInfo) {
+            return ctx.success(pageResult);
         }
 
-        const allResourceIds = chain(presentableList).map(x => x.resourceInfo.resourceId).uniq().value();
+        const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
         const resourceVersionsMap = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfoV2}/list?resourceIds=${allResourceIds}&projection=resourceVersions`)
             .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
 
-        presentableList = presentableList.map(presentableInfo => {
+        pageResult.dataList = pageResult.dataList.map(presentableInfo => {
             const model = presentableInfo.toObject();
             const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId);
             model.resourceInfo.versions = resourceVersions.map(x => x.version);
             return model
         });
 
-        ctx.success({page, pageSize, totalItem, dataList: presentableList});
+        ctx.success(pageResult);
     }
 
     @post('/')
@@ -103,7 +103,7 @@ export class PresentableController {
         this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
 
         await this.presentableCommonChecker.checkResourceIsCreated(nodeId, resourceId);
-        const reBuildPresentableName = await this.presentableCommonChecker.buildPresentableName(nodeId, presentableName);
+        await this.presentableCommonChecker.checkPresentableNameIsUnique(nodeId, presentableName);
 
         const resourceInfo = await this.outsideApiService.getResourceInfo(resourceId);
         if (!resourceInfo) {
@@ -118,15 +118,13 @@ export class PresentableController {
         }
 
         await this.presentableService.createPresentable({
-            resourceInfo, version,
+            presentableName, resourceInfo, version,
             intro, tags, policies, nodeInfo, resolveResources,
             versionId: subjectVersionInfo.versionId,
             presentableTitle: presentableName,
-            presentableName: reBuildPresentableName,
             coverImages: resourceInfo.coverImages,
         }).then(ctx.success);
     }
-
 
     /**
      * 更新presentable
@@ -169,28 +167,29 @@ export class PresentableController {
     @visitorIdentity(LoginUser)
     async detail(ctx) {
 
-        const nodeId = ctx.checkQuery('nodeId').isInt().gt(0).value;
+        const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(0).value;
         const resourceId = ctx.checkQuery('resourceId').optional().isResourceId().value;
         const resourceName = ctx.checkQuery('resourceName').optional().isFullResourceName().value;
         const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        if ([resourceId, resourceName.presentableName].every(isUndefined)) {
+        if ([resourceId, resourceName, presentableName].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'resourceId,resourceName,presentableName'));
         }
 
-        const condition: any = {nodeId, userId: ctx.userId};
-        if (resourceId) {
+        const condition: any = {nodeId};
+        if (isString(resourceId)) {
             condition['resourceInfo.resourceId'] = resourceId;
         }
-        if (resourceName) {
+        if (isString(resourceName)) {
             condition['resourceInfo.resourceName'] = resourceName;
         }
-        if (presentableName) {
+        if (isString(presentableName)) {
             condition['presentableName'] = presentableName;
         }
 
-        await this.presentableService.findOne(condition).then(ctx.success);
+        await this.presentableService.findOne(condition, projection.join(' ')).then(ctx.success);
     }
 
     /**
@@ -202,19 +201,53 @@ export class PresentableController {
     @visitorIdentity(InternalClient | LoginUser)
     async show(ctx) {
 
-        const presentableId = ctx.checkParams("presentableId").isPresentableId().value
+        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const isLoadingVersionProperty = ctx.checkQuery("isLoadingVersionProperty").optional().default(0).in([0, 1]).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+
         ctx.validateParams();
 
-        let presentableInfo: any = await this.presentableService.findById(presentableId);
+        let presentableInfo: any = await this.presentableService.findById(presentableId, projection.join(' '));
         if (presentableInfo && isLoadingVersionProperty) {
             presentableInfo = presentableInfo.toObject();
             await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'versionProperty').then(data => {
-                presentableInfo.versionProperty = data?.versionProperty;
+                presentableInfo.versionProperty = data?.versionProperty ?? {};
             });
         }
         ctx.success(presentableInfo);
     }
+
+    /**
+     * 展品依赖树
+     * @param ctx
+     */
+    @get('/:presentableId/dependencyTree')
+    async dependencyTree(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
+        //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
+        const entityNid = ctx.checkQuery('entityNid').optional().len(12, 12).default(presentableId.substr(0, 12)).value;
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const condition: any = {presentableId};
+        if (isString(version)) {
+            condition.version = version;
+        } else {
+            await this.presentableService.findById(presentableId, 'version').then(data => condition.version = data.version);
+        }
+        const presentableVersionInfo: any = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        if (!presentableVersionInfo) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
+        }
+
+        const presentableDependencies = this.presentableVersionService.buildPresentableDependencyTree(presentableVersionInfo.dependencyTree, entityNid, isContainRootNode, maxDeep)
+
+        ctx.success(presentableDependencies);
+    }
+
 
     /**
      * 策略格式校验

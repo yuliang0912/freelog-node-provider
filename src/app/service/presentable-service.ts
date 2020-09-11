@@ -1,16 +1,12 @@
 import {inject, provide} from 'midway';
 import {
-    CreatePresentableOptions,
-    IOutsideApiService,
-    IPresentableService,
-    PolicyInfo,
-    PresentableInfo,
-    ResolveResource,
-    ResourceInfo,
-    UpdatePresentableOptions
+    CreatePresentableOptions, IOutsideApiService,
+    IPresentableService, PageResult, PolicyInfo,
+    PresentableInfo, ResolveResource,
+    ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
-import {differenceBy, isArray, isEmpty, chain, pick, assign, uniqBy} from 'lodash';
 import {ApplicationError} from 'egg-freelog-base';
+import {differenceBy, isArray, isEmpty, chain, pick, assign, uniqBy} from 'lodash';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum} from "../../enum";
 
 @provide()
@@ -157,8 +153,13 @@ export class PresentableService implements IPresentableService {
         return this.presentableProvider.find({_id: {$in: presentableIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]> {
-        return this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1});
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     async count(condition: object): Promise<number> {

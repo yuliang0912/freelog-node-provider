@@ -42,8 +42,6 @@ module.exports = {
 
     'node-domain-has-already-existed': '节点域名已经存在',
 
-    'custom-store-key-has-already-existed': '当前key已经存在,不能重复创建',
-
     'presentable-name-has-already-existed': '展品%s已经存在,不能重复创建',
 
     'presentable-release-repetition-create-error': '当前发行已经创建成节点资源,无法重复创建',
@@ -57,6 +55,8 @@ module.exports = {
     'presentable-resolve-release-integrity-validate-failed': 'presentable未全部解决所有上抛的发行',
 
     'release-policy-identity-authorization-failed': '待签约的发行策略未启用或身份对象校验不通过',
+
+    'subject-authorization-failed': '标的物未获得授权',
 
     'presentable-policy-create-duplicate-error': 'presentable策略不能重复创建',
 

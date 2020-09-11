@@ -21,6 +21,15 @@ export class PresentableCommonChecker {
         }
     }
 
+    async checkPresentableNameIsUnique(nodeId: number, presentableName: string) {
+        const presentable = await this.presentableService.find({
+            nodeId, presentableName: new RegExp(`^${presentableName.trim()}`, 'i')
+        }, '_id');
+        if (presentable) {
+            throw new ApplicationError(this.ctx.gettext('presentable-name-has-already-existed', presentableName))
+        }
+    }
+
     /**
      * 系统自动生成presentableName,如果不存在名称,则直接默认使用资源名称,否则会在后面递增追加序号
      * @param nodeId

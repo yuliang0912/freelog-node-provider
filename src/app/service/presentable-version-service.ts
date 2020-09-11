@@ -1,15 +1,13 @@
 import {v4} from 'uuid';
-import {assign, omit, pick, uniqBy, first} from 'lodash';
+import {assign, omit, pick, uniqBy, first, isFunction} from 'lodash';
 import {provide, inject} from 'midway';
 import {
-    IOutsideApiService,
-    PresentableInfo,
-    PresentableVersionAuthTreeInfo,
-    PresentableVersionDependencyTreeInfo
+    IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableVersionAuthTreeInfo,
+    PresentableVersionDependencyTreeInfo, PresentableVersionInfo, ResourceDependencyTreeInfo
 } from '../../interface';
 
 @provide()
-export class PresentableVersionService {
+export class PresentableVersionService implements IPresentableVersionService {
 
     @inject()
     ctx;
@@ -20,21 +18,24 @@ export class PresentableVersionService {
     @inject()
     presentableVersionProvider;
 
-    async findById(presentableId: string, version: string) {
-        return this.presentableVersionProvider.findOne({presentableId, version});
+    async findById(presentableId: string, version: string, ...args): Promise<PresentableVersionInfo> {
+        return this.presentableVersionProvider.findOne({presentableId, version}, ...args);
     }
 
-    async findByVersionId(versionId: string) {
-        return this.presentableVersionProvider.findOne({versionId});
+    async findOne(condition: object, ...args): Promise<PresentableVersionInfo> {
+        return this.presentableVersionProvider.findOne(condition, ...args);
     }
 
-    async createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string) {
+    async createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo> {
 
         const {presentableId, resourceInfo, version} = presentableInfo;
         const {systemProperty, customPropertyDescriptors} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
-        const dependencyTree = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${resourceInfo.resourceId}/dependencyTree?version=${version}&isContainRootNode=1`);
+        const dependencyTree = await this.outsideApiService.getResourceDependencyTree(resourceInfo.resourceId, {
+            version, isContainRootNode: 1
+        });
         const presentableAuthTree = await this._buildPresentableAuthTree(presentableInfo, dependencyTree);
-        const model = {
+
+        const model: PresentableVersionInfo = {
             presentableId, version, resourceVersionId,
             resourceSystemProperty: systemProperty,
             dependencyTree: this._flattenDependencyTree(presentableId, dependencyTree),
@@ -43,7 +44,7 @@ export class PresentableVersionService {
             versionProperty: this._calculatePresentableVersionProperty(systemProperty, customPropertyDescriptors, []),
         };
 
-        await this.presentableVersionProvider.findOneAndUpdate({
+        return this.presentableVersionProvider.findOneAndUpdate({
             presentableId, version
         }, model, {new: true}).then(data => {
             return data || this.presentableVersionProvider.create(model);
@@ -51,22 +52,55 @@ export class PresentableVersionService {
     }
 
     /**
+     * 构建presentable递归结构的依赖树
+     * @param flattenDependencies
+     * @param startNid
+     * @param maxDeep
+     * @returns {*}
+     */
+    buildPresentableDependencyTree(flattenDependencies, startNid: string, isContainRootNode = true, maxDeep = 100): PresentableVersionDependencyTreeInfo[] {
+
+        flattenDependencies = isFunction(flattenDependencies?.toObject) ? flattenDependencies.toObject() : flattenDependencies;
+
+        const targetDependencyInfo = flattenDependencies.find(x => x.nid === startNid);
+
+        if (!targetDependencyInfo) {
+            return [];
+        }
+        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
+
+        function recursionBuildDependencyTree(dependencies, currDeep = 1) {
+            if (!dependencies.length || currDeep++ >= maxDeep) {
+                return
+            }
+            dependencies.forEach(item => {
+                item.dependencies = flattenDependencies.filter(x => x.parentNid === item.nid);
+                recursionBuildDependencyTree(item.dependencies, currDeep);
+            })
+        }
+
+        recursionBuildDependencyTree([targetDependencyInfo]);
+
+        return isContainRootNode ? [targetDependencyInfo] : targetDependencyInfo.dependencies;
+    }
+
+    /**
      * 构建presentable授权树
      * @param dependencyTree
      * @private
      */
-    async _buildPresentableAuthTree(presentableInfo: PresentableInfo, dependencyTree): Promise<PresentableVersionAuthTreeInfo[]> {
+    async _buildPresentableAuthTree(presentableInfo: PresentableInfo, dependencyTree: ResourceDependencyTreeInfo[]): Promise<PresentableVersionAuthTreeInfo[]> {
 
         const presentableResolveResources = await this._getPresentableResolveResources(presentableInfo, first(dependencyTree));
         const resourceVersionInfoMap = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/list?versionIds=${dependencyTree.map(x => x.versionId).toString()}&projection=resolveResources`)
             .then(list => new Map(list.map(x => [x.versionId, x.resolveResources])));
 
-        // 如果某个具体版本资源的依赖实际没有使用,即使上抛签约了.也不在授权树中验证合同的有效性, 所以依赖树中也不存在
+        // 如果某个具体版本资源的依赖实际没有使用,即使上抛签约了.也不在授权树中验证合同的有效性, 所以授权树中也不存在
         for (let i = 0, j = presentableResolveResources.length; i < j; i++) {
             const resolveResource = presentableResolveResources[i];
             for (let x = 0, y = resolveResource.versions.length; x < y; x++) {
-                let resourceVersion = resolveResource.versions[x]
-                resourceVersion.resolveResources = this._getResourceAuthTree(resourceVersion.dependencies, resourceVersion.resourceVersionId, resourceVersionInfoMap)
+                const resourceVersion = resolveResource.versions[x];
+                resourceVersion.resolveResources = this._getResourceAuthTree(resourceVersion.dependencies, resourceVersion.resourceVersionId, resourceVersionInfoMap);
             }
         }
 
@@ -91,7 +125,7 @@ export class PresentableVersionService {
             return {
                 resourceId: resolveResources.resourceId,
                 resourceName: resolveResources.resourceName,
-                versions: uniqBy(list, x => x.version).map(item => Object({
+                versions: uniqBy(list, 'version').map(item => Object({
                     version: item.version,
                     resourceVersionId: item.resourceVersionId,
                     resolveResources: this._getResourceAuthTree(item.dependencies, item.resourceVersionId, resourceVersionMap)
@@ -190,8 +224,8 @@ export class PresentableVersionService {
         const flattenDependencyTree = [];
         const recursionFillAttribute = (children, parentNid = '', deep = 1) => {
             for (let i = 0, j = children.length; i < j; i++) {
-                let model = children[i];
-                let nid = deep == 1 ? presentableId.substr(0, 12) : this._generateRandomStr();
+                const model = children[i];
+                const nid = deep == 1 ? presentableId.substr(0, 12) : this._generateRandomStr();
                 flattenDependencyTree.push(Object.assign(omit(model, ['dependencies']), {deep, parentNid, nid}));
                 recursionFillAttribute(model.dependencies, nid, deep + 1);
             }
@@ -200,7 +234,6 @@ export class PresentableVersionService {
 
         return flattenDependencyTree;
     }
-
 
     /**
      * 平铺授权树
@@ -211,7 +244,6 @@ export class PresentableVersionService {
 
         const treeNodes = [];
         const recursion = (children, parentVersionId = '', deep = 1) => {
-            console.log(children);
             for (let i = 0, j = children.length; i < j; i++) {
                 const {resourceId, resourceName, versions} = children[i];
                 for (let x = 0, y = versions.length; x < y; x++) {

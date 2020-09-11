@@ -6,6 +6,15 @@ import {
     SubjectTypeEnum,
     IdentityType
 } from './enum';
+import {SubjectAuthResult} from "./auth-interface";
+import {ObjectDependencyTreeInfo} from "./test-node-interface";
+
+export interface PageResult {
+    page: number;
+    pageSize: number;
+    totalItem: number;
+    dataList: any[];
+}
 
 export interface SubjectInfo {
     subjectId: string;
@@ -48,13 +57,25 @@ export interface PresentableInfo {
     nodeId: number;
     userId: number;
     version: string;
-    resourceInfo: BaseResourceInfo
-    resolveResources: ResolveResource[]
+    resourceInfo: BaseResourceInfo;
+    resolveResources: ResolveResource[];
     tags?: string[];
     intro?: string;
     coverImages: string[],
     onlineStatus: PresentableOnlineStatusEnum,
     authStatus: PresentableAuthStatusEnum
+}
+
+export interface PresentableVersionInfo {
+    presentableId: string;
+    version: string;
+    resourceVersionId: string;
+    resourceSystemProperty: object;
+    resourceCustomPropertyDescriptors?: any[];
+    presentableRewriteProperty?: any[];
+    versionProperty: object;
+    authTree: PresentableVersionAuthTreeInfo[]
+    dependencyTree: PresentableVersionDependencyTreeInfo[];
 }
 
 export interface UserInfo {
@@ -129,6 +150,21 @@ export interface ContractInfo {
     status?: ContractStatusEnum;
     authStatus: number;
     createDate?: Date;
+
+    isAuth?: boolean;
+    isTestAuth?: boolean;
+}
+
+export interface ObjectStorageInfo {
+    objectId: string;
+    userId: number;
+    sha1: string;
+    objectName: string;
+    bucketName: string;
+    resourceType: string;
+    bucketId?: string;
+    systemProperty?: object;
+    customProperty?: object;
 }
 
 export interface ResourceInfo {
@@ -158,22 +194,37 @@ export interface ResourceVersionInfo {
     description?: string;
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
-    resolveResources?: object[];
+    resolveResources?: ResolveResource[];
     systemProperty?: object;
     customPropertyDescriptors?: object[];
     status: number;
 }
 
+export interface ResourceDependencyTreeInfo {
+    resourceId: string;
+    resourceName: string;
+    version: string;
+    versions: string[];
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    fileSha1: string;
+    baseUpcastResources: any[];
+    dependencies: ResourceDependencyTreeInfo[];
+}
+
 export interface PresentableVersionDependencyTreeInfo {
-    nid: string;
+    nid?: string;
     resourceId: string;
     resourceName: string;
     version: string;
     versionRange: string;
     resourceType: string;
     versionId: string;
+    fileSha1: string;
     deep: number;
-    parentNid?: string;
+    parentNid: string;
+    dependencies?: PresentableVersionDependencyTreeInfo[];
 }
 
 export interface PresentableVersionAuthTreeInfo {
@@ -181,8 +232,10 @@ export interface PresentableVersionAuthTreeInfo {
     resourceName: string;
     version: string;
     versionId: string;
-    parentVersionId?: string;
+    fileSha1: string;
+    parentVersionId: string;
     deep: number;
+    authContractIds: string[];
 }
 
 export interface INodeService {
@@ -195,7 +248,7 @@ export interface INodeService {
 
     findByIds(nodeIds: number[], ...args): Promise<NodeInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<NodeInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 
     count(condition: object): Promise<number>;
 
@@ -216,7 +269,7 @@ export interface IPresentableService {
 
     findByIds(presentableIds: string[], ...args): Promise<PresentableInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 
     count(condition: object): Promise<number>;
 
@@ -225,15 +278,57 @@ export interface IPresentableService {
 
 export interface IOutsideApiService {
 
-    getResourceInfo(resourceId: string): Promise<ResourceInfo>;
+    getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
 
     getResourceVersionInfo(resourceVersionId: string, projection?: string[]): Promise<ResourceVersionInfo>;
+
+    getResourceVersionByVersionIds(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
+
+    getResourceListByIds(resourceIds: string[], options?: object): Promise<ResourceInfo[]>;
+
+    getResourceListByNames(resourceNames: string[], options?: object): Promise<ResourceInfo[]>;
+
+    getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
+
+    getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
 
     getUserInfo(userId: number): Promise<UserInfo>;
 
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<PolicyInfo[]>;
 
     batchSignNodeContracts(nodeId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
+
+    getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
+
+    signUserPresentableContract(userId, subjectInfo: SubjectInfo): Promise<ContractInfo>;
+
+    getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
+
+    getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]>;
+
+    getFileStream(fileSha1: string): Promise<any>;
+
+    getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;
+
+    getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>
+}
+
+export interface IPresentableAuthService {
+
+    contractAuth(subjectId, contracts: ContractInfo[]): SubjectAuthResult;
+
+    presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: PresentableVersionAuthTreeInfo[]): Promise<SubjectAuthResult>;
+}
+
+export interface IPresentableVersionService {
+
+    findOne(condition: object, ...args): Promise<PresentableVersionInfo>;
+
+    findById(presentableId: string, version: string, ...args): Promise<PresentableVersionInfo>;
+
+    createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
+
+    buildPresentableDependencyTree(flattenDependencies: Array<any>, startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableVersionDependencyTreeInfo[];
 }
 
 export interface IEventHandler {

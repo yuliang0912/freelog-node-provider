@@ -27,20 +27,14 @@ export class NodeController {
         if (!isUndefined(status)) {
             condition.status = status;
         }
-
-        let dataList = [];
-        const totalItem = await this.nodeService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.nodeService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        }
-        ctx.success({page, pageSize, totalItem, dataList});
+        await this.nodeService.findPageList(condition, page, pageSize, projection, {createDate: -1}).then(ctx.success);
     }
 
     @get('/list')
     @visitorIdentity(LoginUser)
     async list(ctx) {
         const nodeIds = ctx.checkQuery('nodeIds').optional().isSplitNumber().toSplitArray().len(1, 100).value;
-        const nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 100).value
+        const nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 100).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -69,7 +63,7 @@ export class NodeController {
         await this.nodeCommonChecker.checkRegisterNodeDomainAndName(nodeDomain, nodeName);
         await this.nodeCommonChecker.checkNodeCreatedLimit();
 
-        await this.nodeService.createNode({nodeName, nodeDomain}).then(ctx.success)
+        await this.nodeService.createNode({nodeName, nodeDomain}).then(ctx.success);
     }
 
     @get('/detail')

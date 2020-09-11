@@ -1,4 +1,4 @@
-import { CreatePresentableOptions, IOutsideApiService, IPresentableService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
+import { CreatePresentableOptions, IOutsideApiService, IPresentableService, PageResult, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { SubjectTypeEnum } from "../../enum";
 export declare class PresentableService implements IPresentableService {
     ctx: any;
@@ -21,7 +21,7 @@ export declare class PresentableService implements IPresentableService {
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
     findByIds(presentableIds: string[], ...args: any[]): Promise<PresentableInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     count(condition: object): Promise<number>;
     /**
      * 校验resolveResources参数

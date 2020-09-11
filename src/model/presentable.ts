@@ -40,11 +40,13 @@ export class PresentableModel extends MongooseModelBase implements IMongooseMode
             userId: {type: Number, required: true},
             version: {type: String, required: true}, // 与资源版本同步,切换版本时,修改此值
             resourceInfo: {type: BaseResourceInfo, required: true},
+            // 解决资源的方式存在跨版本的一致性.所以提取到展品信息中.
             resolveResources: {type: [ResolveResourceSchema], required: true},
             tags: {type: [String], default: [], required: false},// 用户自定义tags
             intro: {type: String, default: '', required: false},
             coverImages: {type: [String], default: [], required: false},
-            onlineStatus: {type: Number, default: 0, required: true}, //上线状态 0:未上线 1:已上线
+            isTheme: {type: Number, default: 0, enum: [0, 1], required: true},
+            onlineStatus: {type: Number, default: 0, enum: [0, 1], required: true}, //上线状态 0:未上线 1:已上线
             authStatus: {type: Number, default: 0, required: true}, //授权链授权状态 0:未知  1:节点侧合约授权失败 2:资源侧合约授权失败 4:节点侧合约授权通过 8:资源侧合约授权通过
             status: {type: Number, default: 0, required: true}, //状态 0:正常
         }, {
