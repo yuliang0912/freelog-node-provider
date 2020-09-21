@@ -60,7 +60,6 @@ export interface PresentableInfo {
     resourceInfo: BaseResourceInfo;
     resolveResources: ResolveResource[];
     tags?: string[];
-    intro?: string;
     coverImages: string[],
     onlineStatus: PresentableOnlineStatusEnum,
     authStatus: PresentableAuthStatusEnum
@@ -101,7 +100,6 @@ export interface CreatePresentableOptions {
     resourceInfo: ResourceInfo;
     version: string;
     versionId: string;
-    intro: string;
     tags: string[];
     policies: PolicyInfo[],
     nodeInfo: NodeInfo;
@@ -110,7 +108,6 @@ export interface CreatePresentableOptions {
 }
 
 export interface UpdatePresentableOptions {
-    intro?: string;
     presentableTitle?: string;
     tags?: string[];
     resolveResources?: ResolveResource[];
@@ -174,8 +171,7 @@ export interface ResourceInfo {
     userId: number;
     username: string;
     resourceVersions: any[];
-    baseUpcastResources: object[];
-    intro?: string;
+    baseUpcastResources: any[];
     coverImages?: string[];
     policies?: PolicyInfo[];
     status: number;

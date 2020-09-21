@@ -1,4 +1,4 @@
-import { PresentableInfo } from "./interface";
+import { PageResult, PresentableInfo } from "./interface";
 export declare enum TestResourceOriginType {
     Resource = "resource",
     Object = "object"
@@ -21,7 +21,6 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versions?: string[];
     coverImages?: string[];
     resourceType: string;
-    intro?: string;
 }
 export interface ReplaceOptionInfo {
     replaced: CandidateInfo;
@@ -46,7 +45,6 @@ export interface TestRuleMatchInfo {
     id: string;
     isValid: boolean;
     matchErrors: string[];
-    effectiveMatchCount: number;
     ruleInfo: BaseTestRuleInfo;
     presentableInfo?: PresentableInfo;
     testResourceOriginInfo?: TestResourceOriginInfo;
@@ -59,13 +57,37 @@ export interface TestRuleMatchInfo {
         status: number;
         source: string;
     };
-    efficientCountInfos: TestRuleEfficientInfo[];
+    efficientInfos: TestRuleEfficientInfo[];
+}
+export interface FlattenDependencyTree {
+    nid: string;
+    id: string;
+    name: string;
+    type: TestResourceOriginType;
+    version: string;
+    versionId: string;
+    resourceType: string;
+    deep: number;
+    parentNid: string;
+    userId?: number;
+}
+export interface FlattenTestResourceAuthTree {
+    nid: string;
+    id: string;
+    name: string;
+    type: TestResourceOriginType;
+    version: string;
+    versionId: string;
+    resourceType: string;
+    deep: number;
+    parentNid: string;
+    userId: number;
 }
 export interface TestResourceDependencyTree {
     nid?: string;
     id: string;
     name: string;
-    type: string;
+    type: TestResourceOriginType;
     version: string;
     versionId: string;
     resourceType: string;
@@ -91,15 +113,15 @@ export interface BaseContractInfo {
 }
 export interface ResolveResourceInfo {
     resourceId: string;
-    resourceName: string;
+    resourceName?: string;
     contracts: BaseContractInfo[];
 }
-export interface DifferenceInfo {
+export interface StateInfo {
     onlineStatusInfo?: {
         isOnline: number;
         ruleId: string;
     };
-    userDefinedTagInfo?: {
+    tagsInfo?: {
         tags: string[];
         ruleId: string;
     };
@@ -112,10 +134,47 @@ export interface TestResourceInfo {
     coverImages: string[];
     associatedPresentableId?: string;
     resourceType: string;
-    intro?: string;
     originInfo: TestResourceOriginInfo;
-    differenceInfo: DifferenceInfo;
+    stateInfo: StateInfo;
     resolveResources?: ResolveResourceInfo[];
+    dependencyTree?: FlattenDependencyTree[];
+    authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;
+}
+export interface TestResourceTreeInfo {
+    nodeId: number;
+    testResourceId: string;
+    testResourceName: string;
+    dependencyTree: FlattenDependencyTree[];
+    authTree: FlattenTestResourceAuthTree[];
+}
+export interface NodeTestRuleInfo {
+    nodeId: number;
+    userId: number;
+    ruleText: string;
+    themeId?: string;
+    testRules: any[];
+    status?: number;
+}
+export interface TestRuleMatchResult {
+    ruleId: string;
+    isValid: boolean;
+    matchErrors: string[];
+    efficientInfos: TestRuleEfficientInfo[];
+    associatedPresentableId?: string;
+}
+export interface IMatchTestRuleEventHandler {
+    handle(nodeId: number): Promise<void>;
+}
+export interface ITestNodeService {
+    testResourceCount(condition: object): Promise<number>;
+    findOneTestResource(condition: object, ...args: any[]): Promise<TestResourceInfo>;
+    findTestResources(condition: object, ...args: any[]): Promise<TestResourceInfo[]>;
+    findOneTestResourceTreeInfo(condition: object, ...args: any[]): Promise<TestResourceTreeInfo>;
+    findTestResourceTreeInfos(condition: object, ...args: any[]): Promise<TestResourceTreeInfo[]>;
+    findNodeTestRuleInfoById(nodeId: number, ...args: any[]): Promise<NodeTestRuleInfo>;
+    matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
+    updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
+    findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 }

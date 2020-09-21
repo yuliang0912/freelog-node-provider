@@ -28,10 +28,10 @@ export class PresentableService implements IPresentableService {
      */
     async createPresentable(options: CreatePresentableOptions) {
 
-        const {resourceInfo, resolveResources, nodeInfo, policies, presentableName, presentableTitle, version, versionId, tags, intro, coverImages} = options;
+        const {resourceInfo, resolveResources, nodeInfo, policies, presentableName, presentableTitle, version, versionId, tags, coverImages} = options;
 
         const model = {
-            presentableName, presentableTitle, version, tags, intro, coverImages, resolveResources,
+            presentableName, presentableTitle, version, tags, coverImages, resolveResources,
             policies: [],
             nodeId: nodeInfo.nodeId,
             userId: nodeInfo.ownerUserId,
@@ -80,7 +80,6 @@ export class PresentableService implements IPresentableService {
      */
     async updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo> {
         const updateModel: any = {
-            intro: options.intro ?? presentableInfo.intro,
             presentableTitle: options.presentableTitle ?? presentableInfo.presentableTitle
         };
         if (isArray(options.tags)) {

@@ -19,6 +19,6 @@ export class OptionSetTagsHandler {
         }
 
         testRuleInfo.tags = {tags: testRuleInfo.ruleInfo.tags, source: testRuleInfo.id};
-        testRuleInfo.efficientCountInfos.push(this.setTagsOptionEfficientCountInfo);
+        testRuleInfo.efficientInfos.push(this.setTagsOptionEfficientCountInfo);
     }
 }

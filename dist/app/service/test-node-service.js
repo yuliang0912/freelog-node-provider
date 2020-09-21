@@ -10,112 +10,92 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestNodeService = void 0;
-const lodash_1 = require("lodash");
 const midway_1 = require("midway");
-// import {ApplicationError} from 'egg-freelog-base';
 const test_node_interface_1 = require("../../test-node-interface");
-const crypto_helper_1 = require("egg-freelog-base/app/extend/helper/crypto_helper");
+const enum_1 = require("../../enum");
+const lodash_1 = require("lodash");
+const egg_freelog_base_1 = require("egg-freelog-base");
 let TestNodeService = class TestNodeService {
+    async findOneTestResource(condition, ...args) {
+        return this.nodeTestResourceProvider.findOne(condition, ...args);
+    }
+    async findTestResources(condition, ...args) {
+        return this.nodeTestResourceProvider.find(condition, ...args);
+    }
+    async findNodeTestRuleInfoById(nodeId, ...args) {
+        return this.nodeTestRuleProvider.findOne({ nodeId }, ...args);
+    }
+    async testResourceCount(condition) {
+        return this.nodeTestResourceProvider.count(condition);
+    }
+    async findOneTestResourceTreeInfo(condition, ...args) {
+        return this.nodeTestResourceTreeProvider.findOne(condition, ...args);
+    }
+    async findTestResourceTreeInfos(condition, ...args) {
+        return this.nodeTestResourceTreeProvider.find(condition, ...args);
+    }
+    async findTestResourcePageList(condition, page, pageSize, projection, orderBy) {
+        let dataList = [];
+        const totalItem = await this.testResourceCount(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.nodeTestResourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? { _id: 1 });
+        }
+        return { page, pageSize, totalItem, dataList };
+    }
     /**
      * 匹配规则并且保存结果
      * @param nodeId
      * @param testRuleText
      */
     async matchAndSaveNodeTestRule(nodeId, testRuleText) {
-        const testRuleMatchInfos = await this._compileAndMatchTestRule(nodeId, testRuleText);
-        const matchedNodeTestResources = testRuleMatchInfos.filter(x => x.isValid && ['alter', 'add'].includes(x.ruleInfo.operation))
-            .map(testRuleMatchInfo => this._testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId));
-        const unOperantNodeTestResources = await this.getUnOperantPresentables(nodeId, testRuleMatchInfos);
-        return [...matchedNodeTestResources, ...unOperantNodeTestResources];
-    }
-    /**
-     * 获取未操作的展品
-     * @param nodeId
-     * @param testRuleMatchInfos
-     */
-    async getUnOperantPresentables(nodeId, testRuleMatchInfos) {
-        const existingPresentableIds = testRuleMatchInfos.filter(x => x.isValid && x.ruleInfo.operation == test_node_interface_1.TestNodeOperationEnum.Alter && x.presentableInfo).map(x => x.presentableInfo.presentableId);
-        const unOperantPresentables = await this.presentableService.find({ nodeId, _id: { $nin: existingPresentableIds } });
-        const resourceMap = await this.outsideApiService.getResourceListByIds(unOperantPresentables.map(x => x.resourceInfo.resourceId), { projection: 'resourceId,coverImages,resourceVersions,intro' }).then(list => {
-            return new Map(list.map(x => [x.resourceId, x]));
+        const testRules = this._compileAndMatchTestRule(nodeId, testRuleText);
+        const nodeTestRuleInfo = {
+            nodeId,
+            ruleText: testRuleText,
+            userId: this.ctx.userId,
+            status: enum_1.NodeTestRuleMatchStatus.Pending,
+            testRules: testRules.map(ruleInfo => Object({
+                id: this.testNodeGenerator.generateTestRuleId(nodeId, ruleInfo.text),
+                ruleInfo,
+                matchErrors: [],
+                efficientInfos: []
+            }))
+        };
+        return this.nodeTestRuleProvider.findOneAndUpdate({ nodeId }, nodeTestRuleInfo, { new: true }).then(data => {
+            return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
+        }).then(nodeTestRule => {
+            this.matchTestRuleEventHandler.handle(nodeId);
+            return nodeTestRule;
         });
-        return unOperantPresentables.map(presentable => this._presentableInfoMapToTestResource(presentable, resourceMap.get(presentable.resourceInfo.resourceId), nodeId));
     }
     /**
-     * 规则匹配结果转换为测试资源实体
-     * @param testRuleMatchInfo
-     * @param nodeId
+     * 更新测试资源
+     * @param testResource
+     * @param resolveResources
      */
-    _testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId) {
-        const { id, testResourceOriginInfo, ruleInfo, onlineStatus, tags, entityDependencyTree } = testRuleMatchInfo;
-        const testResourceInfo = {
-            nodeId,
-            ruleId: id,
-            userId: this.ctx.userId,
-            intro: testResourceOriginInfo.intro ?? '',
-            associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
-            resourceType: testResourceOriginInfo.resourceType,
-            testResourceId: this._generateTestResourceId(nodeId, testResourceOriginInfo),
-            testResourceName: ruleInfo.presentableName,
-            coverImages: testResourceOriginInfo.coverImages ?? [],
-            originInfo: testResourceOriginInfo,
-            differenceInfo: {
-                onlineStatusInfo: {
-                    isOnline: onlineStatus?.status ?? 0,
-                    ruleId: onlineStatus?.source ?? 'default'
-                },
-                userDefinedTagInfo: {
-                    tags: tags?.tags ?? [],
-                    ruleId: tags?.source ?? 'default'
-                }
-            }
-        };
-        // 如果根级资源的版本被替换掉了,则整个测试资源的版本重置为被替换之后的版本
-        if (testResourceOriginInfo.type === test_node_interface_1.TestResourceOriginType.Resource && !lodash_1.isEmpty(entityDependencyTree)) {
-            testResourceInfo.originInfo.version = lodash_1.first(entityDependencyTree).version;
+    async updateTestResource(testResource, resolveResources) {
+        const invalidResolves = lodash_1.differenceBy(resolveResources, testResource.resolveResources, 'resourceId');
+        if (!lodash_1.isEmpty(invalidResolves)) {
+            throw new egg_freelog_base_1.ApplicationError(this.ctx.gettext('node-test-resolve-release-invalid-error'), { invalidResolves });
         }
-        return testResourceInfo;
+        const beSignSubjects = lodash_1.chain(resolveResources).map(({ resourceId, contracts }) => contracts.map(({ policyId }) => Object({
+            subjectId: resourceId, policyId
+        }))).flattenDeep().value();
+        const contractMap = await this.outsideApiService.batchSignNodeContracts(testResource.nodeId, beSignSubjects).then(contracts => {
+            return new Map(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
+        });
+        resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(item => {
+            item.contractId = contractMap.get(resolveResource.resourceId + item.policyId) ?? '';
+        }));
+        const updateResolveResources = testResource.resolveResources.map(resolveResource => {
+            const modifyResolveResource = resolveResources.find(x => x.resourceId === resolveResource.resourceId);
+            return modifyResolveResource ? lodash_1.assign(resolveResource, modifyResolveResource) : resolveResource;
+        });
+        return this.nodeTestResourceProvider.findOneAndUpdate({ testResourceId: testResource.testResourceId }, {
+            resolveResources: updateResolveResources
+        }, { new: true });
     }
-    /**
-     * presentable转换为测试资源实体
-     * @param presentableInfo
-     * @param resourceInfo
-     * @param nodeId
-     */
-    _presentableInfoMapToTestResource(presentableInfo, resourceInfo, nodeId) {
-        const testResourceOriginInfo = {
-            id: presentableInfo.resourceInfo.resourceId,
-            name: presentableInfo.resourceInfo.resourceName,
-            type: test_node_interface_1.TestResourceOriginType.Resource,
-            resourceType: presentableInfo.resourceInfo.resourceType,
-            version: presentableInfo.version,
-            versions: resourceInfo ? resourceInfo.resourceVersions.map(x => x.version) : [],
-            coverImages: resourceInfo.coverImages ?? [],
-        };
-        const testResourceInfo = {
-            nodeId,
-            userId: this.ctx.userId,
-            intro: resourceInfo.intro ?? '',
-            associatedPresentableId: presentableInfo.presentableId,
-            resourceType: presentableInfo.resourceInfo.resourceType,
-            testResourceId: this._generateTestResourceId(nodeId, testResourceOriginInfo),
-            testResourceName: presentableInfo.presentableName,
-            coverImages: testResourceOriginInfo.coverImages,
-            originInfo: testResourceOriginInfo,
-            differenceInfo: {
-                onlineStatusInfo: {
-                    isOnline: presentableInfo.onlineStatus,
-                    ruleId: 'default'
-                },
-                userDefinedTagInfo: {
-                    tags: presentableInfo.tags,
-                    ruleId: 'default'
-                }
-            }
-        };
-        return testResourceInfo;
-    }
-    async _compileAndMatchTestRule(nodeId, testRuleText) {
+    _compileAndMatchTestRule(nodeId, testRuleText) {
         // const {errors, rules} = this.testRuleHandler.compileTestRule(testRuleText);
         // if (!isEmpty(errors)) {
         //     throw new ApplicationError(this.ctx.gettext('node-test-rule-compile-failed'), {errors})
@@ -124,14 +104,14 @@ let TestNodeService = class TestNodeService {
         //     return [];
         // }
         const ruleInfos = [];
-        ruleInfos.push({
-            text: "alter hello  do \\n set_tags tag1,tag2\\n   show\\nend",
-            tags: ["tag1", "tag2"],
-            replaces: [],
-            online: true,
-            operation: test_node_interface_1.TestNodeOperationEnum.Alter,
-            presentableName: "hello"
-        });
+        // ruleInfos.push({
+        //     text: "alter hello  do \\n set_tags tag1,tag2\\n   show\\nend",
+        //     tags: ["tag1", "tag2"],
+        //     replaces: [],
+        //     online: true,
+        //     operation: TestNodeOperationEnum.Alter,
+        //     presentableName: "hello"
+        // });
         ruleInfos.push({
             text: "add  $yuliang/my-first-resource3@^1.0.0   as import_test_resource \\ndo\\nend",
             tags: ["tag1", "tag2"],
@@ -169,19 +149,7 @@ let TestNodeService = class TestNodeService {
                 type: test_node_interface_1.TestResourceOriginType.Object
             }
         });
-        return this.testRuleHandler.main(nodeId, ruleInfos.reverse());
-    }
-    async _generateTestResourceAuthTree(dependencyTree) {
-        //1200
-    }
-    /**
-     * 生成测试资源ID
-     * @param nodeId
-     * @param originInfo
-     * @private
-     */
-    _generateTestResourceId(nodeId, originInfo) {
-        return crypto_helper_1.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`);
+        return ruleInfos.reverse();
     }
 };
 __decorate([
@@ -199,13 +167,37 @@ __decorate([
 __decorate([
     midway_1.inject(),
     __metadata("design:type", Object)
+], TestNodeService.prototype, "testNodeGenerator", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], TestNodeService.prototype, "nodeTestRuleProvider", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], TestNodeService.prototype, "nodeTestResourceProvider", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], TestNodeService.prototype, "nodeTestResourceTreeProvider", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
 ], TestNodeService.prototype, "presentableService", void 0);
 __decorate([
     midway_1.inject(),
     __metadata("design:type", Object)
 ], TestNodeService.prototype, "outsideApiService", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], TestNodeService.prototype, "presentableVersionService", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], TestNodeService.prototype, "matchTestRuleEventHandler", void 0);
 TestNodeService = __decorate([
     midway_1.provide()
 ], TestNodeService);
 exports.TestNodeService = TestNodeService;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdC1ub2RlLXNlcnZpY2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL3NlcnZpY2UvdGVzdC1ub2RlLXNlcnZpY2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQXNDO0FBQ3RDLG1DQUF1QztBQUN2QyxxREFBcUQ7QUFDckQsbUVBSW1DO0FBQ25DLG9GQUFxRTtBQUlyRSxJQUFhLGVBQWUsR0FBNUIsTUFBYSxlQUFlO0lBYXhCOzs7O09BSUc7SUFDSCxLQUFLLENBQUMsd0JBQXdCLENBQUMsTUFBYyxFQUFFLFlBQW9CO1FBRS9ELE1BQU0sa0JBQWtCLEdBQUcsTUFBTSxJQUFJLENBQUMsd0JBQXdCLENBQUMsTUFBTSxFQUFFLFlBQVksQ0FBQyxDQUFDO1FBRXJGLE1BQU0sd0JBQXdCLEdBQUcsa0JBQWtCLENBQUMsTUFBTSxDQUFDLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDLE9BQU8sSUFBSSxDQUFDLE9BQU8sRUFBRSxLQUFLLENBQUMsQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFDLFFBQVEsQ0FBQyxTQUFTLENBQUMsQ0FBQzthQUN4SCxHQUFHLENBQUMsaUJBQWlCLENBQUMsRUFBRSxDQUFDLElBQUksQ0FBQyxtQ0FBbUMsQ0FBQyxpQkFBaUIsRUFBRSxNQUFNLENBQUMsQ0FBQyxDQUFDO1FBQ25HLE1BQU0sMEJBQTBCLEdBQUcsTUFBTSxJQUFJLENBQUMsd0JBQXdCLENBQUMsTUFBTSxFQUFFLGtCQUFrQixDQUFDLENBQUM7UUFFbkcsT0FBTyxDQUFDLEdBQUcsd0JBQXdCLEVBQUUsR0FBRywwQkFBMEIsQ0FBQyxDQUFDO0lBQ3hFLENBQUM7SUFFRDs7OztPQUlHO0lBQ0gsS0FBSyxDQUFDLHdCQUF3QixDQUFDLE1BQWMsRUFBRSxrQkFBdUM7UUFDbEYsTUFBTSxzQkFBc0IsR0FBRyxrQkFBa0IsQ0FBQyxNQUFNLENBQUMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxD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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdC1ub2RlLXNlcnZpY2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL3NlcnZpY2UvdGVzdC1ub2RlLXNlcnZpY2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQXVDO0FBQ3ZDLG1FQVVtQztBQUluQyxxQ0FBbUQ7QUFDbkQsbUNBQTREO0FBQzVELHVEQUFrRDtBQUdsRCxJQUFhLGVBQWUsR0FBNUIsTUFBYSxlQUFlO0lBeUJ4QixLQUFLLENBQUMsbUJBQW1CLENBQUMsU0FBaUIsRUFBRSxHQUFHLElBQUk7UUFDaEQsT0FBTyxJQUFJLENBQUMsd0JBQXdCLENBQUMsT0FBTyxDQUFDLFNBQVMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDO0lBQ3JFLENBQUM7SUFFRCxLQUFLLENBQUMsaUJBQWlCLENBQUMsU0FBaUIsRUFBRSxHQUFHLElBQUk7UUFDOUMsT0FBTyxJQUFJLENBQUMsd0JBQXdCLENBQUMsSUFBSSxDQUFDLFNBQVMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDO0lBQ2xFLENBQUM7SUFFRCxLQUFLLENBQUMsd0JBQXdCLENBQUMsTUFBYyxFQUFFLEdBQUcsSUFBSTtRQUNsRCxPQUFPLElBQUksQ0FBQyxvQkFBb0IsQ0FBQyxPQUFPLENBQUMsRUFBQyxNQUFNLEVBQUMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDO0lBQ2hFLENBQUM7SUFFRCxLQUFLLENBQUMsaUJBQWlCLENBQUMsU0FBaUI7UUFDckMsT0FBTyxJQUFJLENBQUMsd0JBQXdCLENBQUMsS0FBSyxDQUFDLFNBQVMsQ0FBQyxDQUFDO0lBQzFELENBQUM7SUFFRCxLQUFLLENBQUMsMkJBQTJCLENBQUMsU0FBaUIsRUFBRSxHQUFHLElBQUk7UUFDeEQsT0FBTyxJQUFJLENBQUMsNEJBQTRCLENBQUMsT0FBTyxDQUFDLFNBQVMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDO0lBQ3pFLENBQUM7SUFFRCxLQUFL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

@@ -28,12 +28,12 @@ export class NodeTestResourceInfo extends MongooseModelBase implements IMongoose
             versions: {type: [String], required: false, default: []}
         }, {_id: false})
 
-        const DifferenceInfoSchema = new this.mongoose.Schema({
+        const StateInfoSchema = new this.mongoose.Schema({
             onlineStatusInfo: {
                 isOnline: {type: Number, required: true},
                 ruleId: {type: String, default: '', required: false},//没有规则,代表默认原始的上线状态
             },
-            userDefinedTagInfo: {
+            tagsInfo: {
                 tags: {type: [String], required: true},
                 ruleId: {type: String, required: false},
             }
@@ -49,7 +49,7 @@ export class NodeTestResourceInfo extends MongooseModelBase implements IMongoose
             resourceType: {type: String, required: true}, //资源类型
             intro: {type: String, required: false, default: ''}, //测试资源简介
             originInfo: {type: OriginInfoSchema, required: true},
-            differenceInfo: {type: DifferenceInfoSchema, required: true},
+            stateInfo: {type: StateInfoSchema, required: true},
             resolveResources: {type: [ResolveResourceSchema], default: [], required: false},
             resolveResourceSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
             ruleId: {type: String, required: false, default: ''},

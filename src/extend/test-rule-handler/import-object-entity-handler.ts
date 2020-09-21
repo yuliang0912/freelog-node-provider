@@ -93,8 +93,7 @@ export class ImportObjectEntityHandler {
             resourceType: objectInfo.resourceType ?? '',
             version: null,
             versions: [],
-            coverImages: [],
-            intro: ''
+            coverImages: []
             // _originInfo: objectInfo
         }
     }

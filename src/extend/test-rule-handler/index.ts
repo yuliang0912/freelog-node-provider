@@ -1,4 +1,3 @@
-import {v4} from 'uuid';
 import {isEmpty} from "lodash";
 import {provide, inject} from 'midway';
 import {
@@ -29,6 +28,8 @@ export class TestRuleHandler {
     optionReplaceHandler;
     @inject()
     optionSetOnlineStatusHandler;
+    @inject()
+    testNodeGenerator;
 
     async main(nodeId: number, testRules: BaseTestRuleInfo[]) {
 
@@ -47,13 +48,13 @@ export class TestRuleHandler {
      * 初始化规则,拓展规则的基础属性
      * @param testRules
      */
-    initialTestRules(testRules) {
+    initialTestRules(testRules: BaseTestRuleInfo[]) {
         this.testRuleMatchInfos = testRules.map(ruleInfo => Object({
-            id: v4().replace(/-/g, ''),
+            id: this.testNodeGenerator.generateTestRuleId(this.nodeId, ruleInfo.text ?? ''),
             isValid: true,
             matchErrors: [],
             effectiveMatchCount: 0,
-            efficientCountInfos: [],
+            efficientInfos: [],
             ruleInfo
         }));
         return this;

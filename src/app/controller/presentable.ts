@@ -91,7 +91,6 @@ export class PresentableController {
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
         const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).value;
-        const intro = ctx.checkBody('intro').optional().type('string').default('').value;
         const presentableName = ctx.checkBody('presentableName').exist().type('string').isPresentableName().value;
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
@@ -119,7 +118,7 @@ export class PresentableController {
 
         await this.presentableService.createPresentable({
             presentableName, resourceInfo, version,
-            intro, tags, policies, nodeInfo, resolveResources,
+            tags, policies, nodeInfo, resolveResources,
             versionId: subjectVersionInfo.versionId,
             presentableTitle: presentableName,
             coverImages: resourceInfo.coverImages,
@@ -138,13 +137,12 @@ export class PresentableController {
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const presentableTitle = ctx.checkBody('presentableTitle').optional().type('string').value;
         const tags = ctx.checkBody('tags').optional().isArray().value;
-        const intro = ctx.checkBody('intro').optional().type('string').len(0, 500).value;
         const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
         const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().len(1).value;
         const addPolicies = ctx.checkBody('addPolicies').optional().isArray().len(1).value;
         ctx.validateParams();
 
-        if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources, intro].every(isUndefined)) {
+        if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
 
@@ -158,7 +156,7 @@ export class PresentableController {
         });
 
         await this.presentableService.updatePresentable(presentableInfo, {
-            addPolicies, updatePolicies, presentableTitle, intro, resolveResources, tags
+            addPolicies, updatePolicies, presentableTitle, resolveResources, tags
         }).then(ctx.success);
     }
 
@@ -238,12 +236,12 @@ export class PresentableController {
         } else {
             await this.presentableService.findById(presentableId, 'version').then(data => condition.version = data.version);
         }
-        const presentableVersionInfo: any = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'dependencyTree');
         if (!presentableVersionInfo) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
         }
 
-        const presentableDependencies = this.presentableVersionService.buildPresentableDependencyTree(presentableVersionInfo.dependencyTree, entityNid, isContainRootNode, maxDeep)
+        const presentableDependencies = this.presentableVersionService.buildPresentableDependencyTree(presentableVersionInfo.dependencyTree, entityNid, isContainRootNode, maxDeep);
 
         ctx.success(presentableDependencies);
     }

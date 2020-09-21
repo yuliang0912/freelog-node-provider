@@ -22,7 +22,7 @@ export class PresentableCommonChecker {
     }
 
     async checkPresentableNameIsUnique(nodeId: number, presentableName: string) {
-        const presentable = await this.presentableService.find({
+        const presentable = await this.presentableService.findOne({
             nodeId, presentableName: new RegExp(`^${presentableName.trim()}`, 'i')
         }, '_id');
         if (presentable) {

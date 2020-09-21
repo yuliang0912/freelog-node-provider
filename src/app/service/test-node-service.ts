@@ -1,16 +1,24 @@
-import {isEmpty, first} from 'lodash';
-import {provide, inject} from 'midway';
-// import {ApplicationError} from 'egg-freelog-base';
+import {inject, provide} from 'midway';
 import {
-    BaseTestRuleInfo, TestNodeOperationEnum, TestResourceDependencyTree,
-    TestResourceInfo, TestResourceOriginInfo,
-    TestResourceOriginType, TestRuleMatchInfo
+    BaseTestRuleInfo,
+    IMatchTestRuleEventHandler,
+    ITestNodeService,
+    NodeTestRuleInfo,
+    ResolveResourceInfo,
+    TestNodeOperationEnum,
+    TestResourceInfo,
+    TestResourceOriginType,
+    TestResourceTreeInfo
 } from "../../test-node-interface";
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper';
-import {IOutsideApiService, IPresentableService, PresentableInfo, ResourceInfo} from "../../interface";
+import {
+    IOutsideApiService, IPresentableService, IPresentableVersionService, PageResult
+} from "../../interface";
+import {NodeTestRuleMatchStatus} from "../../enum";
+import {assign, chain, differenceBy, isEmpty} from 'lodash';
+import {ApplicationError} from 'egg-freelog-base';
 
 @provide()
-export class TestNodeService {
+export class TestNodeService implements ITestNodeService {
 
     @inject()
     ctx;
@@ -19,118 +27,115 @@ export class TestNodeService {
     @inject()
     testRuleHandler;
     @inject()
+    testNodeGenerator;
+    @inject()
+    nodeTestRuleProvider;
+    @inject()
+    nodeTestResourceProvider;
+    @inject()
+    nodeTestResourceTreeProvider;
+    @inject()
     presentableService: IPresentableService;
     @inject()
     outsideApiService: IOutsideApiService;
+    @inject()
+    presentableVersionService: IPresentableVersionService;
+    @inject()
+    matchTestRuleEventHandler: IMatchTestRuleEventHandler;
+
+    async findOneTestResource(condition: object, ...args): Promise<TestResourceInfo> {
+        return this.nodeTestResourceProvider.findOne(condition, ...args);
+    }
+
+    async findTestResources(condition: object, ...args): Promise<TestResourceInfo[]> {
+        return this.nodeTestResourceProvider.find(condition, ...args);
+    }
+
+    async findNodeTestRuleInfoById(nodeId: number, ...args): Promise<NodeTestRuleInfo> {
+        return this.nodeTestRuleProvider.findOne({nodeId}, ...args);
+    }
+
+    async testResourceCount(condition: object): Promise<number> {
+        return this.nodeTestResourceProvider.count(condition);
+    }
+
+    async findOneTestResourceTreeInfo(condition: object, ...args): Promise<TestResourceTreeInfo> {
+        return this.nodeTestResourceTreeProvider.findOne(condition, ...args);
+    }
+
+    async findTestResourceTreeInfos(condition: object, ...args): Promise<TestResourceTreeInfo[]> {
+        return this.nodeTestResourceTreeProvider.find(condition, ...args);
+    }
+
+    async findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.testResourceCount(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.nodeTestResourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {_id: 1});
+        }
+        return {page, pageSize, totalItem, dataList};
+    }
 
     /**
      * 匹配规则并且保存结果
      * @param nodeId
      * @param testRuleText
      */
-    async matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<TestResourceInfo[]> {
+    async matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo> {
 
-        const testRuleMatchInfos = await this._compileAndMatchTestRule(nodeId, testRuleText);
+        const testRules = this._compileAndMatchTestRule(nodeId, testRuleText);
+        const nodeTestRuleInfo: NodeTestRuleInfo = {
+            nodeId,
+            ruleText: testRuleText,
+            userId: this.ctx.userId,
+            status: NodeTestRuleMatchStatus.Pending,
+            testRules: testRules.map(ruleInfo => Object({
+                id: this.testNodeGenerator.generateTestRuleId(nodeId, ruleInfo.text),
+                ruleInfo,
+                matchErrors: [],
+                efficientInfos: []
+            }))
+        };
 
-        const matchedNodeTestResources = testRuleMatchInfos.filter(x => x.isValid && ['alter', 'add'].includes(x.ruleInfo.operation))
-            .map(testRuleMatchInfo => this._testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId));
-        const unOperantNodeTestResources = await this.getUnOperantPresentables(nodeId, testRuleMatchInfos);
-
-        return [...matchedNodeTestResources, ...unOperantNodeTestResources];
-    }
-
-    /**
-     * 获取未操作的展品
-     * @param nodeId
-     * @param testRuleMatchInfos
-     */
-    async getUnOperantPresentables(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]): Promise<TestResourceInfo[]> {
-        const existingPresentableIds = testRuleMatchInfos.filter(x => x.isValid && x.ruleInfo.operation == TestNodeOperationEnum.Alter && x.presentableInfo).map(x => x.presentableInfo.presentableId);
-        const unOperantPresentables = await this.presentableService.find({nodeId, _id: {$nin: existingPresentableIds}});
-        const resourceMap: Map<string, ResourceInfo> = await this.outsideApiService.getResourceListByIds(unOperantPresentables.map(x => x.resourceInfo.resourceId), {projection: 'resourceId,coverImages,resourceVersions,intro'}).then(list => {
-            return new Map(list.map(x => [x.resourceId, x]));
+        return this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
+            return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
+        }).then(nodeTestRule => {
+            this.matchTestRuleEventHandler.handle(nodeId);
+            return nodeTestRule;
         });
-        return unOperantPresentables.map(presentable => this._presentableInfoMapToTestResource(presentable, resourceMap.get(presentable.resourceInfo.resourceId), nodeId));
     }
 
     /**
-     * 规则匹配结果转换为测试资源实体
-     * @param testRuleMatchInfo
-     * @param nodeId
+     * 更新测试资源
+     * @param testResource
+     * @param resolveResources
      */
-    _testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number): TestResourceInfo {
-
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatus, tags, entityDependencyTree} = testRuleMatchInfo;
-        const testResourceInfo: TestResourceInfo = {
-            nodeId,
-            ruleId: id,
-            userId: this.ctx.userId,
-            intro: testResourceOriginInfo.intro ?? '',
-            associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
-            resourceType: testResourceOriginInfo.resourceType,
-            testResourceId: this._generateTestResourceId(nodeId, testResourceOriginInfo),
-            testResourceName: ruleInfo.presentableName,
-            coverImages: testResourceOriginInfo.coverImages ?? [],
-            originInfo: testResourceOriginInfo,
-            differenceInfo: {
-                onlineStatusInfo: {
-                    isOnline: onlineStatus?.status ?? 0,
-                    ruleId: onlineStatus?.source ?? 'default'
-                },
-                userDefinedTagInfo: {
-                    tags: tags?.tags ?? [],
-                    ruleId: tags?.source ?? 'default'
-                }
-            }
-        };
-        // 如果根级资源的版本被替换掉了,则整个测试资源的版本重置为被替换之后的版本
-        if (testResourceOriginInfo.type === TestResourceOriginType.Resource && !isEmpty(entityDependencyTree)) {
-            testResourceInfo.originInfo.version = first(entityDependencyTree).version;
+    async updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo> {
+        const invalidResolves = differenceBy(resolveResources, testResource.resolveResources, 'resourceId');
+        if (!isEmpty(invalidResolves)) {
+            throw new ApplicationError(this.ctx.gettext('node-test-resolve-release-invalid-error'), {invalidResolves})
         }
-        return testResourceInfo;
+        const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+            subjectId: resourceId, policyId
+        }))).flattenDeep().value();
+        const contractMap = await this.outsideApiService.batchSignNodeContracts(testResource.nodeId, beSignSubjects).then(contracts => {
+            return new Map<string, string>(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
+        });
+        resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(item => {
+            item.contractId = contractMap.get(resolveResource.resourceId + item.policyId) ?? '';
+        }));
+
+        const updateResolveResources = testResource.resolveResources.map(resolveResource => {
+            const modifyResolveResource = resolveResources.find(x => x.resourceId === resolveResource.resourceId);
+            return modifyResolveResource ? assign(resolveResource, modifyResolveResource) : resolveResource;
+        });
+
+        return this.nodeTestResourceProvider.findOneAndUpdate({testResourceId: testResource.testResourceId}, {
+            resolveResources: updateResolveResources
+        }, {new: true});
     }
 
-    /**
-     * presentable转换为测试资源实体
-     * @param presentableInfo
-     * @param resourceInfo
-     * @param nodeId
-     */
-    _presentableInfoMapToTestResource(presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, nodeId: number): TestResourceInfo {
-        const testResourceOriginInfo = {
-            id: presentableInfo.resourceInfo.resourceId,
-            name: presentableInfo.resourceInfo.resourceName,
-            type: TestResourceOriginType.Resource,
-            resourceType: presentableInfo.resourceInfo.resourceType,
-            version: presentableInfo.version,
-            versions: resourceInfo ? resourceInfo.resourceVersions.map(x => x.version) : [], // 容错处理
-            coverImages: resourceInfo.coverImages ?? [],
-        };
-        const testResourceInfo: TestResourceInfo = {
-            nodeId,
-            userId: this.ctx.userId,
-            intro: resourceInfo.intro ?? '',
-            associatedPresentableId: presentableInfo.presentableId,
-            resourceType: presentableInfo.resourceInfo.resourceType,
-            testResourceId: this._generateTestResourceId(nodeId, testResourceOriginInfo),
-            testResourceName: presentableInfo.presentableName,
-            coverImages: testResourceOriginInfo.coverImages,
-            originInfo: testResourceOriginInfo,
-            differenceInfo: {
-                onlineStatusInfo: {
-                    isOnline: presentableInfo.onlineStatus,
-                    ruleId: 'default'
-                },
-                userDefinedTagInfo: {
-                    tags: presentableInfo.tags,
-                    ruleId: 'default'
-                }
-            }
-        };
-        return testResourceInfo;
-    }
-
-    async _compileAndMatchTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]> {
+    _compileAndMatchTestRule(nodeId: number, testRuleText: string): BaseTestRuleInfo[] {
 
         // const {errors, rules} = this.testRuleHandler.compileTestRule(testRuleText);
         // if (!isEmpty(errors)) {
@@ -141,14 +146,14 @@ export class TestNodeService {
         // }
 
         const ruleInfos: BaseTestRuleInfo[] = [];
-        ruleInfos.push({
-            text: "alter hello  do \\n set_tags tag1,tag2\\n   show\\nend",
-            tags: ["tag1", "tag2"],
-            replaces: [],
-            online: true,
-            operation: TestNodeOperationEnum.Alter,
-            presentableName: "hello"
-        });
+        // ruleInfos.push({
+        //     text: "alter hello  do \\n set_tags tag1,tag2\\n   show\\nend",
+        //     tags: ["tag1", "tag2"],
+        //     replaces: [],
+        //     online: true,
+        //     operation: TestNodeOperationEnum.Alter,
+        //     presentableName: "hello"
+        // });
         ruleInfos.push({
             text: "add  $yuliang/my-first-resource3@^1.0.0   as import_test_resource \\ndo\\nend",
             tags: ["tag1", "tag2"],
@@ -187,21 +192,6 @@ export class TestNodeService {
             }
         });
 
-
-        return this.testRuleHandler.main(nodeId, ruleInfos.reverse());
-    }
-
-    async _generateTestResourceAuthTree(dependencyTree: TestResourceDependencyTree[]) {
-        //1200
-    }
-
-    /**
-     * 生成测试资源ID
-     * @param nodeId
-     * @param originInfo
-     * @private
-     */
-    _generateTestResourceId(nodeId: number, originInfo: TestResourceOriginInfo) {
-        return md5(`${nodeId}-${originInfo.id}-${originInfo.type}`);
+        return ruleInfos.reverse();
     }
 }

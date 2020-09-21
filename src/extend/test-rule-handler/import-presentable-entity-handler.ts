@@ -29,7 +29,7 @@ export class ImportPresentableEntityHandler {
         });
 
         const resources = await this.outsideApiService.getResourceListByIds(presentables.map(x => x.resourceInfo.resourceId), {
-            projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages,intro'
+            projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
         });
 
         alterPresentableRules.forEach(matchRule => {
@@ -90,8 +90,7 @@ export class ImportPresentableEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages ?? [],
-            intro: resourceInfo.intro ?? ''
+            coverImages: resourceInfo.coverImages ?? []
             // _originInfo: resourceInfo
         };
 

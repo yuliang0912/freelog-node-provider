@@ -10,12 +10,13 @@ export declare class TestRuleHandler {
     optionSetTagsHandler: any;
     optionReplaceHandler: any;
     optionSetOnlineStatusHandler: any;
+    testNodeGenerator: any;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
     /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules
      */
-    initialTestRules(testRules: any): this;
+    initialTestRules(testRules: BaseTestRuleInfo[]): this;
     /**
      * 编译测试规则
      * @param testRuleText

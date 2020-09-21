@@ -4,38 +4,37 @@ import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.NodeTestRuleInfo')
-export class NodeTestRuleInfo extends MongooseModelBase implements IMongooseModelBase {
+export class TestRuleInfo extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
 
         const TestRuleInfo = new this.mongoose.Schema({
             id: {type: String, required: true},
-            text: {type: String, required: true},
             ruleInfo: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true},
-            matchErrors: {type: [String], required: false, default: []},
-            effectiveMatchCount: {type: Number, required: false, default: 0}
+            matchErrors: {type: [String], required: true, default: []},
+            efficientInfos: {type: [], required: true, default: []}
         }, {_id: false, minimize: false})
 
         const NodeTestRuleSchema = new this.mongoose.Schema({
             nodeId: {type: Number, required: true}, //节点ID
             userId: {type: Number, required: true}, //节点用户ID
             ruleText: {type: String, required: false, default: ''},
-            themeId: {type: String, required: false, default: ''}, //节点用户ID
+            themeId: {type: String, required: false, default: ''}, //节点主题ID
             testRules: {
-                type: [TestRuleInfo], required: true
+                type: [TestRuleInfo], required: false
             },
             status: {type: Number, default: 0}
         }, {
             minimize: false,
             versionKey: false,
-            toJSON: NodeTestRuleInfo.toObjectOptions,
-            toObject: NodeTestRuleInfo.toObjectOptions,
+            toJSON: TestRuleInfo.toObjectOptions,
+            toObject: TestRuleInfo.toObjectOptions,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
         })
 
         NodeTestRuleSchema.index({nodeId: 1}, {unique: true});
 
-        return this.mongoose.model('node-test-rules', TestRuleInfo);
+        return this.mongoose.model('node-test-rules', NodeTestRuleSchema);
     }
 
     static get toObjectOptions() {

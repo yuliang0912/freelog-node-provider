@@ -1,43 +1,35 @@
-import { TestResourceDependencyTree, TestResourceInfo, TestResourceOriginInfo, TestRuleMatchInfo } from "../../test-node-interface";
-import { IOutsideApiService, IPresentableService, PresentableInfo, ResourceInfo } from "../../interface";
-export declare class TestNodeService {
+import { BaseTestRuleInfo, IMatchTestRuleEventHandler, ITestNodeService, NodeTestRuleInfo, ResolveResourceInfo, TestResourceInfo, TestResourceTreeInfo } from "../../test-node-interface";
+import { IOutsideApiService, IPresentableService, IPresentableVersionService, PageResult } from "../../interface";
+export declare class TestNodeService implements ITestNodeService {
     ctx: any;
     nodeProvider: any;
     testRuleHandler: any;
+    testNodeGenerator: any;
+    nodeTestRuleProvider: any;
+    nodeTestResourceProvider: any;
+    nodeTestResourceTreeProvider: any;
     presentableService: IPresentableService;
     outsideApiService: IOutsideApiService;
+    presentableVersionService: IPresentableVersionService;
+    matchTestRuleEventHandler: IMatchTestRuleEventHandler;
+    findOneTestResource(condition: object, ...args: any[]): Promise<TestResourceInfo>;
+    findTestResources(condition: object, ...args: any[]): Promise<TestResourceInfo[]>;
+    findNodeTestRuleInfoById(nodeId: number, ...args: any[]): Promise<NodeTestRuleInfo>;
+    testResourceCount(condition: object): Promise<number>;
+    findOneTestResourceTreeInfo(condition: object, ...args: any[]): Promise<TestResourceTreeInfo>;
+    findTestResourceTreeInfos(condition: object, ...args: any[]): Promise<TestResourceTreeInfo[]>;
+    findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     /**
      * 匹配规则并且保存结果
      * @param nodeId
      * @param testRuleText
      */
-    matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<TestResourceInfo[]>;
+    matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
     /**
-     * 获取未操作的展品
-     * @param nodeId
-     * @param testRuleMatchInfos
+     * 更新测试资源
+     * @param testResource
+     * @param resolveResources
      */
-    getUnOperantPresentables(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]): Promise<TestResourceInfo[]>;
-    /**
-     * 规则匹配结果转换为测试资源实体
-     * @param testRuleMatchInfo
-     * @param nodeId
-     */
-    _testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number): TestResourceInfo;
-    /**
-     * presentable转换为测试资源实体
-     * @param presentableInfo
-     * @param resourceInfo
-     * @param nodeId
-     */
-    _presentableInfoMapToTestResource(presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, nodeId: number): TestResourceInfo;
-    _compileAndMatchTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]>;
-    _generateTestResourceAuthTree(dependencyTree: TestResourceDependencyTree[]): Promise<void>;
-    /**
-     * 生成测试资源ID
-     * @param nodeId
-     * @param originInfo
-     * @private
-     */
-    _generateTestResourceId(nodeId: number, originInfo: TestResourceOriginInfo): any;
+    updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
+    _compileAndMatchTestRule(nodeId: number, testRuleText: string): BaseTestRuleInfo[];
 }

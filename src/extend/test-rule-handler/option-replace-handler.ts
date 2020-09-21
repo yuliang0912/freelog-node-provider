@@ -1,6 +1,6 @@
 import {satisfies} from 'semver';
 import {inject, provide} from "midway";
-import {isEmpty, pick, chain} from "lodash";
+import {isEmpty, pick, chain, first} from "lodash";
 import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from "../../interface";
 import {
     CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType, TestRuleEfficientInfo
@@ -30,7 +30,7 @@ export class OptionReplaceHandler {
         }
 
         this.testRuleMatchInfo = testRuleInfo;
-        this.testRuleMatchInfo.efficientCountInfos.push(this.replaceOptionEfficientCountInfo);
+        this.testRuleMatchInfo.efficientInfos.push(this.replaceOptionEfficientCountInfo);
 
         await this._recursionReplace(testRuleInfo.entityDependencyTree, []);
     }
@@ -113,8 +113,8 @@ export class OptionReplaceHandler {
         }
         // 返回被替换之后的新的依赖树(已包含自身)
         return latestTestResourceDependencyTree.type === TestResourceOriginType.Object
-            ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id)
-            : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version)
+            ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id).then(first)
+            : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first)
     }
 
     /**

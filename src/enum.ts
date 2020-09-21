@@ -80,3 +80,20 @@ export enum PresentableAuthStatusEnum {
      */
     ResourceSideContractAuthPassed = 8,
 }
+
+export enum NodeTestRuleMatchStatus {
+    /**
+     * 规则处理中
+     */
+    Pending = 1,
+
+    /**
+     * 规则匹配失败
+     */
+    Failed = 2,
+
+    /**
+     * 规则匹配完成
+     */
+    Completed = 3,
+}
