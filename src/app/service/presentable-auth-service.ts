@@ -5,7 +5,7 @@ import {
     IPresentableService,
     IPresentableVersionService,
     ContractInfo, PresentableInfo,
-    PresentableVersionAuthTreeInfo,
+    FlattenPresentableAuthTree,
     UserInfo
 } from '../../interface';
 import {chain, isArray, isEmpty} from 'lodash';
@@ -24,12 +24,12 @@ export class PresentableAuthService implements IPresentableAuthService {
     presentableService: IPresentableService;
     @inject()
     presentableVersionService: IPresentableVersionService;
-    
+
     /**
      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)
      * @param presentableInfo
      */
-    async presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: PresentableVersionAuthTreeInfo[]): Promise<SubjectAuthResult> {
+    async presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const clientUserSideAuthResult = await this.presentableClientUserSideAuth(presentableInfo);
         if (!clientUserSideAuthResult.isAuth) {
@@ -54,12 +54,12 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param presentableInfo
      * @param presentableVersionAuthTree
      */
-    async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: PresentableVersionAuthTreeInfo[]): Promise<SubjectAuthResult> {
+    async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const authResult = new SubjectAuthResult();
+        // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.
         const presentableResolveResourceIdSet = new Set(presentableVersionAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
-
-        // 如果授权树中不存在已解决的资源,则说明资源虽然上抛了,但是当前版本实际未使用.所以不对该资源做授权校验
+        // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
         const toBeAuthorizedResources = presentableInfo.resolveResources.filter(x => presentableResolveResourceIdSet.has(x.resourceId));
 
         const allNodeContractIds = chain(toBeAuthorizedResources).map(x => x.contracts).flattenDeep().map(x => x.contractId).value();
@@ -72,8 +72,8 @@ export class PresentableAuthService implements IPresentableAuthService {
 
         const authFailedResources = toBeAuthorizedResources.filter(resolveResource => {
             const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-            const currentAuthTreeNode = presentableVersionAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
-            currentAuthTreeNode.authContractIds = resolveResource.contracts.map(x => x.contractId);
+            // const currentAuthTreeNode = presentableVersionAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
+            // currentAuthTreeNode.authContractIds = resolveResource.contracts.map(x => x.contractId);
             return !this.contractAuth(resolveResource.resourceId, contracts).isAuth;
         });
 
@@ -89,7 +89,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param presentableInfo
      * @param presentableVersionAuthTree
      */
-    async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: PresentableVersionAuthTreeInfo[]): Promise<SubjectAuthResult> {
+    async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const authResult = new SubjectAuthResult();
         const resourceVersionIds = chain(presentableVersionAuthTree).map(x => x.versionId).uniq().value();
@@ -99,12 +99,13 @@ export class PresentableAuthService implements IPresentableAuthService {
 
         const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds);
 
-        for (let i = 0, j = resourceVersionAuthResults.length; i < j; i++) {
-            const {versionId, resolveResourceAuthResults} = resourceVersionAuthResults[i];
+        for (const resourceVersionAuthResult of resourceVersionAuthResults) {
+            const {versionId, resolveResourceAuthResults} = resourceVersionAuthResult;
             if (isEmpty(resourceVersionAuthResults)) {
                 continue;
             }
-            const practicalUsedResources = presentableVersionAuthTree.filter(x => x.parentVersionId === versionId);
+            const nids = presentableVersionAuthTree.filter(x => x.versionId === versionId).map(x => x.nid);
+            const practicalUsedResources = presentableVersionAuthTree.filter(x => nids.includes(x.parentNid));
             const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'resourceId').filter(x => !x.authResult?.isAuth).value();
             if (!isEmpty(authFailedResources)) {
                 return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setErrorMsg('展品上游链路授权未通过');

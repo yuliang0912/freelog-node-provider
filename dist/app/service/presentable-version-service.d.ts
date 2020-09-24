@@ -1,26 +1,36 @@
-import { IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableVersionAuthTreeInfo, PresentableVersionDependencyTreeInfo, PresentableVersionInfo, ResourceDependencyTreeInfo } from '../../interface';
+import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, FlattenPresentableAuthTree, PresentableDependencyTree, PresentableVersionInfo, ResourceDependencyTree, PresentableAuthTree, PresentableResolveResource } from '../../interface';
 export declare class PresentableVersionService implements IPresentableVersionService {
     ctx: any;
     presentableProvider: any;
     outsideApiService: IOutsideApiService;
     presentableVersionProvider: any;
+    presentableCommonChecker: any;
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
+    find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     /**
-     * 构建presentable递归结构的依赖树
+     * 平铺结构的授权树转换为递归结构的授权树
+     * @param flattenAuthTree
+     * @param startNid
+     * @param isContainRootNode
+     * @param maxDeep
+     */
+    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode?: boolean, maxDeep?: number): any;
+    /**
+     * 平铺结构的依赖树转换为递归结构的依赖树
      * @param flattenDependencies
      * @param startNid
      * @param maxDeep
      * @returns {*}
      */
-    buildPresentableDependencyTree(flattenDependencies: any, startNid: string, isContainRootNode?: boolean, maxDeep?: number): PresentableVersionDependencyTreeInfo[];
+    convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode?: boolean, maxDeep?: number): PresentableDependencyTree[];
     /**
      * 构建presentable授权树
      * @param dependencyTree
      * @private
      */
-    _buildPresentableAuthTree(presentableInfo: PresentableInfo, dependencyTree: ResourceDependencyTreeInfo[]): Promise<PresentableVersionAuthTreeInfo[]>;
+    _buildPresentableAuthTree(presentableInfo: PresentableInfo, dependencyTree: ResourceDependencyTree[], allVersionIds: string[]): Promise<PresentableResolveResource[]>;
     /**
      * 获取授权树
      * @param resourceId
@@ -30,12 +40,12 @@ export declare class PresentableVersionService implements IPresentableVersionSer
      * @returns {*}
      * @private
      */
-    _getResourceAuthTree(dependencies: any, resourceVersionId: any, resourceVersionMap: any): any;
+    _getResourceAuthTree(dependencies: ResourceDependencyTree[], resourceVersionId: string, resourceVersionMap: any): PresentableAuthTree[];
     /**
      * 获取presentable解决的发行(需要包含具体的版本信息)
      * @param rootDependency
      */
-    _getPresentableResolveResources(presentableInfo: any, rootDependency: any): any[];
+    _getPresentableResolveResources(presentableInfo: PresentableInfo, rootDependency: ResourceDependencyTree): PresentableResolveResource[];
     /**
      * 从依赖树中递归获取发行的所有版本信息
      * @param dependencies
@@ -64,11 +74,11 @@ export declare class PresentableVersionService implements IPresentableVersionSer
      * @param dependencyTree
      * @private
      */
-    _flattenDependencyTree(presentableId: string, dependencyTree: Array<any>): PresentableVersionDependencyTreeInfo[];
+    _flattenDependencyTree(presentableId: string, resourceDependencyTree: ResourceDependencyTree[]): FlattenPresentableDependencyTree[];
     /**
      * 平铺授权树
      * @param presentableResolveReleases
      * @private
      */
-    _flattenPresentableAuthTree(presentableResolveResources: any): any[];
+    _flattenPresentableAuthTree(presentableResolveResources: any): FlattenPresentableAuthTree[];
 }

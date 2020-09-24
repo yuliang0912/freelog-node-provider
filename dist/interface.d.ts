@@ -2,11 +2,11 @@ import { ValidatorResult } from 'jsonschema';
 import { ContractStatusEnum, PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum, IdentityType } from './enum';
 import { SubjectAuthResult } from "./auth-interface";
 import { ObjectDependencyTreeInfo } from "./test-node-interface";
-export interface PageResult {
+export interface PageResult<T> {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: any[];
+    dataList: T[];
 }
 export interface SubjectInfo {
     subjectId: string;
@@ -35,6 +35,7 @@ export interface NodeInfo {
     ownerUserName: string;
     nodeThemeId?: string;
     status?: number;
+    uniqueKey?: string;
 }
 export interface PresentableInfo {
     presentableId: string;
@@ -54,13 +55,14 @@ export interface PresentableInfo {
 export interface PresentableVersionInfo {
     presentableId: string;
     version: string;
-    resourceVersionId: string;
+    resourceId: string;
+    presentableVersionId: string;
     resourceSystemProperty: object;
     resourceCustomPropertyDescriptors?: any[];
     presentableRewriteProperty?: any[];
     versionProperty: object;
-    authTree: PresentableVersionAuthTreeInfo[];
-    dependencyTree: PresentableVersionDependencyTreeInfo[];
+    authTree: FlattenPresentableAuthTree[];
+    dependencyTree: FlattenPresentableDependencyTree[];
 }
 export interface UserInfo {
     userId: number;
@@ -161,7 +163,7 @@ export interface ResourceVersionInfo {
     customPropertyDescriptors?: object[];
     status: number;
 }
-export interface ResourceDependencyTreeInfo {
+export interface ResourceDependencyTree {
     resourceId: string;
     resourceName: string;
     version: string;
@@ -171,9 +173,9 @@ export interface ResourceDependencyTreeInfo {
     versionId: string;
     fileSha1: string;
     baseUpcastResources: any[];
-    dependencies: ResourceDependencyTreeInfo[];
+    dependencies: ResourceDependencyTree[];
 }
-export interface PresentableVersionDependencyTreeInfo {
+export interface FlattenPresentableDependencyTree {
     nid?: string;
     resourceId: string;
     resourceName: string;
@@ -184,24 +186,52 @@ export interface PresentableVersionDependencyTreeInfo {
     fileSha1: string;
     deep: number;
     parentNid: string;
-    dependencies?: PresentableVersionDependencyTreeInfo[];
 }
-export interface PresentableVersionAuthTreeInfo {
+export interface PresentableDependencyTree {
+    nid?: string;
+    resourceId: string;
+    resourceName: string;
+    version: string;
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    fileSha1: string;
+    dependencies: PresentableDependencyTree[];
+}
+export interface FlattenPresentableAuthTree {
+    nid: string;
     resourceId: string;
     resourceName: string;
     version: string;
     versionId: string;
-    fileSha1: string;
-    parentVersionId: string;
+    parentNid: string;
     deep: number;
-    authContractIds: string[];
+}
+export interface PresentableAuthTree {
+    resourceId: string;
+    resourceName: string;
+    versions: {
+        version: string;
+        versionId: string;
+        resolveResources: PresentableAuthTree[];
+    };
+}
+export interface PresentableResolveResource {
+    resourceId: string;
+    resourceName: string;
+    versions: Array<{
+        version: string;
+        versionId: string;
+        dependencies: ResourceDependencyTree[];
+    }>;
 }
 export interface INodeService {
     findOne(condition: object, ...args: any[]): Promise<NodeInfo>;
     findById(nodeId: number, ...args: any[]): Promise<NodeInfo>;
+    findByDomain(nodeDomain: string, ...args: any[]): Promise<NodeInfo>;
     find(condition: object, ...args: any[]): Promise<NodeInfo[]>;
     findByIds(nodeIds: number[], ...args: any[]): Promise<NodeInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<NodeInfo>>;
     count(condition: object): Promise<number>;
     updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
@@ -212,16 +242,17 @@ export interface IPresentableService {
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
     findByIds(presentableIds: string[], ...args: any[]): Promise<PresentableInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>>;
+    findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
     count(condition: object): Promise<number>;
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
 }
 export interface IOutsideApiService {
     getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
     getResourceVersionInfo(resourceVersionId: string, projection?: string[]): Promise<ResourceVersionInfo>;
-    getResourceVersionByVersionIds(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     getResourceListByIds(resourceIds: string[], options?: object): Promise<ResourceInfo[]>;
     getResourceListByNames(resourceNames: string[], options?: object): Promise<ResourceInfo[]>;
+    getResourceVersionList(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getUserInfo(userId: number): Promise<UserInfo>;
@@ -232,18 +263,20 @@ export interface IOutsideApiService {
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]>;
     getFileStream(fileSha1: string): Promise<any>;
-    getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;
+    getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
 }
 export interface IPresentableAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;
-    presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: PresentableVersionAuthTreeInfo[]): Promise<SubjectAuthResult>;
+    presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 export interface IPresentableVersionService {
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
+    find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
-    buildPresentableDependencyTree(flattenDependencies: Array<any>, startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableVersionDependencyTreeInfo[];
+    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): any;
+    convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
 }
 export interface IEventHandler {
     handle(...args: any[]): Promise<any>;

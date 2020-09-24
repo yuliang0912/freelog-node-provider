@@ -66,9 +66,9 @@ export class PresentableService implements IPresentableService {
             }));
         });
 
+        //TODO:后期待生产环境部署副本集,此处需要加入事务支持
         const presentableInfo = await this.presentableProvider.create(model);
-
-        this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, versionId).then();
+        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, versionId);
 
         return presentableInfo;
     }
@@ -152,13 +152,17 @@ export class PresentableService implements IPresentableService {
         return this.presentableProvider.find({_id: {$in: presentableIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
         if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1});
+            dataList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
         }
         return {page, pageSize, totalItem, dataList};
+    }
+
+    async findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]> {
+        return this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
     }
 
     async count(condition: object): Promise<number> {
@@ -187,22 +191,21 @@ export class PresentableService implements IPresentableService {
             throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveResources'), {invalidResolveResources});
         }
 
-        const resourceMap: Map<string, ResourceInfo> = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfoV2}/list?resourceIds=${resolveResources.map(x => x.resourceId).toString()}&projection=resourceName,policies,status`)
+        const resourceMap = await this.outsideApiService.getResourceListByIds(resolveResources.map(x => x.resourceId), {projection: 'resourceId,resourceName,policies,status'})
             .then(list => new Map(list.map(x => [x.resourceId, x])));
 
         const invalidPolicies = [], offlineResources = [];
-        for (let i = 0, j = resolveResources.length; i < j; i++) {
-            let resolveResource = resolveResources[i];
+        for (const resolveResource of resolveResources) {
             const resourceInfo = resourceMap.get(resolveResource.resourceId);
             if (resourceInfo.status !== 1) {
                 offlineResources.push({resourceId: resourceInfo.resourceId, resourceName: resourceInfo.resourceName});
             }
             resolveResource.resourceName = resourceInfo.resourceName;
-            resolveResource.contracts.forEach(item => {
-                if (!resourceInfo.policies.some(x => x.policyId === item.policyId && x.status === 1)) {
+            for (const resolveContract of resolveResource.contracts) {
+                if (!resourceInfo.policies.some(x => x.policyId === resolveContract.policyId && x.status === 1)) {
                     invalidPolicies.push(pick(resourceInfo, ['resourceId', 'resourceName']));
                 }
-            });
+            }
         }
         if (!isEmpty(invalidPolicies)) {
             throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveResources'), {invalidPolicies});

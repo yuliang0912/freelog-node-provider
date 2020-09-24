@@ -11,7 +11,6 @@ export class PresentableModel extends MongooseModelBase implements IMongooseMode
         const PolicySchema = new this.mongoose.Schema({
             policyId: {type: String, required: true},
             policyName: {type: String, required: true},
-            policyText: {type: String, required: true},
             status: {type: Number, required: true}, // 0:不启用  1:启用
         }, {_id: false})
 
@@ -29,7 +28,7 @@ export class PresentableModel extends MongooseModelBase implements IMongooseMode
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
-            contracts: [BaseContractInfo],
+            contracts: {type: [BaseContractInfo], required: true},
         }, {_id: false})
 
         const PresentableSchema = new this.mongoose.Schema({
@@ -58,7 +57,7 @@ export class PresentableModel extends MongooseModelBase implements IMongooseMode
 
         PresentableSchema.virtual('presentableId').get(function (this: any) {
             return this.id;
-        })
+        });
 
         PresentableSchema.index({nodeId: 1, presentableName: 1}, {unique: true});
         PresentableSchema.index({nodeId: 1, 'resourceInfo.resourceId': 1}, {unique: true});

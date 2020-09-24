@@ -16,7 +16,7 @@ export declare class ImportPresentableEntityHandler {
      * @param presentableId
      * @param version
      */
-    getPresentableDependencyTree(presentableId: any, version: any): Promise<TestResourceDependencyTree[]>;
+    getPresentableDependencyTree(presentableId: string, version: string): Promise<TestResourceDependencyTree[]>;
     /**
      * 填充实体数据
      * @param matchRule

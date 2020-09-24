@@ -1,6 +1,7 @@
 import {inject, provide} from 'midway';
 import {IPresentableService} from '../interface';
 import {ApplicationError} from 'egg-freelog-base';
+import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper';
 
 @provide()
 export class PresentableCommonChecker {
@@ -42,15 +43,25 @@ export class PresentableCommonChecker {
         }, 'presentableName');
 
         if (!presentableNames.length || !presentableNames.some(x => x.presentableName.toUpperCase() === presentableName.toUpperCase())) {
-            return presentableName
+            return presentableName;
         }
 
         for (let i = 0; i < presentableNames.length; i++) {
             let newPresentableName = `${presentableName}(${i + 1})`;
             if (presentableNames.some(x => x.presentableName.toUpperCase() === newPresentableName.toUpperCase())) {
-                continue
+                continue;
             }
             return newPresentableName;
         }
+    }
+
+    /**
+     * 生成资源版本ID
+     * @param {string} resourceId
+     * @param {string} version
+     * @returns {string}
+     */
+    generatePresentableVersionId(presentableId: string, version: string): string {
+        return md5(`${presentableId}-${version}`);
     }
 }

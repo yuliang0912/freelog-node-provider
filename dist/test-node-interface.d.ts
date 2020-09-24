@@ -59,7 +59,7 @@ export interface TestRuleMatchInfo {
     };
     efficientInfos: TestRuleEfficientInfo[];
 }
-export interface FlattenDependencyTree {
+export interface FlattenTestResourceDependencyTree {
     nid: string;
     id: string;
     name: string;
@@ -78,7 +78,6 @@ export interface FlattenTestResourceAuthTree {
     type: TestResourceOriginType;
     version: string;
     versionId: string;
-    resourceType: string;
     deep: number;
     parentNid: string;
     userId: number;
@@ -137,7 +136,7 @@ export interface TestResourceInfo {
     originInfo: TestResourceOriginInfo;
     stateInfo: StateInfo;
     resolveResources?: ResolveResourceInfo[];
-    dependencyTree?: FlattenDependencyTree[];
+    dependencyTree?: FlattenTestResourceDependencyTree[];
     authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;
@@ -146,7 +145,7 @@ export interface TestResourceTreeInfo {
     nodeId: number;
     testResourceId: string;
     testResourceName: string;
-    dependencyTree: FlattenDependencyTree[];
+    dependencyTree: FlattenTestResourceDependencyTree[];
     authTree: FlattenTestResourceAuthTree[];
 }
 export interface NodeTestRuleInfo {
@@ -176,5 +175,5 @@ export interface ITestNodeService {
     findNodeTestRuleInfoById(nodeId: number, ...args: any[]): Promise<NodeTestRuleInfo>;
     matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
     updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
-    findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<TestResourceInfo>>;
 }

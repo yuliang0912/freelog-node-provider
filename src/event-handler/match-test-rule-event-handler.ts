@@ -1,7 +1,7 @@
 import {inject, provide} from 'midway';
 import {
     BaseTestRuleInfo,
-    FlattenDependencyTree,
+    FlattenTestResourceDependencyTree,
     FlattenTestResourceAuthTree,
     IMatchTestRuleEventHandler,
     NodeTestRuleInfo,
@@ -14,10 +14,12 @@ import {
     TestRuleMatchResult
 } from '../test-node-interface';
 import {
+    FlattenPresentableAuthTree,
+    FlattenPresentableDependencyTree,
     IOutsideApiService,
     IPresentableService,
     IPresentableVersionService,
-    PresentableInfo,
+    PresentableInfo, PresentableVersionInfo,
     ResourceInfo
 } from "../interface";
 import {chain, chunk, first, isEmpty} from "lodash";
@@ -42,6 +44,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     outsideApiService: IOutsideApiService;
     @inject()
     presentableVersionService: IPresentableVersionService;
+    @inject()
+    presentableCommonChecker;
 
     /**
      * 开始规则测试匹配事件
@@ -153,22 +157,38 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     async saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[]): Promise<void> {
         let page = 1;
-        const pageSize = 1;
-        const condition = {nodeId};
+        const pageSize = 50;
+        const condition = {nodeId, createDate: {$lt: new Date()}};
         if (!isEmpty(excludedPresentableIds)) {
             condition['_id'] = {$nin: excludedPresentableIds};
         }
         const projection = ['presentableId', 'tag', 'onlineStatus', 'coverImages', 'presentableName', 'resourceInfo', 'version', 'resolveResources'];
         while (true) {
-            const pageResult = await this.presentableService.findPageList(condition, page++, pageSize, projection, {createDate: -1});
-            if (isEmpty(pageResult.dataList)) {
+            const presentables = await this.presentableService.findList(condition, page++, pageSize, projection, {createDate: -1});
+            if (isEmpty(presentables)) {
                 break;
             }
-            const resourceMap: Map<string, ResourceInfo> = await this.outsideApiService.getResourceListByIds(pageResult.dataList.map(x => x.resourceInfo.resourceId), {projection: 'resourceId,resourceVersions'}).then(list => {
+            const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+            const presentableVersionInfos = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}});
+            const presentableVersionMap: Map<string, PresentableVersionInfo> = new Map(presentableVersionInfos.map(x => [x.presentableId, x]));
+            const allResourceIds = chain(presentableVersionInfos).map(x => x.dependencyTree).flatten().map(x => x.resourceId).uniq().value();
+            const resourceMap: Map<string, ResourceInfo> = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,userId,resourceVersions'}).then(list => {
                 return new Map(list.map(x => [x.resourceId, x]));
             });
-            const testResources = pageResult.dataList.map(x => this.presentableInfoMapToTestResource(x, resourceMap.get(x.resourceInfo.resourceId), nodeId, userId));
+
+            const testResourceTreeInfos = [];
+            const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, resourceMap.get(x.resourceInfo.resourceId), nodeId, userId));
+            for (const testResource of testResources) {
+                testResourceTreeInfos.push({
+                    nodeId,
+                    testResourceId: testResource.testResourceId,
+                    testResourceName: testResource.testResourceName,
+                    authTree: this.convertPresentableAuthTreeToTestResourceAuthTree(presentableVersionMap.get(testResource.associatedPresentableId).authTree, resourceMap),
+                    dependencyTree: this.convertPresentableDependencyTreeToTestResourceDependencyTree(testResource.testResourceId, presentableVersionMap.get(testResource.associatedPresentableId).dependencyTree)
+                })
+            }
             await this.nodeTestResourceProvider.insertMany(testResources);
+            await this.nodeTestResourceTreeProvider.insertMany(testResourceTreeInfos);
         }
     }
 
@@ -200,7 +220,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 }
             }
         };
-        testResourceInfo.dependencyTree = this.flattenDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
+        testResourceInfo.dependencyTree = this.FlattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
         testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.userId !== userId && x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => {
             return {
                 resourceId: x.id,
@@ -229,7 +249,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resourceType: presentableInfo.resourceInfo.resourceType,
             version: presentableInfo.version,
             versions: resourceInfo ? resourceInfo.resourceVersions.map(x => x.version) : [], // 容错处理
-            coverImages: resourceInfo.coverImages ?? []
+            coverImages: resourceInfo?.coverImages ?? []
         };
         const testResourceInfo: TestResourceInfo = {
             nodeId, userId,
@@ -263,14 +283,59 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param deep
      * @private
      */
-    flattenDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenDependencyTree[] = [], deep: number = 1): FlattenDependencyTree[] {
+    FlattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
         for (const dependencyInfo of dependencyTree) {
             const nid = this.testNodeGenerator.generateDependencyNodeId(deep === 1 ? testResourceId : null);
             const {id, name, type, version, versionId, dependencies, resourceType} = dependencyInfo;
             results.push({nid, id, name, type, deep, version, versionId, parentNid, resourceType});
-            this.flattenDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
+            this.FlattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
         }
         return results;
+    }
+
+    /**
+     * 展品依赖树转换成测试资源依赖树
+     * @param testResourceId
+     * @param FlattenTestResourceDependencyTree
+     */
+    convertPresentableDependencyTreeToTestResourceDependencyTree(testResourceId: string, FlattenTestResourceDependencyTree: FlattenPresentableDependencyTree[]): FlattenTestResourceDependencyTree[] {
+        const nid = this.testNodeGenerator.generateDependencyNodeId(testResourceId);
+        for (const dependencyInfo of FlattenTestResourceDependencyTree) {
+            if (dependencyInfo.deep === 2) {
+                dependencyInfo.parentNid = nid;
+            }
+        }
+        FlattenTestResourceDependencyTree.find(x => x.deep === 1).nid = nid;
+
+        return FlattenTestResourceDependencyTree.map(item => {
+            return {
+                nid: item.nid,
+                id: item.resourceId,
+                name: item.resourceName,
+                type: TestResourceOriginType.Resource,
+                resourceType: item.resourceType,
+                version: item.version,
+                versionId: item.versionId,
+                parentNid: item.parentNid,
+                deep: item.deep
+            }
+        });
+    }
+
+    convertPresentableAuthTreeToTestResourceAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], resourceMap: Map<string, ResourceInfo>): FlattenTestResourceAuthTree[] {
+        return flattenAuthTree.map(item => {
+            return {
+                nid: item.nid,
+                id: item.resourceId,
+                name: item.resourceName,
+                type: TestResourceOriginType.Resource,
+                version: item.version,
+                versionId: item.versionId,
+                deep: item.deep,
+                parentNid: item.parentNid,
+                userId: resourceMap.get(item.resourceId)?.userId
+            }
+        });
     }
 
     /**

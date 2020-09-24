@@ -1,11 +1,11 @@
+import {isEmpty} from 'lodash';
 import {provide, inject} from 'midway';
 import {
     ContractInfo, IOutsideApiService,
     ResourceInfo, ResourceVersionInfo,
-    SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTreeInfo
+    SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTree
 } from '../../interface';
 import {IdentityType, SubjectTypeEnum} from '../../enum';
-import {isEmpty} from 'lodash';
 import {ObjectDependencyTreeInfo} from '../../test-node-interface';
 
 @provide()
@@ -48,9 +48,22 @@ export class OutsideApiService implements IOutsideApiService {
      * @param resourceId
      * @param options
      */
-    async getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]> {
+    async getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${encodeURIComponent(resourceIdOrName)}/dependencyTree?${optionParams.join('&')}`);
+    }
+
+    /**
+     * 批量获取资源版本信息
+     * @param versionIds
+     * @param options
+     */
+    async getResourceVersionList(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]> {
+        if (isEmpty(versionIds)) {
+            return [];
+        }
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/list?versionIds=${versionIds.toString()}&${optionParams.join('&')}`);
     }
 
     /**
@@ -112,16 +125,6 @@ export class OutsideApiService implements IOutsideApiService {
     async getResourceVersionInfo(resourceVersionId: string, projection?: string[]): Promise<ResourceVersionInfo> {
         projection = projection || [];
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/detail?versionId=${resourceVersionId}&projection=${projection.toString()}`);
-    }
-
-    /**
-     * 批量获取资源版本信息
-     * @param versionIds
-     * @param options
-     */
-    async getResourceVersionByVersionIds(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]> {
-        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/list?versionIds=${versionIds.toString()}&${optionParams.join('&')}`);
     }
 
     /**

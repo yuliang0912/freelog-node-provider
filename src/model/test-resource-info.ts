@@ -24,7 +24,7 @@ export class NodeTestResourceInfo extends MongooseModelBase implements IMongoose
             id: {type: String, required: true},
             name: {type: String, required: true},
             type: {type: String, required: true},  // resource or object
-            version: {type: String, required: false, default: null},
+            version: {type: String, required: false, default: ''},
             versions: {type: [String], required: false, default: []}
         }, {_id: false})
 

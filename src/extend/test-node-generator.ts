@@ -1,16 +1,13 @@
-import {provide} from 'midway';
-import {
-    FlattenDependencyTree,
-    FlattenTestResourceAuthTree,
-    TestResourceDependencyTree,
-    TestResourceOriginInfo,
-    TestResourceOriginType
-} from '../test-node-interface';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
-import {first, isEmpty, isString} from 'lodash';
 import {v4} from 'uuid';
-import {ResourceInfo} from "../interface";
+import {provide} from 'midway';
 import {satisfies} from 'semver';
+import {
+    FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree,
+    TestResourceDependencyTree, TestResourceOriginInfo, TestResourceOriginType
+} from '../test-node-interface';
+import {ResourceInfo} from "../interface";
+import {first, isEmpty, isString} from 'lodash';
+import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
 
 @provide()
 export class TestNodeGenerator {
@@ -40,7 +37,7 @@ export class TestNodeGenerator {
      * @param textId
      */
     generateDependencyNodeId(textId?: string): string {
-        let fullText = ''
+        let fullText = '';
         if (isString(textId) && textId.length >= this.dependencyNodeIdLength) {
             fullText = textId;
         } else {
@@ -56,7 +53,7 @@ export class TestNodeGenerator {
      * @param maxDeep
      * @param isContainRootNode
      */
-    generateTestResourceDependencyTree(dependencyTree: FlattenDependencyTree[], startNid: string = "", maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceDependencyTree[] {
+    generateTestResourceDependencyTree(dependencyTree: FlattenTestResourceDependencyTree[], startNid: string = "", maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceDependencyTree[] {
 
         const targetDependencyInfo = startNid ? dependencyTree.find(x => x.nid === startNid) : dependencyTree.find(x => x.deep === 1);
         if (!targetDependencyInfo) {
@@ -64,7 +61,7 @@ export class TestNodeGenerator {
         }
         maxDeep = isContainRootNode ? maxDeep : maxDeep + 1
 
-        function recursionBuildDependencyTree(dependencies: FlattenDependencyTree[], currDeep: number = 1): TestResourceDependencyTree[] {
+        function recursionBuildDependencyTree(dependencies: FlattenTestResourceDependencyTree[], currDeep: number = 1): TestResourceDependencyTree[] {
             if (!dependencies.length || currDeep++ >= maxDeep) {
                 return [];
             }
@@ -92,7 +89,7 @@ export class TestNodeGenerator {
      * @param dependencyTree 拍平的依赖树信息
      * @param resourceMap 此处传入资源MAP主要是为了提高性能,方便更大批量的查询,减少查询次数
      */
-    generateTestResourceAuthTree(dependencyTree: FlattenDependencyTree[], resourceMap: Map<string, ResourceInfo>) {
+    generateTestResourceAuthTree(dependencyTree: FlattenTestResourceDependencyTree[], resourceMap: Map<string, ResourceInfo>) {
         for (const dependencyInfo of dependencyTree) {
             if (dependencyInfo.type === TestResourceOriginType.Resource) {
                 dependencyInfo.userId = resourceMap.get(dependencyInfo.id)?.userId ?? 0;
@@ -109,7 +106,7 @@ export class TestNodeGenerator {
      * @param dependentEntityId
      * @param dependentEntityVersionRange
      */
-    filterTestResourceDependencyTree(dependencyTree: FlattenDependencyTree[], dependentEntityId: string, dependentEntityVersionRange: string) {
+    filterTestResourceDependencyTree(dependencyTree: FlattenTestResourceDependencyTree[], dependentEntityId: string, dependentEntityVersionRange: string) {
 
         const matchedIdSet: Set<string> = new Set();
         const testResourceDependencyTree = this.generateTestResourceDependencyTree(dependencyTree, null, 999, true);
@@ -161,7 +158,7 @@ export class TestNodeGenerator {
      * @param resourceMap
      * @private
      */
-    _findResolver(dependencyTree: FlattenDependencyTree[], parent: FlattenDependencyTree, target: FlattenDependencyTree, resourceMap: Map<string, ResourceInfo>): FlattenDependencyTree {
+    _findResolver(dependencyTree: FlattenTestResourceDependencyTree[], parent: FlattenTestResourceDependencyTree, target: FlattenTestResourceDependencyTree, resourceMap: Map<string, ResourceInfo>): FlattenTestResourceDependencyTree {
         if (!parent || target.type === TestResourceOriginType.Object) {
             return null;
         }
@@ -185,15 +182,15 @@ export class TestNodeGenerator {
      * @param deep
      * @private
      */
-    _buildAuthTree(dependencyTree: FlattenDependencyTree[], results: FlattenTestResourceAuthTree[] = [], parent: FlattenDependencyTree = null, deep = 1): FlattenTestResourceAuthTree[] {
+    _buildAuthTree(dependencyTree: FlattenTestResourceDependencyTree[], results: FlattenTestResourceAuthTree[] = [], parent: FlattenTestResourceDependencyTree = null, deep = 1): FlattenTestResourceAuthTree[] {
         for (const dependencyInfo of dependencyTree) {
             if (dependencyInfo['resolver']?.nid !== parent?.nid) {
                 continue;
             }
-            const {nid, id, name, userId, type, version, versionId, resourceType} = dependencyInfo;
+            const {nid, id, name, userId, type, version, versionId} = dependencyInfo;
             results.push({
                 id, nid, name, userId, type, version, versionId,
-                resourceType, deep, parentNid: parent?.nid ?? ''
+                deep, parentNid: parent?.nid ?? ''
             });
             this._buildAuthTree(dependencyTree, results, dependencyInfo, deep + 1);
         }

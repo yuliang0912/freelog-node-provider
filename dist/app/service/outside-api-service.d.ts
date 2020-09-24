@@ -1,4 +1,4 @@
-import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTreeInfo } from '../../interface';
+import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTree } from '../../interface';
 import { SubjectTypeEnum } from '../../enum';
 import { ObjectDependencyTreeInfo } from '../../test-node-interface';
 export declare class OutsideApiService implements IOutsideApiService {
@@ -26,7 +26,13 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param resourceId
      * @param options
      */
-    getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;
+    getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
+    /**
+     * 批量获取资源版本信息
+     * @param versionIds
+     * @param options
+     */
+    getResourceVersionList(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     /**
      * 批量根据对象全名获取存储对象
      * @param objectNames
@@ -58,12 +64,6 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @returns {Promise<any>}
      */
     getResourceVersionInfo(resourceVersionId: string, projection?: string[]): Promise<ResourceVersionInfo>;
-    /**
-     * 批量获取资源版本信息
-     * @param versionIds
-     * @param options
-     */
-    getResourceVersionByVersionIds(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     /**
      * 批量签约(已经签过不会重签)
      * @param nodeId

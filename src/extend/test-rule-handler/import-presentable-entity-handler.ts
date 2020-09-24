@@ -2,7 +2,7 @@ import {provide, inject} from 'midway';
 import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
 import {
     IOutsideApiService, IPresentableService, IPresentableVersionService,
-    PresentableInfo, PresentableVersionDependencyTreeInfo, ResourceInfo
+    PresentableInfo, PresentableDependencyTree, ResourceInfo
 } from "../../interface";
 
 @provide()
@@ -32,11 +32,11 @@ export class ImportPresentableEntityHandler {
             projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
         });
 
-        alterPresentableRules.forEach(matchRule => {
+        for (const matchRule of alterPresentableRules) {
             const presentableInfo = presentables.find(x => x.presentableName.toLowerCase() === matchRule.ruleInfo.presentableName.toLowerCase());
             const resourceInfo = presentableInfo ? resources.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId) : null;
             this._fillRuleEntityInfo(matchRule, presentableInfo, resourceInfo);
-        });
+        }
     }
 
     /**
@@ -44,12 +44,12 @@ export class ImportPresentableEntityHandler {
      * @param presentableId
      * @param version
      */
-    async getPresentableDependencyTree(presentableId, version): Promise<TestResourceDependencyTree[]> {
+    async getPresentableDependencyTree(presentableId: string, version: string): Promise<TestResourceDependencyTree[]> {
 
         const presentableVersion = await this.presentableVersionService.findById(presentableId, version, 'dependencyTree');
-        const presentableDependencyTree = this.presentableVersionService.buildPresentableDependencyTree(presentableVersion.dependencyTree, presentableId.substr(0, 12), true, Number.MAX_SAFE_INTEGER);
+        const presentableDependencyTree = this.presentableVersionService.convertPresentableDependencyTree(presentableVersion.dependencyTree, presentableId.substr(0, 12), true, Number.MAX_SAFE_INTEGER);
 
-        function recursionConvertSubNodes(dependencies: PresentableVersionDependencyTreeInfo[]): TestResourceDependencyTree[] {
+        function recursionConvertSubNodes(dependencies: PresentableDependencyTree[]): TestResourceDependencyTree[] {
             if (!Array.isArray(dependencies)) {
                 return [];
             }
@@ -91,7 +91,6 @@ export class ImportPresentableEntityHandler {
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages ?? []
-            // _originInfo: resourceInfo
         };
 
         matchRule.presentableInfo = presentableInfo;

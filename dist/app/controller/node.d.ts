@@ -1,7 +1,7 @@
 import { INodeService } from '../../interface';
 export declare class NodeController {
-    nodeService: INodeService;
     nodeCommonChecker: any;
+    nodeService: INodeService;
     index(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;
     create(ctx: any): Promise<void>;

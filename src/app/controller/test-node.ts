@@ -23,17 +23,17 @@ export class TestNodeController {
     @inject()
     resolveResourcesValidator: IJsonSchemaValidate;
 
-    @get('/rules/:nodeId')
+    @get('/:nodeId/rules')
     @visitorIdentity(LoginUser | InternalClient)
     async showTestRuleInfo(ctx) {
 
         const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
-        ctx.validateParams()
+        ctx.validateParams();
 
         await this.testNodeService.findNodeTestRuleInfoById(nodeId).then(ctx.success);
     }
 
-    @post('/rules/:nodeId')
+    @post('/:nodeId/rules')
     @visitorIdentity(LoginUser)
     async createTestRule(ctx) {
 
@@ -44,14 +44,14 @@ export class TestNodeController {
         const nodeInfo = await this.nodeService.findById(nodeId);
         this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
 
-        await this.testNodeService.matchAndSaveNodeTestRule(80000000, testRuleText ?? '').then(ctx.success);
+        await this.testNodeService.matchAndSaveNodeTestRule(nodeId, testRuleText ?? '').then(ctx.success);
     }
 
-    @put('/rules/:nodeId')
+    @put('/:nodeId/rules')
     @visitorIdentity(LoginUser)
     async updateTestRule(ctx) {
 
-        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const additionalTestRule = ctx.checkBody('additionalTestRule').exist().type('string').decodeURIComponent().value;
         ctx.validateParams();
 
@@ -61,10 +61,10 @@ export class TestNodeController {
         const nodeTestRule = await this.testNodeService.findNodeTestRuleInfoById(nodeId, 'ruleText');
         const currentRuleText = (nodeTestRule?.ruleText ?? '') + '   ' + additionalTestRule;
 
-        await ctx.service.testRuleService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success)
+        await this.testNodeService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success);
     }
 
-    @post('/rules/:nodeId/rematch')
+    @post('/:nodeId/rules/rematch')
     @visitorIdentity(LoginUser)
     async rematchTestRule(ctx) {
 
@@ -141,22 +141,23 @@ export class TestNodeController {
 
         const condition = {nodeId};
         if (entityType) {
-            condition['originInfo.type'] = entityType
+            condition['originInfo.type'] = entityType;
         }
         if (isArray(entityIds)) {
-            condition['originInfo.id'] = {$in: entityIds}
+            condition['originInfo.id'] = {$in: entityIds};
         }
         if (isArray(entityNames)) {
-            condition['originInfo.name'] = {$in: entityNames}
+            condition['originInfo.name'] = {$in: entityNames};
         }
 
-        await this.testNodeService.findTestResources(condition, projection.join(' ')).then(ctx.success)
+        await this.testNodeService.findTestResources(condition, projection.join(' ')).then(ctx.success);
     }
 
     @get('/testResources/:testResourceId')
     @visitorIdentity(LoginUser)
     async showTestResource(ctx) {
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         ctx.validateParams();
 
         await this.testNodeService.findOneTestResource({testResourceId}).then(ctx.success);
@@ -185,7 +186,7 @@ export class TestNodeController {
         await this.testNodeService.updateTestResource(testResourceInfo, resolveResources).then(ctx.success);
     }
 
-    @get('/:nodeId/testResources/search')
+    @get('/:nodeId/testResources/searchByDependency')
     @visitorIdentity(LoginUser)
     async searchTestResources(ctx) {
 
@@ -209,6 +210,7 @@ export class TestNodeController {
     @get('/testResources/:testResourceId/dependencyTree')
     @visitorIdentity(LoginUser)
     async testResourceDependencyTree(ctx) {
+
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         const entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
@@ -259,7 +261,7 @@ export class TestNodeController {
 
         const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId}, 'dependencyTree');
         if (!testResourceTreeInfo) {
-            return [];
+            return ctx.success([]);
         }
 
         const filteredDependencyTree = this.testNodeGenerator.filterTestResourceDependencyTree(testResourceTreeInfo.dependencyTree ?? [], dependentEntityId, dependentEntityVersionRange);

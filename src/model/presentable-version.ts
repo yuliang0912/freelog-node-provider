@@ -22,13 +22,13 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
         }, {_id: false});
 
         const PresentableAuthTreeSchema = new this.mongoose.Schema({
+            nid: {type: String, required: true},
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
             version: {type: String, required: true},
             versionId: {type: String, required: true},
-            fileSha1: {type: String, required: true},
-            parentVersionId: {type: String, required: false},
             deep: {type: Number, required: true},
+            parentNid: {type: String, required: false},
         }, {_id: false});
 
         const PresentableDependencyTreeSchema = new this.mongoose.Schema({
@@ -47,7 +47,7 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
         const PresentableVersionSchema = new this.mongoose.Schema({
             presentableId: {type: String, required: true}, // 名称节点内唯一
             version: {type: String, required: true}, // 与资源版本同步
-            resourceVersionId: {type: String, required: true},
+            presentableVersionId: {type: String, required: true},
             resourceSystemProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true}, // 资源的原始系统属性
             resourceCustomPropertyDescriptors: {type: [CustomPropertyDescriptorSchema], default: [], required: false},
             presentableRewriteProperty: {type: [PresentableRewritePropertySchema], default: [], required: false}, // 新增或者覆盖的属性
@@ -62,6 +62,7 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
         });
 
+        PresentableVersionSchema.index({presentableVersionId: 1}, {unique: true});
         PresentableVersionSchema.index({presentableId: 1, version: 1}, {unique: true});
 
         return this.mongoose.model('presentable-versions', PresentableVersionSchema);

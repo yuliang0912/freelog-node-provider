@@ -4,7 +4,7 @@ import {IJsonSchemaValidate} from '../../interface';
 import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
 
 @scope('Singleton')
-@provide('resolveResourcesValidator')
+@provide()
 export class resolveResourcesValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
 
     validate(resolveResources: object[]): ValidatorResult {

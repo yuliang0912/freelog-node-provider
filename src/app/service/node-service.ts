@@ -9,6 +9,8 @@ export class NodeService implements INodeService {
     @inject()
     nodeProvider;
     @inject()
+    nodeCommonChecker;
+    @inject()
     autoIncrementRecordProvider;
 
     async updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean> {
@@ -25,7 +27,8 @@ export class NodeService implements INodeService {
             nodeName: options.nodeName,
             nodeDomain: options.nodeDomain,
             ownerUserId: userInfo.userId,
-            ownerUserName: userInfo.username
+            ownerUserName: userInfo.username,
+            uniqueKey: this.nodeCommonChecker.generateNodeUniqueKey(options.nodeDomain)
         };
 
         return this.nodeProvider.create(nodeInfo);
@@ -33,6 +36,11 @@ export class NodeService implements INodeService {
 
     async findById(nodeId: number, ...args): Promise<NodeInfo> {
         return this.nodeProvider.findOne({nodeId}, ...args);
+    }
+
+    async findByDomain(nodeDomain: string, ...args): Promise<NodeInfo> {
+        const uniqueKey = this.nodeCommonChecker.generateNodeUniqueKey(nodeDomain);
+        return this.nodeProvider.findOne({uniqueKey}, ...args);
     }
 
     async findByIds(nodeIds: number[], ...args): Promise<NodeInfo[]> {
@@ -47,7 +55,7 @@ export class NodeService implements INodeService {
         return this.nodeProvider.find(condition, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<NodeInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
         if (totalItem > (page - 1) * pageSize) {

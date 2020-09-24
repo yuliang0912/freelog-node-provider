@@ -29,7 +29,7 @@ export class ResourceAuthController {
     async presentableAuth(ctx) {
 
         const presentableId = ctx.checkParams('subjectId').isPresentableId().value;
-        const entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).value;
+        const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
         ctx.validateParams();
 
@@ -39,7 +39,7 @@ export class ResourceAuthController {
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, entityNid, subResourceIdOrName);
+        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
     }
 
     @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
@@ -48,7 +48,7 @@ export class ResourceAuthController {
 
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        const entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).value;
+        const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
         ctx.validateParams();
 
@@ -67,6 +67,6 @@ export class ResourceAuthController {
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, entityNid, subResourceIdOrName);
+        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
     }
 }

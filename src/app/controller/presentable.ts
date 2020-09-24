@@ -25,15 +25,16 @@ export class PresentableController {
     @inject()
     presentableService: IPresentableService;
     @inject()
-    presentableVersionService: IPresentableVersionService;
-    @inject()
     resolveResourcesValidator: IJsonSchemaValidate;
     @inject()
     presentablePolicyValidator: IJsonSchemaValidate;
+    @inject()
+    presentableVersionService: IPresentableVersionService;
 
     @get('/')
     @visitorIdentity(InternalClient | LoginUser)
     async index(ctx) {
+
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
@@ -47,9 +48,9 @@ export class PresentableController {
         ctx.validateParams();
 
         const condition: any = {nodeId};
-        if (resourceType) { //resourceType 与 omitResourceType互斥
+        if (isString(resourceType)) { //resourceType 与 omitResourceType互斥
             condition['resourceInfo.resourceType'] = resourceType;
-        } else if (omitResourceType) {
+        } else if (isString(omitResourceType)) {
             condition['resourceInfo.resourceType'] = {$ne: omitResourceType};
         }
         if (tags) {
@@ -69,14 +70,14 @@ export class PresentableController {
         }
 
         const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
-        const resourceVersionsMap = await ctx.curlIntranetApi(`${ctx.webApi.resourceInfoV2}/list?resourceIds=${allResourceIds}&projection=resourceVersions`)
+        const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
             .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
 
         pageResult.dataList = pageResult.dataList.map(presentableInfo => {
-            const model = presentableInfo.toObject();
-            const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId);
+            const model = (<any>presentableInfo).toObject();
+            const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId) ?? [];
             model.resourceInfo.versions = resourceVersions.map(x => x.version);
-            return model
+            return model;
         });
 
         ctx.success(pageResult);
@@ -125,11 +126,6 @@ export class PresentableController {
         }).then(ctx.success);
     }
 
-    /**
-     * 更新presentable
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     @put('/:presentableId')
     @visitorIdentity(LoginUser)
     async update(ctx) {
@@ -169,7 +165,7 @@ export class PresentableController {
         const resourceId = ctx.checkQuery('resourceId').optional().isResourceId().value;
         const resourceName = ctx.checkQuery('resourceName').optional().isFullResourceName().value;
         const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         if ([resourceId, resourceName, presentableName].every(isUndefined)) {
@@ -190,19 +186,13 @@ export class PresentableController {
         await this.presentableService.findOne(condition, projection.join(' ')).then(ctx.success);
     }
 
-    /**
-     * 展示presentable详情
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
     @get('/:presentableId')
     @visitorIdentity(InternalClient | LoginUser)
     async show(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const isLoadingVersionProperty = ctx.checkQuery("isLoadingVersionProperty").optional().default(0).in([0, 1]).value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
-
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         let presentableInfo: any = await this.presentableService.findById(presentableId, projection.join(' '));
@@ -215,17 +205,41 @@ export class PresentableController {
         ctx.success(presentableInfo);
     }
 
-    /**
-     * 展品依赖树
-     * @param ctx
-     */
     @get('/:presentableId/dependencyTree')
     async dependencyTree(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
         //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
-        const entityNid = ctx.checkQuery('entityNid').optional().len(12, 12).default(presentableId.substr(0, 12)).value;
+        const nid = ctx.checkQuery('nid').optional().type('string').value;
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const condition: any = {presentableId};
+        if (isString(version)) {
+            condition.version = version;
+        } else {
+            await this.presentableService.findById(presentableId, 'version').then(data => condition.version = data?.version ?? '');
+        }
+        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        if (!presentableVersionInfo) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'presentableId or version'));
+        }
+
+        const presentableDependencies = this.presentableVersionService.convertPresentableDependencyTree(presentableVersionInfo.dependencyTree, nid, isContainRootNode, maxDeep);
+
+        ctx.success(presentableDependencies);
+    }
+
+    @get('/:presentableId/authTree')
+    async authTree(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
+        //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
+        const nid = ctx.checkQuery('nid').optional().type('string').value;
+        //与依赖树不同的是presentable授权树没有根节点(节点签约的,不能作为根),所以此参数一般是配合nid一起使用才有正确的效果
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
@@ -236,16 +250,15 @@ export class PresentableController {
         } else {
             await this.presentableService.findById(presentableId, 'version').then(data => condition.version = data.version);
         }
-        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'authTree');
         if (!presentableVersionInfo) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
         }
 
-        const presentableDependencies = this.presentableVersionService.buildPresentableDependencyTree(presentableVersionInfo.dependencyTree, entityNid, isContainRootNode, maxDeep);
+        const presentableAuthTree = this.presentableVersionService.convertPresentableAuthTree(presentableVersionInfo.authTree, nid, isContainRootNode, maxDeep);
 
-        ctx.success(presentableDependencies);
+        ctx.success(presentableAuthTree);
     }
-
 
     /**
      * 策略格式校验

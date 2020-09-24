@@ -67,7 +67,7 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestResourceTreeProvider.find(condition, ...args);
     }
 
-    async findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+    async findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<TestResourceInfo>> {
         let dataList = [];
         const totalItem = await this.testResourceCount(condition);
         if (totalItem > (page - 1) * pageSize) {

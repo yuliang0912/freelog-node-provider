@@ -1,6 +1,7 @@
 import {provide, inject} from 'midway';
 import {INodeService, NodeInfo} from "../interface";
 import {ApplicationError, ArgumentError} from 'egg-freelog-base';
+import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
 
 @provide()
 export class NodeCommonChecker {
@@ -15,19 +16,36 @@ export class NodeCommonChecker {
      * 先参考天猫:https://wenku.baidu.com/view/d5ab601db52acfc789ebc98f.html
      * @param nodeDomain
      */
-    async checkRegisterNodeDomainAndName(nodeDomain, nodeName): Promise<void> {
+    async checkRegisterNodeDomainAndName(nodeDomain: string, nodeName: string): Promise<void> {
 
-        if (NodeCommonChecker.systemRetain.some(item => item.toLowerCase() === nodeDomain.toLocaleString())) {
+        if (NodeCommonChecker.systemRetain.some(item => item.toLowerCase() === nodeDomain.toLowerCase())) {
             throw new ArgumentError(this.ctx.gettext('节点域名不能注册系统保留字段'));
         }
 
-        const nodeList = await this.nodeService.find({$or: [{nodeName}, {nodeDomain}]});
-        if (nodeList.some(x => x.nodeName.toLowerCase() === nodeName.toLocaleString())) {
+        // TODO:动态检查,模拟请求域名,如果返回非404,则代表已经被使用
+        // this.ctx.curl(`https://${nodeDomain}.freelog.com`).then(res => {
+        //     if (res.httpCode != 404) {
+        //         throw new ArgumentError(this.ctx.gettext('节点域名已被使用'));
+        //     }
+        // });
+
+        const uniqueKey = this.generateNodeUniqueKey(nodeDomain);
+        const nodeList = await this.nodeService.find({$or: [{nodeName}, {uniqueKey}]});
+        if (nodeList.some(x => x.nodeName.toLowerCase() === nodeName.toLowerCase())) {
             throw new ApplicationError(this.ctx.gettext('node-name-has-already-existed'), {nodeName})
         }
-        if (nodeList.some(x => x.nodeDomain.toLowerCase() === nodeDomain.toLowerCase())) {
+        if (nodeList.some(x => x.uniqueKey === uniqueKey)) {
             throw new ApplicationError(this.ctx.gettext('node-domain-has-already-existed'), {nodeDomain})
         }
+    }
+
+    /**
+     * 生成规则ID
+     * @param nodeId
+     * @param ruleText
+     */
+    generateNodeUniqueKey(nodeDomain: string): string {
+        return md5(`freelog-node-unique-key-${nodeDomain.trim().toLowerCase()}`);
     }
 
     /**

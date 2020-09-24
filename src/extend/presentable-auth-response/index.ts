@@ -1,16 +1,16 @@
 import {parse} from 'url';
 import {inject, provide} from 'midway';
 import {
+    FlattenPresentableDependencyTree,
     IOutsideApiService,
     IPresentableVersionService,
     PresentableInfo,
-    PresentableVersionDependencyTreeInfo,
+    PresentableDependencyTree,
     PresentableVersionInfo
 } from '../../interface';
 import {chain, first, isEmpty, isString} from "lodash";
 import {SubjectAuthCodeEnum, SubjectAuthResult} from '../../auth-interface';
 import {AuthorizationError, ApplicationError} from 'egg-freelog-base/index';
-import {base64Encode} from 'egg-freelog-base/app/extend/helper/crypto_helper';
 
 @provide('presentableAuthResponseHandler')
 export class PresentableAuthResponseHandler {
@@ -30,16 +30,12 @@ export class PresentableAuthResponseHandler {
      * @param entityNid
      * @param subResourceIdOrName
      */
-    async handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, entityNid?: string, subResourceIdOrName?: string) {
+    async handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string) {
 
-        if (!isString(entityNid)) {
-            entityNid = presentableInfo.presentableId.substr(0, 12);
-        }
-
-        const realResponseResourceVersionInfo = this.getRealResponseResourceInfo(presentableVersionInfo.dependencyTree, entityNid, subResourceIdOrName);
+        const realResponseResourceVersionInfo = this.getRealResponseResourceInfo(presentableVersionInfo.dependencyTree, parentNid, subResourceIdOrName);
         if (!realResponseResourceVersionInfo) {
             const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError)
-                .setErrorMsg(this.ctx.gettext('params-validate-failed', 'entityNid,subResourceIdOrName'))
+                .setErrorMsg(this.ctx.gettext('params-validate-failed', 'entityNid,subResourceIdOrName'));
             this.subjectAuthFailedResponseHandle(authResult);
         }
 
@@ -73,14 +69,14 @@ export class PresentableAuthResponseHandler {
      * @param presentableVersionInfo
      * @param realResponseVersionInfo
      */
-    commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableVersionDependencyTreeInfo) {
+    commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
 
         const responseDependencies = realResponseResourceVersionInfo.dependencies.map(x => Object({
             id: x.resourceId, name: x.resourceName, type: 'resource', resourceType: x.resourceType
         }));
 
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
-        this.ctx.set('freelog-sub-dependencies', base64Encode(JSON.stringify(responseDependencies)));
+        this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
         this.ctx.set('freelog-meta', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
     }
@@ -92,7 +88,7 @@ export class PresentableAuthResponseHandler {
      * @param presentableVersionInfo
      * @param realResponseResourceVersionInfo
      */
-    async fileStreamResponseHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableVersionDependencyTreeInfo) {
+    async fileStreamResponseHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
 
         const response = await this.outsideApiService.getFileStream(realResponseResourceVersionInfo.fileSha1);
         if ((response.res.headers['content-type'] ?? '').includes('application/json')) {
@@ -155,18 +151,18 @@ export class PresentableAuthResponseHandler {
      * @param parentEntityNid
      * @param subResourceIdOrName
      */
-    getRealResponseResourceInfo(presentableVersionAuthTree: PresentableVersionDependencyTreeInfo[], parentEntityNid: string, subResourceIdOrName ?: string): PresentableVersionDependencyTreeInfo {
+    getRealResponseResourceInfo(flattenPresentableDependencyTree: FlattenPresentableDependencyTree[], parentNid: string, subResourceIdOrName ?: string): PresentableDependencyTree {
 
-        const dependencies = this.presentableVersionService.buildPresentableDependencyTree(presentableVersionAuthTree, parentEntityNid, true, 3);
+        const dependencies = this.presentableVersionService.convertPresentableDependencyTree(flattenPresentableDependencyTree, parentNid, true, 3);
         if (isEmpty(dependencies)) {
             return null;
         }
 
-        const parentEntity = first(dependencies) as PresentableVersionDependencyTreeInfo;
+        const parentDependency = first(dependencies);
         if (!isString(subResourceIdOrName)) {
-            return parentEntity;
+            return parentDependency;
         }
 
-        return parentEntity.dependencies.find(x => x.resourceId === subResourceIdOrName || x.resourceName.toLowerCase() === subResourceIdOrName.toLowerCase());
+        return parentDependency.dependencies.find(x => x.resourceId === subResourceIdOrName || x.resourceName.toLowerCase() === subResourceIdOrName.toLowerCase());
     }
 }

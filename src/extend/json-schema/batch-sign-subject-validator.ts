@@ -4,7 +4,7 @@ import {IJsonSchemaValidate} from '../../interface';
 import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
 
 @scope('Singleton')
-@provide('batchSignSubjectValidator')
+@provide()
 export class BatchSignSubjectValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
 
     /**

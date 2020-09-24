@@ -6,29 +6,16 @@ export declare class PresentableController {
     nodeService: INodeService;
     outsideApiService: IOutsideApiService;
     presentableService: IPresentableService;
-    presentableVersionService: IPresentableVersionService;
     resolveResourcesValidator: IJsonSchemaValidate;
     presentablePolicyValidator: IJsonSchemaValidate;
+    presentableVersionService: IPresentableVersionService;
     index(ctx: any): Promise<any>;
     create(ctx: any): Promise<void>;
-    /**
-     * 更新presentable
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     update(ctx: any): Promise<void>;
     detail(ctx: any): Promise<void>;
-    /**
-     * 展示presentable详情
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
     show(ctx: any): Promise<void>;
-    /**
-     * 展品依赖树
-     * @param ctx
-     */
     dependencyTree(ctx: any): Promise<void>;
+    authTree(ctx: any): Promise<void>;
     /**
      * 策略格式校验
      * @param policies

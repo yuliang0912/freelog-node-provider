@@ -22,5 +22,5 @@ export declare class TestNodeController {
     searchTestResources(ctx: any): Promise<void>;
     testResourceDependencyTree(ctx: any): Promise<any[]>;
     searchTestResourceDependencyTree(ctx: any): Promise<void>;
-    filterTestResourceDependencyTree(ctx: any): Promise<any[]>;
+    filterTestResourceDependencyTree(ctx: any): Promise<any>;
 }

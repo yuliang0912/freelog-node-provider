@@ -1,6 +1,6 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
-import {IOutsideApiService, ResourceDependencyTreeInfo, ResourceInfo} from "../../interface";
+import {IOutsideApiService, ResourceDependencyTree, ResourceInfo} from "../../interface";
 import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
 
 @provide()
@@ -39,7 +39,7 @@ export class ImportResourceEntityHandler {
             version
         });
 
-        function recursionConvertSubNodes(dependencies: ResourceDependencyTreeInfo[]): TestResourceDependencyTree[] {
+        function recursionConvertSubNodes(dependencies: ResourceDependencyTree[]): TestResourceDependencyTree[] {
             if (!Array.isArray(dependencies)) {
                 return [];
             }
