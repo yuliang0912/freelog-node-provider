@@ -9,7 +9,7 @@ import {
     FlattenPresentableAuthTree,
     PresentableDependencyTree,
     PresentableVersionInfo,
-    ResourceDependencyTree, PresentableAuthTree, PresentableResolveResource
+    ResourceDependencyTree, PresentableResolveResource, PresentableAuthTree
 } from '../../interface';
 
 @provide()
@@ -71,7 +71,7 @@ export class PresentableVersionService implements IPresentableVersionService {
      * @param isContainRootNode
      * @param maxDeep
      */
-    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100) {
+    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableAuthTree[] {
 
         const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
         if (isEmpty(startedAuthTree)) {
@@ -79,7 +79,7 @@ export class PresentableVersionService implements IPresentableVersionService {
         }
         maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
 
-        function recursionBuildAuthTree(dependencies: FlattenPresentableAuthTree[], currDeep: number = 1) {
+        function recursionBuildAuthTree(dependencies: FlattenPresentableAuthTree[], currDeep: number = 1): PresentableAuthTree[] {
             if (isEmpty(dependencies) || currDeep++ >= maxDeep) {
                 return [];
             }
@@ -97,7 +97,7 @@ export class PresentableVersionService implements IPresentableVersionService {
 
         const convertedAuthTree = recursionBuildAuthTree(startedAuthTree);
 
-        return isContainRootNode ? convertedAuthTree : first(convertedAuthTree)['children'];
+        return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
     }
 
     /**
@@ -168,7 +168,7 @@ export class PresentableVersionService implements IPresentableVersionService {
      * @returns {*}
      * @private
      */
-    _getResourceAuthTree(dependencies: ResourceDependencyTree[], resourceVersionId: string, resourceVersionMap): PresentableAuthTree[] {
+    _getResourceAuthTree(dependencies: ResourceDependencyTree[], resourceVersionId: string, resourceVersionMap) {
 
         return resourceVersionMap.get(resourceVersionId).map(resolveResources => {
 
@@ -271,12 +271,10 @@ export class PresentableVersionService implements IPresentableVersionService {
      * @private
      */
     _flattenDependencyTree(presentableId: string, resourceDependencyTree: ResourceDependencyTree[]): FlattenPresentableDependencyTree[] {
-
-        const flattenDependencyTree: FlattenPresentableDependencyTree[] = [];
-        const recursionFillAttribute = (dependencies: ResourceDependencyTree[], parentNid = '', deep = 1) => {
+        const recursionFillAttribute = (dependencies: ResourceDependencyTree[], results: FlattenPresentableDependencyTree[], parentNid: string, deep: number) => {
             for (const dependencyInfo of dependencies) {
                 const nid = deep == 1 ? presentableId.substr(0, 12) : this._generateRandomStr();
-                flattenDependencyTree.push({
+                results.push({
                     nid, deep, parentNid,
                     resourceId: dependencyInfo.resourceId,
                     resourceName: dependencyInfo.resourceName,
@@ -286,12 +284,11 @@ export class PresentableVersionService implements IPresentableVersionService {
                     fileSha1: dependencyInfo.fileSha1,
                     resourceType: dependencyInfo.resourceType
                 });
-                recursionFillAttribute(dependencyInfo.dependencies, nid, deep + 1);
+                recursionFillAttribute(dependencyInfo.dependencies, results, nid, deep + 1);
             }
+            return results;
         }
-        recursionFillAttribute(resourceDependencyTree);
-
-        return flattenDependencyTree;
+        return recursionFillAttribute(resourceDependencyTree, [], '', 1);
     }
 
     /**

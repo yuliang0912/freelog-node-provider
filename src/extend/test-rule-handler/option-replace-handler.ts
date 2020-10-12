@@ -73,6 +73,7 @@ export class OptionReplaceHandler {
      */
     async _matchReplacer(targetInfo: TestResourceDependencyTree, parents = []): Promise<TestResourceDependencyTree> {
 
+        const replaceRecords = [];
         let latestTestResourceDependencyTree = targetInfo;
         for (const replaceObjectInfo of this.testRuleMatchInfo.ruleInfo.replaces) {
 
@@ -95,6 +96,12 @@ export class OptionReplaceHandler {
                 return;
             }
 
+            replaceRecords.push({
+                id: latestTestResourceDependencyTree.id,
+                name: latestTestResourceDependencyTree.name,
+                type: latestTestResourceDependencyTree.type
+            });
+
             // 代码执行到此,说明已经匹配成功,然后接着再结果的基础上进行再次匹配,直到替换完所有的
             this.replaceOptionEfficientCountInfo.count++;
             latestTestResourceDependencyTree = {
@@ -104,6 +111,7 @@ export class OptionReplaceHandler {
                 resourceType: replacerInfo.resourceType,
                 version: resourceVersionInfo?.version,
                 versionId: resourceVersionInfo?.versionId,
+                fileSha1: resourceVersionInfo.fileSha1,
                 dependencies: []
             }
         }
@@ -112,9 +120,13 @@ export class OptionReplaceHandler {
             return;
         }
         // 返回被替换之后的新的依赖树(已包含自身)
-        return latestTestResourceDependencyTree.type === TestResourceOriginType.Object
+        const replacer: TestResourceDependencyTree = latestTestResourceDependencyTree.type === TestResourceOriginType.Object
             ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id).then(first)
             : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first)
+
+        replacer.replaced = first(replaceRecords);
+
+        return replacer;
     }
 
     /**

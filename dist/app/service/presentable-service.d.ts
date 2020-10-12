@@ -1,10 +1,11 @@
-import { CreatePresentableOptions, IOutsideApiService, IPresentableService, PageResult, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
-import { SubjectTypeEnum } from "../../enum";
+import { CreatePresentableOptions, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PageResult, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
+import { PresentableOnlineStatusEnum } from "../../enum";
 export declare class PresentableService implements IPresentableService {
     ctx: any;
     presentableProvider: any;
-    presentableVersionService: any;
     outsideApiService: IOutsideApiService;
+    presentableAuthService: IPresentableAuthService;
+    presentableVersionService: IPresentableVersionService;
     /**
      * 创建展品
      * @param {CreatePresentableOptions} options
@@ -17,6 +18,7 @@ export declare class PresentableService implements IPresentableService {
      * @param options
      */
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
+    updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<any>;
     findOne(condition: object, ...args: any[]): Promise<PresentableInfo>;
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
@@ -37,5 +39,5 @@ export declare class PresentableService implements IPresentableService {
      * @param policyIds
      * @private
      */
-    _validateSubjectPolicies(policies: PolicyInfo[], subjectType: SubjectTypeEnum): Promise<PolicyInfo[]>;
+    _validateAndCreateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]>;
 }

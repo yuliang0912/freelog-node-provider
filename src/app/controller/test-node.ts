@@ -11,8 +11,6 @@ import {isString, isArray, isUndefined, pick, chain, uniq, first, isEmpty} from 
 export class TestNodeController {
 
     @inject()
-    testRuleHandler;
-    @inject()
     nodeCommonChecker;
     @inject()
     testNodeGenerator;
@@ -212,7 +210,7 @@ export class TestNodeController {
     async testResourceDependencyTree(ctx) {
 
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
-        const entityNid = ctx.checkQuery('entityNid').optional().type('string').len(12, 12).value;
+        const nid = ctx.checkQuery('nid').optional().type('string').value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
         ctx.validateParams();
@@ -221,9 +219,29 @@ export class TestNodeController {
         if (!testResourceTreeInfo) {
             return [];
         }
-        const dependencyTree = this.testNodeGenerator.generateTestResourceDependencyTree(testResourceTreeInfo.dependencyTree, entityNid, maxDeep, isContainRootNode);
+        const dependencyTree = this.testNodeGenerator.generateTestResourceDependencyTree(testResourceTreeInfo.dependencyTree, nid, maxDeep, isContainRootNode);
         ctx.success(dependencyTree);
     }
+
+
+    @get('/testResources/:testResourceId/authTree')
+    @visitorIdentity(LoginUser)
+    async testResourceAuthTree(ctx) {
+
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
+        const nid = ctx.checkQuery('nid').optional().type('string').len(12, 12).value;
+        const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
+        ctx.validateParams();
+
+        const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId}, 'authTree');
+        if (!testResourceTreeInfo) {
+            return [];
+        }
+        const dependencyTree = this.testNodeGenerator.convertTestResourceAuthTree(testResourceTreeInfo.authTree, nid, maxDeep, isContainRootNode);
+        ctx.success(dependencyTree);
+    }
+
 
     @get('/:nodeId/testResources/dependencyTree/search')
     @visitorIdentity(LoginUser)
@@ -238,10 +256,10 @@ export class TestNodeController {
             nodeId, 'dependencyTree.name': searchRegexp
         };
 
-        const nodeTestResourceDependencyTrees = await this.testNodeService.findTestResourceTreeInfos(condition, 'dependencyTree');
+        const nodeTestResourceDependencyTree = await this.testNodeService.findTestResourceTreeInfos(condition, 'dependencyTree');
 
         const searchResults = [];
-        chain(nodeTestResourceDependencyTrees).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
+        chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
             const model = pick(first(values), ['id', 'name', 'type']);
             model['versions'] = uniq(values.filter(x => x.version).map(x => x.version));
             searchResults.push(model);

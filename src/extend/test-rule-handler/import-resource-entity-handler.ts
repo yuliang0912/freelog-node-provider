@@ -24,7 +24,7 @@ export class ImportResourceEntityHandler {
         addResourceRules.forEach(matchRule => {
             const resourceInfo = resources.find(x => x.resourceName.toLowerCase() === matchRule.ruleInfo.candidate.name.toLowerCase());
             this._fillRuleEntityInfo(matchRule, resourceInfo);
-        })
+        });
     }
 
     /**
@@ -35,23 +35,25 @@ export class ImportResourceEntityHandler {
     async getResourceDependencyTree(resourceIdOrName: string, version: string): Promise<TestResourceDependencyTree[]> {
 
         const resourceDependencyTree = await this.outsideApiService.getResourceDependencyTree(resourceIdOrName, {
-            isContainRootNode: 1,
-            version
+            isContainRootNode: 1, version
         });
 
         function recursionConvertSubNodes(dependencies: ResourceDependencyTree[]): TestResourceDependencyTree[] {
             if (!Array.isArray(dependencies)) {
                 return [];
             }
-            return dependencies.map(model => Object({
-                id: model.resourceId,
-                name: model.resourceName,
-                type: TestResourceOriginType.Resource,
-                resourceType: model.resourceType,
-                version: model.version,
-                versionId: model.versionId,
-                dependencies: recursionConvertSubNodes(model.dependencies)
-            }));
+            return dependencies.map(model => {
+                return {
+                    id: model.resourceId,
+                    name: model.resourceName,
+                    type: TestResourceOriginType.Resource,
+                    resourceType: model.resourceType,
+                    version: model.version,
+                    versionId: model.versionId,
+                    fileSha1: model.fileSha1,
+                    dependencies: recursionConvertSubNodes(model.dependencies)
+                }
+            });
         }
 
         return recursionConvertSubNodes(resourceDependencyTree);

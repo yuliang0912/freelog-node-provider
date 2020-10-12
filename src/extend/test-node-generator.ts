@@ -3,7 +3,7 @@ import {provide} from 'midway';
 import {satisfies} from 'semver';
 import {
     FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree,
-    TestResourceDependencyTree, TestResourceOriginInfo, TestResourceOriginType
+    TestResourceDependencyTree, TestResourceOriginInfo, TestResourceOriginType, TestResourceAuthTree
 } from '../test-node-interface';
 import {ResourceInfo} from "../interface";
 import {first, isEmpty, isString} from 'lodash';
@@ -12,7 +12,7 @@ import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
 @provide()
 export class TestNodeGenerator {
 
-    readonly dependencyNodeIdLength = 12;
+    readonly dependencyNodeIdLength = 8;
 
     /**
      * 生成测试资源ID
@@ -47,6 +47,45 @@ export class TestNodeGenerator {
     }
 
     /**
+     * 转换测试资源授权树
+     * @param flattenAuthTree
+     * @param startNid
+     * @param maxDeep
+     * @param isContainRootNode
+     */
+    convertTestResourceAuthTree(flattenAuthTree: FlattenTestResourceAuthTree[], startNid: string = "", maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceAuthTree[] {
+
+        const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
+        if (isEmpty(startedAuthTree)) {
+            return [];
+        }
+
+        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
+
+        function recursionBuildAuthTree(dependencies: FlattenTestResourceAuthTree[], currDeep: number = 1): TestResourceAuthTree[] {
+            if (isEmpty(dependencies) || currDeep++ >= maxDeep) {
+                return [];
+            }
+            return dependencies.map(item => {
+                return {
+                    nid: item.nid,
+                    id: item.id,
+                    name: item.name,
+                    type: item.type,
+                    version: item.version,
+                    versionId: item.versionId,
+                    userId: item.userId,
+                    children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
+                }
+            });
+        }
+
+        const convertedAuthTree = recursionBuildAuthTree(startedAuthTree);
+
+        return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
+    }
+
+    /**
      * 生成依赖树
      * @param dependencyTree
      * @param startNid
@@ -74,6 +113,8 @@ export class TestNodeGenerator {
                     resourceType: item.resourceType,
                     version: item.version,
                     versionId: item.versionId,
+                    fileSha1: item.fileSha1,
+                    replaced: item.replaced,
                     dependencies: recursionBuildDependencyTree(dependencyTree.filter(x => x.parentNid === item.nid), currDeep)
                 };
             })

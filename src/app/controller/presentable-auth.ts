@@ -1,6 +1,6 @@
 import {controller, get, inject, provide} from 'midway';
 import {
-    IOutsideApiService, IPresentableAuthService,
+    IPresentableAuthService,
     IPresentableService, IPresentableVersionService
 } from '../../interface';
 import {fullResourceName, mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
@@ -8,22 +8,22 @@ import {ArgumentError, LoginUser, UnLoginUser, InternalClient} from 'egg-freelog
 import {visitorIdentity} from "../../extend/vistorIdentityDecorator";
 
 @provide()
-@controller('/v2/auths/presentable') // 统一URL v2/auths/:subjectType
+@controller('/v2/auths/presentable') // 统一URL v2/auths/:subjectType/:subjectId
 export class ResourceAuthController {
 
     @inject()
-    ctx;
-    @inject()
-    outsideApiService: IOutsideApiService;
+    presentableAuthResponseHandler;
     @inject()
     presentableService: IPresentableService;
     @inject()
     presentableAuthService: IPresentableAuthService;
     @inject()
     presentableVersionService: IPresentableVersionService;
-    @inject()
-    presentableAuthResponseHandler;
 
+    /**
+     * 通过展品ID获取展品并且授权
+     * @param ctx
+     */
     @get('/:subjectId/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
     @visitorIdentity(LoginUser | UnLoginUser | InternalClient)
     async presentableAuth(ctx) {
@@ -42,6 +42,10 @@ export class ResourceAuthController {
         await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
     }
 
+    /**
+     * 通过节点ID和资源ID获取展品,并且授权
+     * @param ctx
+     */
     @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
     @visitorIdentity(LoginUser | UnLoginUser | InternalClient)
     async nodeResourceAuth(ctx) {

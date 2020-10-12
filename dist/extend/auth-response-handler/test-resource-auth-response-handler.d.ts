@@ -1,9 +1,10 @@
-import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableDependencyTree, PresentableVersionInfo } from '../../interface';
 import { SubjectAuthResult } from '../../auth-interface';
-export declare class PresentableAuthResponseHandler {
+import { IOutsideApiService } from '../../interface';
+import { FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo } from "../../test-node-interface";
+export declare class TestResourceAuthResponseHandler {
     ctx: any;
+    testNodeGenerator: any;
     outsideApiService: IOutsideApiService;
-    presentableVersionService: IPresentableVersionService;
     /**
      * 授权结果统一响应处理
      * @param presentableInfo
@@ -12,30 +13,30 @@ export declare class PresentableAuthResponseHandler {
      * @param entityNid
      * @param subResourceIdOrName
      */
-    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
+    handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string): Promise<void>;
     /**
      * 公共响应头处理
      * @param presentableVersionInfo
      * @param realResponseVersionInfo
      */
-    commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): void;
+    commonResponseHeaderHandle(responseTestResourceDependencyTree: TestResourceDependencyTree): void;
     /**
      * 文件流响应处理
      * @param presentableInfo
      * @param presentableVersionInfo
      * @param realResponseResourceVersionInfo
      */
-    fileStreamResponseHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): Promise<void>;
+    fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string): Promise<void>;
     /**
      * 标的物自身信息展示
      * @param presentableInfo
      */
-    subjectInfoResponseHandle(presentableInfo: PresentableInfo): void;
+    subjectInfoResponseHandle(testResourceInfo: TestResourceInfo): void;
     /**
      * 标的物上游资源信息展示
      * @param resourceId
      */
-    subjectUpstreamResourceInfoResponseHandle(resourceId: any): Promise<void>;
+    subjectUpstreamResourceInfoResponseHandle(resourceId: string): Promise<void>;
     subjectAuthFailedResponseHandle(authResult: SubjectAuthResult): void;
     subjectAuthProcessExceptionHandle(error: any): void;
     /**
@@ -45,9 +46,9 @@ export declare class PresentableAuthResponseHandler {
     subjectAuthResultResponse(authResult: SubjectAuthResult): void;
     /**
      * 获取实际需要响应的资源信息,例如标的物的依赖项
-     * @param presentableVersionAuthTree
+     * @param presentableAuthTree
      * @param parentEntityNid
      * @param subResourceIdOrName
      */
-    getRealResponseResourceInfo(flattenPresentableDependencyTree: FlattenPresentableDependencyTree[], parentNid: string, subResourceIdOrName?: string): PresentableDependencyTree;
+    getRealResponseEntityInfo(flattenTestResourceDependencyTree: FlattenTestResourceDependencyTree[], parentNid: string, subEntityIdOrName?: string, subEntityType?: string): TestResourceDependencyTree;
 }

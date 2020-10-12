@@ -3,7 +3,7 @@ import {provide, inject} from 'midway';
 import {
     ContractInfo, IOutsideApiService,
     ResourceInfo, ResourceVersionInfo,
-    SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTree
+    SubjectInfo, UserInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo
 } from '../../interface';
 import {IdentityType, SubjectTypeEnum} from '../../enum';
 import {ObjectDependencyTreeInfo} from '../../test-node-interface';
@@ -163,11 +163,23 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 创建策略
+     * @param policyText
+     */
+    async createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}`, {
+            method: 'post', contentType: 'json', data: {
+                policyTexts, subjectType: SubjectTypeEnum.Resource
+            }
+        });
+    }
+
+    /**
      * 获取标的物策略
      * @param policyIds
      * @param projection
      */
-    async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = []): Promise<PolicyInfo[]> {
+    async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = []): Promise<BasePolicyInfo[]> {
         if (isEmpty(policyIds)) {
             return [];
         }
@@ -206,11 +218,12 @@ export class OutsideApiService implements IOutsideApiService {
      * 批量获取资源的授权结果
      * @param resourceVersionIds
      */
-    async getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]> {
+    async getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]> {
         if (isEmpty(resourceVersionIds)) {
             return [];
         }
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.authInfoV2}/resource/batchAuth/result?resourceVersionIds=${resourceVersionIds.toString()}`);
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.authInfoV2}/resource/batchAuth/result?resourceVersionIds=${resourceVersionIds.toString()}&${optionParams.join('&')}`);
     }
 
     /**

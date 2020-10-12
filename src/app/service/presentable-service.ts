@@ -1,13 +1,19 @@
 import {inject, provide} from 'midway';
 import {
-    CreatePresentableOptions, IOutsideApiService,
-    IPresentableService, PageResult, PolicyInfo,
-    PresentableInfo, ResolveResource,
-    ResourceInfo, UpdatePresentableOptions
+    CreatePresentableOptions,
+    IOutsideApiService,
+    IPresentableAuthService,
+    IPresentableService, IPresentableVersionService,
+    PageResult,
+    PolicyInfo,
+    PresentableInfo,
+    ResolveResource,
+    ResourceInfo,
+    UpdatePresentableOptions
 } from '../../interface';
 import {ApplicationError} from 'egg-freelog-base';
-import {differenceBy, isArray, isEmpty, chain, pick, assign, uniqBy} from 'lodash';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum} from "../../enum";
+import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from "../../enum";
 
 @provide()
 export class PresentableService implements IPresentableService {
@@ -17,9 +23,11 @@ export class PresentableService implements IPresentableService {
     @inject()
     presentableProvider;
     @inject()
-    presentableVersionService;
-    @inject()
     outsideApiService: IOutsideApiService;
+    @inject()
+    presentableAuthService: IPresentableAuthService;
+    @inject()
+    presentableVersionService: IPresentableVersionService;
 
     /**
      * 创建展品
@@ -42,13 +50,8 @@ export class PresentableService implements IPresentableService {
 
         await this._validateResolveResources(resourceInfo, resolveResources);
 
-        if (!isEmpty(policies)) {
-            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.policies, SubjectTypeEnum.Resource).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
-            policies.forEach(addPolicy => model.policies.push({
-                policyId: addPolicy.policyId,
-                policyName: addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId),
-                status: addPolicy.status ?? 1
-            }));
+        if (isArray(policies) && !isEmpty(policies)) {
+            model.policies = await this._validateAndCreateSubjectPolicies(options.policies);
             if (model.policies.some(x => x.status === 1)) {
                 model.onlineStatus = PresentableOnlineStatusEnum.Online;
             }
@@ -97,19 +100,22 @@ export class PresentableService implements IPresentableService {
             });
         }
         if (isArray(options.addPolicies)) {
-            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.addPolicies, SubjectTypeEnum.Resource).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
-            options.addPolicies.forEach(addPolicy => {
-                if (existingPolicyMap.has(addPolicy.policyId)) {
-                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), addPolicy);
+            const existingPolicyNameSet = new Set(presentableInfo.policies.map(x => x.policyName));
+            const duplicatePolicyNames = options.addPolicies.filter(x => existingPolicyNameSet.has(x.policyName));
+            if (!isEmpty(duplicatePolicyNames)) {
+                throw new ApplicationError(this.ctx.gettext('subject-policy-name-duplicate-failed'), duplicatePolicyNames);
+            }
+            const createdPolicyList = await this._validateAndCreateSubjectPolicies(options.addPolicies);
+            for (const createdPolicy of createdPolicyList) {
+                if (existingPolicyMap.has(createdPolicy.policyId)) {
+                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), createdPolicy);
                 }
-                addPolicy.policyName = addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId);
-                addPolicy.status = addPolicy.status ?? 1;
-                existingPolicyMap.set(addPolicy.policyId, addPolicy);
-            });
+                existingPolicyMap.set(createdPolicy.policyId, createdPolicy);
+            }
         }
         if (isArray(options.updatePolicies) || isArray(options.addPolicies)) {
             updateModel.policies = [...existingPolicyMap.values()];
-            updateModel.onlineStatus = updateModel.policies.some(x => x.status === 1) ? PresentableOnlineStatusEnum.Online : PresentableOnlineStatusEnum.Offline;
+            // updateModel.onlineStatus = updateModel.policies.some(x => x.status === 1) ? PresentableOnlineStatusEnum.Online : PresentableOnlineStatusEnum.Offline;
         }
 
         // 如果重新选择已解决资源的策略,则系统会重新进行签约,并且赋值
@@ -133,7 +139,22 @@ export class PresentableService implements IPresentableService {
             });
         }
 
+
         return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.presentableId}, updateModel, {new: true});
+    }
+
+    async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum) {
+        if (onlineStatus === PresentableOnlineStatusEnum.Online) {
+            if (!presentableInfo.policies.some(x => x.status === 1)) {
+                throw new ApplicationError(this.ctx.gettext('presentable-online-policy-validate-error'));
+            }
+            const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'authTree');
+            const presentableNodeSideAuthResult = await this.presentableAuthService.presentableNodeSideAuth(presentableInfo, presentableVersionInfo.authTree);
+            if (!presentableNodeSideAuthResult.isAuth) {
+                throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'));
+            }
+        }
+        return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.presentableId}, {onlineStatus}, {new: true});
     }
 
     async findOne(condition: object, ...args): Promise<PresentableInfo> {
@@ -220,18 +241,33 @@ export class PresentableService implements IPresentableService {
      * @param policyIds
      * @private
      */
-    async _validateSubjectPolicies(policies: PolicyInfo[], subjectType: SubjectTypeEnum): Promise<PolicyInfo[]> {
+    async _validateAndCreateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]> {
         if (isEmpty(policies)) {
             return [];
         }
-        if (uniqBy(policies, 'policyId').length !== policies.length) {
+        // 名称不允许重复
+        if (uniqBy(policies, 'policyName').length !== policies.length) {
             throw new ApplicationError(this.ctx.gettext('subject-policy-repeatability-validate-failed'));
         }
-        const policyInfos = await this.outsideApiService.getPolicies(policies.map(x => x.policyId), subjectType, ['policyId', 'policyName', 'userId']);
-        const invalidPolicies = differenceBy(policies, policyInfos, 'policyId');
-        if (!isEmpty(invalidPolicies)) {
-            throw new ApplicationError(this.ctx.gettext('subject-policy-validate-failed'), invalidPolicies);
+        const policyInfos = await this.outsideApiService.createPolicies(policies.map(x => x.policyText));
+        if (policyInfos.length !== policies.length) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-create-failed'));
         }
-        return policyInfos;
+        if (uniqBy(policyInfos, 'policyId').length !== policyInfos.length) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-repeatability-validate-failed'));
+        }
+
+        const result: PolicyInfo[] = [];
+        for (let i = 0, j = policyInfos.length; i < j; i++) {
+            const policyInfo = policyInfos[i];
+            result.push({
+                policyId: policyInfo.policyId,
+                policyText: policyInfo.policyText,
+                fsmDescriptionInfo: policyInfo.fsmDescriptionInfo,
+                policyName: policies[i].policyName,
+                status: policies[i].status ?? 1,
+            })
+        }
+        return result;
     }
 }

@@ -84,11 +84,16 @@ export interface UserInfo {
     username: string;
 }
 
-export interface PolicyInfo {
+export interface BasePolicyInfo {
     policyId: string;
-    policyName?: string;
-    policyText?: string;
-    status?: number;
+    policyText: string;
+    subjectType?: number;
+    fsmDescriptionInfo: object;
+}
+
+export interface PolicyInfo extends BasePolicyInfo {
+    status: number;
+    policyName: string;
 }
 
 export interface CreateNodeOptions {
@@ -247,13 +252,12 @@ export interface FlattenPresentableAuthTree {
 }
 
 export interface PresentableAuthTree {
+    nid: string;
     resourceId: string;
     resourceName: string;
-    versions: {
-        version: string;
-        versionId: string;
-        resolveResources: PresentableAuthTree[]
-    }
+    version: string;
+    versionId: string;
+    children: PresentableAuthTree[];
 }
 
 export interface PresentableResolveResource {
@@ -326,7 +330,9 @@ export interface IOutsideApiService {
 
     getUserInfo(userId: number): Promise<UserInfo>;
 
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<PolicyInfo[]>;
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<BasePolicyInfo[]>;
 
     batchSignNodeContracts(nodeId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 
@@ -336,7 +342,7 @@ export interface IOutsideApiService {
 
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
 
-    getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]>;
+    getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
 
     getFileStream(fileSha1: string): Promise<any>;
 
@@ -350,6 +356,8 @@ export interface IPresentableAuthService {
     contractAuth(subjectId, contracts: ContractInfo[]): SubjectAuthResult;
 
     presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+
+    presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 
 export interface IPresentableVersionService {

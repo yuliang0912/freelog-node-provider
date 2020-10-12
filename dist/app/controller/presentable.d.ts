@@ -9,10 +9,16 @@ export declare class PresentableController {
     resolveResourcesValidator: IJsonSchemaValidate;
     presentablePolicyValidator: IJsonSchemaValidate;
     presentableVersionService: IPresentableVersionService;
-    index(ctx: any): Promise<any>;
-    create(ctx: any): Promise<void>;
-    update(ctx: any): Promise<void>;
-    detail(ctx: any): Promise<void>;
+    presentablePageList(ctx: any): Promise<any>;
+    /**
+     * 获取presentable列表
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    list(ctx: any): Promise<void>;
+    createPresentable(ctx: any): Promise<void>;
+    updatePresentable(ctx: any): Promise<void>;
+    presentableDetail(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<void>;
     authTree(ctx: any): Promise<void>;

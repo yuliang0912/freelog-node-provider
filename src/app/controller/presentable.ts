@@ -1,5 +1,5 @@
 import * as semver from 'semver';
-import {isString, chain, isUndefined, isEmpty} from 'lodash';
+import {isString, chain, isUndefined, isNumber, isEmpty} from 'lodash';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
@@ -33,7 +33,7 @@ export class PresentableController {
 
     @get('/')
     @visitorIdentity(InternalClient | LoginUser)
-    async index(ctx) {
+    async presentablePageList(ctx) {
 
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
@@ -43,8 +43,7 @@ export class PresentableController {
         const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
         const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
-        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const condition: any = {nodeId};
@@ -63,12 +62,15 @@ export class PresentableController {
             const searchExp = {$regex: keywords, $options: 'i'};
             condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}, {'resourceInfo.resourceName': searchExp}];
         }
-        const pageResult = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1})
 
+        const pageResult = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        return ctx.success(pageResult);
+
+        // 以下代码已过期,目前只有展品切换版本时需要考虑所有版本列表,此操作可以通过调用资源接口获取到可选版本集
+        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
         if (!pageResult.dataList.length || !isLoadingResourceInfo) {
             return ctx.success(pageResult);
         }
-
         const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
         const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
             .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
@@ -83,9 +85,50 @@ export class PresentableController {
         ctx.success(pageResult);
     }
 
+    /**
+     * 获取presentable列表
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    @get('/list')
+    @visitorIdentity(InternalClient | LoginUser)
+    async list(ctx) {
+
+        const userId = ctx.checkQuery('userId').optional().toInt().gt(0).value;
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
+        const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const resourceIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const resourceNames = ctx.checkQuery('releaseNames').optional().toSplitArray().len(1, 100).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const condition: any = {};
+        if (isNumber(userId)) {
+            condition.userId = userId;
+        }
+        if (isNumber(nodeId)) {
+            condition.nodeId = nodeId;
+        }
+        if (presentableIds) {
+            condition._id = {$in: presentableIds};
+        }
+        if (resourceIds) {
+            condition['resourceInfo.resourceId'] = {$in: resourceIds};
+        }
+        if (resourceNames) {
+            condition['resourceInfo.resourceNames'] = {$in: resourceNames.map(decodeURIComponent)};
+        }
+
+        if (!resourceIds && !presentableIds && !resourceNames) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'))
+        }
+
+        await this.presentableService.find(condition, projection.join(' ')).then(ctx.success);
+    }
+
     @post('/')
     @visitorIdentity(LoginUser)
-    async create(ctx) {
+    async createPresentable(ctx) {
 
         const nodeId = ctx.checkBody('nodeId').exist().toInt().gt(0).value;
         const resourceId = ctx.checkBody('resourceId').isResourceId().value;
@@ -128,7 +171,7 @@ export class PresentableController {
 
     @put('/:presentableId')
     @visitorIdentity(LoginUser)
-    async update(ctx) {
+    async updatePresentable(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const presentableTitle = ctx.checkBody('presentableTitle').optional().type('string').value;
@@ -159,7 +202,7 @@ export class PresentableController {
 
     @get('/detail')
     @visitorIdentity(LoginUser)
-    async detail(ctx) {
+    async presentableDetail(ctx) {
 
         const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(0).value;
         const resourceId = ctx.checkQuery('resourceId').optional().isResourceId().value;
@@ -210,7 +253,7 @@ export class PresentableController {
 
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
-        //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
+        // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
         const nid = ctx.checkQuery('nid').optional().type('string').value;
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -237,9 +280,9 @@ export class PresentableController {
 
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
-        //不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
+        // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
         const nid = ctx.checkQuery('nid').optional().type('string').value;
-        //与依赖树不同的是presentable授权树没有根节点(节点签约的,不能作为根),所以此参数一般是配合nid一起使用才有正确的效果
+        // 与依赖树不同的是presentable授权树没有根节点(节点签约的,不能作为根),所以此参数一般是配合nid一起使用才有正确的效果
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();

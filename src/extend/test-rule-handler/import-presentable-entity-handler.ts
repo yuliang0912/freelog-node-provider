@@ -53,16 +53,19 @@ export class ImportPresentableEntityHandler {
             if (!Array.isArray(dependencies)) {
                 return [];
             }
-            return dependencies.map(model => Object({
-                nid: model.nid,
-                id: model.resourceId,
-                name: model.resourceName,
-                type: TestResourceOriginType.Resource,
-                resourceType: model.resourceType,
-                version: model.version,
-                versionId: model.versionId,
-                dependencies: recursionConvertSubNodes(model.dependencies)
-            }));
+            return dependencies.map(model => {
+                return {
+                    nid: model.nid,
+                    id: model.resourceId,
+                    name: model.resourceName,
+                    type: TestResourceOriginType.Resource,
+                    resourceType: model.resourceType,
+                    version: model.version,
+                    versionId: model.versionId,
+                    fileSha1: model.fileSha1,
+                    dependencies: recursionConvertSubNodes(model.dependencies)
+                }
+            });
         }
 
         return recursionConvertSubNodes(presentableDependencyTree);

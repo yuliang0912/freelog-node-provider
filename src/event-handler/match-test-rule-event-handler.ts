@@ -286,8 +286,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     FlattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
         for (const dependencyInfo of dependencyTree) {
             const nid = this.testNodeGenerator.generateDependencyNodeId(deep === 1 ? testResourceId : null);
-            const {id, name, type, version, versionId, dependencies, resourceType} = dependencyInfo;
-            results.push({nid, id, name, type, deep, version, versionId, parentNid, resourceType});
+            const {id, fileSha1, name, type, version, versionId, dependencies, resourceType, replaced} = dependencyInfo;
+            results.push({fileSha1, nid, id, name, type, deep, version, versionId, parentNid, resourceType, replaced});
             this.FlattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
         }
         return results;
@@ -316,6 +316,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 resourceType: item.resourceType,
                 version: item.version,
                 versionId: item.versionId,
+                fileSha1: item.fileSha1,
                 parentNid: item.parentNid,
                 deep: item.deep
             }

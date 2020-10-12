@@ -1,4 +1,4 @@
-import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, UserInfo, PolicyInfo, ObjectStorageInfo, ResourceDependencyTree } from '../../interface';
+import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, UserInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo } from '../../interface';
 import { SubjectTypeEnum } from '../../enum';
 import { ObjectDependencyTreeInfo } from '../../test-node-interface';
 export declare class OutsideApiService implements IOutsideApiService {
@@ -78,11 +78,16 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     /**
+     * 创建策略
+     * @param policyText
+     */
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+    /**
      * 获取标的物策略
      * @param policyIds
      * @param projection
      */
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[]): Promise<PolicyInfo[]>;
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[]): Promise<BasePolicyInfo[]>;
     /**
      * 获取用户与展品的合约
      * @param subjectId
@@ -101,7 +106,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * 批量获取资源的授权结果
      * @param resourceVersionIds
      */
-    getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]>;
+    getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
     /**
      * 获取文件流
      * @param fileSha1

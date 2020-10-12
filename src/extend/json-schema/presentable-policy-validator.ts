@@ -14,8 +14,9 @@ export class PresentablePolicyValidator extends freelogCommonJsonSchema implemen
      * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations: object[]): ValidatorResult {
-        return super.validate(operations, super.getSchema('/policySchema'));
+    validate(operations: object[], mode: 'addPolicy' | 'updatePolicy'): ValidatorResult {
+        const schemaId = mode === 'addPolicy' ? '/addPolicySchema' : '/updatePolicySchema';
+        return super.validate(operations, super.getSchema(schemaId));
     }
 
     /**
@@ -39,7 +40,27 @@ export class PresentablePolicyValidator extends freelogCommonJsonSchema implemen
          * 新增策略格式
          */
         super.addSchema({
-            id: '/policySchema',
+            id: '/addPolicySchema',
+            type: 'array',
+            uniqueItems: true,
+            maxItems: 20,
+            items: {
+                type: 'object',
+                required: true,
+                additionalProperties: false,
+                properties: {
+                    policyName: {required: true, minLength: 1, maxLength: 20, type: 'string', format: 'policyName'},
+                    policyText: {required: true, type: 'string'},
+                    status: {required: false, type: 'integer', enum: [0, 1], minimum: 0, maximum: 1}
+                }
+            }
+        });
+
+        /**
+         * 修改策略格式
+         */
+        super.addSchema({
+            id: '/updatePolicySchema',
             type: 'array',
             uniqueItems: true,
             maxItems: 20,
@@ -49,8 +70,8 @@ export class PresentablePolicyValidator extends freelogCommonJsonSchema implemen
                 additionalProperties: false,
                 properties: {
                     policyId: {required: true, type: 'string', format: 'md5'},
-                    policyName: {required: false, minLength: 2, maxLength: 20, type: 'string', format: 'policyName'},
-                    status: {required: false, type: 'integer', minimum: 0, maximum: 1}
+                    // 目前只允许修改上线下状态,名字暂时锁住不让修改
+                    status: {required: true, type: 'integer', enum: [0, 1], minimum: 0, maximum: 1}
                 }
             }
         });

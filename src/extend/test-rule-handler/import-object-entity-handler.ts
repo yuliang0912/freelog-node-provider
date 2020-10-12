@@ -45,15 +45,18 @@ export class ImportObjectEntityHandler {
             if (!Array.isArray(dependencies)) {
                 return [];
             }
-            return dependencies.map(model => Object({
-                id: model.id,
-                name: model.name,
-                type: model.type,
-                resourceType: model.resourceType,
-                version: model.version,
-                versionId: model.versionId,
-                dependencies: recursionConvertSubNodes(model.dependencies)
-            }));
+            return dependencies.map(model => {
+                return {
+                    id: model.id,
+                    name: model.name,
+                    type: model.type as TestResourceOriginType,
+                    resourceType: model.resourceType,
+                    version: model.version,
+                    versionId: model.versionId,
+                    fileSha1: model.fileSha1,
+                    dependencies: recursionConvertSubNodes(model.dependencies)
+                }
+            });
         }
 
         return recursionConvertSubNodes(objectDependencyTree);

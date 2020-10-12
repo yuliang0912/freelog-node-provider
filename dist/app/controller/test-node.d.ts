@@ -1,7 +1,6 @@
 import { IJsonSchemaValidate, INodeService } from '../../interface';
 import { ITestNodeService } from "../../test-node-interface";
 export declare class TestNodeController {
-    testRuleHandler: any;
     nodeCommonChecker: any;
     testNodeGenerator: any;
     nodeService: INodeService;
@@ -21,6 +20,7 @@ export declare class TestNodeController {
     updateTestResource(ctx: any): Promise<void>;
     searchTestResources(ctx: any): Promise<void>;
     testResourceDependencyTree(ctx: any): Promise<any[]>;
+    testResourceAuthTree(ctx: any): Promise<any[]>;
     searchTestResourceDependencyTree(ctx: any): Promise<void>;
     filterTestResourceDependencyTree(ctx: any): Promise<any>;
 }

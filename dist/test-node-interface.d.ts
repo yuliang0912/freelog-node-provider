@@ -1,4 +1,5 @@
 import { PageResult, PresentableInfo } from "./interface";
+import { SubjectAuthResult } from "./auth-interface";
 export declare enum TestResourceOriginType {
     Resource = "resource",
     Object = "object"
@@ -59,17 +60,20 @@ export interface TestRuleMatchInfo {
     };
     efficientInfos: TestRuleEfficientInfo[];
 }
-export interface FlattenTestResourceDependencyTree {
+export interface BaseReplacedInfo {
+    id: string;
+    name: string;
+    type: TestResourceOriginType;
+}
+export interface TestResourceAuthTree {
     nid: string;
     id: string;
     name: string;
     type: TestResourceOriginType;
     version: string;
     versionId: string;
-    resourceType: string;
-    deep: number;
-    parentNid: string;
     userId?: number;
+    children: TestResourceAuthTree[];
 }
 export interface FlattenTestResourceAuthTree {
     nid: string;
@@ -90,7 +94,23 @@ export interface TestResourceDependencyTree {
     version: string;
     versionId: string;
     resourceType: string;
+    fileSha1: string;
+    replaced?: BaseReplacedInfo;
     dependencies: TestResourceDependencyTree[];
+}
+export interface FlattenTestResourceDependencyTree {
+    nid: string;
+    id: string;
+    name: string;
+    type: TestResourceOriginType;
+    version: string;
+    versionId: string;
+    fileSha1: string;
+    resourceType: string;
+    deep: number;
+    parentNid: string;
+    userId?: number;
+    replaced?: BaseReplacedInfo;
 }
 export interface ObjectDependencyTreeInfo {
     id: string;
@@ -99,6 +119,7 @@ export interface ObjectDependencyTreeInfo {
     versionId?: string;
     versionRange?: string;
     versions?: string[];
+    fileSha1: string;
     type: 'object' | 'resource';
     resourceType: string;
     dependencies: ObjectDependencyTreeInfo[];
@@ -176,4 +197,7 @@ export interface ITestNodeService {
     matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
     updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
     findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<TestResourceInfo>>;
+}
+export interface ITestResourceAuthService {
+    testResourceAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
 }

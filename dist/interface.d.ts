@@ -68,11 +68,15 @@ export interface UserInfo {
     userId: number;
     username: string;
 }
-export interface PolicyInfo {
+export interface BasePolicyInfo {
     policyId: string;
-    policyName?: string;
-    policyText?: string;
-    status?: number;
+    policyText: string;
+    subjectType?: number;
+    fsmDescriptionInfo: object;
+}
+export interface PolicyInfo extends BasePolicyInfo {
+    status: number;
+    policyName: string;
 }
 export interface CreateNodeOptions {
     nodeName: string;
@@ -208,13 +212,12 @@ export interface FlattenPresentableAuthTree {
     deep: number;
 }
 export interface PresentableAuthTree {
+    nid: string;
     resourceId: string;
     resourceName: string;
-    versions: {
-        version: string;
-        versionId: string;
-        resolveResources: PresentableAuthTree[];
-    };
+    version: string;
+    versionId: string;
+    children: PresentableAuthTree[];
 }
 export interface PresentableResolveResource {
     resourceId: string;
@@ -256,12 +259,13 @@ export interface IOutsideApiService {
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getUserInfo(userId: number): Promise<UserInfo>;
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<PolicyInfo[]>;
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<BasePolicyInfo[]>;
     batchSignNodeContracts(nodeId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
-    getResourceVersionAuthResults(resourceVersionIds: string[]): Promise<any[]>;
+    getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
     getFileStream(fileSha1: string): Promise<any>;
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
@@ -269,6 +273,7 @@ export interface IOutsideApiService {
 export interface IPresentableAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;
     presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+    presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 export interface IPresentableVersionService {
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;

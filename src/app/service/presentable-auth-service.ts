@@ -1,17 +1,12 @@
 import {inject, provide} from 'midway';
 import {
-    IOutsideApiService,
-    IPresentableAuthService,
-    IPresentableService,
-    IPresentableVersionService,
-    ContractInfo, PresentableInfo,
-    FlattenPresentableAuthTree,
-    UserInfo
+    IOutsideApiService, IPresentableAuthService,
+    ContractInfo, PresentableInfo, FlattenPresentableAuthTree, UserInfo
 } from '../../interface';
-import {chain, isArray, isEmpty} from 'lodash';
 import {SubjectTypeEnum} from "../../enum";
-import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
+import {chain, isArray, isEmpty} from 'lodash';
 import {ApplicationError} from 'egg-freelog-base';
+import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
 
 @provide()
 export class PresentableAuthService implements IPresentableAuthService {
@@ -20,59 +15,49 @@ export class PresentableAuthService implements IPresentableAuthService {
     ctx;
     @inject()
     outsideApiService: IOutsideApiService;
-    @inject()
-    presentableService: IPresentableService;
-    @inject()
-    presentableVersionService: IPresentableVersionService;
 
     /**
      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)
      * @param presentableInfo
      */
-    async presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
+    async presentableAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const clientUserSideAuthResult = await this.presentableClientUserSideAuth(presentableInfo);
         if (!clientUserSideAuthResult.isAuth) {
             return clientUserSideAuthResult;
         }
 
-        const presentableNodeSideAuthResult = await this.presentableNodeSideAuth(presentableInfo, presentableVersionAuthTree);
-        if (!presentableNodeSideAuthResult.isAuth) {
-            return presentableNodeSideAuthResult;
-        }
+        const nodeSideAuthTask = this.presentableNodeSideAuth(presentableInfo, presentableAuthTree);
+        const upstreamResourceAuthTask = this.presentableUpstreamAuth(presentableInfo, presentableAuthTree);
+        const [nodeSideAuthResult, upstreamResourceAuthResult] = await Promise.all([nodeSideAuthTask, upstreamResourceAuthTask]);
 
-        const upstreamResourceAuthResult = await this.presentableUpstreamAuth(presentableInfo, presentableVersionAuthTree);
-        if (!upstreamResourceAuthResult.isAuth) {
-            return upstreamResourceAuthResult;
-        }
-
-        return clientUserSideAuthResult;
+        return !nodeSideAuthResult.isAuth ? nodeSideAuthResult : !upstreamResourceAuthResult.isAuth ? upstreamResourceAuthResult : clientUserSideAuthResult;
     }
 
     /**
      * 展品节点侧授权(节点自己解决的资源以及上抛的授权情况)
      * @param presentableInfo
-     * @param presentableVersionAuthTree
+     * @param presentableAuthTree
      */
-    async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
+    async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const authResult = new SubjectAuthResult();
         // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.
-        const presentableResolveResourceIdSet = new Set(presentableVersionAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
+        const presentableResolveResourceIdSet = new Set(presentableAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
         // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
         const toBeAuthorizedResources = presentableInfo.resolveResources.filter(x => presentableResolveResourceIdSet.has(x.resourceId));
 
         const allNodeContractIds = chain(toBeAuthorizedResources).map(x => x.contracts).flattenDeep().map(x => x.contractId).value();
 
         const contractMap = await this.outsideApiService.getContractByContractIds(allNodeContractIds, {
-            licenseeId: presentableInfo.nodeId, projection: 'subjectId subjectType authStatus'
+            licenseeId: presentableInfo.nodeId, projection: 'contractId,subjectId,subjectType,authStatus'
         }).then(list => {
             return new Map(list.map(x => [x.contractId, x]));
         });
 
         const authFailedResources = toBeAuthorizedResources.filter(resolveResource => {
             const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-            // const currentAuthTreeNode = presentableVersionAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
+            // const currentAuthTreeNode = presentableAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
             // currentAuthTreeNode.authContractIds = resolveResource.contracts.map(x => x.contractId);
             return !this.contractAuth(resolveResource.resourceId, contracts).isAuth;
         });
@@ -87,25 +72,25 @@ export class PresentableAuthService implements IPresentableAuthService {
     /**
      * 展品上游合约授权(通过授权树获取对应的合约的授权状态即可直接判定,无需调用标的物的授权API)
      * @param presentableInfo
-     * @param presentableVersionAuthTree
+     * @param presentableAuthTree
      */
-    async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
+    async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
         const authResult = new SubjectAuthResult();
-        const resourceVersionIds = chain(presentableVersionAuthTree).map(x => x.versionId).uniq().value();
+        const resourceVersionIds = chain(presentableAuthTree).map(x => x.versionId).uniq().value();
         if (isEmpty(resourceVersionIds)) {
             throw new ApplicationError('presentable data has loused');
         }
 
-        const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds);
+        const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds, {authType: 'auth'});
 
         for (const resourceVersionAuthResult of resourceVersionAuthResults) {
             const {versionId, resolveResourceAuthResults} = resourceVersionAuthResult;
             if (isEmpty(resourceVersionAuthResults)) {
                 continue;
             }
-            const nids = presentableVersionAuthTree.filter(x => x.versionId === versionId).map(x => x.nid);
-            const practicalUsedResources = presentableVersionAuthTree.filter(x => nids.includes(x.parentNid));
+            const nids = presentableAuthTree.filter(x => x.versionId === versionId).map(x => x.nid);
+            const practicalUsedResources = presentableAuthTree.filter(x => nids.includes(x.parentNid));
             const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'resourceId').filter(x => !x.authResult?.isAuth).value();
             if (!isEmpty(authFailedResources)) {
                 return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setErrorMsg('展品上游链路授权未通过');

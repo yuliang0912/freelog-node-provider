@@ -74,6 +74,6 @@ export class NodeCommonChecker {
      * @returns {[string,string]}
      */
     static get systemRetain() {
-        return ['freelog', 'www', 'account', 'docs', 'free', 'democracy', 'service', 'node', 'nodes', 'admin', 'self', 'public', 'system', 'user', 'group', 'copyright', 'platform', 'china', 'xijinping', 'company', 'maozedong', 'dengxiaop', 'zhouenlai', 'likeqiang', 'jiangzeming', 'hujingtao']
+        return ['freelog', 'www', 'account', 'login', 'pay', 'master', 'main', 'shenzhen', 'beijing', 'shanghai', 'docs', 'free', 'democracy', 'service', 'node', 'nodes', 'admin', 'self', 'public', 'system', 'user', 'group', 'copyright', 'platform', 'china', 'xijinping', 'company', 'maozedong', 'dengxiaop', 'zhouenlai', 'likeqiang', 'jiangzeming', 'hujingtao']
     }
 }
