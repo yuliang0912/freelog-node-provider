@@ -97,8 +97,8 @@ export class PresentableController {
         const userId = ctx.checkQuery('userId').optional().toInt().gt(0).value;
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
-        const resourceIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
-        const resourceNames = ctx.checkQuery('releaseNames').optional().toSplitArray().len(1, 100).value;
+        const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().len(1, 100).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
