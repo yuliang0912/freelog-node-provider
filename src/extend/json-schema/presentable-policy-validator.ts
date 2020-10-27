@@ -32,7 +32,7 @@ export class PresentablePolicyValidator extends freelogCommonJsonSchema implemen
          */
         super.registerCustomFormats('policyName', (input) => {
             input = input.trim();
-            return input.length >= 2 && input.length < 20;
+            return input.length >= 2 && input.length <= 20;
         });
 
 

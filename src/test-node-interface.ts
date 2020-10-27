@@ -179,7 +179,7 @@ export interface TestResourceTreeInfo {
     testResourceId: string;
     testResourceName: string;
     dependencyTree: FlattenTestResourceDependencyTree[];
-    authTree: FlattenTestResourceAuthTree[],
+    authTree: FlattenTestResourceAuthTree[];
 }
 
 export interface NodeTestRuleInfo {

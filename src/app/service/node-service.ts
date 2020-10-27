@@ -13,8 +13,8 @@ export class NodeService implements INodeService {
     @inject()
     autoIncrementRecordProvider;
 
-    async updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean> {
-        return true;
+    async updateNodeInfo(nodeId: number, model: object): Promise<boolean> {
+        return this.nodeProvider.updateOne({nodeId}, model);
     }
 
     async createNode(options: CreateNodeOptions): Promise<NodeInfo> {

@@ -163,13 +163,13 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
-     * 创建策略
+     * 创建展品策略
      * @param policyText
      */
     async createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}`, {
             method: 'post', contentType: 'json', data: {
-                policyTexts, subjectType: SubjectTypeEnum.Resource
+                policyTexts, subjectType: SubjectTypeEnum.Presentable
             }
         });
     }

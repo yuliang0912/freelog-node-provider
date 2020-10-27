@@ -1,6 +1,7 @@
 import {inject, provide} from 'midway';
 import {
-    CreatePresentableOptions,
+    BasePolicyInfo,
+    CreatePresentableOptions, INodeService,
     IOutsideApiService,
     IPresentableAuthService,
     IPresentableService, IPresentableVersionService,
@@ -13,7 +14,7 @@ import {
 } from '../../interface';
 import {ApplicationError} from 'egg-freelog-base';
 import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from "../../enum";
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum} from "../../enum";
 
 @provide()
 export class PresentableService implements IPresentableService {
@@ -22,6 +23,8 @@ export class PresentableService implements IPresentableService {
     ctx;
     @inject()
     presentableProvider;
+    @inject()
+    nodeService: INodeService;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
@@ -88,7 +91,9 @@ export class PresentableService implements IPresentableService {
         if (isArray(options.tags)) {
             updateModel.tags = options.tags;
         }
-
+        if (isArray(options.coverImages)) {
+            updateModel.coverImages = options.coverImages;
+        }
         const existingPolicyMap = new Map<string, PolicyInfo>(presentableInfo.policies.map(x => [x.policyId, x]));
         if (isArray(options.updatePolicies)) {
             options.updatePolicies.forEach(modifyPolicy => {
@@ -143,7 +148,24 @@ export class PresentableService implements IPresentableService {
         return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.presentableId}, updateModel, {new: true});
     }
 
-    async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum) {
+    /**
+     * 更新展品版本
+     * @param presentableInfo
+     * @param version
+     * @param resourceVersionId
+     */
+    async updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean> {
+        await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {version});
+        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, resourceVersionId);
+        return true;
+    }
+
+    /**
+     * 更新展品上下线状态
+     * @param presentableInfo
+     * @param onlineStatus
+     */
+    async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean> {
         if (onlineStatus === PresentableOnlineStatusEnum.Online) {
             if (!presentableInfo.policies.some(x => x.status === 1)) {
                 throw new ApplicationError(this.ctx.gettext('presentable-online-policy-validate-error'));
@@ -151,10 +173,31 @@ export class PresentableService implements IPresentableService {
             const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'authTree');
             const presentableNodeSideAuthResult = await this.presentableAuthService.presentableNodeSideAuth(presentableInfo, presentableVersionInfo.authTree);
             if (!presentableNodeSideAuthResult.isAuth) {
-                throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'));
+                throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'), {
+                    nodeSideAuthResult: presentableNodeSideAuthResult
+                });
+            }
+            const presentableUpstreamAuthResult = await this.presentableAuthService.presentableUpstreamAuth(presentableInfo, presentableVersionInfo.authTree);
+            if (!presentableUpstreamAuthResult.isAuth) {
+                throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'), {
+                    upstreamAuthResult: presentableUpstreamAuthResult
+                });
             }
         }
-        return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.presentableId}, {onlineStatus}, {new: true});
+
+        const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {onlineStatus}).then(data => Boolean(data.ok));
+        if (!isSuccessful || presentableInfo.resourceInfo.resourceType !== 'theme') {
+            return isSuccessful;
+        }
+
+        const isOnline = onlineStatus === PresentableOnlineStatusEnum.Online;
+        await this.nodeService.updateNodeInfo(presentableInfo.nodeId, {themeId: isOnline ? presentableInfo.presentableId : ''})
+        await this.presentableProvider.updateMany({
+            _id: {$ne: presentableInfo.presentableId},
+            nodeId: presentableInfo.nodeId,
+            'resourceInfo.resourceType': presentableInfo.presentableId
+        }, {onlineStatus: 0});
+        return isSuccessful;
     }
 
     async findOne(condition: object, ...args): Promise<PresentableInfo> {
@@ -188,6 +231,53 @@ export class PresentableService implements IPresentableService {
 
     async count(condition: object): Promise<number> {
         return this.presentableProvider.count(condition);
+    }
+
+    async fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]> {
+        if (!isArray(presentables) || isEmpty(presentables)) {
+            return presentables;
+        }
+        const condition = {$or: []};
+        for (const {presentableId, version} of presentables) {
+            condition.$or.push({presentableId, version});
+        }
+        const presentableVersionPropertyMap = await this.presentableVersionService.find(condition, 'presentableId versionProperty resourceCustomPropertyDescriptors presentableRewriteProperty').then(list => {
+            return new Map(list.map(x => [x.presentableId, x]));
+        });
+        return presentables.map(presentable => {
+            const presentableInfo = Reflect.has(presentable, 'toObject') ? (<any>presentable).toObject() : presentable;
+            const versionProperty = presentableVersionPropertyMap.get(presentable.presentableId);
+            presentableInfo.versionProperty = versionProperty?.versionProperty ?? {};
+            if (isLoadResourceCustomPropertyDescriptors) {
+                presentableInfo.resourceCustomPropertyDescriptors = versionProperty?.resourceCustomPropertyDescriptors ?? {};
+            }
+            if (isLoadPresentableRewriteProperty) {
+                presentableInfo.presentableRewriteProperty = versionProperty?.presentableRewriteProperty ?? {};
+            }
+            return presentableInfo;
+        });
+    }
+
+    async fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]> {
+        if (!isArray(presentables) || isEmpty(presentables)) {
+            return presentables;
+        }
+        const policyIds = chain(presentables).filter(x => isArray(x?.policies) && !isEmpty(x.policies)).map(x => x.policies.map(m => m.policyId)).flatten().uniq().value();
+        if (isEmpty(policyIds)) {
+            return presentables;
+        }
+        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getPolicies(policyIds, SubjectTypeEnum.Presentable, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+        return presentables.map(presentable => {
+            const presentableInfo = Reflect.has(presentable, 'toObject') ? (<any>presentable).toObject() : presentable;
+            presentableInfo.policies.forEach(policyInfo => {
+                const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
+                policyInfo.policyText = policyText;
+                policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
+            })
+            return presentableInfo;
+        });
     }
 
     /**

@@ -1,5 +1,5 @@
 import * as semver from 'semver';
-import {isString, chain, isUndefined, isNumber, isEmpty} from 'lodash';
+import {isString, isUndefined, isNumber, isEmpty, first} from 'lodash';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
@@ -7,6 +7,7 @@ import {
     IJsonSchemaValidate, INodeService,
     IOutsideApiService, IPresentableService, IPresentableVersionService
 } from '../../interface';
+import {PresentableOnlineStatusEnum} from "../../enum";
 
 @provide()
 @controller('/v2/presentables')
@@ -43,6 +44,8 @@ export class PresentableController {
         const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
         const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -64,25 +67,31 @@ export class PresentableController {
         }
 
         const pageResult = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList);
+        }
+        if (isLoadVersionProperty) {
+            pageResult.dataList = await this.presentableService.fillPresentableVersionProperty(pageResult.dataList, false, false);
+        }
         return ctx.success(pageResult);
 
         // 以下代码已过期,目前只有展品切换版本时需要考虑所有版本列表,此操作可以通过调用资源接口获取到可选版本集
-        const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
-        if (!pageResult.dataList.length || !isLoadingResourceInfo) {
-            return ctx.success(pageResult);
-        }
-        const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
-        const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
-            .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
-
-        pageResult.dataList = pageResult.dataList.map(presentableInfo => {
-            const model = (<any>presentableInfo).toObject();
-            const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId) ?? [];
-            model.resourceInfo.versions = resourceVersions.map(x => x.version);
-            return model;
-        });
-
-        ctx.success(pageResult);
+        // const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
+        // if (!pageResult.dataList.length || !isLoadingResourceInfo) {
+        //     return ctx.success(pageResult);
+        // }
+        // const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
+        // const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
+        //     .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
+        //
+        // pageResult.dataList = pageResult.dataList.map(presentableInfo => {
+        //     const model = (<any>presentableInfo).toObject();
+        //     const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId) ?? [];
+        //     model.resourceInfo.versions = resourceVersions.map(x => x.version);
+        //     return model;
+        // });
+        //
+        // ctx.success(pageResult);
     }
 
     /**
@@ -99,6 +108,8 @@ export class PresentableController {
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().len(1, 100).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -123,7 +134,14 @@ export class PresentableController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'))
         }
 
-        await this.presentableService.find(condition, projection.join(' ')).then(ctx.success);
+        let presentableList = await this.presentableService.find(condition, projection.join(' '));
+        if (isLoadPolicyInfo) {
+            presentableList = await this.presentableService.fillPresentablePolicyInfo(presentableList)
+        }
+        if (isLoadVersionProperty) {
+            presentableList = await this.presentableService.fillPresentableVersionProperty(presentableList, false, false);
+        }
+        ctx.success(presentableList);
     }
 
     @post('/')
@@ -139,7 +157,7 @@ export class PresentableController {
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
-        this._policySchemaValidate(policies);
+        this._policySchemaValidate(policies, 'addPolicy');
         this._resolveResourcesSchemaValidate(resolveResources);
 
         const nodeInfo = await this.nodeService.findById(nodeId);
@@ -179,14 +197,18 @@ export class PresentableController {
         const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
         const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().len(1).value;
         const addPolicies = ctx.checkBody('addPolicies').optional().isArray().len(1).value;
+        const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
         ctx.validateParams();
 
         if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
+        if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
+        }
 
-        this._policySchemaValidate(addPolicies);
-        this._policySchemaValidate(updatePolicies);
+        this._policySchemaValidate(addPolicies, 'addPolicy');
+        this._policySchemaValidate(updatePolicies, 'updatePolicy');
         this._resolveResourcesSchemaValidate(resolveResources);
 
         const presentableInfo = await this.presentableService.findById(presentableId);
@@ -195,10 +217,47 @@ export class PresentableController {
         });
 
         await this.presentableService.updatePresentable(presentableInfo, {
-            addPolicies, updatePolicies, presentableTitle, resolveResources, tags
+            addPolicies, updatePolicies, presentableTitle, resolveResources, tags, coverImages
         }).then(ctx.success);
     }
 
+    @put('/:presentableId/onlineStatus')
+    @visitorIdentity(LoginUser)
+    async updatePresentableOnlineStatus(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const onlineStatus = ctx.checkBody("onlineStatus").exist().toInt().in([PresentableOnlineStatusEnum.Offline, PresentableOnlineStatusEnum.Online]).value;
+        ctx.validateParams();
+
+        const presentableInfo = await this.presentableService.findById(presentableId);
+        ctx.entityNullValueAndUserAuthorizationCheck(presentableInfo, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId')
+        });
+
+        await this.presentableService.updateOnlineStatus(presentableInfo, onlineStatus).then(ctx.success);
+    }
+
+    @put('/:presentableId/version')
+    @visitorIdentity(LoginUser)
+    async updatePresentableVersion(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const presentableInfo = await this.presentableService.findById(presentableId);
+        ctx.entityNullValueAndUserAuthorizationCheck(presentableInfo, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId')
+        });
+
+        const resourceInfo = await this.outsideApiService.getResourceInfo(presentableInfo.resourceInfo.resourceId, {projection: 'resourceVersions'});
+        const resourceVersionInfo = resourceInfo.resourceVersions.find(x => x.version === version);
+        if (!resourceVersionInfo) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'), {version});
+        }
+
+        await this.presentableService.updatePresentableVersion(presentableInfo, resourceVersionInfo.version, resourceVersionInfo.versionId).then(ctx.success);
+    }
 
     @get('/detail')
     @visitorIdentity(LoginUser)
@@ -209,6 +268,9 @@ export class PresentableController {
         const resourceName = ctx.checkQuery('resourceName').optional().isFullResourceName().value;
         const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadCustomPropertyDescriptors = ctx.checkQuery("isLoadCustomPropertyDescriptors").optional().toInt().default(0).in([0, 1]).value;
         ctx.validateParams();
 
         if ([resourceId, resourceName, presentableName].every(isUndefined)) {
@@ -226,7 +288,14 @@ export class PresentableController {
             condition['presentableName'] = presentableName;
         }
 
-        await this.presentableService.findOne(condition, projection.join(' ')).then(ctx.success);
+        let presentableInfo: any = await this.presentableService.findOne(condition, projection.join(' ')).then(ctx.success);
+        if (presentableInfo && (isLoadVersionProperty || isLoadCustomPropertyDescriptors)) {
+            presentableInfo = await this.presentableService.fillPresentableVersionProperty([presentableInfo], isLoadCustomPropertyDescriptors, isLoadCustomPropertyDescriptors).then(first);
+        }
+        if (presentableInfo && isLoadPolicyInfo) {
+            presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
+        }
+        ctx.success(presentableInfo);
     }
 
     @get('/:presentableId')
@@ -234,16 +303,18 @@ export class PresentableController {
     async show(ctx) {
 
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
-        const isLoadingVersionProperty = ctx.checkQuery("isLoadingVersionProperty").optional().default(0).in([0, 1]).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadCustomPropertyDescriptors = ctx.checkQuery("isLoadCustomPropertyDescriptors").optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         let presentableInfo: any = await this.presentableService.findById(presentableId, projection.join(' '));
-        if (presentableInfo && isLoadingVersionProperty) {
-            presentableInfo = presentableInfo.toObject();
-            await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'versionProperty').then(data => {
-                presentableInfo.versionProperty = data?.versionProperty ?? {};
-            });
+        if (presentableInfo && (isLoadVersionProperty || isLoadCustomPropertyDescriptors)) {
+            presentableInfo = await this.presentableService.fillPresentableVersionProperty([presentableInfo], isLoadCustomPropertyDescriptors, isLoadCustomPropertyDescriptors).then(first);
+        }
+        if (presentableInfo && isLoadPolicyInfo) {
+            presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
         }
         ctx.success(presentableInfo);
     }
@@ -308,8 +379,8 @@ export class PresentableController {
      * @param policies
      * @private
      */
-    _policySchemaValidate(policies) {
-        const policyValidateResult = this.presentablePolicyValidator.validate(policies || []);
+    _policySchemaValidate(policies, mode: 'addPolicy' | 'updatePolicy') {
+        const policyValidateResult = this.presentablePolicyValidator.validate(policies || [], mode);
         if (!isEmpty(policyValidateResult.errors)) {
             throw new ArgumentError(this.ctx.gettext('params-format-validate-failed', 'policies'), {
                 errors: policyValidateResult.errors

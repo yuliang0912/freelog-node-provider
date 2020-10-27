@@ -120,6 +120,7 @@ export interface UpdatePresentableOptions {
     resolveResources?: ResolveResource[];
     addPolicies?: PolicyInfo[];
     updatePolicies?: PolicyInfo[];
+    coverImages?: string[];
 }
 
 export interface ContractInfo {
@@ -286,7 +287,7 @@ export interface INodeService {
 
     count(condition: object): Promise<number>;
 
-    updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean>;
+    updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
 
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
 }
@@ -310,6 +311,15 @@ export interface IPresentableService {
     count(condition: object): Promise<number>;
 
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
+
+    updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
+
+    updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean>;
+
+    fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+
+    fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
+
 }
 
 export interface IOutsideApiService {
@@ -358,6 +368,8 @@ export interface IPresentableAuthService {
     presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 
     presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+
+    presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 
 export interface IPresentableVersionService {
@@ -373,6 +385,8 @@ export interface IPresentableVersionService {
     convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number);
 
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
+
+    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean>;
 }
 
 export interface IEventHandler {

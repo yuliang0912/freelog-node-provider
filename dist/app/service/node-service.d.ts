@@ -4,7 +4,7 @@ export declare class NodeService implements INodeService {
     nodeProvider: any;
     nodeCommonChecker: any;
     autoIncrementRecordProvider: any;
-    updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean>;
+    updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
     findById(nodeId: number, ...args: any[]): Promise<NodeInfo>;
     findByDomain(nodeDomain: string, ...args: any[]): Promise<NodeInfo>;

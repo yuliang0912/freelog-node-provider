@@ -78,7 +78,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     /**
-     * 创建策略
+     * 创建展品策略
      * @param policyText
      */
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;

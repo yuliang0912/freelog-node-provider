@@ -49,10 +49,11 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
             version: {type: String, required: true}, // 与资源版本同步
             presentableVersionId: {type: String, required: true},
             resourceSystemProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true}, // 资源的原始系统属性
-            resourceCustomPropertyDescriptors: {type: [CustomPropertyDescriptorSchema], default: [], required: false},
+            resourceCustomPropertyDescriptors: {type: [CustomPropertyDescriptorSchema], default: [], required: false}, // 当前版本资源的自定义属性描述器
             presentableRewriteProperty: {type: [PresentableRewritePropertySchema], default: [], required: false}, // 新增或者覆盖的属性
-            versionProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true}, // 通过计算resourceSystemProperty,resourceCustomPropertyDescriptors,presentableRewriteProperty获得的最终属性
-            // 由于资源的子依赖是semver约束,所以不同时期资源的依赖结构可能完全不一致.所以此次会保存切换版本时的当下所有依赖树,然后固化下来. 后续升级版本时,才会重新计算.
+            //展品的版本属性是通过计算resourceSystemProperty,resourceCustomPropertyDescriptors,presentableRewriteProperty获得的最终属性,提供给消费侧使用
+            versionProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true},
+            // 由于资源的子依赖是semver约束,所以不同时期资源的依赖结构可能完全不一致.所以此次会保存切换版本时的当下所有依赖树,然后固化下来.后续可以给出升级或者最新按钮,目前是通过版本来回切换实现
             authTree: {type: [PresentableAuthTreeSchema], default: [], required: false},
             dependencyTree: {type: [PresentableDependencyTreeSchema], default: [], required: false},
             status: {type: Number, default: 0, required: true}, //状态 0:正常

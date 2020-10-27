@@ -1,8 +1,8 @@
 import {omit} from 'lodash';
-import {scope, provide} from 'midway';
+import {scope, provide, ScopeEnum} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
-@scope('Singleton')
+@scope(ScopeEnum.Singleton)
 @provide('model.Presentable')
 export class PresentableModel extends MongooseModelBase implements IMongooseModelBase {
 
@@ -42,9 +42,7 @@ export class PresentableModel extends MongooseModelBase implements IMongooseMode
             // 解决资源的方式存在跨版本的一致性.所以提取到展品信息中.
             resolveResources: {type: [ResolveResourceSchema], required: true},
             tags: {type: [String], default: [], required: false},// 用户自定义tags
-            intro: {type: String, default: '', required: false},
             coverImages: {type: [String], default: [], required: false},
-            isTheme: {type: Number, default: 0, enum: [0, 1], required: true},
             onlineStatus: {type: Number, default: 0, enum: [0, 1], required: true}, //上线状态 0:未上线 1:已上线
             authStatus: {type: Number, default: 0, required: true}, //授权链授权状态 0:未知  1:节点侧合约授权失败 2:资源侧合约授权失败 4:节点侧合约授权通过 8:资源侧合约授权通过
             status: {type: Number, default: 0, required: true}, //状态 0:正常

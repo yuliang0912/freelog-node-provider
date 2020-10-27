@@ -100,6 +100,7 @@ export interface UpdatePresentableOptions {
     resolveResources?: ResolveResource[];
     addPolicies?: PolicyInfo[];
     updatePolicies?: PolicyInfo[];
+    coverImages?: string[];
 }
 export interface ContractInfo {
     contractId: string;
@@ -236,7 +237,7 @@ export interface INodeService {
     findByIds(nodeIds: number[], ...args: any[]): Promise<NodeInfo[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<NodeInfo>>;
     count(condition: object): Promise<number>;
-    updateNodeInfo(nodeInfo: NodeInfo, model: object): Promise<boolean>;
+    updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
 }
 export interface IPresentableService {
@@ -249,6 +250,10 @@ export interface IPresentableService {
     findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
     count(condition: object): Promise<number>;
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
+    updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
+    updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean>;
+    fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
 }
 export interface IOutsideApiService {
     getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
@@ -274,6 +279,7 @@ export interface IPresentableAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;
     presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
     presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+    presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 export interface IPresentableVersionService {
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
@@ -282,6 +288,7 @@ export interface IPresentableVersionService {
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): any;
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
+    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean>;
 }
 export interface IEventHandler {
     handle(...args: any[]): Promise<any>;

@@ -18,6 +18,8 @@ export declare class PresentableController {
     list(ctx: any): Promise<void>;
     createPresentable(ctx: any): Promise<void>;
     updatePresentable(ctx: any): Promise<void>;
+    updatePresentableOnlineStatus(ctx: any): Promise<void>;
+    updatePresentableVersion(ctx: any): Promise<void>;
     presentableDetail(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<void>;
@@ -27,7 +29,7 @@ export declare class PresentableController {
      * @param policies
      * @private
      */
-    _policySchemaValidate(policies: any): void;
+    _policySchemaValidate(policies: any, mode: 'addPolicy' | 'updatePolicy'): void;
     /**
      * 解决上抛资源格式校验
      * @param resolveResources
