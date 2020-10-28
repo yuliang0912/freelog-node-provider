@@ -8,7 +8,7 @@ export declare class PresentableVersionService implements IPresentableVersionSer
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
-    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean>;
+    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     /**
      * 平铺结构的授权树转换为递归结构的授权树

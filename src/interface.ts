@@ -386,7 +386,7 @@ export interface IPresentableVersionService {
 
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
 
-    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean>;
+    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
 }
 
 export interface IEventHandler {

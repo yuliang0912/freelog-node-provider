@@ -8,6 +8,7 @@ export declare class PresentableController {
     presentableService: IPresentableService;
     resolveResourcesValidator: IJsonSchemaValidate;
     presentablePolicyValidator: IJsonSchemaValidate;
+    presentableRewritePropertyValidator: IJsonSchemaValidate;
     presentableVersionService: IPresentableVersionService;
     presentablePageList(ctx: any): Promise<any>;
     /**
@@ -20,6 +21,7 @@ export declare class PresentableController {
     updatePresentable(ctx: any): Promise<void>;
     updatePresentableOnlineStatus(ctx: any): Promise<void>;
     updatePresentableVersion(ctx: any): Promise<void>;
+    updatePresentableRewriteProperty(ctx: any): Promise<void>;
     presentableDetail(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<void>;

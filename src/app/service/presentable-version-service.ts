@@ -38,14 +38,14 @@ export class PresentableVersionService implements IPresentableVersionService {
         return this.presentableVersionProvider.find(condition, ...args);
     }
 
-    async updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean> {
+    async updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean> {
         const presentableVersionInfo = await this.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableVersionId resourceSystemProperty resourceCustomPropertyDescriptors');
         if (!presentableVersionInfo) {
             return false;
         }
         const updateModel = {
-            presentableRewriteInfo,
-            versionProperty: this._calculatePresentableVersionProperty(presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableRewriteInfo)
+            presentableRewriteProperty,
+            versionProperty: this._calculatePresentableVersionProperty(presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableRewriteProperty)
         }
         return this.presentableVersionProvider.updateOne({presentableVersionId: presentableVersionInfo.presentableVersionId}, updateModel).then(data => Boolean(data.ok));
     }

@@ -30,6 +30,8 @@ export class PresentableController {
     @inject()
     presentablePolicyValidator: IJsonSchemaValidate;
     @inject()
+    presentableRewritePropertyValidator: IJsonSchemaValidate;
+    @inject()
     presentableVersionService: IPresentableVersionService;
 
     @get('/')
@@ -257,6 +259,28 @@ export class PresentableController {
         }
 
         await this.presentableService.updatePresentableVersion(presentableInfo, resourceVersionInfo.version, resourceVersionInfo.versionId).then(ctx.success);
+    }
+
+    @put('/:presentableId/rewriteProperty')
+    @visitorIdentity(LoginUser)
+    async updatePresentableRewriteProperty(ctx) {
+
+        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const rewriteProperty = ctx.checkBody('rewriteProperty').exist().isArray().value;
+        ctx.validateParams();
+
+        const presentableInfo = await this.presentableService.findById(presentableId);
+        ctx.entityNullValueAndUserAuthorizationCheck(presentableInfo, {
+            msg: ctx.gettext('params-validate-failed', 'presentableId')
+        });
+
+        const rewritePropertyValidateResult = this.presentableRewritePropertyValidator.validate(rewriteProperty);
+        if (!isEmpty(rewritePropertyValidateResult.errors)) {
+            throw new ArgumentError(this.ctx.gettext('params-format-validate-failed', 'rewriteProperty'), {
+                errors: rewritePropertyValidateResult.errors
+            });
+        }
+        await this.presentableVersionService.updatePresentableRewriteProperty(presentableInfo, rewriteProperty).then(ctx.success);
     }
 
     @get('/detail')

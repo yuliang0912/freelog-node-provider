@@ -19,6 +19,7 @@ export class PresentableVersionModel extends MongooseModelBase implements IMongo
         const PresentableRewritePropertySchema = new this.mongoose.Schema({
             key: {type: String, required: true},
             value: {type: this.mongoose.Schema.Types.Mixed, required: true},
+            remark: {type: String, required: false, default: ''},
         }, {_id: false});
 
         const PresentableAuthTreeSchema = new this.mongoose.Schema({

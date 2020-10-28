@@ -288,7 +288,7 @@ export interface IPresentableVersionService {
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): any;
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
-    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteInfo: any[]): Promise<boolean>;
+    updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
 }
 export interface IEventHandler {
     handle(...args: any[]): Promise<any>;
