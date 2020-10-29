@@ -202,7 +202,7 @@ export class PresentableController {
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
         ctx.validateParams();
 
-        if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources].every(isUndefined)) {
+        if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources, coverImages].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
