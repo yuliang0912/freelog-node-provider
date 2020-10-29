@@ -241,7 +241,7 @@ export class PresentableService implements IPresentableService {
         for (const {presentableId, version} of presentables) {
             condition.$or.push({presentableId, version});
         }
-        const presentableVersionPropertyMap = await this.presentableVersionService.find(condition, 'presentableId versionProperty resourceCustomPropertyDescriptors presentableRewriteProperty').then(list => {
+        const presentableVersionPropertyMap = await this.presentableVersionService.find(condition, 'presentableId resourceSystemProperty versionProperty resourceCustomPropertyDescriptors presentableRewriteProperty').then(list => {
             return new Map(list.map(x => [x.presentableId, x]));
         });
         return presentables.map(presentable => {
@@ -249,6 +249,7 @@ export class PresentableService implements IPresentableService {
             const versionProperty = presentableVersionPropertyMap.get(presentable.presentableId);
             presentableInfo.versionProperty = versionProperty?.versionProperty ?? {};
             if (isLoadResourceCustomPropertyDescriptors) {
+                presentableInfo.resourceSystemProperty = versionProperty?.resourceSystemProperty ?? {};
                 presentableInfo.resourceCustomPropertyDescriptors = versionProperty?.resourceCustomPropertyDescriptors ?? {};
             }
             if (isLoadPresentableRewriteProperty) {
