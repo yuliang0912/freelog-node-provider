@@ -36,14 +36,14 @@ export class PresentableRewritePropertyValidator extends freelogCommonJsonSchema
                 additionalProperties: false,
                 properties: {
                     key: {
-                        type: 'string', required: true, minLength: 1, maxLength: 15,
+                        type: 'string', required: true, minLength: 1, maxLength: 20,
                         pattern: '^[a-zA-Z0-9_]{1,20}$'
                     },
                     value: {
                         // 考虑到UI文本框输入,目前限定为字符串.后期可能修改为any
                         type: 'string', required: true, minLength: 1, maxLength: 30
                     },
-                    remark: {type: 'string', required: true, minLength: 0, maxLength: 15},
+                    remark: {type: 'string', required: true, minLength: 0, maxLength: 50},
                 }
             }
         });

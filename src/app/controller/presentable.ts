@@ -312,7 +312,7 @@ export class PresentableController {
             condition['presentableName'] = presentableName;
         }
 
-        let presentableInfo: any = await this.presentableService.findOne(condition, projection.join(' ')).then(ctx.success);
+        let presentableInfo: any = await this.presentableService.findOne(condition, projection.join(' '));
         if (presentableInfo && (isLoadVersionProperty || isLoadCustomPropertyDescriptors)) {
             presentableInfo = await this.presentableService.fillPresentableVersionProperty([presentableInfo], isLoadCustomPropertyDescriptors, isLoadCustomPropertyDescriptors).then(first);
         }
