@@ -1,7 +1,6 @@
 import {inject, provide} from 'midway';
 import {IPresentableService} from '../interface';
-import {ApplicationError} from 'egg-freelog-base';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper';
+import {ApplicationError, CryptoHelper} from 'egg-freelog-base';
 
 @provide()
 export class PresentableCommonChecker {
@@ -34,8 +33,7 @@ export class PresentableCommonChecker {
     /**
      * 系统自动生成presentableName,如果不存在名称,则直接默认使用资源名称,否则会在后面递增追加序号
      * @param nodeId
-     * @param resourceName
-     * @returns {Promise<any>}
+     * @param presentableName
      */
     async buildPresentableName(nodeId: number, presentableName: string): Promise<string> {
         const presentableNames = await this.presentableService.find({
@@ -57,11 +55,10 @@ export class PresentableCommonChecker {
 
     /**
      * 生成资源版本ID
-     * @param {string} resourceId
-     * @param {string} version
-     * @returns {string}
+     * @param presentableId
+     * @param version
      */
     generatePresentableVersionId(presentableId: string, version: string): string {
-        return md5(`${presentableId}-${version}`);
+        return CryptoHelper.md5(`${presentableId}-${version}`);
     }
 }

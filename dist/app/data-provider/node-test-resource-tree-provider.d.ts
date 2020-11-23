@@ -1,4 +1,5 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class NodeTestResourceTreeProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+import { TestResourceTreeInfo } from '../../test-node-interface';
+export default class NodeTestResourceTreeProvider extends MongodbOperation<TestResourceTreeInfo> {
     constructor(model: any);
 }

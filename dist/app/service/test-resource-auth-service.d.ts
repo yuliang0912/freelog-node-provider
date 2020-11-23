@@ -1,8 +1,9 @@
 import { ContractInfo, IOutsideApiService } from "../../interface";
 import { SubjectAuthResult } from "../../auth-interface";
 import { FlattenTestResourceAuthTree, ITestResourceAuthService, TestResourceInfo } from "../../test-node-interface";
+import { FreelogContext } from 'egg-freelog-base';
 export declare class TestResourceAuthService implements ITestResourceAuthService {
-    ctx: any;
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     /**
      * 测试资源授权

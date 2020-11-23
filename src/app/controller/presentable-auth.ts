@@ -1,33 +1,36 @@
+import {differenceWith, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
-    IPresentableAuthService,
-    IPresentableService, IPresentableVersionService
+    IPresentableAuthResponseHandler,
+    IPresentableAuthService, IPresentableService, IPresentableVersionService
 } from '../../interface';
-import {fullResourceName, mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
-import {ArgumentError, LoginUser, UnLoginUser, InternalClient} from 'egg-freelog-base/index';
-import {visitorIdentity} from "../../extend/vistorIdentityDecorator";
+import {ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext} from 'egg-freelog-base';
 
 @provide()
-@controller('/v2/auths/presentable') // 统一URL v2/auths/:subjectType/:subjectId
+@controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectType/:subjectId
 export class ResourceAuthController {
 
     @inject()
-    presentableAuthResponseHandler;
+    ctx: FreelogContext;
+    @inject()
+    presentableCommonChecker;
     @inject()
     presentableService: IPresentableService;
     @inject()
     presentableAuthService: IPresentableAuthService;
     @inject()
     presentableVersionService: IPresentableVersionService;
+    @inject()
+    presentableAuthResponseHandler: IPresentableAuthResponseHandler;
 
     /**
      * 通过展品ID获取展品并且授权
-     * @param ctx
      */
     @get('/:subjectId/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentity(LoginUser | UnLoginUser | InternalClient)
-    async presentableAuth(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.UnLoginUser | IdentityTypeEnum.InternalClient)
+    async presentableAuth() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams('subjectId').isPresentableId().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
@@ -44,22 +47,22 @@ export class ResourceAuthController {
 
     /**
      * 通过节点ID和资源ID获取展品,并且授权
-     * @param ctx
      */
     @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentity(LoginUser | UnLoginUser | InternalClient)
-    async nodeResourceAuth(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async nodeResourceAuth() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
         ctx.validateParams();
 
-        const condition: any = {nodeId};
-        if (mongoObjectId.test(resourceIdOrName)) {
+        const condition = {nodeId};
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             condition['resourceInfo.resourceId'] = resourceIdOrName;
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             condition['resourceInfo.resourceName'] = resourceIdOrName;
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
@@ -72,5 +75,83 @@ export class ResourceAuthController {
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
         await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
+    }
+
+    /**
+     * 批量展品节点侧以及上游链路授权(不包含C端用户)
+     */
+    @get('/nodes/:nodeId/batchPresentableNodeSideAndUpstreamAuth/result')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async presentableNodeSideAndUpstreamAuth() {
+
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const presentables = await this.presentableService.find({nodeId, _id: {$in: presentableIds}});
+        const invalidPresentableIds = differenceWith(presentableIds, presentables, (x: string, y) => x === y.presentableId);
+
+        if (!isEmpty(invalidPresentableIds)) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'presentableIds'), {invalidPresentableIds});
+        }
+
+        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+        const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
+            return new Map(list.map(x => [x.presentableId, x.authTree]));
+        });
+
+        const tasks = [];
+        const returnResults = [];
+        for (const presentableInfo of presentables) {
+            const task = this.presentableAuthService.presentableNodeSideAndUpstreamAuth(presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+                presentableId: presentableInfo.presentableId,
+                authCode: authResult.authCode,
+                isAuth: authResult.isAuth,
+                error: authResult.errorMsg
+            }));
+            tasks.push(task);
+        }
+
+        await Promise.all(tasks).then(() => ctx.success(returnResults));
+    }
+
+    /**
+     * 批量展品上游链路授权(不包含C端以及节点侧)
+     */
+    @get('/nodes/:nodeId/batchPresentableUpstreamAuth/result')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async presentableUpstreamAuth() {
+
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
+        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const presentables = await this.presentableService.find({nodeId, _id: {$in: presentableIds}});
+        const invalidPresentableIds = differenceWith(presentableIds, presentables, (x: string, y) => x === y.presentableId);
+
+        if (!isEmpty(invalidPresentableIds)) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'presentableIds'), {invalidPresentableIds});
+        }
+
+        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+        const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
+            return new Map(list.map(x => [x.presentableId, x.authTree]));
+        });
+
+        const tasks = [];
+        const returnResults = [];
+        for (const presentableInfo of presentables) {
+            const task = this.presentableAuthService.presentableUpstreamAuth(presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+                presentableId: presentableInfo.presentableId,
+                authCode: authResult.authCode,
+                isAuth: authResult.isAuth,
+                error: authResult.errorMsg
+            }));
+            tasks.push(task);
+        }
+
+        await Promise.all(tasks).then(() => ctx.success(returnResults));
     }
 }

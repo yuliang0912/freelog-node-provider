@@ -4,13 +4,12 @@ export declare class ImportResourceEntityHandler {
     outsideApiService: IOutsideApiService;
     /**
      * 从规则中分析需要导入的资源数据
-     * @param testRules
-     * @param promiseResults
+     * @param addResourceRules
      */
     importResourceEntityDataFromRules(addResourceRules: TestRuleMatchInfo[]): Promise<void>;
     /**
      * 获取展品依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param version
      */
     getResourceDependencyTree(resourceIdOrName: string, version: string): Promise<TestResourceDependencyTree[]>;
@@ -23,9 +22,8 @@ export declare class ImportResourceEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo): void;
     /**
      * 匹配发行版本
-     * @param releaseInfo
+     * @param resourceInfo
      * @param versionRange
-     * @returns {*}
      */
     matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string): any;
 }

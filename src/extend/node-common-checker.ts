@@ -1,7 +1,6 @@
 import {provide, inject} from 'midway';
 import {INodeService, NodeInfo} from "../interface";
-import {ApplicationError, ArgumentError} from 'egg-freelog-base';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
+import {ApplicationError, ArgumentError, CryptoHelper} from 'egg-freelog-base';
 
 @provide()
 export class NodeCommonChecker {
@@ -15,6 +14,7 @@ export class NodeCommonChecker {
      * 检查节点域名
      * 先参考天猫:https://wenku.baidu.com/view/d5ab601db52acfc789ebc98f.html
      * @param nodeDomain
+     * @param nodeName
      */
     async checkRegisterNodeDomainAndName(nodeDomain: string, nodeName: string): Promise<void> {
 
@@ -41,11 +41,10 @@ export class NodeCommonChecker {
 
     /**
      * 生成规则ID
-     * @param nodeId
-     * @param ruleText
+     * @param nodeDomain
      */
     generateNodeUniqueKey(nodeDomain: string): string {
-        return md5(`freelog-node-unique-key-${nodeDomain.trim().toLowerCase()}`);
+        return CryptoHelper.md5(`freelog-node-unique-key-${nodeDomain.trim().toLowerCase()}`);
     }
 
     /**

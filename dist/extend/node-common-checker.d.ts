@@ -6,12 +6,12 @@ export declare class NodeCommonChecker {
      * 检查节点域名
      * 先参考天猫:https://wenku.baidu.com/view/d5ab601db52acfc789ebc98f.html
      * @param nodeDomain
+     * @param nodeName
      */
     checkRegisterNodeDomainAndName(nodeDomain: string, nodeName: string): Promise<void>;
     /**
      * 生成规则ID
-     * @param nodeId
-     * @param ruleText
+     * @param nodeDomain
      */
     generateNodeUniqueKey(nodeDomain: string): string;
     /**

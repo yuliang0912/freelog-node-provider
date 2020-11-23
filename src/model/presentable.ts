@@ -1,10 +1,14 @@
 import {omit} from 'lodash';
-import {scope, provide, ScopeEnum} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, ScopeEnum, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope(ScopeEnum.Singleton)
 @provide('model.Presentable')
-export class PresentableModel extends MongooseModelBase implements IMongooseModelBase {
+export class PresentableModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
 

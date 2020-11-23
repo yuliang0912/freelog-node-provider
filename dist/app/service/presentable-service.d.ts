@@ -1,18 +1,19 @@
-import { CreatePresentableOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PageResult, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { PresentableOnlineStatusEnum } from "../../enum";
+import { CreatePresentableOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
+import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 export declare class PresentableService implements IPresentableService {
-    ctx: any;
-    presentableProvider: any;
+    ctx: FreelogContext;
     nodeService: INodeService;
     outsideApiService: IOutsideApiService;
     presentableAuthService: IPresentableAuthService;
     presentableVersionService: IPresentableVersionService;
+    presentableProvider: IMongodbOperation<PresentableInfo>;
     /**
      * 创建展品
      * @param {CreatePresentableOptions} options
      * @returns {Promise<any>}
      */
-    createPresentable(options: CreatePresentableOptions): Promise<any>;
+    createPresentable(options: CreatePresentableOptions): Promise<PresentableInfo>;
     /**
      * 更新展品
      * @param presentableInfo
@@ -51,8 +52,7 @@ export declare class PresentableService implements IPresentableService {
     _validateResolveResources(resourceInfo: ResourceInfo, resolveResources: ResolveResource[]): Promise<void>;
     /**
      * 策略校验
-     * @param policyIds
-     * @private
+     * @param policies
      */
     _validateAndCreateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]>;
 }

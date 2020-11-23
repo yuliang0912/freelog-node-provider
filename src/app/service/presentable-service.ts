@@ -1,28 +1,20 @@
 import {inject, provide} from 'midway';
-import {
-    BasePolicyInfo,
-    CreatePresentableOptions, INodeService,
-    IOutsideApiService,
-    IPresentableAuthService,
-    IPresentableService, IPresentableVersionService,
-    PageResult,
-    PolicyInfo,
-    PresentableInfo,
-    ResolveResource,
-    ResourceInfo,
-    UpdatePresentableOptions
-} from '../../interface';
-import {ApplicationError} from 'egg-freelog-base';
 import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum} from "../../enum";
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from "../../enum";
+import {
+    BasePolicyInfo, CreatePresentableOptions, INodeService,
+    IOutsideApiService, IPresentableAuthService,
+    IPresentableService, IPresentableVersionService,
+    PolicyInfo, PresentableInfo, ResolveResource,
+    ResourceInfo, UpdatePresentableOptions
+} from '../../interface';
+import {ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide()
 export class PresentableService implements IPresentableService {
 
     @inject()
-    ctx;
-    @inject()
-    presentableProvider;
+    ctx: FreelogContext;
     @inject()
     nodeService: INodeService;
     @inject()
@@ -31,6 +23,8 @@ export class PresentableService implements IPresentableService {
     presentableAuthService: IPresentableAuthService;
     @inject()
     presentableVersionService: IPresentableVersionService;
+    @inject()
+    presentableProvider: IMongodbOperation<PresentableInfo>;
 
     /**
      * 创建展品
@@ -329,8 +323,7 @@ export class PresentableService implements IPresentableService {
 
     /**
      * 策略校验
-     * @param policyIds
-     * @private
+     * @param policies
      */
     async _validateAndCreateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]> {
         if (isEmpty(policies)) {

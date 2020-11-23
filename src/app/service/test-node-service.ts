@@ -11,37 +11,37 @@ import {
     TestResourceTreeInfo
 } from "../../test-node-interface";
 import {
-    IOutsideApiService, IPresentableService, IPresentableVersionService, PageResult
+    IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo,
 } from "../../interface";
 import {NodeTestRuleMatchStatus} from "../../enum";
 import {assign, chain, differenceBy, isEmpty} from 'lodash';
-import {ApplicationError} from 'egg-freelog-base';
+import {ApplicationError, PageResult, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 
 @provide()
 export class TestNodeService implements ITestNodeService {
 
     @inject()
-    ctx;
-    @inject()
-    nodeProvider;
+    ctx: FreelogContext;
     @inject()
     testRuleHandler;
     @inject()
     testNodeGenerator;
     @inject()
-    nodeTestRuleProvider;
-    @inject()
-    nodeTestResourceProvider;
-    @inject()
-    nodeTestResourceTreeProvider;
+    outsideApiService: IOutsideApiService;
     @inject()
     presentableService: IPresentableService;
     @inject()
-    outsideApiService: IOutsideApiService;
+    nodeProvider: IMongodbOperation<NodeInfo>;
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
     matchTestRuleEventHandler: IMatchTestRuleEventHandler;
+    @inject()
+    nodeTestRuleProvider: IMongodbOperation<NodeTestRuleInfo>;
+    @inject()
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
+    @inject()
+    nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
 
     async findOneTestResource(condition: object, ...args): Promise<TestResourceInfo> {
         return this.nodeTestResourceProvider.findOne(condition, ...args);

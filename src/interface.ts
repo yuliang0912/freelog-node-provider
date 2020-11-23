@@ -1,20 +1,13 @@
-import {ValidatorResult} from 'jsonschema';
-import {
-    ContractStatusEnum,
-    PresentableAuthStatusEnum,
-    PresentableOnlineStatusEnum,
-    SubjectTypeEnum,
-    IdentityType
-} from './enum';
 import {SubjectAuthResult} from "./auth-interface";
 import {ObjectDependencyTreeInfo} from "./test-node-interface";
-
-export interface PageResult<T> {
-    page: number;
-    pageSize: number;
-    totalItem: number;
-    dataList: T[];
-}
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from './enum';
+import {
+    ContractLicenseeIdentityTypeEnum,
+    ContractStatusEnum,
+    FreelogUserInfo,
+    SubjectTypeEnum,
+    PageResult
+} from "egg-freelog-base";
 
 export interface SubjectInfo {
     subjectId: string;
@@ -79,11 +72,6 @@ export interface PresentableVersionInfo {
     dependencyTree: FlattenPresentableDependencyTree[];
 }
 
-export interface UserInfo {
-    userId: number;
-    username: string;
-}
-
 export interface BasePolicyInfo {
     policyId: string;
     policyText: string;
@@ -138,7 +126,7 @@ export interface ContractInfo {
     licenseeName: string;
     licenseeOwnerId: number;
     licenseeOwnerName: string;
-    licenseeIdentityType: IdentityType;
+    licenseeIdentityType: ContractLicenseeIdentityTypeEnum;
 
     // 标的物相关信息
     subjectId: string;
@@ -338,7 +326,7 @@ export interface IOutsideApiService {
 
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
 
-    getUserInfo(userId: number): Promise<UserInfo>;
+    getUserInfo(userId: number): Promise<FreelogUserInfo>;
 
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
 
@@ -370,6 +358,8 @@ export interface IPresentableAuthService {
     presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 
     presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+
+    presentableNodeSideAndUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 
 export interface IPresentableVersionService {
@@ -377,6 +367,8 @@ export interface IPresentableVersionService {
     findOne(condition: object, ...args): Promise<PresentableVersionInfo>;
 
     findById(presentableId: string, version: string, ...args): Promise<PresentableVersionInfo>;
+
+    findByIds(presentableVersionIds: string[], ...args): Promise<PresentableVersionInfo[]>;
 
     find(condition: object, ...args): Promise<PresentableVersionInfo[]>;
 
@@ -389,13 +381,15 @@ export interface IPresentableVersionService {
     updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
 }
 
-export interface IEventHandler {
-    handle(...args): Promise<any>;
+export interface IPresentableAuthResponseHandler {
+
+    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
+
+    subjectAuthFailedResponseHandle(authResult: SubjectAuthResult);
+
+    subjectAuthProcessExceptionHandle(error);
 }
 
-/**
- * 针对object做校验的基础接口
- */
-export interface IJsonSchemaValidate {
-    validate(instance: object[] | object, ...args): ValidatorResult;
+export interface IEventHandler {
+    handle(...args): Promise<any>;
 }

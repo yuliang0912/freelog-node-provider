@@ -1,11 +1,10 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import {IJsonSchemaValidate} from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide()
-export class PresentablePolicyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class PresentablePolicyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
 
     /**
@@ -14,9 +13,9 @@ export class PresentablePolicyValidator extends freelogCommonJsonSchema implemen
      * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations: object[], mode: 'addPolicy' | 'updatePolicy'): ValidatorResult {
-        const schemaId = mode === 'addPolicy' ? '/addPolicySchema' : '/updatePolicySchema';
-        return super.validate(operations, super.getSchema(schemaId));
+    validate(operations: object[], ...args): ValidatorResult {
+        const schemaId = args[0] === 'addPolicy' ? '/addPolicySchema' : '/updatePolicySchema';
+        return super.validate(operations, this.schemas[schemaId]);
     }
 
     /**

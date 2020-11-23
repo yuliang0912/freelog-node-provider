@@ -1,17 +1,18 @@
 import { BaseTestRuleInfo, IMatchTestRuleEventHandler, ITestNodeService, NodeTestRuleInfo, ResolveResourceInfo, TestResourceInfo, TestResourceTreeInfo } from "../../test-node-interface";
-import { IOutsideApiService, IPresentableService, IPresentableVersionService, PageResult } from "../../interface";
+import { IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo } from "../../interface";
+import { PageResult, FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 export declare class TestNodeService implements ITestNodeService {
-    ctx: any;
-    nodeProvider: any;
+    ctx: FreelogContext;
     testRuleHandler: any;
     testNodeGenerator: any;
-    nodeTestRuleProvider: any;
-    nodeTestResourceProvider: any;
-    nodeTestResourceTreeProvider: any;
-    presentableService: IPresentableService;
     outsideApiService: IOutsideApiService;
+    presentableService: IPresentableService;
+    nodeProvider: IMongodbOperation<NodeInfo>;
     presentableVersionService: IPresentableVersionService;
     matchTestRuleEventHandler: IMatchTestRuleEventHandler;
+    nodeTestRuleProvider: IMongodbOperation<NodeTestRuleInfo>;
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
+    nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
     findOneTestResource(condition: object, ...args: any[]): Promise<TestResourceInfo>;
     findTestResources(condition: object, ...args: any[]): Promise<TestResourceInfo[]>;
     findNodeTestRuleInfoById(nodeId: number, ...args: any[]): Promise<NodeTestRuleInfo>;

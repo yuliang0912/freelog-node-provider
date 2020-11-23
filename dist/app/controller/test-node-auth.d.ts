@@ -1,19 +1,18 @@
 import { IOutsideApiService } from '../../interface';
 import { ITestNodeService, ITestResourceAuthService } from "../../test-node-interface";
+import { FreelogContext } from 'egg-freelog-base';
 export declare class TestNodeAuthController {
-    ctx: any;
+    ctx: FreelogContext;
     testNodeService: ITestNodeService;
     outsideApiService: IOutsideApiService;
     testResourceAuthService: ITestResourceAuthService;
     testResourceAuthResponseHandler: any;
     /**
      * 测试资源或者子依赖授权
-     * @param ctx
      */
-    testResourceAuth(ctx: any): Promise<void>;
+    testResourceAuth(): Promise<void>;
     /**
      * 测试资源或者子依赖授权,根据节点ID和源实体ID查找测试资源.
-     * @param ctx
      */
-    nodeTestResourceAuth(ctx: any): Promise<void>;
+    nodeTestResourceAuth(): Promise<void>;
 }

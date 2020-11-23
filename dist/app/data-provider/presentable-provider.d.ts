@@ -1,4 +1,5 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class PresentableProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+import { PresentableInfo } from "../../interface";
+export default class PresentableProvider extends MongodbOperation<PresentableInfo> {
     constructor(model: any);
 }

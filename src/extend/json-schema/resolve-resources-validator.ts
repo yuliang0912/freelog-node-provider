@@ -1,14 +1,13 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import {IJsonSchemaValidate} from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide()
-export class resolveResourcesValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class resolveResourcesValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
     validate(resolveResources: object[]): ValidatorResult {
-        return super.validate(resolveResources, super.getSchema('/resolveResourcesSchema'))
+        return super.validate(resolveResources, this.schemas['/resolveResourcesSchema'])
     }
 
     @init()

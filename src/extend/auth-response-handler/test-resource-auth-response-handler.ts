@@ -1,8 +1,8 @@
 import {parse} from 'url';
 import {inject, provide} from 'midway';
 import {chain, first, isEmpty, isString} from "lodash";
-import {SubjectAuthCodeEnum, SubjectAuthResult} from '../../auth-interface';
-import {AuthorizationError, ApplicationError} from 'egg-freelog-base/index';
+import {SubjectAuthResult} from '../../auth-interface';
+import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum} from 'egg-freelog-base';
 import {IOutsideApiService} from '../../interface';
 import {
     FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo
@@ -20,11 +20,12 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 授权结果统一响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
+     * @param testResourceInfo
+     * @param flattenDependencyTree
      * @param authResult
-     * @param entityNid
-     * @param subResourceIdOrName
+     * @param parentNid
+     * @param subEntityIdOrName
+     * @param subEntityType
      */
     async handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string) {
 
@@ -58,23 +59,23 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 公共响应头处理
-     * @param presentableVersionInfo
-     * @param realResponseVersionInfo
+     * @param responseTestResourceDependencyTree
      */
     commonResponseHeaderHandle(responseTestResourceDependencyTree: TestResourceDependencyTree) {
 
         this.ctx.set('freelog-entity-nid', responseTestResourceDependencyTree.nid);
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseTestResourceDependencyTree.dependencies)));
         this.ctx.set('freelog-resource-type', responseTestResourceDependencyTree.resourceType);
-        // this.ctx.set('freelog-meta', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        // this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
     }
 
 
     /**
      * 文件流响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
-     * @param realResponseResourceVersionInfo
+     * @param fileSha1
+     * @param entityId
+     * @param entityType
+     * @param attachmentName
      */
     async fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string) {
 
@@ -100,7 +101,7 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 标的物自身信息展示
-     * @param presentableInfo
+     * @param testResourceInfo
      */
     subjectInfoResponseHandle(testResourceInfo: TestResourceInfo) {
         this.ctx.success(testResourceInfo);
@@ -138,9 +139,10 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 获取实际需要响应的资源信息,例如标的物的依赖项
-     * @param presentableAuthTree
-     * @param parentEntityNid
-     * @param subResourceIdOrName
+     * @param flattenTestResourceDependencyTree
+     * @param parentNid
+     * @param subEntityIdOrName
+     * @param subEntityType
      */
     getRealResponseEntityInfo(flattenTestResourceDependencyTree: FlattenTestResourceDependencyTree[], parentNid: string, subEntityIdOrName ?: string, subEntityType?: string): TestResourceDependencyTree {
 

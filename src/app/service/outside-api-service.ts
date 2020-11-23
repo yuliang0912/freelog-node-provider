@@ -3,30 +3,30 @@ import {provide, inject} from 'midway';
 import {
     ContractInfo, IOutsideApiService,
     ResourceInfo, ResourceVersionInfo,
-    SubjectInfo, UserInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo
+    SubjectInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo
 } from '../../interface';
-import {IdentityType, SubjectTypeEnum} from '../../enum';
 import {ObjectDependencyTreeInfo} from '../../test-node-interface';
+import {FreelogContext, SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, FreelogUserInfo} from "egg-freelog-base";
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
 
     /**
      * 获取用户信息
      * @param {number} userId
      * @returns {Promise<UserInfo>}
      */
-    async getUserInfo(userId: number): Promise<UserInfo> {
+    async getUserInfo(userId: number): Promise<FreelogUserInfo> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.userInfo}/${userId}`);
     }
 
     /**
      * 获取资源信息
-     * @param {string} resourceId
-     * @returns {Promise<ResourceInfo>}
+     * @param resourceIdOrName
+     * @param options
      */
     async getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
@@ -45,7 +45,7 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取资源依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param options
      */
     async getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]> {
@@ -81,7 +81,7 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取对象依赖树
-     * @param objectId
+     * @param objectIdOrName
      * @param options
      */
     async getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]> {
@@ -136,7 +136,7 @@ export class OutsideApiService implements IOutsideApiService {
     async batchSignNodeContracts(nodeId, subjects: SubjectInfo[]): Promise<ContractInfo[]> {
         const postBody = {
             subjectType: SubjectTypeEnum.Resource,
-            licenseeIdentityType: IdentityType.Node,
+            licenseeIdentityType: ContractLicenseeIdentityTypeEnum.Node,
             licenseeId: nodeId, subjects
         };
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/batchSign`, {
@@ -154,7 +154,7 @@ export class OutsideApiService implements IOutsideApiService {
             subjectId: subjectInfo.subjectId,
             policyId: subjectInfo.policyId,
             subjectType: SubjectTypeEnum.Presentable,
-            licenseeIdentityType: IdentityType.ClientUser,
+            licenseeIdentityType: ContractLicenseeIdentityTypeEnum.ClientUser,
             licenseeId: userId,
         };
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/`, {
@@ -164,7 +164,7 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 创建展品策略
-     * @param policyText
+     * @param policyTexts
      */
     async createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}`, {
@@ -177,6 +177,7 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 获取标的物策略
      * @param policyIds
+     * @param subjectType
      * @param projection
      */
     async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = []): Promise<BasePolicyInfo[]> {
@@ -217,6 +218,7 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 批量获取资源的授权结果
      * @param resourceVersionIds
+     * @param options
      */
     async getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]> {
         if (isEmpty(resourceVersionIds)) {

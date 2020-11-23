@@ -1,13 +1,21 @@
-import { IOutsideApiService, IPresentableAuthService, ContractInfo, PresentableInfo, FlattenPresentableAuthTree, UserInfo } from '../../interface';
+import { ContractInfo, FlattenPresentableAuthTree, IOutsideApiService, IPresentableAuthService, PresentableInfo } from '../../interface';
+import { FreelogContext, FreelogUserInfo } from 'egg-freelog-base';
 import { SubjectAuthResult } from "../../auth-interface";
 export declare class PresentableAuthService implements IPresentableAuthService {
-    ctx: any;
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     /**
      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)
      * @param presentableInfo
+     * @param presentableAuthTree
      */
     presentableAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+    /**
+     * 展品节点侧以及上游授权结果
+     * @param presentableInfo
+     * @param presentableAuthTree
+     */
+    presentableNodeSideAndUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
     /**
      * 展品节点侧授权(节点自己解决的资源以及上抛的授权情况)
      * @param presentableInfo
@@ -36,13 +44,11 @@ export declare class PresentableAuthService implements IPresentableAuthService {
      * @param presentableInfo
      * @param userInfo
      */
-    _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: UserInfo): Promise<SubjectAuthResult>;
+    _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult>;
     /**
      * 尝试创建免费合同
      * @param presentableInfo
      * @param userInfo
-     * @returns {Promise<void>}
-     * @private
      */
-    _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: UserInfo): Promise<SubjectAuthResult>;
+    _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult>;
 }

@@ -1,10 +1,12 @@
 import { INodeService } from '../../interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class NodeController {
+    ctx: FreelogContext;
     nodeCommonChecker: any;
     nodeService: INodeService;
-    index(ctx: any): Promise<void>;
-    list(ctx: any): Promise<void>;
-    create(ctx: any): Promise<void>;
-    detail(ctx: any): Promise<void>;
-    show(ctx: any): Promise<void>;
+    index(): Promise<void>;
+    list(): Promise<void>;
+    create(): Promise<void>;
+    detail(): Promise<void>;
+    show(): Promise<void>;
 }

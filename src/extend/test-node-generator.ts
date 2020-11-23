@@ -7,7 +7,7 @@ import {
 } from '../test-node-interface';
 import {ResourceInfo} from "../interface";
 import {first, isEmpty, isString} from 'lodash';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper'
+import {CryptoHelper} from 'egg-freelog-base'
 
 @provide()
 export class TestNodeGenerator {
@@ -20,7 +20,7 @@ export class TestNodeGenerator {
      * @param originInfo
      */
     generateTestResourceId(nodeId: number, originInfo: TestResourceOriginInfo): string {
-        return md5(`${nodeId}-${originInfo.id}-${originInfo.type}`);
+        return CryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`);
     }
 
     /**
@@ -29,7 +29,7 @@ export class TestNodeGenerator {
      * @param ruleText
      */
     generateTestRuleId(nodeId: number, ruleText: string): string {
-        return md5(`${nodeId}-${ruleText}`);
+        return CryptoHelper.md5(`${nodeId}-${ruleText}`);
     }
 
     /**
@@ -37,7 +37,7 @@ export class TestNodeGenerator {
      * @param textId
      */
     generateDependencyNodeId(textId?: string): string {
-        let fullText = '';
+        let fullText;
         if (isString(textId) && textId.length >= this.dependencyNodeIdLength) {
             fullText = textId;
         } else {

@@ -1,9 +1,10 @@
-import { CreateNodeOptions, INodeService, NodeInfo, PageResult } from '../../interface';
+import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
+import { CreateNodeOptions, INodeService, NodeInfo } from '../../interface';
 export declare class NodeService implements INodeService {
-    ctx: any;
-    nodeProvider: any;
+    ctx: FreelogContext;
     nodeCommonChecker: any;
     autoIncrementRecordProvider: any;
+    nodeProvider: IMongodbOperation<NodeInfo>;
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
     findById(nodeId: number, ...args: any[]): Promise<NodeInfo>;

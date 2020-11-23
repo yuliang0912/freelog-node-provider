@@ -1,17 +1,16 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base'
 
 @provide()
 @scope('Singleton')
-export default class AutoIncrementRecordProvider extends MongoBaseOperation {
+export default class AutoIncrementRecordProvider extends MongodbOperation<any> {
+
     constructor(@inject('model.AutoIncrementRecord') model) {
         super(model);
     }
 
     /**
      * 获取下一个递增节点ID
-     * @param {string} dataType
-     * @returns {Promise<number>}
      */
     async getNextNodeId(): Promise<number> {
         const dataType = 'NODE_ID';

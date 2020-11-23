@@ -4,8 +4,8 @@ export declare class ImportObjectEntityHandler {
     outsideApiService: IOutsideApiService;
     /**
      * 从规则中分析需要导入的资源数据
-     * @param testRules
-     * @param promiseResults
+     * @param userId
+     * @param addObjectRules
      */
     importObjectEntityDataFromRules(userId: number, addObjectRules: TestRuleMatchInfo[]): Promise<void>;
     /**
@@ -16,9 +16,8 @@ export declare class ImportObjectEntityHandler {
     /**
      * 填充实体数据
      * @param matchRule
-     * @param presentableInfo
-     * @param resourceInfo
-     * @private
+     * @param objectInfo
+     * @param userId
      */
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, objectInfo: ObjectStorageInfo, userId: number): void;
 }

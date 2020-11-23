@@ -1,4 +1,5 @@
-import { MongooseModelBase, IMongooseModelBase } from './mongoose-model-base';
-export declare class AutoIncrementRecordModel extends MongooseModelBase implements IMongooseModelBase {
+import { MongooseModelBase } from 'egg-freelog-base/database/mongoose-model-base';
+export declare class AutoIncrementRecordModel extends MongooseModelBase {
+    constructor(mongoose: any);
     buildMongooseModel(): any;
 }

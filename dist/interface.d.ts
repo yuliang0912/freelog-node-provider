@@ -1,13 +1,7 @@
-import { ValidatorResult } from 'jsonschema';
-import { ContractStatusEnum, PresentableAuthStatusEnum, PresentableOnlineStatusEnum, SubjectTypeEnum, IdentityType } from './enum';
 import { SubjectAuthResult } from "./auth-interface";
 import { ObjectDependencyTreeInfo } from "./test-node-interface";
-export interface PageResult<T> {
-    page: number;
-    pageSize: number;
-    totalItem: number;
-    dataList: T[];
-}
+import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum } from './enum';
+import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from "egg-freelog-base";
 export interface SubjectInfo {
     subjectId: string;
     policyId: string;
@@ -64,10 +58,6 @@ export interface PresentableVersionInfo {
     authTree: FlattenPresentableAuthTree[];
     dependencyTree: FlattenPresentableDependencyTree[];
 }
-export interface UserInfo {
-    userId: number;
-    username: string;
-}
 export interface BasePolicyInfo {
     policyId: string;
     policyText: string;
@@ -113,7 +103,7 @@ export interface ContractInfo {
     licenseeName: string;
     licenseeOwnerId: number;
     licenseeOwnerName: string;
-    licenseeIdentityType: IdentityType;
+    licenseeIdentityType: ContractLicenseeIdentityTypeEnum;
     subjectId: string;
     subjectName: string;
     subjectType: SubjectTypeEnum;
@@ -263,7 +253,7 @@ export interface IOutsideApiService {
     getResourceVersionList(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
-    getUserInfo(userId: number): Promise<UserInfo>;
+    getUserInfo(userId: number): Promise<FreelogUserInfo>;
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<BasePolicyInfo[]>;
     batchSignNodeContracts(nodeId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
@@ -280,22 +270,23 @@ export interface IPresentableAuthService {
     presentableAuth(presentableInfo: PresentableInfo, presentableVersionAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
     presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
     presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
+    presentableNodeSideAndUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult>;
 }
 export interface IPresentableVersionService {
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
+    findByIds(presentableVersionIds: string[], ...args: any[]): Promise<PresentableVersionInfo[]>;
     find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): any;
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
     updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
 }
+export interface IPresentableAuthResponseHandler {
+    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
+    subjectAuthFailedResponseHandle(authResult: SubjectAuthResult): any;
+    subjectAuthProcessExceptionHandle(error: any): any;
+}
 export interface IEventHandler {
     handle(...args: any[]): Promise<any>;
-}
-/**
- * 针对object做校验的基础接口
- */
-export interface IJsonSchemaValidate {
-    validate(instance: object[] | object, ...args: any[]): ValidatorResult;
 }

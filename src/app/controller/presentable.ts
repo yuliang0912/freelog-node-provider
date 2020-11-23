@@ -1,20 +1,20 @@
+import {isURL} from 'validator';
 import * as semver from 'semver';
-import {isString, isUndefined, isNumber, isEmpty, first} from 'lodash';
-import {controller, inject, get, post, put, provide} from 'midway';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
-import {
-    IJsonSchemaValidate, INodeService,
-    IOutsideApiService, IPresentableService, IPresentableVersionService
-} from '../../interface';
 import {PresentableOnlineStatusEnum} from "../../enum";
+import {controller, inject, get, post, put, provide} from 'midway';
+import {isString, isUndefined, isNumber, isEmpty, first} from 'lodash';
+import {INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService} from '../../interface';
+import {
+    IdentityTypeEnum, visitorIdentityValidator,
+    ArgumentError, FreelogContext, IJsonSchemaValidate
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v2/presentables')
 export class PresentableController {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     nodeCommonChecker;
     @inject()
@@ -35,9 +35,10 @@ export class PresentableController {
     presentableVersionService: IPresentableVersionService;
 
     @get('/')
-    @visitorIdentity(InternalClient | LoginUser)
-    async presentablePageList(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async presentablePageList() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
@@ -98,13 +99,13 @@ export class PresentableController {
 
     /**
      * 获取presentable列表
-     * @param ctx
      * @returns {Promise<void>}
      */
     @get('/list')
-    @visitorIdentity(InternalClient | LoginUser)
-    async list(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async list() {
 
+        const {ctx} = this;
         const userId = ctx.checkQuery('userId').optional().toInt().gt(0).value;
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
@@ -147,9 +148,10 @@ export class PresentableController {
     }
 
     @post('/')
-    @visitorIdentity(LoginUser)
-    async createPresentable(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async createPresentable() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkBody('nodeId').exist().toInt().gt(0).value;
         const resourceId = ctx.checkBody('resourceId').isResourceId().value;
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().value;
@@ -190,9 +192,10 @@ export class PresentableController {
     }
 
     @put('/:presentableId')
-    @visitorIdentity(LoginUser)
-    async updatePresentable(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updatePresentable() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const presentableTitle = ctx.checkBody('presentableTitle').optional().type('string').value;
         const tags = ctx.checkBody('tags').optional().isArray().value;
@@ -205,7 +208,7 @@ export class PresentableController {
         if ([updatePolicies, addPolicies, presentableTitle, tags, resolveResources, coverImages].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
-        if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (!isEmpty(coverImages) && coverImages.some(x => !isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
@@ -224,9 +227,10 @@ export class PresentableController {
     }
 
     @put('/:presentableId/onlineStatus')
-    @visitorIdentity(LoginUser)
-    async updatePresentableOnlineStatus(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updatePresentableOnlineStatus() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const onlineStatus = ctx.checkBody("onlineStatus").exist().toInt().in([PresentableOnlineStatusEnum.Offline, PresentableOnlineStatusEnum.Online]).value;
         ctx.validateParams();
@@ -240,9 +244,10 @@ export class PresentableController {
     }
 
     @put('/:presentableId/version')
-    @visitorIdentity(LoginUser)
-    async updatePresentableVersion(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updatePresentableVersion() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
@@ -262,9 +267,10 @@ export class PresentableController {
     }
 
     @put('/:presentableId/rewriteProperty')
-    @visitorIdentity(LoginUser)
-    async updatePresentableRewriteProperty(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updatePresentableRewriteProperty() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
         const rewriteProperty = ctx.checkBody('rewriteProperty').exist().isArray().value;
         ctx.validateParams();
@@ -284,9 +290,10 @@ export class PresentableController {
     }
 
     @get('/detail')
-    @visitorIdentity(LoginUser)
-    async presentableDetail(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async presentableDetail() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkQuery('nodeId').exist().isInt().gt(0).value;
         const resourceId = ctx.checkQuery('resourceId').optional().isResourceId().value;
         const resourceName = ctx.checkQuery('resourceName').optional().isFullResourceName().value;
@@ -323,9 +330,10 @@ export class PresentableController {
     }
 
     @get('/:presentableId')
-    @visitorIdentity(InternalClient | LoginUser)
-    async show(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async show() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
@@ -344,8 +352,9 @@ export class PresentableController {
     }
 
     @get('/:presentableId/dependencyTree')
-    async dependencyTree(ctx) {
+    async dependencyTree() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
         // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
@@ -371,8 +380,9 @@ export class PresentableController {
     }
 
     @get('/:presentableId/authTree')
-    async authTree(ctx) {
+    async authTree() {
 
+        const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
         // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
@@ -401,7 +411,7 @@ export class PresentableController {
     /**
      * 策略格式校验
      * @param policies
-     * @private
+     * @param mode
      */
     _policySchemaValidate(policies, mode: 'addPolicy' | 'updatePolicy') {
         const policyValidateResult = this.presentablePolicyValidator.validate(policies || [], mode);

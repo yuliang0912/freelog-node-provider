@@ -18,8 +18,7 @@ export class ImportPresentableEntityHandler {
     /**
      * 从规则中分析需要导入的展品数据
      * @param nodeId
-     * @param testRules
-     * @param promiseResults
+     * @param alterPresentableRules
      */
     async importPresentableEntityDataFromRules(nodeId: number, alterPresentableRules: TestRuleMatchInfo[]) {
 

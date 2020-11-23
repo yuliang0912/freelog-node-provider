@@ -15,8 +15,8 @@ export class ImportObjectEntityHandler {
 
     /**
      * 从规则中分析需要导入的资源数据
-     * @param testRules
-     * @param promiseResults
+     * @param userId
+     * @param addObjectRules
      */
     async importObjectEntityDataFromRules(userId: number, addObjectRules: TestRuleMatchInfo[]) {
 
@@ -65,9 +65,8 @@ export class ImportObjectEntityHandler {
     /**
      * 填充实体数据
      * @param matchRule
-     * @param presentableInfo
-     * @param resourceInfo
-     * @private
+     * @param objectInfo
+     * @param userId
      */
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, objectInfo: ObjectStorageInfo, userId: number) {
 

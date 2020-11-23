@@ -1,9 +1,9 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base'
 
 @provide()
 @scope('Singleton')
-export default class NodeProvider extends MongoBaseOperation {
+export default class NodeProvider extends MongodbOperation<any> {
     constructor(@inject('model.DataRecycleBin') model) {
         super(model);
     }

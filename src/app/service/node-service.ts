@@ -1,25 +1,26 @@
 import {provide, inject} from 'midway';
-import {CreateNodeOptions, INodeService, NodeInfo, PageResult, UserInfo} from '../../interface';
+import {FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
+import {CreateNodeOptions, INodeService, NodeInfo} from '../../interface';
 
 @provide()
 export class NodeService implements INodeService {
 
     @inject()
-    ctx;
-    @inject()
-    nodeProvider;
+    ctx: FreelogContext;
     @inject()
     nodeCommonChecker;
     @inject()
     autoIncrementRecordProvider;
+    @inject()
+    nodeProvider: IMongodbOperation<NodeInfo>;
 
     async updateNodeInfo(nodeId: number, model: object): Promise<boolean> {
-        return this.nodeProvider.updateOne({nodeId}, model);
+        return this.nodeProvider.updateOne({nodeId}, model).then(t => Boolean(t.ok));
     }
 
     async createNode(options: CreateNodeOptions): Promise<NodeInfo> {
 
-        const userInfo = this.ctx.userInfo as UserInfo;
+        const userInfo = this.ctx.identityInfo.userInfo;
         const nodeId = await this.autoIncrementRecordProvider.getNextNodeId();
 
         const nodeInfo: NodeInfo = {

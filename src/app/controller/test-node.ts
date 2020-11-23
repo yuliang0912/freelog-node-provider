@@ -1,15 +1,19 @@
 import {satisfies} from 'semver';
-import {IJsonSchemaValidate, INodeService} from '../../interface';
+import {INodeService} from '../../interface';
 import {controller, inject, get, post, put, provide} from 'midway';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base/index';
 import {ITestNodeService, TestResourceOriginType} from "../../test-node-interface";
 import {isString, isArray, isUndefined, pick, chain, uniq, first, isEmpty} from 'lodash';
+import {
+    IdentityTypeEnum, ArgumentError,
+    FreelogContext, IJsonSchemaValidate, visitorIdentityValidator
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v2/testNodes')
 export class TestNodeController {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     nodeCommonChecker;
     @inject()
@@ -22,9 +26,10 @@ export class TestNodeController {
     resolveResourcesValidator: IJsonSchemaValidate;
 
     @get('/:nodeId/rules')
-    @visitorIdentity(LoginUser | InternalClient)
-    async showTestRuleInfo(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async showTestRuleInfo() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
         ctx.validateParams();
 
@@ -32,9 +37,10 @@ export class TestNodeController {
     }
 
     @post('/:nodeId/rules')
-    @visitorIdentity(LoginUser)
-    async createTestRule(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async createTestRule() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
         const testRuleText = ctx.checkBody('testRuleText').exist().type('string').decodeURIComponent().value;
         ctx.validateParams();
@@ -46,9 +52,10 @@ export class TestNodeController {
     }
 
     @put('/:nodeId/rules')
-    @visitorIdentity(LoginUser)
-    async updateTestRule(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updateTestRule() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const additionalTestRule = ctx.checkBody('additionalTestRule').exist().type('string').decodeURIComponent().value;
         ctx.validateParams();
@@ -63,9 +70,10 @@ export class TestNodeController {
     }
 
     @post('/:nodeId/rules/rematch')
-    @visitorIdentity(LoginUser)
-    async rematchTestRule(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async rematchTestRule() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
         ctx.validateParams();
 
@@ -78,9 +86,10 @@ export class TestNodeController {
     }
 
     @get('/:nodeId/testResources')
-    @visitorIdentity(LoginUser)
-    async testResources(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testResources() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value;
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value;
@@ -117,12 +126,12 @@ export class TestNodeController {
 
     /**
      * 根据源资源获取测试资源.例如通过发行名称或者发行ID获取测试资源.API不再提供单一查询
-     * @param ctx
      */
     @get('/:nodeId/testResources/list')
-    @visitorIdentity(LoginUser)
-    async testResourceList(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testResourceList() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const entityType = ctx.checkQuery('entityType').optional().in([TestResourceOriginType.Resource, TestResourceOriginType.Object]).value;
         const entityIds = ctx.checkQuery('entityIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
@@ -152,9 +161,10 @@ export class TestNodeController {
     }
 
     @get('/testResources/:testResourceId')
-    @visitorIdentity(LoginUser)
-    async showTestResource(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async showTestResource() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         ctx.validateParams();
 
@@ -162,9 +172,10 @@ export class TestNodeController {
     }
 
     @put('/testResources/:testResourceId')
-    @visitorIdentity(LoginUser)
-    async updateTestResource(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updateTestResource() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().len(1, 999).value;
         ctx.validateParams();
@@ -185,9 +196,10 @@ export class TestNodeController {
     }
 
     @get('/:nodeId/testResources/searchByDependency')
-    @visitorIdentity(LoginUser)
-    async searchTestResources(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async searchTestResources() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value;
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value;
@@ -206,9 +218,10 @@ export class TestNodeController {
     }
 
     @get('/testResources/:testResourceId/dependencyTree')
-    @visitorIdentity(LoginUser)
-    async testResourceDependencyTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testResourceDependencyTree() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         const nid = ctx.checkQuery('nid').optional().type('string').value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
@@ -225,9 +238,10 @@ export class TestNodeController {
 
 
     @get('/testResources/:testResourceId/authTree')
-    @visitorIdentity(LoginUser)
-    async testResourceAuthTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testResourceAuthTree() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         const nid = ctx.checkQuery('nid').optional().type('string').len(12, 12).value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
@@ -244,9 +258,10 @@ export class TestNodeController {
 
 
     @get('/:nodeId/testResources/dependencyTree/search')
-    @visitorIdentity(LoginUser)
-    async searchTestResourceDependencyTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async searchTestResourceDependencyTree() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const keywords = ctx.checkQuery('keywords').exist().type('string').value;
         ctx.validateParams();
@@ -269,9 +284,10 @@ export class TestNodeController {
     }
 
     @get('/testResources/:testResourceId/dependencyTree/filter')
-    @visitorIdentity(LoginUser)
-    async filterTestResourceDependencyTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async filterTestResourceDependencyTree() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
         const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value;
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value;

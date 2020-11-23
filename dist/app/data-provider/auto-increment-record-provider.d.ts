@@ -1,10 +1,8 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class AutoIncrementRecordProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+export default class AutoIncrementRecordProvider extends MongodbOperation<any> {
     constructor(model: any);
     /**
      * 获取下一个递增节点ID
-     * @param {string} dataType
-     * @returns {Promise<number>}
      */
     getNextNodeId(): Promise<number>;
 }

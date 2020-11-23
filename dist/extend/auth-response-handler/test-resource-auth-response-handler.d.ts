@@ -7,29 +7,30 @@ export declare class TestResourceAuthResponseHandler {
     outsideApiService: IOutsideApiService;
     /**
      * 授权结果统一响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
+     * @param testResourceInfo
+     * @param flattenDependencyTree
      * @param authResult
-     * @param entityNid
-     * @param subResourceIdOrName
+     * @param parentNid
+     * @param subEntityIdOrName
+     * @param subEntityType
      */
     handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string): Promise<void>;
     /**
      * 公共响应头处理
-     * @param presentableVersionInfo
-     * @param realResponseVersionInfo
+     * @param responseTestResourceDependencyTree
      */
     commonResponseHeaderHandle(responseTestResourceDependencyTree: TestResourceDependencyTree): void;
     /**
      * 文件流响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
-     * @param realResponseResourceVersionInfo
+     * @param fileSha1
+     * @param entityId
+     * @param entityType
+     * @param attachmentName
      */
     fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string): Promise<void>;
     /**
      * 标的物自身信息展示
-     * @param presentableInfo
+     * @param testResourceInfo
      */
     subjectInfoResponseHandle(testResourceInfo: TestResourceInfo): void;
     /**
@@ -46,9 +47,10 @@ export declare class TestResourceAuthResponseHandler {
     subjectAuthResultResponse(authResult: SubjectAuthResult): void;
     /**
      * 获取实际需要响应的资源信息,例如标的物的依赖项
-     * @param presentableAuthTree
-     * @param parentEntityNid
-     * @param subResourceIdOrName
+     * @param flattenTestResourceDependencyTree
+     * @param parentNid
+     * @param subEntityIdOrName
+     * @param subEntityType
      */
     getRealResponseEntityInfo(flattenTestResourceDependencyTree: FlattenTestResourceDependencyTree[], parentNid: string, subEntityIdOrName?: string, subEntityType?: string): TestResourceDependencyTree;
 }

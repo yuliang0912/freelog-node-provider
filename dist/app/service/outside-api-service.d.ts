@@ -1,18 +1,18 @@
-import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, UserInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo } from '../../interface';
-import { SubjectTypeEnum } from '../../enum';
+import { ContractInfo, IOutsideApiService, ResourceInfo, ResourceVersionInfo, SubjectInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo } from '../../interface';
 import { ObjectDependencyTreeInfo } from '../../test-node-interface';
+import { FreelogContext, SubjectTypeEnum, FreelogUserInfo } from "egg-freelog-base";
 export declare class OutsideApiService implements IOutsideApiService {
-    ctx: any;
+    ctx: FreelogContext;
     /**
      * 获取用户信息
      * @param {number} userId
      * @returns {Promise<UserInfo>}
      */
-    getUserInfo(userId: number): Promise<UserInfo>;
+    getUserInfo(userId: number): Promise<FreelogUserInfo>;
     /**
      * 获取资源信息
-     * @param {string} resourceId
-     * @returns {Promise<ResourceInfo>}
+     * @param resourceIdOrName
+     * @param options
      */
     getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
     /**
@@ -23,7 +23,7 @@ export declare class OutsideApiService implements IOutsideApiService {
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
     /**
      * 获取资源依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param options
      */
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
@@ -41,7 +41,7 @@ export declare class OutsideApiService implements IOutsideApiService {
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     /**
      * 获取对象依赖树
-     * @param objectId
+     * @param objectIdOrName
      * @param options
      */
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
@@ -79,12 +79,13 @@ export declare class OutsideApiService implements IOutsideApiService {
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     /**
      * 创建展品策略
-     * @param policyText
+     * @param policyTexts
      */
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
     /**
      * 获取标的物策略
      * @param policyIds
+     * @param subjectType
      * @param projection
      */
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[]): Promise<BasePolicyInfo[]>;
@@ -105,6 +106,7 @@ export declare class OutsideApiService implements IOutsideApiService {
     /**
      * 批量获取资源的授权结果
      * @param resourceVersionIds
+     * @param options
      */
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
     /**

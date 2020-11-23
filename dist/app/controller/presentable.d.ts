@@ -1,6 +1,7 @@
-import { IJsonSchemaValidate, INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
 export declare class PresentableController {
-    ctx: any;
+    ctx: FreelogContext;
     nodeCommonChecker: any;
     presentableCommonChecker: any;
     nodeService: INodeService;
@@ -10,26 +11,25 @@ export declare class PresentableController {
     presentablePolicyValidator: IJsonSchemaValidate;
     presentableRewritePropertyValidator: IJsonSchemaValidate;
     presentableVersionService: IPresentableVersionService;
-    presentablePageList(ctx: any): Promise<any>;
+    presentablePageList(): Promise<FreelogContext>;
     /**
      * 获取presentable列表
-     * @param ctx
      * @returns {Promise<void>}
      */
-    list(ctx: any): Promise<void>;
-    createPresentable(ctx: any): Promise<void>;
-    updatePresentable(ctx: any): Promise<void>;
-    updatePresentableOnlineStatus(ctx: any): Promise<void>;
-    updatePresentableVersion(ctx: any): Promise<void>;
-    updatePresentableRewriteProperty(ctx: any): Promise<void>;
-    presentableDetail(ctx: any): Promise<void>;
-    show(ctx: any): Promise<void>;
-    dependencyTree(ctx: any): Promise<void>;
-    authTree(ctx: any): Promise<void>;
+    list(): Promise<void>;
+    createPresentable(): Promise<void>;
+    updatePresentable(): Promise<void>;
+    updatePresentableOnlineStatus(): Promise<void>;
+    updatePresentableVersion(): Promise<void>;
+    updatePresentableRewriteProperty(): Promise<void>;
+    presentableDetail(): Promise<void>;
+    show(): Promise<void>;
+    dependencyTree(): Promise<void>;
+    authTree(): Promise<void>;
     /**
      * 策略格式校验
      * @param policies
-     * @private
+     * @param mode
      */
     _policySchemaValidate(policies: any, mode: 'addPolicy' | 'updatePolicy'): void;
     /**

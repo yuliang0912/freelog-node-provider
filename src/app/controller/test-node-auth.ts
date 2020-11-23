@@ -1,16 +1,14 @@
-import {controller, get, inject, provide} from 'midway';
 import {IOutsideApiService} from '../../interface';
-import {LoginUser, ArgumentError} from 'egg-freelog-base/index';
-import {visitorIdentity} from "../../extend/vistorIdentityDecorator";
+import {controller, get, inject, provide} from 'midway';
 import {ITestNodeService, ITestResourceAuthService, TestResourceOriginType} from "../../test-node-interface";
-import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {IdentityTypeEnum, visitorIdentityValidator, CommonRegex, ArgumentError, FreelogContext} from 'egg-freelog-base';
 
 @provide()
 @controller('/v2/auths/testResource') // 统一URL v2/auths/:subjectType
 export class TestNodeAuthController {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     testNodeService: ITestNodeService;
     @inject()
@@ -22,12 +20,12 @@ export class TestNodeAuthController {
 
     /**
      * 测试资源或者子依赖授权
-     * @param ctx
      */
     @get('/:subjectId/(result|info|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentity(LoginUser)
-    async testResourceAuth(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testResourceAuth() {
 
+        const {ctx} = this;
         const testResourceId = ctx.checkParams('subjectId').isMd5().value;
         // 以下参数作为测试资源的子依赖授权,否则可以不选
         const parentNid = ctx.checkQuery('parentNid').optional().value;
@@ -47,12 +45,12 @@ export class TestNodeAuthController {
 
     /**
      * 测试资源或者子依赖授权,根据节点ID和源实体ID查找测试资源.
-     * @param ctx
      */
     @get('/nodes/:nodeId/:entityIdOrName/(result|info|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentity(LoginUser)
-    async nodeTestResourceAuth(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async nodeTestResourceAuth() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const entityIdOrName = ctx.checkParams('entityIdOrName').exist().decodeURIComponent().value;
         const entityType = ctx.checkQuery('subEntityType').optional().in([TestResourceOriginType.Resource, TestResourceOriginType.Object]).value;
@@ -63,7 +61,7 @@ export class TestNodeAuthController {
         ctx.validateParams();
 
         const condition: any = {nodeId};
-        if (mongoObjectId.test(entityIdOrName)) {
+        if (CommonRegex.mongoObjectId.test(entityIdOrName)) {
             condition['originInfo.id'] = entityIdOrName;
         } else if (entityIdOrName.includes('/')) {
             condition['originInfo.name'] = entityIdOrName;

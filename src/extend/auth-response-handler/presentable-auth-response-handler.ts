@@ -2,18 +2,16 @@ import {parse} from 'url';
 import {inject, provide} from 'midway';
 import {
     FlattenPresentableDependencyTree,
-    IOutsideApiService,
-    IPresentableVersionService,
-    PresentableInfo,
-    PresentableDependencyTree,
-    PresentableVersionInfo
+    IOutsideApiService, IPresentableVersionService,
+    PresentableInfo, PresentableDependencyTree,
+    PresentableVersionInfo, IPresentableAuthResponseHandler
 } from '../../interface';
-import {chain, first, isEmpty, isString} from "lodash";
-import {SubjectAuthCodeEnum, SubjectAuthResult} from '../../auth-interface';
-import {AuthorizationError, ApplicationError} from 'egg-freelog-base/index';
+import {chain, first, isEmpty, isString} from 'lodash';
+import {SubjectAuthResult} from '../../auth-interface';
+import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum} from 'egg-freelog-base';
 
 @provide()
-export class PresentableAuthResponseHandler {
+export class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
 
     @inject()
     ctx;
@@ -27,7 +25,7 @@ export class PresentableAuthResponseHandler {
      * @param presentableInfo
      * @param presentableVersionInfo
      * @param authResult
-     * @param entityNid
+     * @param parentNid
      * @param subResourceIdOrName
      */
     async handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string) {
@@ -67,7 +65,7 @@ export class PresentableAuthResponseHandler {
     /**
      * 公共响应头处理
      * @param presentableVersionInfo
-     * @param realResponseVersionInfo
+     * @param realResponseResourceVersionInfo
      */
     commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
 
@@ -78,15 +76,15 @@ export class PresentableAuthResponseHandler {
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
-        this.ctx.set('freelog-meta', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
     }
 
 
     /**
      * 文件流响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
-     * @param realResponseResourceVersionInfo
+     * @param fileSha1
+     * @param resourceType
+     * @param attachmentName
      */
     async fileStreamResponseHandle(fileSha1: string, resourceType: string, attachmentName?: string,) {
 
@@ -149,8 +147,8 @@ export class PresentableAuthResponseHandler {
 
     /**
      * 获取实际需要响应的资源信息,例如标的物的依赖项
-     * @param presentableAuthTree
-     * @param parentEntityNid
+     * @param flattenPresentableDependencyTree
+     * @param parentNid
      * @param subResourceIdOrName
      */
     getRealResponseResourceInfo(flattenPresentableDependencyTree: FlattenPresentableDependencyTree[], parentNid: string, subResourceIdOrName ?: string): PresentableDependencyTree {

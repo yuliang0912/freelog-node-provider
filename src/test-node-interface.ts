@@ -1,5 +1,6 @@
-import {PageResult, PresentableInfo} from "./interface";
+import {PresentableInfo} from "./interface";
 import {SubjectAuthResult} from "./auth-interface";
+import {PageResult} from 'egg-freelog-base'
 
 export enum TestResourceOriginType {
     Resource = 'resource',

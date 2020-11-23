@@ -1,9 +1,10 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base'
+import {PresentableVersionInfo} from "../../interface";
 
 @provide()
 @scope('Singleton')
-export default class PresentableVersionProvider extends MongoBaseOperation {
+export default class PresentableVersionProvider extends MongodbOperation<PresentableVersionInfo> {
     constructor(@inject('model.PresentableVersion') model) {
         super(model);
     }

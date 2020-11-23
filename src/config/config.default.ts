@@ -18,9 +18,7 @@ export default (appInfo: EggAppInfo) => {
         defaultLocale: 'zh-CN'
     };
 
-    config.middleware = [
-        'errorHandler', 'identityAuthentication'
-    ];
+    config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler'];
 
     config.static = {
         enable: false

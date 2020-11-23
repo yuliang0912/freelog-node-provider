@@ -1,41 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeTestRuleMatchStatus = exports.PresentableAuthStatusEnum = exports.PresentableOnlineStatusEnum = exports.ContractStatusEnum = exports.IdentityType = exports.SubjectTypeEnum = void 0;
-/**
- * 标的物类型
- */
-var SubjectTypeEnum;
-(function (SubjectTypeEnum) {
-    SubjectTypeEnum[SubjectTypeEnum["Resource"] = 1] = "Resource";
-    SubjectTypeEnum[SubjectTypeEnum["Presentable"] = 2] = "Presentable";
-    SubjectTypeEnum[SubjectTypeEnum["UserGroup"] = 3] = "UserGroup";
-})(SubjectTypeEnum = exports.SubjectTypeEnum || (exports.SubjectTypeEnum = {}));
-/**
- * 合同类型
- */
-var IdentityType;
-(function (IdentityType) {
-    IdentityType[IdentityType["Resource"] = 1] = "Resource";
-    IdentityType[IdentityType["Node"] = 2] = "Node";
-    IdentityType[IdentityType["ClientUser"] = 3] = "ClientUser";
-})(IdentityType = exports.IdentityType || (exports.IdentityType = {}));
-var ContractStatusEnum;
-(function (ContractStatusEnum) {
-    /**
-     * 正常生效中
-     */
-    ContractStatusEnum[ContractStatusEnum["Executed"] = 0] = "Executed";
-    /**
-     * 合同已终止(未授权,并且不再接受新事件)
-     * @type {number}
-     */
-    ContractStatusEnum[ContractStatusEnum["Terminated"] = 1] = "Terminated";
-    /**
-     * 异常的,例如签名不对,冻结等.
-     * @type {number}
-     */
-    ContractStatusEnum[ContractStatusEnum["Exception"] = 2] = "Exception";
-})(ContractStatusEnum = exports.ContractStatusEnum || (exports.ContractStatusEnum = {}));
+exports.NodeTestRuleMatchStatus = exports.PresentableAuthStatusEnum = exports.PresentableOnlineStatusEnum = void 0;
 var PresentableOnlineStatusEnum;
 (function (PresentableOnlineStatusEnum) {
     /**
@@ -90,4 +55,4 @@ var NodeTestRuleMatchStatus;
      */
     NodeTestRuleMatchStatus[NodeTestRuleMatchStatus["Completed"] = 3] = "Completed";
 })(NodeTestRuleMatchStatus = exports.NodeTestRuleMatchStatus || (exports.NodeTestRuleMatchStatus = {}));
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBOztHQUVHO0FBQ0gsSUFBWSxlQUlYO0FBSkQsV0FBWSxlQUFlO0lBQ3ZCLDZEQUFZLENBQUE7SUFDWixtRUFBZSxDQUFBO0lBQ2YsK0RBQWEsQ0FBQTtBQUNqQixDQUFDLEVBSlcsZUFBZSxHQUFmLHVCQUFlLEtBQWYsdUJBQWUsUUFJMUI7QUFFRDs7R0FFRztBQUNILElBQVksWUFJWDtBQUpELFdBQVksWUFBWTtJQUNwQix1REFBWSxDQUFBO0lBQ1osK0NBQUksQ0FBQTtJQUNKLDJEQUFVLENBQUE7QUFDZCxDQUFDLEVBSlcsWUFBWSxHQUFaLG9CQUFZLEtBQVosb0JBQVksUUFJdkI7QUFFRCxJQUFZLGtCQWlCWDtBQWpCRCxXQUFZLGtCQUFrQjtJQUMxQjs7T0FFRztJQUNILG1FQUFZLENBQUE7SUFFWjs7O09BR0c7SUFDSCx1RUFBYyxDQUFBO0lBRWQ7OztPQUdHO0lBQ0gscUVBQWEsQ0FBQTtBQUNqQixDQUFDLEVBakJXLGtCQUFrQixHQUFsQiwwQkFBa0IsS0FBbEIsMEJBQWtCLFFBaUI3QjtBQUVELElBQVksMkJBWVg7QUFaRCxXQUFZLDJCQUEyQjtJQUVuQzs7O09BR0c7SUFDSCxtRkFBVyxDQUFBO0lBRVg7O09BRUc7SUFDSCxpRkFBVSxDQUFBO0FBQ2QsQ0FBQyxFQVpXLDJCQUEyQixHQUEzQixtQ0FBMkIsS0FBM0IsbUNBQTJCLFFBWXRDO0FBRUQsSUFBWSx5QkE4Qlg7QUE5QkQsV0FBWSx5QkFBeUI7SUFFakM7O09BRUc7SUFDSCwrRUFBVyxDQUFBO0lBRVg7OztPQUdHO0lBQ0gscUhBQThCLENBQUE7SUFFOUI7OztPQUdHO0lBQ0gsNkhBQWtDLENBQUE7SUFFbEM7OztPQUdHO0lBQ0gscUhBQThCLENBQUE7SUFFOUI7OztPQUdHO0lBQ0gsNkhBQWtDLENBQUE7QUFDdEMsQ0FBQyxFQTlCVyx5QkFBeUIsR0FBekIsaUNBQXlCLEtBQXpCLGlDQUF5QixRQThCcEM7QUFFRCxJQUFZLHVCQWVYO0FBZkQsV0FBWSx1QkFBdUI7SUFDL0I7O09BRUc7SUFDSCwyRUFBVyxDQUFBO0lBRVg7O09BRUc7SUFDSCx5RUFBVSxDQUFBO0lBRVY7O09BRUc7SUFDSCwrRUFBYSxDQUFBO0FBQ2pCLENBQUMsRUFmVyx1QkFBdUIsR0FBdkIsK0JBQXVCLEtBQXZCLCtCQUF1QixRQWVsQyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUNBLElBQVksMkJBWVg7QUFaRCxXQUFZLDJCQUEyQjtJQUVuQzs7O09BR0c7SUFDSCxtRkFBVyxDQUFBO0lBRVg7O09BRUc7SUFDSCxpRkFBVSxDQUFBO0FBQ2QsQ0FBQyxFQVpXLDJCQUEyQixHQUEzQixtQ0FBMkIsS0FBM0IsbUNBQTJCLFFBWXRDO0FBRUQsSUFBWSx5QkE4Qlg7QUE5QkQsV0FBWSx5QkFBeUI7SUFFakM7O09BRUc7SUFDSCwrRUFBVyxDQUFBO0lBRVg7OztPQUdHO0lBQ0gscUhBQThCLENBQUE7SUFFOUI7OztPQUdHO0lBQ0gsNkhBQWtDLENBQUE7SUFFbEM7OztPQUdHO0lBQ0gscUhBQThCLENBQUE7SUFFOUI7OztPQUdHO0lBQ0gsNkhBQWtDLENBQUE7QUFDdEMsQ0FBQyxFQTlCVyx5QkFBeUIsR0FBekIsaUNBQXlCLEtBQXpCLGlDQUF5QixRQThCcEM7QUFFRCxJQUFZLHVCQWVYO0FBZkQsV0FBWSx1QkFBdUI7SUFDL0I7O09BRUc7SUFDSCwyRUFBVyxDQUFBO0lBRVg7O09BRUc7SUFDSCx5RUFBVSxDQUFBO0lBRVY7O09BRUc7SUFDSCwrRUFBYSxDQUFBO0FBQ2pCLENBQUMsRUFmVyx1QkFBdUIsR0FBdkIsK0JBQXVCLEtBQXZCLCtCQUF1QixRQWVsQyJ9

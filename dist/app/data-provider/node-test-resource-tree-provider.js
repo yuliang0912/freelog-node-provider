@@ -13,8 +13,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
-let NodeTestResourceTreeProvider = class NodeTestResourceTreeProvider extends MongoBaseOperation {
+const egg_freelog_base_1 = require("egg-freelog-base");
+let NodeTestResourceTreeProvider = class NodeTestResourceTreeProvider extends egg_freelog_base_1.MongodbOperation {
     constructor(model) {
         super(model);
     }
@@ -26,4 +26,4 @@ NodeTestResourceTreeProvider = __decorate([
     __metadata("design:paramtypes", [Object])
 ], NodeTestResourceTreeProvider);
 exports.default = NodeTestResourceTreeProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibm9kZS10ZXN0LXJlc291cmNlLXRyZWUtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvbm9kZS10ZXN0LXJlc291cmNlLXRyZWUtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMseUZBQXlGO0FBSXpGLElBQXFCLDRCQUE0QixHQUFqRCxNQUFxQiw0QkFBNkIsU0FBUSxrQkFBa0I7SUFDeEUsWUFBc0QsS0FBSztRQUN2RCxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0IsNEJBQTRCO0lBRmhELGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsZ0NBQWdDLENBQUMsQ0FBQTs7R0FEcEMsNEJBQTRCLENBSWhEO2tCQUpvQiw0QkFBNEIifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibm9kZS10ZXN0LXJlc291cmNlLXRyZWUtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvbm9kZS10ZXN0LXJlc291cmNlLXRyZWUtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsdURBQWlEO0FBS2pELElBQXFCLDRCQUE0QixHQUFqRCxNQUFxQiw0QkFBNkIsU0FBUSxtQ0FBc0M7SUFDNUYsWUFBc0QsS0FBSztRQUN2RCxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0IsNEJBQTRCO0lBRmhELGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsZ0NBQWdDLENBQUMsQ0FBQTs7R0FEcEMsNEJBQTRCLENBSWhEO2tCQUpvQiw0QkFBNEIifQ==

@@ -1,6 +1,6 @@
-import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableDependencyTree, PresentableVersionInfo } from '../../interface';
+import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableDependencyTree, PresentableVersionInfo, IPresentableAuthResponseHandler } from '../../interface';
 import { SubjectAuthResult } from '../../auth-interface';
-export declare class PresentableAuthResponseHandler {
+export declare class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
     ctx: any;
     outsideApiService: IOutsideApiService;
     presentableVersionService: IPresentableVersionService;
@@ -9,21 +9,21 @@ export declare class PresentableAuthResponseHandler {
      * @param presentableInfo
      * @param presentableVersionInfo
      * @param authResult
-     * @param entityNid
+     * @param parentNid
      * @param subResourceIdOrName
      */
     handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
     /**
      * 公共响应头处理
      * @param presentableVersionInfo
-     * @param realResponseVersionInfo
+     * @param realResponseResourceVersionInfo
      */
     commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): void;
     /**
      * 文件流响应处理
-     * @param presentableInfo
-     * @param presentableVersionInfo
-     * @param realResponseResourceVersionInfo
+     * @param fileSha1
+     * @param resourceType
+     * @param attachmentName
      */
     fileStreamResponseHandle(fileSha1: string, resourceType: string, attachmentName?: string): Promise<void>;
     /**
@@ -45,8 +45,8 @@ export declare class PresentableAuthResponseHandler {
     subjectAuthResultResponse(authResult: SubjectAuthResult): void;
     /**
      * 获取实际需要响应的资源信息,例如标的物的依赖项
-     * @param presentableAuthTree
-     * @param parentEntityNid
+     * @param flattenPresentableDependencyTree
+     * @param parentNid
      * @param subResourceIdOrName
      */
     getRealResponseResourceInfo(flattenPresentableDependencyTree: FlattenPresentableDependencyTree[], parentNid: string, subResourceIdOrName?: string): PresentableDependencyTree;

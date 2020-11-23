@@ -1,14 +1,13 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import {IJsonSchemaValidate} from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 /**
  * http://json-schema.org/understanding-json-schema/
  */
 @scope('Singleton')
 @provide('presentableRewritePropertyValidator')
-export class PresentableRewritePropertyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class PresentableRewritePropertyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
     /**
      * 资源自定义属性格式校验
@@ -16,7 +15,7 @@ export class PresentableRewritePropertyValidator extends freelogCommonJsonSchema
      * @returns {ValidatorResult}
      */
     validate(operations: object[]): ValidatorResult {
-        return super.validate(operations, super.getSchema('/presentableCustomPropertySchema'));
+        return super.validate(operations, this.schemas['/presentableCustomPropertySchema']);
     }
 
     /**

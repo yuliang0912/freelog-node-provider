@@ -15,7 +15,6 @@ export declare class OptionReplaceHandler {
      * 递归替换依赖树
      * @param dependencies
      * @param parents
-     * @private
      */
     _recursionReplace(dependencies: TestResourceDependencyTree[], parents: {
         name: string;
@@ -26,9 +25,7 @@ export declare class OptionReplaceHandler {
      * 匹配替换对象,此函数会在替换之后的结果上做多次替换.具体需要看规则的定义.即支持A=>B,B=>C,C=>D. 综合替换之后的结果为A替换成D.最终返回D以及D的依赖信息.
      * 然后上游调用者会把A以及A的所有依赖信息移除,替换成D以及D的依赖信息.然后在新的依赖树下递归调用后续的规则
      * @param targetInfo
-     * @param ruleInfo
      * @param parents
-     * @private
      */
     _matchReplacer(targetInfo: TestResourceDependencyTree, parents?: any[]): Promise<TestResourceDependencyTree>;
     /**
@@ -44,9 +41,7 @@ export declare class OptionReplaceHandler {
     /**
      * 检查依赖树节点对象与候选对象规则是否匹配
      * @param scopeInfo
-     * @param dependInfo
-     * @returns {boolean|*}
-     * @private
+     * @param targetInfo
      */
     _entityIsMatched(scopeInfo: CandidateInfo, targetInfo: TestResourceDependencyTree): boolean;
     /**

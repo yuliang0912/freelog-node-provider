@@ -1,6 +1,7 @@
 import {v4} from 'uuid';
-import {assign, pick, uniqBy, first, isEmpty} from 'lodash';
 import {provide, inject} from 'midway';
+import {FreelogContext} from "egg-freelog-base";
+import {assign, pick, uniqBy, first, isEmpty} from 'lodash';
 import {
     FlattenPresentableDependencyTree,
     IOutsideApiService,
@@ -16,7 +17,7 @@ import {
 export class PresentableVersionService implements IPresentableVersionService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     presentableProvider;
     @inject()
@@ -27,7 +28,11 @@ export class PresentableVersionService implements IPresentableVersionService {
     presentableCommonChecker;
 
     async findById(presentableId: string, version: string, ...args): Promise<PresentableVersionInfo> {
-        return this.presentableVersionProvider.findOne({presentableId, version}, ...args);
+        return this.findOne({presentableId, version}, ...args);
+    }
+
+    async findByIds(presentableVersionIds: string[], ...args): Promise<PresentableVersionInfo[]> {
+        return this.find({presentableVersionId: {$in: presentableVersionIds}}, ...args);
     }
 
     async findOne(condition: object, ...args): Promise<PresentableVersionInfo> {
@@ -116,8 +121,8 @@ export class PresentableVersionService implements IPresentableVersionService {
      * 平铺结构的依赖树转换为递归结构的依赖树
      * @param flattenDependencies
      * @param startNid
+     * @param isContainRootNode
      * @param maxDeep
-     * @returns {*}
      */
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableDependencyTree[] {
 
@@ -153,8 +158,9 @@ export class PresentableVersionService implements IPresentableVersionService {
 
     /**
      * 构建presentable授权树
+     * @param presentableInfo
      * @param dependencyTree
-     * @private
+     * @param allVersionIds
      */
     async _buildPresentableAuthTree(presentableInfo: PresentableInfo, dependencyTree: ResourceDependencyTree[], allVersionIds: string[]): Promise<PresentableResolveResource[]> {
 
@@ -173,12 +179,9 @@ export class PresentableVersionService implements IPresentableVersionService {
 
     /**
      * 获取授权树
-     * @param resourceId
-     * @param version
      * @param dependencies
+     * @param resourceVersionId
      * @param resourceVersionMap
-     * @returns {*}
-     * @private
      */
     _getResourceAuthTree(dependencies: ResourceDependencyTree[], resourceVersionId: string, resourceVersionMap) {
 
@@ -200,6 +203,7 @@ export class PresentableVersionService implements IPresentableVersionService {
 
     /**
      * 获取presentable解决的发行(需要包含具体的版本信息)
+     * @param presentableInfo
      * @param rootDependency
      */
     _getPresentableResolveResources(presentableInfo: PresentableInfo, rootDependency: ResourceDependencyTree): PresentableResolveResource[] {
@@ -226,9 +230,8 @@ export class PresentableVersionService implements IPresentableVersionService {
     /**
      * 从依赖树中递归获取发行的所有版本信息
      * @param dependencies
-     * @param resource
-     * @returns {Array}
-     * @private
+     * @param resourceInfo
+     * @param list
      */
     _findResourceVersionFromDependencyTree(dependencies, resourceInfo, list = []): any[] {
         return dependencies.reduce((acc, dependency) => {
@@ -279,8 +282,7 @@ export class PresentableVersionService implements IPresentableVersionService {
     /**
      * 平铺依赖树
      * @param presentableId
-     * @param dependencyTree
-     * @private
+     * @param resourceDependencyTree
      */
     _flattenDependencyTree(presentableId: string, resourceDependencyTree: ResourceDependencyTree[]): FlattenPresentableDependencyTree[] {
         const recursionFillAttribute = (dependencies: ResourceDependencyTree[], results: FlattenPresentableDependencyTree[], parentNid: string, deep: number) => {
@@ -305,8 +307,7 @@ export class PresentableVersionService implements IPresentableVersionService {
 
     /**
      * 平铺授权树
-     * @param presentableResolveReleases
-     * @private
+     * @param presentableResolveResources
      */
     _flattenPresentableAuthTree(presentableResolveResources): FlattenPresentableAuthTree[] {
         const treeNodes: FlattenPresentableAuthTree[] = [];

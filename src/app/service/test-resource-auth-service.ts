@@ -1,18 +1,18 @@
 import {inject, provide} from "midway";
-import {SubjectTypeEnum} from "../../enum";
 import {chain, isArray, isEmpty} from "lodash";
 import {ContractInfo, IOutsideApiService} from "../../interface";
-import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
+import {SubjectAuthResult} from "../../auth-interface";
 import {
     FlattenTestResourceAuthTree, ITestResourceAuthService,
     TestResourceInfo, TestResourceOriginType
 } from "../../test-node-interface";
+import {SubjectTypeEnum, FreelogContext, SubjectAuthCodeEnum} from 'egg-freelog-base'
 
 @provide()
 export class TestResourceAuthService implements ITestResourceAuthService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     outsideApiService: IOutsideApiService;
 

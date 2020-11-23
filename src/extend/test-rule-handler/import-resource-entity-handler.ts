@@ -11,8 +11,7 @@ export class ImportResourceEntityHandler {
 
     /**
      * 从规则中分析需要导入的资源数据
-     * @param testRules
-     * @param promiseResults
+     * @param addResourceRules
      */
     async importResourceEntityDataFromRules(addResourceRules: TestRuleMatchInfo[]) {
 
@@ -29,7 +28,7 @@ export class ImportResourceEntityHandler {
 
     /**
      * 获取展品依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param version
      */
     async getResourceDependencyTree(resourceIdOrName: string, version: string): Promise<TestResourceDependencyTree[]> {
@@ -94,9 +93,8 @@ export class ImportResourceEntityHandler {
 
     /**
      * 匹配发行版本
-     * @param releaseInfo
+     * @param resourceInfo
      * @param versionRange
-     * @returns {*}
      */
     matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string) {
 
