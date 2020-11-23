@@ -2,7 +2,7 @@ import {parse} from 'url';
 import {inject, provide} from 'midway';
 import {chain, first, isEmpty, isString} from "lodash";
 import {SubjectAuthResult} from '../../auth-interface';
-import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum} from 'egg-freelog-base';
+import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum, FreelogContext} from 'egg-freelog-base';
 import {IOutsideApiService} from '../../interface';
 import {
     FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo
@@ -12,7 +12,7 @@ import {
 export class TestResourceAuthResponseHandler {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     testNodeGenerator;
     @inject()

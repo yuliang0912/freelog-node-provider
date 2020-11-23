@@ -1,6 +1,7 @@
 import { INodeService, NodeInfo } from "../interface";
+import { FreelogContext } from 'egg-freelog-base';
 export declare class NodeCommonChecker {
-    ctx: any;
+    ctx: FreelogContext;
     nodeService: INodeService;
     /**
      * 检查节点域名

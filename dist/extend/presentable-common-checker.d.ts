@@ -1,6 +1,7 @@
 import { IPresentableService } from '../interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class PresentableCommonChecker {
-    ctx: any;
+    ctx: FreelogContext;
     presentableService: IPresentableService;
     checkResourceIsCreated(nodeId: number, resourceId: string): Promise<void>;
     checkPresentableNameIsUnique(nodeId: number, presentableName: string): Promise<void>;

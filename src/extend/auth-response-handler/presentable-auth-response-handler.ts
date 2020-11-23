@@ -8,13 +8,13 @@ import {
 } from '../../interface';
 import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
-import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum} from 'egg-freelog-base';
+import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum, FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()

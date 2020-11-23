@@ -1,12 +1,12 @@
 import {provide, inject} from 'midway';
 import {INodeService, NodeInfo} from "../interface";
-import {ApplicationError, ArgumentError, CryptoHelper} from 'egg-freelog-base';
+import {ApplicationError, ArgumentError, CryptoHelper, FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class NodeCommonChecker {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     nodeService: INodeService;
 

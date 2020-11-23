@@ -1,7 +1,8 @@
 import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableDependencyTree, PresentableVersionInfo, IPresentableAuthResponseHandler } from '../../interface';
 import { SubjectAuthResult } from '../../auth-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
-    ctx: any;
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     presentableVersionService: IPresentableVersionService;
     /**

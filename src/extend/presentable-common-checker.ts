@@ -1,12 +1,12 @@
 import {inject, provide} from 'midway';
 import {IPresentableService} from '../interface';
-import {ApplicationError, CryptoHelper} from 'egg-freelog-base';
+import {ApplicationError, CryptoHelper, FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class PresentableCommonChecker {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     presentableService: IPresentableService;
 

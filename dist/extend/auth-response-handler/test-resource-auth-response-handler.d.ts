@@ -1,8 +1,9 @@
 import { SubjectAuthResult } from '../../auth-interface';
+import { FreelogContext } from 'egg-freelog-base';
 import { IOutsideApiService } from '../../interface';
 import { FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo } from "../../test-node-interface";
 export declare class TestResourceAuthResponseHandler {
-    ctx: any;
+    ctx: FreelogContext;
     testNodeGenerator: any;
     outsideApiService: IOutsideApiService;
     /**
