@@ -210,17 +210,8 @@ export class PresentableService implements IPresentableService {
         return this.presentableProvider.find({_id: {$in: presentableIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>> {
-        let dataList = [];
-        const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
-        }
-        return {page, pageSize, totalItem, dataList};
-    }
-
-    async findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]> {
-        return this.presentableProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
+    async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>> {
+        return this.presentableProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort ?? {createDate: -1});
     }
 
     async count(condition: object): Promise<number> {

@@ -91,8 +91,9 @@ export class TestNodeController {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const page = ctx.checkQuery("page").optional().default(1).toInt().gt(0).value;
-        const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
@@ -121,7 +122,7 @@ export class TestNodeController {
             condition.$or = [{testResourceName: searchExp}, {'originInfo.name': searchExp}];
         }
 
-        await this.testNodeService.findTestResourcePageList(condition, page, pageSize, projection, null).then(ctx.success);
+        await this.testNodeService.findIntervalResourceList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
     /**

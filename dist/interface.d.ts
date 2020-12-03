@@ -225,7 +225,7 @@ export interface INodeService {
     findByDomain(nodeDomain: string, ...args: any[]): Promise<NodeInfo>;
     find(condition: object, ...args: any[]): Promise<NodeInfo[]>;
     findByIds(nodeIds: number[], ...args: any[]): Promise<NodeInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<NodeInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>>;
     count(condition: object): Promise<number>;
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
@@ -236,8 +236,7 @@ export interface IPresentableService {
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
     findByIds(presentableIds: string[], ...args: any[]): Promise<PresentableInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>>;
-    findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
     count(condition: object): Promise<number>;
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
     updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;

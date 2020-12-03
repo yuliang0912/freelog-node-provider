@@ -46,8 +46,7 @@ export default (appInfo: EggAppInfo) => {
         publicKey: 'c8724fd977542b155abac77664093770',
         privateKey: 'e8739ff716660a4c942724d306216612'
     };
-
-
+    
     config.rabbitMq = {
         enable: false, // 先不启用
         connOptions: {

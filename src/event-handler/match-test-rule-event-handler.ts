@@ -68,7 +68,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 50)) {
                 await this.matchAndSaveTestResourceInfos(testRules, nodeId, nodeTestRuleInfo.userId).then(testRuleMatchResults => {
-                    allTestRuleMatchResults = [...allTestRuleMatchResults, ...testRuleMatchResults];
+                    allTestRuleMatchResults.push(...testRuleMatchResults);
                 })
             }
 
@@ -156,15 +156,17 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param excludedPresentableIds
      */
     async saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[]): Promise<void> {
-        let page = 1;
-        const pageSize = 50;
+        let skip = 0;
+        const limit = 50;
         const condition = {nodeId, createDate: {$lt: new Date()}};
         if (!isEmpty(excludedPresentableIds)) {
             condition['_id'] = {$nin: excludedPresentableIds};
         }
         const projection = ['presentableId', 'tag', 'onlineStatus', 'coverImages', 'presentableName', 'resourceInfo', 'version', 'resolveResources'];
         while (true) {
-            const presentables = await this.presentableService.findList(condition, page++, pageSize, projection, {createDate: -1});
+            const presentables = await this.presentableService.find(condition, projection.join(' '), {
+                skip, limit, sort: {createDate: -1}
+            })
             if (isEmpty(presentables)) {
                 break;
             }
@@ -189,6 +191,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             }
             await this.nodeTestResourceProvider.insertMany(testResources);
             await this.nodeTestResourceTreeProvider.insertMany(testResourceTreeInfos);
+            skip += 50;
         }
     }
 

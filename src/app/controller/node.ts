@@ -19,8 +19,9 @@ export class NodeController {
     async index() {
 
         const {ctx} = this;
-        const page = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const status = ctx.checkQuery('status').optional().default(0).in([0, 1, 2]).toInt().value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -30,7 +31,23 @@ export class NodeController {
             condition.status = status;
         }
 
-        await this.nodeService.findPageList(condition, page, pageSize, projection).then(ctx.success);
+        await this.nodeService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
+    }
+
+    @get('/count')
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async createdCount() {
+
+        const {ctx} = this;
+        const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const list = await this.nodeService.findUserCreatedNodeCounts(userIds.map(x => parseInt(x)));
+
+        ctx.success(userIds.map(userId => {
+            const record = list.find(x => x.userId.toString() === userId);
+            return {userId: parseInt(userId), createdNodeCount: record?.count ?? 0}
+        }))
     }
 
     @get('/list')

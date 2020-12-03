@@ -271,13 +271,15 @@ export interface INodeService {
 
     findByIds(nodeIds: number[], ...args): Promise<NodeInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<NodeInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>>;
 
     count(condition: object): Promise<number>;
 
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
 
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
+
+    findUserCreatedNodeCounts(userIds: number[]);
 }
 
 export interface IPresentableService {
@@ -292,9 +294,7 @@ export interface IPresentableService {
 
     findByIds(presentableIds: string[], ...args): Promise<PresentableInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>>;
-
-    findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
 
     count(condition: object): Promise<number>;
 

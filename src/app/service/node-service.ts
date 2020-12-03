@@ -56,13 +56,22 @@ export class NodeService implements INodeService {
         return this.nodeProvider.find(condition, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<NodeInfo>> {
-        let dataList = [];
-        const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.nodeProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1});
-        }
-        return {page, pageSize, totalItem, dataList};
+    async findUserCreatedNodeCounts(userIds: number[]) {
+        return this.nodeProvider.aggregate([
+            {
+                $match: {ownerUserId: {$in: userIds}}
+            },
+            {
+                $group: {_id: "$ownerUserId", count: {"$sum": 1}}
+            },
+            {
+                $project: {_id: 0, userId: "$_id", count: "$count"}
+            }
+        ])
+    }
+
+    async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>> {
+        return this.nodeProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
     }
 
     async count(condition: object): Promise<number> {

@@ -37,8 +37,7 @@ export declare class PresentableService implements IPresentableService {
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
     findByIds(presentableIds: string[], ...args: any[]): Promise<PresentableInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PresentableInfo>>;
-    findList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PresentableInfo[]>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
     count(condition: object): Promise<number>;
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
     fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;

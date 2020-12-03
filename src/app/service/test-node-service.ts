@@ -67,13 +67,8 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestResourceTreeProvider.find(condition, ...args);
     }
 
-    async findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<TestResourceInfo>> {
-        let dataList = [];
-        const totalItem = await this.testResourceCount(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.nodeTestResourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {_id: 1});
-        }
-        return {page, pageSize, totalItem, dataList};
+    async findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>> {
+        return this.nodeTestResourceProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort);
     }
 
     /**

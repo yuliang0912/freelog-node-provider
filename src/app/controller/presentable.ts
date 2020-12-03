@@ -5,8 +5,7 @@ import {controller, inject, get, post, put, provide} from 'midway';
 import {isString, isUndefined, isNumber, isEmpty, first} from 'lodash';
 import {INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService} from '../../interface';
 import {
-    IdentityTypeEnum, visitorIdentityValidator,
-    ArgumentError, FreelogContext, IJsonSchemaValidate
+    IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext, IJsonSchemaValidate
 } from 'egg-freelog-base';
 
 @provide()
@@ -39,13 +38,14 @@ export class PresentableController {
     async presentablePageList() {
 
         const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().value;
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
-        const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
         const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
@@ -69,7 +69,7 @@ export class PresentableController {
             condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}, {'resourceInfo.resourceName': searchExp}];
         }
 
-        const pageResult = await this.presentableService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        const pageResult = await this.presentableService.findIntervalList(condition, skip, limit, projection, sort);
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList);
         }

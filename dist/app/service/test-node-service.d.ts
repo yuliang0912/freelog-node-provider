@@ -19,7 +19,7 @@ export declare class TestNodeService implements ITestNodeService {
     testResourceCount(condition: object): Promise<number>;
     findOneTestResourceTreeInfo(condition: object, ...args: any[]): Promise<TestResourceTreeInfo>;
     findTestResourceTreeInfos(condition: object, ...args: any[]): Promise<TestResourceTreeInfo[]>;
-    findTestResourcePageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<TestResourceInfo>>;
+    findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>>;
     /**
      * 匹配规则并且保存结果
      * @param nodeId
