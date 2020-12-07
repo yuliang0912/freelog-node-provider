@@ -229,6 +229,7 @@ export interface INodeService {
     count(condition: object): Promise<number>;
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
+    findUserCreatedNodeCounts(userIds: number[]): any;
 }
 export interface IPresentableService {
     createPresentable(options: CreatePresentableOptions): Promise<PresentableInfo>;

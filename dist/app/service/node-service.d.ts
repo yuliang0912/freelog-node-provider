@@ -12,6 +12,7 @@ export declare class NodeService implements INodeService {
     findByIds(nodeIds: number[], ...args: any[]): Promise<NodeInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<NodeInfo>;
     find(condition: object, ...args: any[]): Promise<NodeInfo[]>;
+    findUserCreatedNodeCounts(userIds: number[]): Promise<any>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>>;
     count(condition: object): Promise<number>;
 }

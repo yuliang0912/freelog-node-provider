@@ -5,6 +5,7 @@ export declare class NodeController {
     nodeCommonChecker: any;
     nodeService: INodeService;
     index(): Promise<void>;
+    createdCount(): Promise<void>;
     list(): Promise<void>;
     create(): Promise<void>;
     detail(): Promise<void>;
