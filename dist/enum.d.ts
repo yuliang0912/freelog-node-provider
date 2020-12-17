@@ -49,3 +49,27 @@ export declare enum NodeTestRuleMatchStatus {
      */
     Completed = 3
 }
+export declare enum NodeStatus {
+    /**
+     * 正常.
+     */
+    Normal = 0,
+    /**
+     * 冻结
+     */
+    Freeze = 1
+}
+export declare enum NodeAuditStatus {
+    /**
+     * 未审核.
+     */
+    Unreviewed = 0,
+    /**
+     * 审核通过
+     */
+    Approved = 1,
+    /**
+     * 审核不通过
+     */
+    NotApproved = 2
+}

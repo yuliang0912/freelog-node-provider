@@ -1,4 +1,3 @@
-
 export enum PresentableOnlineStatusEnum {
 
     /**
@@ -60,4 +59,36 @@ export enum NodeTestRuleMatchStatus {
      * 规则匹配完成
      */
     Completed = 3,
+}
+
+// 0:未发布 1:已发布 2:系统冻结
+export enum NodeStatus {
+
+    /**
+     * 正常.
+     */
+    Normal = 0,
+    
+    /**
+     * 冻结
+     */
+    Freeze = 1
+}
+
+export enum NodeAuditStatus {
+
+    /**
+     * 未审核.
+     */
+    Unreviewed = 0,
+
+    /**
+     * 审核通过
+     */
+    Approved = 1,
+
+    /**
+     * 审核不通过
+     */
+    NotApproved = 2
 }

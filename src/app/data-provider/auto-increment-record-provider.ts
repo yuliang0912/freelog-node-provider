@@ -18,4 +18,14 @@ export default class AutoIncrementRecordProvider extends MongodbOperation<any> {
             return model || super.create({dataType, value: 80000000})
         }).then(data => data.value);
     }
+
+    /**
+     * 获取下一个tagId
+     */
+    async getNextTagId(): Promise<number> {
+        const dataType = 'TAG_ID';
+        return super.findOneAndUpdate({dataType}, {$inc: {value: 1}}, {new: true}).then(model => {
+            return model || super.create({dataType, value: 1})
+        }).then(data => data.value);
+    }
 }

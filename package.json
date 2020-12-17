@@ -5,33 +5,33 @@
   "private": true,
   "dependencies": {
     "@freelog/nmr_translator": "^4.2.8",
-    "ali-oss": "^6.11.2",
+    "ali-oss": "^6.12.0",
     "amqp": "^0.2.7",
     "async": "^3.2.0",
-    "egg-freelog-base": "^3.0.24",
+    "egg-freelog-base": "^3.0.35",
     "egg-scripts": "^2.10.0",
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.4.0",
     "midway": "^1.20.3",
-    "mongoose": "^5.10.15",
+    "mongoose": "^5.11.8",
     "patrun": "^4.0.0",
     "probe-image-size": "^5.0.0",
-    "semver": "^7.3.2",
-    "uuid": "^8.3.1",
-    "validator": "^13.1.17"
+    "semver": "^7.3.4",
+    "uuid": "^8.3.2",
+    "validator": "^13.5.2"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.46",
+    "@types/node": "^10.17.49",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.18.0",
     "midway-bin": "^1.20.3",
     "midway-mock": "^1.20.3",
-    "ts-node": "^9.0.0",
+    "ts-node": "^9.1.1",
     "tslib": "^2.0.3",
     "tslint": "^6.1.3",
     "tslint-midway-contrib": "^1.20.1",
-    "typescript": "^4.1.2"
+    "typescript": "^4.1.3"
   },
   "engines": {
     "node": ">=10.16.0"
@@ -41,7 +41,7 @@
     "stop": "egg-scripts stop --title=freelog-node-provider",
     "start_build": "npm run build && cross-env NODE_ENV=development midway-bin dev",
     "clean": "midway-bin clean",
-    "dev": "cross-env NODE_ENV=local  port=7105 midway-bin dev --ts",
+    "dev": "cross-env NODE_ENV=local port=7105 midway-bin dev --ts",
     "debug": "cross-env NODE_ENV=local midway-bin debug --ts",
     "test": "npm run lint && midway-bin test --ts",
     "cov": "midway-bin cov --ts",

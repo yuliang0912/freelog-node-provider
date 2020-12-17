@@ -9,6 +9,15 @@ import {
     PageResult
 } from "egg-freelog-base";
 
+export interface findOptions<T> {
+    sort?: {
+        [P in keyof T]?: 1 | -1 | boolean;
+    },
+    limit?: number;
+    skip?: number;
+    projection?: string;
+}
+
 export interface SubjectInfo {
     subjectId: string;
     policyId: string;
@@ -41,6 +50,14 @@ export interface NodeInfo {
     nodeThemeId?: string;
     status?: number;
     uniqueKey?: string;
+
+    nodeDetail?: NodeDetailInfo;
+
+}
+
+export interface NodeDetailInfo {
+    tagIds: number[];
+    statusChangeRemark?: string;
 }
 
 export interface PresentableInfo {
@@ -280,6 +297,29 @@ export interface INodeService {
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
 
     findUserCreatedNodeCounts(userIds: number[]);
+
+    searchIntervalListByTags(condition: object, tagIds?: number[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>>;
+
+    /**
+     * 设置标签
+     * @param nodeId
+     * @param tagInfo
+     */
+    setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean>;
+
+    /**
+     * 取消设置Tag
+     * @param nodeId
+     * @param tagInfo
+     */
+    unsetTag(nodeId: number, tagInfo: TagInfo): Promise<boolean>;
+
+    /**
+     * 更新节点详情
+     * @param nodeId
+     * @param model
+     */
+    updateNodeDetailInfo(nodeId: number, model: Partial<NodeDetailInfo>): Promise<boolean>;
 }
 
 export interface IPresentableService {
@@ -392,4 +432,66 @@ export interface IPresentableAuthResponseHandler {
 
 export interface IEventHandler {
     handle(...args): Promise<any>;
+}
+
+export interface IBaseService<T> {
+
+    find(condition: object, options?: findOptions<T>): Promise<T[]>;
+
+    findOne(condition: object, options?: findOptions<T>): Promise<T>;
+
+    findIntervalList(condition: object, options?: findOptions<T>): Promise<PageResult<T>>;
+
+    count(condition: object): Promise<number>;
+}
+
+export interface ITageService extends IBaseService<TagInfo> {
+
+    create(tags: string[], type: 1 | 2): Promise<TagInfo[]>;
+
+    /**
+     * 更新tag
+     * @param tagInfo
+     * @param model
+     */
+    updateOne(tagInfo: TagInfo, model: object): Promise<boolean>;
+
+    /**
+     * 设置标签自增(自减)数量.
+     * @param tagInfo
+     * @param number
+     */
+    setTagAutoIncrementCount(tagInfo: TagInfo, number: 1 | -1): Promise<boolean>;
+
+    /**
+     * 设置标签自增(自减)数量.
+     * @param tagInfo
+     * @param number
+     */
+    setTagAutoIncrementCounts(tagIds: number[], number: 1 | -1): Promise<boolean>;
+}
+
+export interface TagInfo {
+
+    /**
+     * 标签ID
+     */
+    tagId: number;
+
+    /**
+     * 标签名称
+     */
+    tag: string;
+
+    /**
+     * 标签类型 1:手动 2:自动
+     */
+    type: 1 | 2;
+
+    /**
+     * 总设置数量
+     */
+    totalSetCount: number;
+
+    status: 0;
 }

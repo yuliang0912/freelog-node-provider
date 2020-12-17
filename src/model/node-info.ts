@@ -20,7 +20,8 @@ export class NodeInfoModel extends MongooseModelBase {
             ownerUserId: {type: Number, required: true},
             ownerUserName: {type: String, required: true},
             uniqueKey: {type: String, required: true},
-            status: {type: Number, default: 0, required: true}, //状态 节点状态(0:未发布 1:已发布 2:系统冻结)
+            auditStatus: {type: Number, default: 0, required: true}, // 审核状态 0:未审核 1:审核通过 2:审核不通过
+            status: {type: Number, default: 0, required: true}, //状态 节点状态(0:正常 1:冻结)
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

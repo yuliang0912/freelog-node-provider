@@ -35,7 +35,7 @@ export class PresentableController {
 
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
-    async presentablePageList() {
+    async index() {
 
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
@@ -406,6 +406,71 @@ export class PresentableController {
         const presentableAuthTree = this.presentableVersionService.convertPresentableAuthTree(presentableVersionInfo.authTree, nid, isContainRootNode, maxDeep);
 
         ctx.success(presentableAuthTree);
+    }
+
+
+    @get('/search')
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async indexForAdmin() {
+
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().value;
+        const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
+        const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
+        const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
+        const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const condition: any = {nodeId};
+        if (isString(resourceType)) { //resourceType 与 omitResourceType互斥
+            condition['resourceInfo.resourceType'] = resourceType;
+        } else if (isString(omitResourceType)) {
+            condition['resourceInfo.resourceType'] = {$ne: omitResourceType};
+        }
+        if (tags) {
+            condition.tags = {$in: tags};
+        }
+        if (onlineStatus === 0 || onlineStatus === 1) {
+            condition.onlineStatus = onlineStatus;
+        }
+        if (isString(keywords)) {
+            const searchExp = {$regex: keywords, $options: 'i'};
+            condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}, {'resourceInfo.resourceName': searchExp}];
+        }
+
+        const pageResult = await this.presentableService.findIntervalList(condition, skip, limit, projection, sort);
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList);
+        }
+        if (isLoadVersionProperty) {
+            pageResult.dataList = await this.presentableService.fillPresentableVersionProperty(pageResult.dataList, false, false);
+        }
+        return ctx.success(pageResult);
+
+        // 以下代码已过期,目前只有展品切换版本时需要考虑所有版本列表,此操作可以通过调用资源接口获取到可选版本集
+        // const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
+        // if (!pageResult.dataList.length || !isLoadingResourceInfo) {
+        //     return ctx.success(pageResult);
+        // }
+        // const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
+        // const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
+        //     .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
+        //
+        // pageResult.dataList = pageResult.dataList.map(presentableInfo => {
+        //     const model = (<any>presentableInfo).toObject();
+        //     const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId) ?? [];
+        //     model.resourceInfo.versions = resourceVersions.map(x => x.version);
+        //     return model;
+        // });
+        //
+        // ctx.success(pageResult);
     }
 
     /**
