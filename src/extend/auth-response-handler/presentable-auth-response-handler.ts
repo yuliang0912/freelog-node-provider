@@ -97,6 +97,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         }
 
         this.ctx.body = response.data;
+        this.ctx.set('content-type', response.res.headers['content-type']);
         this.ctx.set('content-length', response.res.headers['content-length']);
 
         if (isString(attachmentName)) {
