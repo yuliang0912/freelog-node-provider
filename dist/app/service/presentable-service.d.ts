@@ -1,5 +1,5 @@
 import { PresentableOnlineStatusEnum } from "../../enum";
-import { CreatePresentableOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
+import { CreatePresentableOptions, findOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 export declare class PresentableService implements IPresentableService {
     ctx: FreelogContext;
@@ -33,6 +33,12 @@ export declare class PresentableService implements IPresentableService {
      * @param onlineStatus
      */
     updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
+    searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>): Promise<{
+        skip: number;
+        limit: number;
+        totalItem: any;
+        dataList: any;
+    }>;
     findOne(condition: object, ...args: any[]): Promise<PresentableInfo>;
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;

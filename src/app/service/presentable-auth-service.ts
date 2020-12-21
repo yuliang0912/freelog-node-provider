@@ -1,14 +1,18 @@
 import {inject, provide} from 'midway';
 import {
-    ContractInfo, FlattenPresentableAuthTree, IOutsideApiService, IPresentableAuthService, PresentableInfo
+    ContractInfo,
+    FlattenPresentableAuthTree,
+    IOutsideApiService,
+    IPresentableAuthService,
+    PresentableInfo
 } from '../../interface';
 import {chain, isArray, isEmpty} from 'lodash';
 import {
     ApplicationError,
     FreelogContext,
-    SubjectTypeEnum,
     FreelogUserInfo,
-    SubjectAuthCodeEnum
+    SubjectAuthCodeEnum,
+    SubjectTypeEnum
 } from 'egg-freelog-base';
 import {SubjectAuthResult} from "../../auth-interface";
 
@@ -132,7 +136,12 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param presentableInfo
      */
     async presentableClientUserSideAuth(presentableInfo: PresentableInfo): Promise<SubjectAuthResult> {
-        return this._loginUserContractAuth(presentableInfo, this.ctx.userInfo);
+        return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
+        try {
+            return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
+        } catch (e) {
+            return new SubjectAuthResult().setData({error: e}).setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
+        }
     }
 
     /**

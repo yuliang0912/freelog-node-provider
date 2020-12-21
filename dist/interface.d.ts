@@ -270,6 +270,7 @@ export interface IPresentableService {
     find(condition: object, ...args: any[]): Promise<PresentableInfo[]>;
     findByIds(presentableIds: string[], ...args: any[]): Promise<PresentableInfo[]>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
+    searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>): any;
     count(condition: object): Promise<number>;
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
     updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;

@@ -2,7 +2,7 @@ import {inject, provide} from 'midway';
 import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from "../../enum";
 import {
-    BasePolicyInfo, CreatePresentableOptions, INodeService,
+    BasePolicyInfo, CreatePresentableOptions, findOptions, INodeService,
     IOutsideApiService, IPresentableAuthService,
     IPresentableService, IPresentableVersionService,
     PolicyInfo, PresentableInfo, ResolveResource,
@@ -192,6 +192,36 @@ export class PresentableService implements IPresentableService {
             'resourceInfo.resourceType': presentableInfo.presentableId
         }, {onlineStatus: 0});
         return isSuccessful;
+    }
+
+    async searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>) {
+        const pipeline: any = [
+            {
+                $lookup: {
+                    from: 'nodes',
+                    localField: 'nodeId',
+                    foreignField: 'nodeId',
+                    as: 'nodes'
+                }
+            }
+        ];
+        if (Object.keys(condition).length) {
+            pipeline.unshift({$match: condition});
+        }
+        if (keywords?.length) {
+            const searchExp = {$regex: keywords, $options: 'i'};
+            pipeline.push({$match: {$or: [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}, {'nodes.nodeName': searchExp}]}});
+        }
+        console.log(pipeline);
+        const [totalItemInfo] = await this.presentableProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]])
+        const {totalItem = 0} = totalItemInfo ?? {};
+
+        pipeline.push({$sort: options?.sort ?? {userId: -1}}, {$skip: options?.skip ?? 0}, {$limit: options?.limit ?? 10});
+        const dataList = await this.presentableProvider.aggregate(pipeline);
+
+        return {
+            skip: options?.skip ?? 0, limit: options?.limit ?? 10, totalItem, dataList
+        }
     }
 
     async findOne(condition: object, ...args): Promise<PresentableInfo> {

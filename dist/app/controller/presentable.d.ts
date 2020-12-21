@@ -12,6 +12,7 @@ export declare class PresentableController {
     presentableRewritePropertyValidator: IJsonSchemaValidate;
     presentableVersionService: IPresentableVersionService;
     index(): Promise<FreelogContext>;
+    indexForAdmin(): Promise<FreelogContext>;
     /**
      * 获取presentable列表
      * @returns {Promise<void>}
@@ -26,7 +27,6 @@ export declare class PresentableController {
     show(): Promise<void>;
     dependencyTree(): Promise<void>;
     authTree(): Promise<void>;
-    indexForAdmin(): Promise<FreelogContext>;
     /**
      * 策略格式校验
      * @param policies

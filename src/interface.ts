@@ -336,6 +336,8 @@ export interface IPresentableService {
 
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
 
+    searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>);
+
     count(condition: object): Promise<number>;
 
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
