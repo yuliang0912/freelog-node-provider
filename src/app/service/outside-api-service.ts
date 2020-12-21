@@ -1,12 +1,23 @@
 import {isEmpty} from 'lodash';
-import {provide, inject} from 'midway';
+import {inject, provide} from 'midway';
 import {
-    ContractInfo, IOutsideApiService,
-    ResourceInfo, ResourceVersionInfo,
-    SubjectInfo, ObjectStorageInfo, ResourceDependencyTree, BasePolicyInfo
+    BasePolicyInfo,
+    ContractInfo,
+    IOutsideApiService,
+    ObjectStorageInfo,
+    ResourceDependencyTree,
+    ResourceInfo,
+    ResourceVersionInfo,
+    SubjectInfo
 } from '../../interface';
 import {ObjectDependencyTreeInfo} from '../../test-node-interface';
-import {FreelogContext, SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, FreelogUserInfo} from "egg-freelog-base";
+import {
+    ContractLicenseeIdentityTypeEnum,
+    CurlResFormatEnum,
+    FreelogContext,
+    FreelogUserInfo,
+    SubjectTypeEnum
+} from "egg-freelog-base";
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
@@ -233,8 +244,6 @@ export class OutsideApiService implements IOutsideApiService {
      * @param fileSha1
      */
     async getFileStream(fileSha1: string): Promise<any> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, {
-            dataType: 'original'
-        });
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.Original);
     }
 }
