@@ -64,6 +64,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      */
     async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
 
+        const startDate = new Date();
         const authResult = new SubjectAuthResult();
         try {
 
@@ -87,6 +88,7 @@ export class PresentableAuthService implements IPresentableAuthService {
                 return !this.contractAuth(resolveResource.resourceId, contracts).isAuth;
             });
 
+            this.ctx.set('presentableNodeSideAuthTime', (new Date().getTime() - startDate.getTime()).toString());
             if (!isEmpty(authFailedResources)) {
                 return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources});
             }
@@ -111,8 +113,9 @@ export class PresentableAuthService implements IPresentableAuthService {
                 throw new ApplicationError('presentable data has loused');
             }
 
+            const startDate = new Date();
             const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds, {authType: 'auth'});
-
+            this.ctx.set('presentableUpstreamAuthTime', (new Date().getTime() - startDate.getTime()).toString());
             for (const resourceVersionAuthResult of resourceVersionAuthResults) {
                 const {versionId, resolveResourceAuthResults} = resourceVersionAuthResult;
                 if (isEmpty(resourceVersionAuthResults)) {
