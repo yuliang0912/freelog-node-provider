@@ -1,5 +1,5 @@
 import {Middleware, WebMiddleware, provide} from 'midway';
-import {AuthorizationError} from 'egg-freelog-base/index';
+import {AuthorizationError, BreakOffError} from 'egg-freelog-base/index';
 
 @provide()
 export class AuthExceptionHandlerMiddleware implements WebMiddleware {
@@ -10,7 +10,7 @@ export class AuthExceptionHandlerMiddleware implements WebMiddleware {
             try {
                 await next();
             } catch (error) {
-                if (error instanceof AuthorizationError) {
+                if ((error instanceof BreakOffError) || (error instanceof AuthorizationError)) {
                     throw error;
                 }
                 ctx.requestContext.get('presentableAuthResponseHandler').subjectAuthProcessExceptionHandle(error);

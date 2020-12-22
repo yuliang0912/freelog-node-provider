@@ -113,5 +113,5 @@ export declare class OutsideApiService implements IOutsideApiService {
      * 获取文件流
      * @param fileSha1
      */
-    getFileStream(fileSha1: string): Promise<any>;
+    getFileStream(versionId: string): Promise<any>;
 }

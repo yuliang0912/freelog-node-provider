@@ -16,6 +16,8 @@ export const development = {
 export default () => {
     const config: any = {};
 
+    config.gatewayUrl = 'http://api.testfreelog.com'
+
     config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler', 'localIdentityInfoHandler'];
 
     // config.mongoose = {

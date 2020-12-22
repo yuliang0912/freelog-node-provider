@@ -8,7 +8,14 @@ import {
 } from '../../interface';
 import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
-import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum, FreelogContext} from 'egg-freelog-base';
+import {
+    ApplicationError,
+    SubjectAuthCodeEnum,
+    FreelogContext,
+    RetCodeEnum,
+    ErrCodeEnum,
+    IApiDataFormat, BreakOffError
+} from 'egg-freelog-base';
 
 @provide()
 export class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
@@ -54,7 +61,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
                 break;
             case 'fileStream':
                 this.subjectAuthFailedResponseHandle(authResult);
-                await this.fileStreamResponseHandle(realResponseResourceVersionInfo.fileSha1, realResponseResourceVersionInfo.resourceType, presentableInfo.presentableTitle);
+                await this.fileStreamResponseHandle(realResponseResourceVersionInfo.versionId, realResponseResourceVersionInfo.resourceType, presentableInfo.presentableTitle);
                 break;
             default:
                 this.ctx.error(new ApplicationError('未实现的授权展示方式'));
@@ -82,30 +89,26 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
 
     /**
      * 文件流响应处理
-     * @param fileSha1
+     * @param versionId
      * @param resourceType
      * @param attachmentName
      */
-    async fileStreamResponseHandle(fileSha1: string, resourceType: string, attachmentName?: string,) {
+    async fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string,) {
 
-        const response = await this.outsideApiService.getFileStream(fileSha1);
-        if ((response.res.headers['content-type'] ?? '').includes('application/json')) {
-            throw new ApplicationError('文件读取失败', {msg: JSON.parse(response.data.toString())?.msg});
-        }
+        const response = await this.outsideApiService.getFileStream(versionId);
         if (!response.res.statusCode.toString().startsWith('2')) {
             throw new ApplicationError('文件读取失败');
         }
-
         this.ctx.body = response.data;
-        this.ctx.set('content-type', response.res.headers['content-type']);
-        this.ctx.set('content-length', response.res.headers['content-length']);
-
         if (isString(attachmentName)) {
             this.ctx.attachment(attachmentName);
         }
         if (['video', 'audio'].includes(resourceType)) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
+        this.ctx.set('content-length', response.res.headers['content-length']);
+        // 代码需要放到ctx.attachment以后,否则不可控.
+        this.ctx.set('content-type', response.res.headers['content-type']);
     }
 
     /**
@@ -125,16 +128,31 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.success(resourceInfo);
     }
 
+    /**
+     * 标的物授权失败
+     * @param authResult
+     */
     subjectAuthFailedResponseHandle(authResult: SubjectAuthResult) {
         if (!authResult.isAuth) {
-            throw new AuthorizationError(this.ctx.gettext('subject-authorization-failed'), {
-                authCode: authResult.authCode, authResult
-            })
+            const body: IApiDataFormat = {
+                ret: RetCodeEnum.success,
+                errCode: ErrCodeEnum.authorizationError,
+                msg: this.ctx.gettext('subject-authorization-failed'),
+                data: authResult
+            };
+            this.ctx.body = body;
+            throw new BreakOffError();
         }
     }
 
+    /**
+     * 授权异常处理
+     * @param error
+     */
     subjectAuthProcessExceptionHandle(error) {
-        const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthApiException).setData({error}).setErrorMsg('授权过程中出现异常')
+        const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthApiException)
+            .setData({errorMsg: error.toString()})
+            .setErrorMsg('授权过程中出现异常')
         this.subjectAuthFailedResponseHandle(authResult);
     }
 

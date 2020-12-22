@@ -243,7 +243,7 @@ export class OutsideApiService implements IOutsideApiService {
      * 获取文件流
      * @param fileSha1
      */
-    async getFileStream(fileSha1: string): Promise<any> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.Original);
+    async getFileStream(versionId: string): Promise<any> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/${versionId}/internalClientDownload`, null, CurlResFormatEnum.Original);
     }
 }

@@ -22,11 +22,11 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
     commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): void;
     /**
      * 文件流响应处理
-     * @param fileSha1
+     * @param versionId
      * @param resourceType
      * @param attachmentName
      */
-    fileStreamResponseHandle(fileSha1: string, resourceType: string, attachmentName?: string): Promise<void>;
+    fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string): Promise<void>;
     /**
      * 标的物自身信息展示
      * @param presentableInfo
@@ -37,7 +37,15 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
      * @param resourceId
      */
     subjectUpstreamResourceInfoResponseHandle(resourceId: string): Promise<void>;
+    /**
+     * 标的物授权失败
+     * @param authResult
+     */
     subjectAuthFailedResponseHandle(authResult: SubjectAuthResult): void;
+    /**
+     * 授权异常处理
+     * @param error
+     */
     subjectAuthProcessExceptionHandle(error: any): void;
     /**
      * 标的物授权结果响应
