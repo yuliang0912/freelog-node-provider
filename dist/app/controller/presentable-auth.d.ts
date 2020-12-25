@@ -8,6 +8,10 @@ export declare class ResourceAuthController {
     presentableVersionService: IPresentableVersionService;
     presentableAuthResponseHandler: IPresentableAuthResponseHandler;
     /**
+     * 展品服务的色块
+     */
+    serviceStates(): Promise<void>;
+    /**
      * 通过展品ID获取展品并且授权
      */
     presentableAuth(): Promise<void>;

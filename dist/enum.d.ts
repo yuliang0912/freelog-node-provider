@@ -73,3 +73,7 @@ export declare enum NodeAuditStatus {
      */
     NotApproved = 2
 }
+export declare enum ServiceStateEnum {
+    Active = 1,
+    TestActive = 2
+}

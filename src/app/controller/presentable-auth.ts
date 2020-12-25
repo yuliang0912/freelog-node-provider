@@ -24,6 +24,17 @@ export class ResourceAuthController {
     presentableAuthResponseHandler: IPresentableAuthResponseHandler;
 
     /**
+     * 展品服务的色块
+     */
+    @get('/serviceStates')
+    async serviceStates() {
+        this.ctx.success([
+            {name: 'active', type: 'authorization', value: 1},
+            {name: 'testActive', type: 'testAuthorization', value: 2}
+        ])
+    }
+
+    /**
      * 通过展品ID获取展品并且授权
      */
     @get('/:subjectId/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})

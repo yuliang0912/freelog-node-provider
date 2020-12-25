@@ -4,11 +4,8 @@ import {PresentableOnlineStatusEnum} from "../../enum";
 import {controller, inject, get, post, put, provide} from 'midway';
 import {isString, isUndefined, isNumber, isEmpty, first, isDate} from 'lodash';
 import {
-    INodeService,
-    IOutsideApiService,
-    IPresentableService,
-    IPresentableVersionService,
-    NodeInfo
+    INodeService, IOutsideApiService, IPresentableService,
+    IPresentableVersionService, NodeInfo
 } from '../../interface';
 import {
     IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext, IJsonSchemaValidate
@@ -114,8 +111,6 @@ export class PresentableController {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().type('string').len(1, 100).value;
-        // const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').ignoreParamWhenEmpty().toInt().default(0).in([0, 1]).value;
-        // const projection = ctx.checkQuery('projection').ignoreParamWhenEmpty().toSplitArray().default([]).value;
         const startCreatedDate = ctx.checkQuery('startCreatedDate').ignoreParamWhenEmpty().toDate().value;
         const endCreatedDate = ctx.checkQuery('endCreatedDate').ignoreParamWhenEmpty().toDate().value;
         ctx.validateParams().validateOfficialAuditAccount();
@@ -142,9 +137,14 @@ export class PresentableController {
         if (!pageResult.dataList) {
             return ctx.success(pageResult);
         }
+        pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList);
         pageResult.dataList.forEach(item => {
             item['nodeName'] = first<NodeInfo>(item.nodes)?.nodeName ?? '';
-        })
+            item.presentableId = item._id;
+            delete item.nodes;
+            delete item._id;
+        });
+        ctx.success(pageResult);
     }
 
     /**
@@ -457,7 +457,6 @@ export class PresentableController {
 
         ctx.success(presentableAuthTree);
     }
-
 
     /**
      * 策略格式校验

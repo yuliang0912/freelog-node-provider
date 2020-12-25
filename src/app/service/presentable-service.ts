@@ -212,7 +212,7 @@ export class PresentableService implements IPresentableService {
             const searchExp = {$regex: keywords, $options: 'i'};
             pipeline.push({$match: {$or: [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}, {'nodes.nodeName': searchExp}]}});
         }
-        console.log(pipeline);
+
         const [totalItemInfo] = await this.presentableProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]])
         const {totalItem = 0} = totalItemInfo ?? {};
 

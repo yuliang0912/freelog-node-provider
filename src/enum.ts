@@ -68,7 +68,7 @@ export enum NodeStatus {
      * 正常.
      */
     Normal = 0,
-    
+
     /**
      * 冻结
      */
@@ -91,4 +91,11 @@ export enum NodeAuditStatus {
      * 审核不通过
      */
     NotApproved = 2
+}
+
+export enum ServiceStateEnum {
+
+    Active = 1,
+
+    TestActive = 2
 }
