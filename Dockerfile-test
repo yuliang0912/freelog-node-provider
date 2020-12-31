@@ -8,7 +8,8 @@ WORKDIR /data/freelog-node-provider
 
 COPY . /data/freelog-node-provider
 
-RUN npm install
+RUN npm config set registry http://registry.npm.taobao.org
+RUN npm install --production
 
 ENV NODE_ENV test
 ENV EGG_SERVER_ENV test

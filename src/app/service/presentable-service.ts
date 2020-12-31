@@ -150,6 +150,7 @@ export class PresentableService implements IPresentableService {
      */
     async updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean> {
         await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {version});
+        presentableInfo.version = version;
         await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, resourceVersionId);
         return true;
     }
