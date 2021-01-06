@@ -1,10 +1,7 @@
 import {inject, provide} from 'midway';
 import {
-    ContractInfo,
-    FlattenPresentableAuthTree,
-    IOutsideApiService,
-    IPresentableAuthService,
-    PresentableInfo
+    ContractInfo, FlattenPresentableAuthTree,
+    IOutsideApiService, IPresentableAuthService, PresentableInfo
 } from '../../interface';
 import {chain, isArray, isEmpty} from 'lodash';
 import {

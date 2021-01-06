@@ -11,7 +11,7 @@ import {
     TestResourceInfo,
     TestResourceOriginType,
     TestRuleMatchInfo,
-    TestRuleMatchResult
+    TestRuleMatchResult, TestResourceTreeInfo
 } from '../test-node-interface';
 import {
     FlattenPresentableAuthTree,
@@ -24,20 +24,23 @@ import {
 } from "../interface";
 import {chain, chunk, first, isEmpty} from "lodash";
 import {NodeTestRuleMatchStatus} from "../enum";
+import {IMongodbOperation} from "egg-freelog-base";
+import {PresentableCommonChecker} from '../extend/presentable-common-checker';
+import {TestRuleHandler} from '../extend/test-rule-handler';
 
 @provide()
 export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
     @inject()
-    testRuleHandler;
+    testRuleHandler: TestRuleHandler;
     @inject()
     testNodeGenerator;
     @inject()
-    nodeTestRuleProvider;
+    nodeTestRuleProvider: IMongodbOperation<NodeTestRuleInfo>;
     @inject()
-    nodeTestResourceProvider;
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
     @inject()
-    nodeTestResourceTreeProvider;
+    nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
     @inject()
     presentableService: IPresentableService;
     @inject()
@@ -45,24 +48,24 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
-    presentableCommonChecker;
+    presentableCommonChecker: PresentableCommonChecker;
 
     /**
      * 开始规则测试匹配事件
-     * @param nodeTestRuleInfo
+     * @param nodeId
      */
     async handle(nodeId: number) {
 
         const operatedPresentableIds = [];
-        let allTestRuleMatchResults: TestRuleMatchResult[] = [];
-        const nodeTestRuleInfo: NodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
+        const allTestRuleMatchResults: TestRuleMatchResult[] = [];
+        const nodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
         if (!nodeTestRuleInfo || nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {
             return;
         }
 
         try {
-            const task1 = this.nodeTestResourceProvider.deleteMany({nodeId: nodeTestRuleInfo.nodeId});
-            const task2 = this.nodeTestResourceTreeProvider.deleteMany({nodeId: nodeTestRuleInfo.nodeId});
+            const task1 = this.nodeTestResourceProvider.deleteMany({nodeId});
+            const task2 = this.nodeTestResourceTreeProvider.deleteMany({nodeId});
             await Promise.all([task1, task2]);
 
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
@@ -89,7 +92,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 status: NodeTestRuleMatchStatus.Completed, testRules: nodeTestRuleInfo.testRules
             });
         } catch (e) {
-            console.log(e);
+            console.log('节点测试规则匹配异常', e);
             await this.nodeTestRuleProvider.updateOne({nodeId}, {status: NodeTestRuleMatchStatus.Failed});
         }
     }
@@ -106,7 +109,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             return;
         }
 
-        const testRuleMatchInfos: TestRuleMatchInfo[] = await this.testRuleHandler.main(nodeId, ruleInfos);
+        const testRuleMatchInfos = await this.testRuleHandler.main(nodeId, ruleInfos);
 
         const matchedNodeTestResources: TestResourceInfo[] = testRuleMatchInfos.filter(x => x.isValid && [TestNodeOperationEnum.Alter, TestNodeOperationEnum.Add].includes(x.ruleInfo.operation))
             .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userId));
@@ -223,7 +226,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 }
             }
         };
-        testResourceInfo.dependencyTree = this.FlattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
+        testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
         testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.userId !== userId && x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => {
             return {
                 resourceId: x.id,
@@ -286,12 +289,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param deep
      * @private
      */
-    FlattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
+    flattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
         for (const dependencyInfo of dependencyTree) {
             const nid = this.testNodeGenerator.generateDependencyNodeId(deep === 1 ? testResourceId : null);
             const {id, fileSha1, name, type, version, versionId, dependencies, resourceType, replaced} = dependencyInfo;
             results.push({fileSha1, nid, id, name, type, deep, version, versionId, parentNid, resourceType, replaced});
-            this.FlattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
+            this.flattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
         }
         return results;
     }
@@ -299,18 +302,18 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 展品依赖树转换成测试资源依赖树
      * @param testResourceId
-     * @param FlattenTestResourceDependencyTree
+     * @param flattenTestResourceDependencyTree
      */
-    convertPresentableDependencyTreeToTestResourceDependencyTree(testResourceId: string, FlattenTestResourceDependencyTree: FlattenPresentableDependencyTree[]): FlattenTestResourceDependencyTree[] {
+    convertPresentableDependencyTreeToTestResourceDependencyTree(testResourceId: string, flattenTestResourceDependencyTree: FlattenPresentableDependencyTree[]): FlattenTestResourceDependencyTree[] {
         const nid = this.testNodeGenerator.generateDependencyNodeId(testResourceId);
-        for (const dependencyInfo of FlattenTestResourceDependencyTree) {
+        for (const dependencyInfo of flattenTestResourceDependencyTree) {
             if (dependencyInfo.deep === 2) {
                 dependencyInfo.parentNid = nid;
             }
         }
-        FlattenTestResourceDependencyTree.find(x => x.deep === 1).nid = nid;
+        flattenTestResourceDependencyTree.find(x => x.deep === 1).nid = nid;
 
-        return FlattenTestResourceDependencyTree.map(item => {
+        return flattenTestResourceDependencyTree.map(item => {
             return {
                 nid: item.nid,
                 id: item.resourceId,

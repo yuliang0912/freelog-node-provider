@@ -1,5 +1,5 @@
 import {Middleware, WebMiddleware, provide} from 'midway';
-import {AuthorizationError, BreakOffError} from 'egg-freelog-base/index';
+import {AuthorizationError, BreakOffError} from 'egg-freelog-base';
 
 @provide()
 export class AuthExceptionHandlerMiddleware implements WebMiddleware {

@@ -8,7 +8,14 @@ import {
     PolicyInfo, PresentableInfo, ResolveResource,
     ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
-import {ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum} from 'egg-freelog-base';
+import {
+    ApplicationError,
+    FreelogContext,
+    IMongodbOperation,
+    PageResult,
+    SubjectTypeEnum,
+    ResourceTypeEnum
+} from 'egg-freelog-base';
 
 @provide()
 export class PresentableService implements IPresentableService {
@@ -181,7 +188,7 @@ export class PresentableService implements IPresentableService {
         }
 
         const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {onlineStatus}).then(data => Boolean(data.ok));
-        if (!isSuccessful || presentableInfo.resourceInfo.resourceType !== 'theme') {
+        if (!isSuccessful || presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
             return isSuccessful;
         }
 
@@ -195,6 +202,12 @@ export class PresentableService implements IPresentableService {
         return isSuccessful;
     }
 
+    /**
+     * 搜索展品列表
+     * @param condition
+     * @param keywords
+     * @param options
+     */
     async searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>) {
         const pipeline: any = [
             {

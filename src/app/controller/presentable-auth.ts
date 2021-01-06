@@ -24,7 +24,7 @@ export class ResourceAuthController {
     presentableAuthResponseHandler: IPresentableAuthResponseHandler;
 
     /**
-     * 展品服务的色块
+     * 展品服务的色块(目前此接口未使用,网关层面通过已通过mock实现)
      */
     @get('/serviceStates')
     async serviceStates() {
@@ -57,41 +57,9 @@ export class ResourceAuthController {
     }
 
     /**
-     * 通过节点ID和资源ID获取展品,并且授权
-     */
-    @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
-    async nodeResourceAuth() {
-
-        const {ctx} = this;
-        const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
-        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
-        ctx.validateParams();
-
-        const condition = {nodeId};
-        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
-            condition['resourceInfo.resourceId'] = resourceIdOrName;
-        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
-            condition['resourceInfo.resourceName'] = resourceIdOrName;
-        } else {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
-        }
-
-        const presentableInfo = await this.presentableService.findOne(condition);
-        ctx.entityNullObjectCheck(presentableInfo);
-
-        const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
-        const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
-
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
-    }
-
-    /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    @get('/nodes/:nodeId/batchPresentableNodeSideAndUpstreamAuth/result')
+    @get('/nodes/:nodeId/batchNodeSideAndUpstreamAuth/result')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async presentableNodeSideAndUpstreamAuth() {
 
@@ -130,7 +98,7 @@ export class ResourceAuthController {
     /**
      * 批量展品上游链路授权(不包含C端以及节点侧)
      */
-    @get('/nodes/:nodeId/batchPresentableUpstreamAuth/result')
+    @get('/nodes/:nodeId/batchUpstreamAuth/result')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async presentableUpstreamAuth() {
 
@@ -164,5 +132,37 @@ export class ResourceAuthController {
         }
 
         await Promise.all(tasks).then(() => ctx.success(returnResults));
+    }
+
+    /**
+     * 通过节点ID和资源ID获取展品,并且授权
+     */
+    @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async nodeResourceAuth() {
+
+        const {ctx} = this;
+        const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
+        const parentNid = ctx.checkQuery('parentNid').optional().value;
+        const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
+        ctx.validateParams();
+
+        const condition = {nodeId};
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
+            condition['resourceInfo.resourceId'] = resourceIdOrName;
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
+            condition['resourceInfo.resourceName'] = resourceIdOrName;
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
+        }
+
+        const presentableInfo = await this.presentableService.findOne(condition);
+        ctx.entityNullObjectCheck(presentableInfo);
+
+        const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
+        const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
+
+        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
     }
 }

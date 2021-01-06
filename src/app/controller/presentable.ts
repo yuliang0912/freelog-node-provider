@@ -80,24 +80,6 @@ export class PresentableController {
             pageResult.dataList = await this.presentableService.fillPresentableVersionProperty(pageResult.dataList, false, false);
         }
         return ctx.success(pageResult);
-
-        // 以下代码已过期,目前只有展品切换版本时需要考虑所有版本列表,此操作可以通过调用资源接口获取到可选版本集
-        // const isLoadingResourceInfo = ctx.checkQuery("isLoadingResourceInfo").optional().toInt().in([0, 1]).default(0).value;
-        // if (!pageResult.dataList.length || !isLoadingResourceInfo) {
-        //     return ctx.success(pageResult);
-        // }
-        // const allResourceIds = chain(pageResult.dataList).map(x => x.resourceInfo.resourceId).uniq().value();
-        // const resourceVersionsMap = await this.outsideApiService.getResourceListByIds(allResourceIds, {projection: 'resourceId,resourceVersions'})
-        //     .then(dataList => new Map(dataList.map(x => [x.resourceId, x.resourceVersions])));
-        //
-        // pageResult.dataList = pageResult.dataList.map(presentableInfo => {
-        //     const model = (<any>presentableInfo).toObject();
-        //     const resourceVersions = resourceVersionsMap.get(model.resourceInfo.resourceId) ?? [];
-        //     model.resourceInfo.versions = resourceVersions.map(x => x.version);
-        //     return model;
-        // });
-        //
-        // ctx.success(pageResult);
     }
 
     @get('/search')

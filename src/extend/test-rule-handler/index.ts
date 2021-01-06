@@ -31,7 +31,7 @@ export class TestRuleHandler {
     @inject()
     testNodeGenerator;
 
-    async main(nodeId: number, testRules: BaseTestRuleInfo[]) {
+    async main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]> {
 
         this.nodeId = nodeId;
         // 初始化,转换数据格式.并且校验新增的展品名称是否与现有的展品名称冲突,新增的资源是否与现有展品对应的资源冲突.

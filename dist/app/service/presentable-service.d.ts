@@ -33,6 +33,12 @@ export declare class PresentableService implements IPresentableService {
      * @param onlineStatus
      */
     updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
+    /**
+     * 搜索展品列表
+     * @param condition
+     * @param keywords
+     * @param options
+     */
     searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>): Promise<{
         skip: number;
         limit: number;

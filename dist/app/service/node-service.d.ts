@@ -1,9 +1,10 @@
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 import { CreateNodeOptions, findOptions, INodeService, ITageService, NodeDetailInfo, NodeInfo, TagInfo } from '../../interface';
+import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 export declare class NodeService implements INodeService {
     ctx: FreelogContext;
     nodeCommonChecker: any;
-    autoIncrementRecordProvider: any;
+    autoIncrementRecordProvider: AutoIncrementRecordProvider;
     tagService: ITageService;
     nodeProvider: IMongodbOperation<NodeInfo>;
     nodeDetailProvider: IMongodbOperation<NodeDetailInfo>;

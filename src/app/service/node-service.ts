@@ -10,6 +10,7 @@ import {
     TagInfo
 } from '../../interface';
 import {difference} from 'lodash';
+import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 
 @provide()
 export class NodeService implements INodeService {
@@ -19,7 +20,7 @@ export class NodeService implements INodeService {
     @inject()
     nodeCommonChecker;
     @inject()
-    autoIncrementRecordProvider;
+    autoIncrementRecordProvider: AutoIncrementRecordProvider;
     @inject()
     tagService: ITageService;
     @inject()

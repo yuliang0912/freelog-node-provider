@@ -1,18 +1,21 @@
-import { BaseTestRuleInfo, FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree, IMatchTestRuleEventHandler, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
+import { BaseTestRuleInfo, FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestRuleMatchInfo, TestRuleMatchResult, TestResourceTreeInfo } from '../test-node-interface';
 import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo } from "../interface";
+import { IMongodbOperation } from "egg-freelog-base";
+import { PresentableCommonChecker } from '../extend/presentable-common-checker';
+import { TestRuleHandler } from '../extend/test-rule-handler';
 export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
-    testRuleHandler: any;
+    testRuleHandler: TestRuleHandler;
     testNodeGenerator: any;
-    nodeTestRuleProvider: any;
-    nodeTestResourceProvider: any;
-    nodeTestResourceTreeProvider: any;
+    nodeTestRuleProvider: IMongodbOperation<NodeTestRuleInfo>;
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
+    nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
     presentableService: IPresentableService;
     outsideApiService: IOutsideApiService;
     presentableVersionService: IPresentableVersionService;
-    presentableCommonChecker: any;
+    presentableCommonChecker: PresentableCommonChecker;
     /**
      * 开始规则测试匹配事件
-     * @param nodeTestRuleInfo
+     * @param nodeId
      */
     handle(nodeId: number): Promise<void>;
     /**
@@ -52,13 +55,13 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * @param deep
      * @private
      */
-    FlattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid?: string, results?: FlattenTestResourceDependencyTree[], deep?: number): FlattenTestResourceDependencyTree[];
+    flattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid?: string, results?: FlattenTestResourceDependencyTree[], deep?: number): FlattenTestResourceDependencyTree[];
     /**
      * 展品依赖树转换成测试资源依赖树
      * @param testResourceId
-     * @param FlattenTestResourceDependencyTree
+     * @param flattenTestResourceDependencyTree
      */
-    convertPresentableDependencyTreeToTestResourceDependencyTree(testResourceId: string, FlattenTestResourceDependencyTree: FlattenPresentableDependencyTree[]): FlattenTestResourceDependencyTree[];
+    convertPresentableDependencyTreeToTestResourceDependencyTree(testResourceId: string, flattenTestResourceDependencyTree: FlattenPresentableDependencyTree[]): FlattenTestResourceDependencyTree[];
     convertPresentableAuthTreeToTestResourceAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], resourceMap: Map<string, ResourceInfo>): FlattenTestResourceAuthTree[];
     /**
      *
