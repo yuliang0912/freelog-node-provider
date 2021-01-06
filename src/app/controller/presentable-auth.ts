@@ -82,14 +82,16 @@ export class ResourceAuthController {
             return new Map(list.map(x => [x.presentableId, x.authTree]));
         });
 
-        const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth.bind(this) :
-            authType === 2 ? this.presentableAuthService.presentableUpstreamAuth.bind(this) :
-                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth.bind(this) : null;
+        const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
+            authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
+                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth : null;
+
+        console.log(authFunc)
 
         const tasks = [];
         const returnResults = [];
         for (const presentableInfo of presentables) {
-            const task = authFunc(presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+            const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
                 presentableId: presentableInfo.presentableId,
                 authCode: authResult.authCode,
                 isAuth: authResult.isAuth,
@@ -100,46 +102,6 @@ export class ResourceAuthController {
 
         await Promise.all(tasks).then(() => ctx.success(returnResults));
     }
-
-    //
-    // /**
-    //  * 批量展品上游链路授权(不包含C端以及节点侧)
-    //  */
-    // @get('/nodes/:nodeId/batchUpstreamAuth/result')
-    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    // async presentableUpstreamAuth() {
-    //
-    //     const {ctx} = this;
-    //     const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-    //     const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
-    //     ctx.validateParams();
-    //
-    //     const presentables = await this.presentableService.find({nodeId, _id: {$in: presentableIds}});
-    //     const invalidPresentableIds = differenceWith(presentableIds, presentables, (x: string, y) => x === y.presentableId);
-    //
-    //     if (!isEmpty(invalidPresentableIds)) {
-    //         throw new ArgumentError(ctx.gettext('params-validate-failed', 'presentableIds'), {invalidPresentableIds});
-    //     }
-    //
-    //     const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
-    //     const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
-    //         return new Map(list.map(x => [x.presentableId, x.authTree]));
-    //     });
-    //
-    //     const tasks = [];
-    //     const returnResults = [];
-    //     for (const presentableInfo of presentables) {
-    //         const task = this.presentableAuthService.presentableUpstreamAuth(presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
-    //             presentableId: presentableInfo.presentableId,
-    //             authCode: authResult.authCode,
-    //             isAuth: authResult.isAuth,
-    //             error: authResult.errorMsg
-    //         }));
-    //         tasks.push(task);
-    //     }
-    //
-    //     await Promise.all(tasks).then(() => ctx.success(returnResults));
-    // }
 
     /**
      * 通过节点ID和资源ID获取展品,并且授权
