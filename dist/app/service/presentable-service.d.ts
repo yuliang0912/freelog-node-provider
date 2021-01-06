@@ -1,6 +1,7 @@
 import { PresentableOnlineStatusEnum } from "../../enum";
 import { CreatePresentableOptions, findOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
+import { PresentableCommonChecker } from '../../extend/presentable-common-checker';
 export declare class PresentableService implements IPresentableService {
     ctx: FreelogContext;
     nodeService: INodeService;
@@ -8,6 +9,7 @@ export declare class PresentableService implements IPresentableService {
     presentableAuthService: IPresentableAuthService;
     presentableVersionService: IPresentableVersionService;
     presentableProvider: IMongodbOperation<PresentableInfo>;
+    presentableCommonChecker: PresentableCommonChecker;
     /**
      * 创建展品
      * @param {CreatePresentableOptions} options

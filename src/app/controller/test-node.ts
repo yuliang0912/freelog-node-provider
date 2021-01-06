@@ -107,7 +107,7 @@ export class TestNodeController {
 
         const condition: any = {nodeId};
         if (isString(resourceType)) { //resourceType 与 omitResourceType互斥
-            condition.resourceType = resourceType
+            condition.resourceType = resourceType;
         } else if (isString(omitResourceType)) {
             condition.resourceType = {$ne: omitResourceType};
         }

@@ -86,8 +86,6 @@ export class ResourceAuthController {
             authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
                 authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth : null;
 
-        console.log(authFunc)
-
         const tasks = [];
         const returnResults = [];
         for (const presentableInfo of presentables) {

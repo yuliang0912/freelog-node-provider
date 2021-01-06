@@ -16,6 +16,7 @@ import {
     SubjectTypeEnum,
     ResourceTypeEnum
 } from 'egg-freelog-base';
+import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 
 @provide()
 export class PresentableService implements IPresentableService {
@@ -32,6 +33,8 @@ export class PresentableService implements IPresentableService {
     presentableVersionService: IPresentableVersionService;
     @inject()
     presentableProvider: IMongodbOperation<PresentableInfo>;
+    @inject()
+    presentableCommonChecker: PresentableCommonChecker;
 
     /**
      * 创建展品
@@ -197,7 +200,7 @@ export class PresentableService implements IPresentableService {
         await this.presentableProvider.updateMany({
             _id: {$ne: presentableInfo.presentableId},
             nodeId: presentableInfo.nodeId,
-            'resourceInfo.resourceType': presentableInfo.presentableId
+            'resourceInfo.resourceType': ResourceTypeEnum.THEME
         }, {onlineStatus: 0});
         return isSuccessful;
     }
@@ -266,11 +269,10 @@ export class PresentableService implements IPresentableService {
         if (!isArray(presentables) || isEmpty(presentables)) {
             return presentables;
         }
-        const condition = {$or: []};
-        for (const {presentableId, version} of presentables) {
-            condition.$or.push({presentableId, version});
-        }
-        const presentableVersionPropertyMap = await this.presentableVersionService.find(condition, 'presentableId resourceSystemProperty versionProperty resourceCustomPropertyDescriptors presentableRewriteProperty').then(list => {
+
+        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+
+        const presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId resourceSystemProperty versionProperty resourceCustomPropertyDescriptors presentableRewriteProperty').then(list => {
             return new Map(list.map(x => [x.presentableId, x]));
         });
         return presentables.map(presentable => {
