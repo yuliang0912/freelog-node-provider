@@ -20,10 +20,6 @@ export declare class ResourceAuthController {
      */
     presentableNodeSideAndUpstreamAuth(): Promise<void>;
     /**
-     * 批量展品上游链路授权(不包含C端以及节点侧)
-     */
-    presentableUpstreamAuth(): Promise<void>;
-    /**
      * 通过节点ID和资源ID获取展品,并且授权
      */
     nodeResourceAuth(): Promise<void>;
