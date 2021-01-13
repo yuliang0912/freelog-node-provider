@@ -23,20 +23,33 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versions?: string[];
     coverImages?: string[];
     resourceType: string;
+    systemProperty?: object;
+    customPropertyDescriptors?: any[];
 }
 export interface ReplaceOptionInfo {
     replaced: CandidateInfo;
     replacer: CandidateInfo;
     scopes: CandidateInfo[][];
 }
+export interface TestResourceProperty {
+    operation: 'add' | 'delete';
+    key: string;
+    defaultValue: string;
+    description?: string;
+    customType: 'base' | 'input' | 'select';
+    options?: string[];
+}
 export interface BaseTestRuleInfo {
     text: string;
     operation: TestNodeOperationEnum;
-    presentableName?: string;
+    exhibitName?: string;
     themeName?: string;
-    tags: string[] | null;
+    labels: string[] | null;
     replaces?: ReplaceOptionInfo[];
     online: boolean | null;
+    cover?: string;
+    title?: string;
+    attrs?: TestResourceProperty[];
     candidate?: CandidateInfo;
 }
 export interface TestRuleEfficientInfo {
@@ -49,6 +62,7 @@ export interface TestRuleMatchInfo {
     matchErrors: string[];
     ruleInfo: BaseTestRuleInfo;
     presentableInfo?: PresentableInfo;
+    presentableRewriteProperty?: any[];
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
     tags?: {
@@ -57,6 +71,18 @@ export interface TestRuleMatchInfo {
     };
     onlineStatus?: {
         status: number;
+        source: string;
+    };
+    title?: {
+        title: string;
+        source: string;
+    };
+    cover?: {
+        cover: string;
+        source: string;
+    };
+    attrs?: {
+        attrs: TestResourceProperty[] | null;
         source: string;
     };
     efficientInfos: TestRuleEfficientInfo[];

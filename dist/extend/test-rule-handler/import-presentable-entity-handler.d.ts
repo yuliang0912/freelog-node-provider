@@ -1,9 +1,11 @@
 import { TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
 import { IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo } from "../../interface";
+import { PresentableCommonChecker } from "../presentable-common-checker";
 export declare class ImportPresentableEntityHandler {
     outsideApiService: IOutsideApiService;
     presentableService: IPresentableService;
     presentableVersionService: IPresentableVersionService;
+    presentableCommonChecker: PresentableCommonChecker;
     /**
      * 从规则中分析需要导入的展品数据
      * @param nodeId
@@ -23,5 +25,5 @@ export declare class ImportPresentableEntityHandler {
      * @param resourceInfo
      * @private
      */
-    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo): void;
+    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableProperty: any): void;
 }

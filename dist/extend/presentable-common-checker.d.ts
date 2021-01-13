@@ -12,9 +12,16 @@ export declare class PresentableCommonChecker {
      */
     buildPresentableName(nodeId: number, presentableName: string): Promise<string>;
     /**
-     * 生成资源版本ID
+     * 生成展品版本ID
      * @param presentableId
      * @param version
      */
     generatePresentableVersionId(presentableId: string, version: string): string;
+    /**
+     * 生成资源版本ID
+     * @param {string} resourceId
+     * @param {string} version
+     * @returns {string}
+     */
+    generateResourceVersionId(resourceId: string, version: string): string;
 }

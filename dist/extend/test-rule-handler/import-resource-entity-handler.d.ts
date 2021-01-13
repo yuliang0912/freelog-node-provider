@@ -14,6 +14,11 @@ export declare class ImportResourceEntityHandler {
      */
     getResourceDependencyTree(resourceIdOrName: string, version: string): Promise<TestResourceDependencyTree[]>;
     /**
+     * 获取资源属性
+     * @param resourceVersionIds
+     */
+    getResourceProperty(resourceVersionIds: string[]): Promise<import("../../interface").ResourceVersionInfo[]>;
+    /**
      * 填充实体数据
      * @param matchRule
      * @param resourceInfo

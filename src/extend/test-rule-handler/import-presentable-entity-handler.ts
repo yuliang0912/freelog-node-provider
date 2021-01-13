@@ -4,6 +4,7 @@ import {
     IOutsideApiService, IPresentableService, IPresentableVersionService,
     PresentableInfo, PresentableDependencyTree, ResourceInfo
 } from "../../interface";
+import {PresentableCommonChecker} from "../presentable-common-checker";
 
 @provide()
 export class ImportPresentableEntityHandler {
@@ -14,6 +15,8 @@ export class ImportPresentableEntityHandler {
     presentableService: IPresentableService;
     @inject()
     presentableVersionService: IPresentableVersionService;
+    @inject()
+    presentableCommonChecker: PresentableCommonChecker;
 
     /**
      * 从规则中分析需要导入的展品数据
@@ -22,7 +25,7 @@ export class ImportPresentableEntityHandler {
      */
     async importPresentableEntityDataFromRules(nodeId: number, alterPresentableRules: TestRuleMatchInfo[]) {
 
-        const presentableNames = alterPresentableRules.map(x => new RegExp(`^${x.ruleInfo.presentableName}$`, 'i'));
+        const presentableNames = alterPresentableRules.map(x => new RegExp(`^${x.ruleInfo.exhibitName}$`, 'i'));
         const presentables = await this.presentableService.find({
             nodeId, presentableName: {$in: presentableNames}
         });
@@ -31,10 +34,14 @@ export class ImportPresentableEntityHandler {
             projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
         });
 
+        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version))
+        const presentableProperties = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId resourceSystemProperty resourceCustomPropertyDescriptors presentableRewriteProperty')
+
         for (const matchRule of alterPresentableRules) {
-            const presentableInfo = presentables.find(x => x.presentableName.toLowerCase() === matchRule.ruleInfo.presentableName.toLowerCase());
+            const presentableInfo = presentables.find(x => x.presentableName.toLowerCase() === matchRule.ruleInfo.exhibitName.toLowerCase());
             const resourceInfo = presentableInfo ? resources.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId) : null;
-            this._fillRuleEntityInfo(matchRule, presentableInfo, resourceInfo);
+            const presentableProperty = presentableProperties.find(x => x.presentableId === presentableInfo.presentableId);
+            this._fillRuleEntityInfo(matchRule, presentableInfo, resourceInfo, presentableProperty);
         }
     }
 
@@ -77,11 +84,11 @@ export class ImportPresentableEntityHandler {
      * @param resourceInfo
      * @private
      */
-    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo) {
+    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableProperty: any) {
 
         if (!presentableInfo) {
-            matchRule.isValid = false
-            matchRule.matchErrors.push(`节点中不存在名称为${matchRule.ruleInfo.presentableName}的展品`);
+            matchRule.isValid = false;
+            matchRule.matchErrors.push(`节点中不存在名称为${matchRule.ruleInfo.exhibitName}的展品`);
             return
         }
 
@@ -92,9 +99,12 @@ export class ImportPresentableEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages ?? []
+            coverImages: resourceInfo.coverImages ?? [],
+            systemProperty: presentableProperty.resourceSystemProperty,
+            customPropertyDescriptors: presentableProperty.resourceCustomPropertyDescriptors
         };
 
+        matchRule.presentableRewriteProperty = presentableProperty.presentableRewriteProperty;
         matchRule.presentableInfo = presentableInfo;
     }
 }

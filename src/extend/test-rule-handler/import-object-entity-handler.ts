@@ -22,7 +22,7 @@ export class ImportObjectEntityHandler {
 
         const objectNames = addObjectRules.map(x => x.ruleInfo.candidate.name);
         const objects = await this.outsideApiService.getObjectListByFullNames(objectNames, {
-            projection: 'bucketId,bucketName,objectName,userId,resourceType'
+            projection: 'bucketId,bucketName,objectName,userId,resourceType,systemProperty,customPropertyDescriptors'
         });
 
         addObjectRules.forEach(matchRule => {
@@ -95,7 +95,9 @@ export class ImportObjectEntityHandler {
             resourceType: objectInfo.resourceType ?? '',
             version: null,
             versions: [],
-            coverImages: []
+            coverImages: [],
+            systemProperty: objectInfo.systemProperty,
+            customPropertyDescriptors: objectInfo.customPropertyDescriptors
             // _originInfo: objectInfo
         }
     }

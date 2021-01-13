@@ -263,20 +263,21 @@ export class PresentableVersionService implements IPresentableVersionService {
      * @returns {Promise<void>}
      */
     _calculatePresentableVersionProperty(resourceSystemProperty: object, resourceCustomPropertyDescriptors: Array<any>, presentableRewriteProperty: Array<any>) {
-        const customReadonlyInfo: any = {};
-        const customEditableInfo: any = {};
+        const resourceCustomReadonlyInfo: any = {};
+        const resourceCustomEditableInfo: any = {};
         const presentableRewriteInfo: any = {};
         resourceCustomPropertyDescriptors.forEach(({key, defaultValue, type}) => {
             if (type === 'readonlyText') {
-                customReadonlyInfo[key] = defaultValue;
+                resourceCustomReadonlyInfo[key] = defaultValue;
             } else {
-                customEditableInfo[key] = defaultValue;
+                resourceCustomEditableInfo[key] = defaultValue;
             }
         });
         presentableRewriteProperty.forEach(({key, value}) => {
             presentableRewriteInfo[key] = value;
         });
-        return assign(customEditableInfo, presentableRewriteInfo, customReadonlyInfo, resourceSystemProperty);
+        // 属性优先级为: 1.系统属性 2:资源定义的不可编辑的属性 3:展品重写的属性 4:资源自定义的可编辑属性
+        return assign(resourceCustomEditableInfo, presentableRewriteInfo, resourceCustomReadonlyInfo, resourceSystemProperty);
     }
 
     /**

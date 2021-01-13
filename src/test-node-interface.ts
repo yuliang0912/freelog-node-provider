@@ -28,6 +28,8 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versions?: string[];
     coverImages?: string[];
     resourceType: string;
+    systemProperty?: object;
+    customPropertyDescriptors?: any[];
     // _originInfo: ResourceInfo | ObjectStorageInfo //此处为resource或者object
 }
 
@@ -37,14 +39,26 @@ export interface ReplaceOptionInfo {
     scopes: CandidateInfo[][];
 }
 
+export interface TestResourceProperty {
+    operation: 'add' | 'delete';
+    key: string;
+    defaultValue: string;
+    description?: string;
+    customType: 'base' | 'input' | 'select';
+    options?: string[];
+}
+
 export interface BaseTestRuleInfo {
     text: string;
     operation: TestNodeOperationEnum;
-    presentableName?: string;
+    exhibitName?: string;
     themeName?: string;  // 此处理论上不应该存在. 激活的主题名称应该使用presentableName表示即可.需要规则编译器端调整
-    tags: string[] | null; // null代表不操作此项,沿用展品的标签属性
+    labels: string[] | null; // null代表不操作此项,沿用展品的标签属性
     replaces?: ReplaceOptionInfo[];
     online: boolean | null; // null代表不操作此项,沿用展品的上下线状态
+    cover?: string;
+    title?: string;
+    attrs?: TestResourceProperty[];
     candidate?: CandidateInfo;
 }
 
@@ -59,12 +73,18 @@ export interface TestRuleMatchInfo {
     matchErrors: string[];
     ruleInfo: BaseTestRuleInfo;
 
+    // 展品比较特殊,比resource和object多了一层包装
     presentableInfo?: PresentableInfo;
+    presentableRewriteProperty?: any[];
+
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
 
     tags?: { tags: string[], source: string }
     onlineStatus?: { status: number, source: string }
+    title?: { title: string, source: string }
+    cover?: { cover: string, source: string }
+    attrs?: { attrs: TestResourceProperty[] | null, source: string };
     efficientInfos: TestRuleEfficientInfo[];
 }
 

@@ -151,11 +151,11 @@ export class TestNodeService implements ITestNodeService {
         // });
         ruleInfos.push({
             text: "add  $yuliang/my-first-resource3@^1.0.0   as import_test_resource \\ndo\\nend",
-            tags: ["tag1", "tag2"],
+            labels: ["tag1", "tag2"],
             replaces: [],
             online: null,
             operation: TestNodeOperationEnum.Add,
-            presentableName: 'import_test_resource',
+            exhibitName: 'import_test_resource',
             candidate: {
                 name: "yuliang/my-first-resource3",
                 versionRange: "^1.0.0",
@@ -164,7 +164,7 @@ export class TestNodeService implements ITestNodeService {
         });
         ruleInfos.push({
             text: "add   #yuliang/2a  as object_1 \\ndo  \\n  set_tags reset  \\n  replace #yuliang/readme2 with #yuliang/readme3  \\n   hide \\nend",
-            tags: ["tag1", "tag2"],
+            labels: ["tag1", "tag2"],
             replaces: [
                 {
                     replaced: {
@@ -180,7 +180,7 @@ export class TestNodeService implements ITestNodeService {
             ],
             online: null,
             operation: TestNodeOperationEnum.Add,
-            presentableName: "object_1",
+            exhibitName: "object_1",
             candidate: {
                 name: "yuliang/2a",
                 type: TestResourceOriginType.Object

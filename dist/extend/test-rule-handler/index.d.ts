@@ -1,4 +1,5 @@
 import { BaseTestRuleInfo, TestRuleMatchInfo } from "../../test-node-interface";
+import { PresentableCommonChecker } from "../presentable-common-checker";
 export declare class TestRuleHandler {
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[];
@@ -7,9 +8,13 @@ export declare class TestRuleHandler {
     importObjectEntityHandler: any;
     importResourceEntityHandler: any;
     importPresentableEntityHandler: any;
+    presentableCommonChecker: PresentableCommonChecker;
     optionSetTagsHandler: any;
     optionReplaceHandler: any;
     optionSetOnlineStatusHandler: any;
+    optionSetAttrHandler: any;
+    optionSetTitleHandler: any;
+    optionSetCoverHandler: any;
     testNodeGenerator: any;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
     /**
@@ -29,6 +34,10 @@ export declare class TestRuleHandler {
      * 检查add对应的presentableName或者resourceName是否已经存在
      */
     presentableNameAndResourceNameExistingCheck(): Promise<this>;
+    /**
+     * 导入属性
+     */
+    importEntityProperty(): Promise<void>;
     /**
      * 导入实体数据
      */

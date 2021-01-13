@@ -71,9 +71,9 @@ export interface PresentableInfo {
     resourceInfo: BaseResourceInfo;
     resolveResources: ResolveResource[];
     tags?: string[];
-    coverImages: string[],
-    onlineStatus: PresentableOnlineStatusEnum,
-    authStatus: PresentableAuthStatusEnum
+    coverImages: string[];
+    onlineStatus: PresentableOnlineStatusEnum;
+    authStatus: PresentableAuthStatusEnum;
 }
 
 export interface PresentableVersionInfo {
@@ -174,7 +174,7 @@ export interface ObjectStorageInfo {
     resourceType: string;
     bucketId?: string;
     systemProperty?: object;
-    customProperty?: object;
+    customPropertyDescriptors?: any[];
 }
 
 export interface ResourceInfo {

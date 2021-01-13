@@ -139,7 +139,7 @@ export interface ObjectStorageInfo {
     resourceType: string;
     bucketId?: string;
     systemProperty?: object;
-    customProperty?: object;
+    customPropertyDescriptors?: any[];
 }
 export interface ResourceInfo {
     resourceId?: string;

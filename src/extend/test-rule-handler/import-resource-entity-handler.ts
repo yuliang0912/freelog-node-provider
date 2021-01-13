@@ -59,6 +59,16 @@ export class ImportResourceEntityHandler {
     }
 
     /**
+     * 获取资源属性
+     * @param resourceVersionIds
+     */
+    async getResourceProperty(resourceVersionIds: string[]) {
+        return this.outsideApiService.getResourceVersionList(resourceVersionIds, {
+            projection: 'resourceId,systemProperty,customPropertyDescriptors'
+        })
+    }
+
+    /**
      * 填充实体数据
      * @param matchRule
      * @param resourceInfo

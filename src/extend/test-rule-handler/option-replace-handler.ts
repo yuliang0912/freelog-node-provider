@@ -55,7 +55,7 @@ export class OptionReplaceHandler {
             const {result, deep} = this._checkCycleDependency(dependencies, replacerInfo);
             if (result) {
                 this.testRuleMatchInfo.isValid = false;
-                this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.presentableName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`);
+                this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`);
                 continue;
             }
             dependencies.splice(i, 1, replacerInfo);

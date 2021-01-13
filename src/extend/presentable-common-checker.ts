@@ -1,6 +1,7 @@
 import {inject, provide} from 'midway';
 import {IPresentableService} from '../interface';
 import {ApplicationError, CryptoHelper, FreelogContext} from 'egg-freelog-base';
+import {clean} from 'semver';
 
 @provide()
 export class PresentableCommonChecker {
@@ -54,11 +55,21 @@ export class PresentableCommonChecker {
     }
 
     /**
-     * 生成资源版本ID
+     * 生成展品版本ID
      * @param presentableId
      * @param version
      */
     generatePresentableVersionId(presentableId: string, version: string): string {
         return CryptoHelper.md5(`${presentableId}-${version}`);
+    }
+
+    /**
+     * 生成资源版本ID
+     * @param {string} resourceId
+     * @param {string} version
+     * @returns {string}
+     */
+    generateResourceVersionId(resourceId: string, version: string): string {
+        return CryptoHelper.md5(`${resourceId}-${clean(version)}`);
     }
 }

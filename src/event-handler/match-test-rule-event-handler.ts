@@ -212,7 +212,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
             resourceType: testResourceOriginInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
-            testResourceName: ruleInfo.presentableName,
+            testResourceName: ruleInfo.exhibitName,
             coverImages: testRuleMatchInfo.presentableInfo?.coverImages ?? testResourceOriginInfo.coverImages ?? [],
             originInfo: testResourceOriginInfo,
             stateInfo: {

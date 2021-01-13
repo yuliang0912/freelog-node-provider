@@ -126,6 +126,9 @@ export class PresentableService implements IPresentableService {
             updateModel.policies = [...existingPolicyMap.values()];
             // updateModel.onlineStatus = updateModel.policies.some(x => x.status === 1) ? PresentableOnlineStatusEnum.Online : PresentableOnlineStatusEnum.Offline;
         }
+        if (presentableInfo.onlineStatus === 1 && updateModel.policies && !updateModel.policies.some(x => x.status === 1)) {
+            throw new ApplicationError('展品已上线,至少需要保留一个有效的策略');
+        }
 
         // 如果重新选择已解决资源的策略,则系统会重新进行签约,并且赋值
         if (!isEmpty(options.resolveResources)) {
@@ -171,7 +174,8 @@ export class PresentableService implements IPresentableService {
      * @param onlineStatus
      */
     async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean> {
-        if (onlineStatus === PresentableOnlineStatusEnum.Online) {
+        const isOnline = onlineStatus === PresentableOnlineStatusEnum.Online;
+        if (isOnline) {
             if (!presentableInfo.policies.some(x => x.status === 1)) {
                 throw new ApplicationError(this.ctx.gettext('presentable-online-policy-validate-error'));
             }
@@ -195,8 +199,7 @@ export class PresentableService implements IPresentableService {
             return isSuccessful;
         }
 
-        const isOnline = onlineStatus === PresentableOnlineStatusEnum.Online;
-        await this.nodeService.updateNodeInfo(presentableInfo.nodeId, {themeId: isOnline ? presentableInfo.presentableId : ''})
+        await this.nodeService.updateNodeInfo(presentableInfo.nodeId, {nodeThemeId: isOnline ? presentableInfo.presentableId : ''})
         await this.presentableProvider.updateMany({
             _id: {$ne: presentableInfo.presentableId},
             nodeId: presentableInfo.nodeId,

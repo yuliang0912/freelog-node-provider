@@ -3,6 +3,7 @@ import {provide, inject} from 'midway';
 import {
     BaseTestRuleInfo, TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo
 } from "../../test-node-interface";
+import {PresentableCommonChecker} from "../presentable-common-checker";
 
 const nmrTranslator = require('@freelog/nmr_translator');
 
@@ -23,11 +24,19 @@ export class TestRuleHandler {
     @inject()
     importPresentableEntityHandler;
     @inject()
+    presentableCommonChecker: PresentableCommonChecker;
+    @inject()
     optionSetTagsHandler;
     @inject()
     optionReplaceHandler;
     @inject()
     optionSetOnlineStatusHandler;
+    @inject()
+    optionSetAttrHandler;
+    @inject()
+    optionSetTitleHandler;
+    @inject()
+    optionSetCoverHandler;
     @inject()
     testNodeGenerator;
 
@@ -79,6 +88,29 @@ export class TestRuleHandler {
     async presentableNameAndResourceNameExistingCheck() {
         await this.testRuleChecker.checkImportPresentableNameAndResourceNameIsExist(this.nodeId, this.testRuleMatchInfos);
         return this;
+    }
+
+    /**
+     * 导入属性
+     */
+    async importEntityProperty() {
+        const objectIds = []
+        const resourceVersionIds = [];
+        const presentableVersionIds = [];
+        const validRules = this.testRuleMatchInfos.filter(x => x.isValid && ['alter', 'add'].includes(x.ruleInfo.operation))
+        for (const testRuleInfo of validRules) {
+            switch (testRuleInfo.ruleInfo.candidate?.type) {
+                case TestResourceOriginType.Object:
+                    objectIds.push(testRuleInfo.testResourceOriginInfo.id);
+                    break;
+                case TestResourceOriginType.Resource:
+                    resourceVersionIds.push(this.presentableCommonChecker.generateResourceVersionId(testRuleInfo.testResourceOriginInfo.id, testRuleInfo.testResourceOriginInfo.version));
+                    break;
+                default:
+                    presentableVersionIds.push(this.presentableCommonChecker.generatePresentableVersionId(testRuleInfo.presentableInfo.presentableId, testRuleInfo.presentableInfo.version));
+                    break;
+            }
+        }
     }
 
     /**
@@ -143,6 +175,9 @@ export class TestRuleHandler {
         const tasks = [];
         for (const testRuleInfo of this.testRuleMatchInfos) {
             this.optionSetTagsHandler.handle(testRuleInfo);
+            this.optionSetTitleHandler.handle(testRuleInfo);
+            this.optionSetCoverHandler.handle(testRuleInfo);
+            this.optionSetAttrHandler.handle(testRuleInfo);
             this.optionSetOnlineStatusHandler.handle(testRuleInfo);
             tasks.push(this.optionReplaceHandler.handle(testRuleInfo));
         }
