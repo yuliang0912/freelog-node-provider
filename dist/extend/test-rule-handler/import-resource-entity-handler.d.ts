@@ -1,7 +1,9 @@
 import { IOutsideApiService, ResourceInfo } from "../../interface";
 import { TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
+import { PresentableCommonChecker } from "../presentable-common-checker";
 export declare class ImportResourceEntityHandler {
     outsideApiService: IOutsideApiService;
+    presentableCommonChecker: PresentableCommonChecker;
     /**
      * 从规则中分析需要导入的资源数据
      * @param addResourceRules
@@ -14,10 +16,11 @@ export declare class ImportResourceEntityHandler {
      */
     getResourceDependencyTree(resourceIdOrName: string, version: string): Promise<TestResourceDependencyTree[]>;
     /**
-     * 获取资源属性
-     * @param resourceVersionIds
+     * 匹配发行版本
+     * @param resourceInfo
+     * @param versionRange
      */
-    getResourceProperty(resourceVersionIds: string[]): Promise<import("../../interface").ResourceVersionInfo[]>;
+    matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string): any;
     /**
      * 填充实体数据
      * @param matchRule
@@ -26,9 +29,9 @@ export declare class ImportResourceEntityHandler {
      */
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo): void;
     /**
-     * 匹配发行版本
-     * @param resourceInfo
-     * @param versionRange
+     * 填充资源对应版本的属性信息
+     * @param matchRule
+     * @param resourceProperty
      */
-    matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string): any;
+    _fillRuleEntityProperty(matchRule: TestRuleMatchInfo, resourceProperty: any): void;
 }

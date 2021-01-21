@@ -2,7 +2,7 @@ import {provide, inject} from 'midway';
 import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
 import {
     IOutsideApiService, IPresentableService, IPresentableVersionService,
-    PresentableInfo, PresentableDependencyTree, ResourceInfo
+    PresentableInfo, PresentableDependencyTree, ResourceInfo, FlattenPresentableDependencyTree, PresentableVersionInfo
 } from "../../interface";
 import {PresentableCommonChecker} from "../presentable-common-checker";
 
@@ -34,26 +34,25 @@ export class ImportPresentableEntityHandler {
             projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
         });
 
-        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version))
-        const presentableProperties = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId resourceSystemProperty resourceCustomPropertyDescriptors presentableRewriteProperty')
+        const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+        const presentableProperties = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId dependencyTree resourceSystemProperty resourceCustomPropertyDescriptors presentableRewriteProperty');
 
         for (const matchRule of alterPresentableRules) {
             const presentableInfo = presentables.find(x => x.presentableName.toLowerCase() === matchRule.ruleInfo.exhibitName.toLowerCase());
             const resourceInfo = presentableInfo ? resources.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId) : null;
-            const presentableProperty = presentableProperties.find(x => x.presentableId === presentableInfo.presentableId);
-            this._fillRuleEntityInfo(matchRule, presentableInfo, resourceInfo, presentableProperty);
+            const presentableVersionInfo = presentableInfo ? presentableProperties.find(x => x.presentableId === presentableInfo.presentableId) : null;
+            this._fillRuleEntityInfo(matchRule, presentableInfo, resourceInfo, presentableVersionInfo);
         }
     }
 
     /**
      * 获取展品依赖树
      * @param presentableId
-     * @param version
+     * @param flattenPresentableDependencyTree
      */
-    async getPresentableDependencyTree(presentableId: string, version: string): Promise<TestResourceDependencyTree[]> {
+    getPresentableDependencyTree(presentableId: string, flattenPresentableDependencyTree: FlattenPresentableDependencyTree[]): TestResourceDependencyTree[] {
 
-        const presentableVersion = await this.presentableVersionService.findById(presentableId, version, 'dependencyTree');
-        const presentableDependencyTree = this.presentableVersionService.convertPresentableDependencyTree(presentableVersion.dependencyTree, presentableId.substr(0, 12), true, Number.MAX_SAFE_INTEGER);
+        const presentableDependencyTree = this.presentableVersionService.convertPresentableDependencyTree(flattenPresentableDependencyTree, presentableId.substr(0, 12), true, Number.MAX_SAFE_INTEGER);
 
         function recursionConvertSubNodes(dependencies: PresentableDependencyTree[]): TestResourceDependencyTree[] {
             if (!Array.isArray(dependencies)) {
@@ -82,14 +81,24 @@ export class ImportPresentableEntityHandler {
      * @param matchRule
      * @param presentableInfo
      * @param resourceInfo
-     * @private
+     * @param presentableVersionInfo
      */
-    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableProperty: any) {
+    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableVersionInfo: PresentableVersionInfo) {
 
         if (!presentableInfo) {
             matchRule.isValid = false;
             matchRule.matchErrors.push(`节点中不存在名称为${matchRule.ruleInfo.exhibitName}的展品`);
-            return
+            return;
+        }
+        if (!resourceInfo) {
+            matchRule.isValid = false;
+            matchRule.matchErrors.push(`展品${matchRule.ruleInfo.exhibitName}引用的资源无法索引`);
+            return;
+        }
+        if (!presentableVersionInfo) {
+            matchRule.isValid = false;
+            matchRule.matchErrors.push(`展品${matchRule.ruleInfo.exhibitName}版本信息无法索引`);
+            return;
         }
 
         matchRule.testResourceOriginInfo = {
@@ -100,11 +109,14 @@ export class ImportPresentableEntityHandler {
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages ?? [],
-            systemProperty: presentableProperty.resourceSystemProperty,
-            customPropertyDescriptors: presentableProperty.resourceCustomPropertyDescriptors
+            systemProperty: presentableVersionInfo.resourceSystemProperty,
+            customPropertyDescriptors: presentableVersionInfo.resourceCustomPropertyDescriptors
         };
 
-        matchRule.presentableRewriteProperty = presentableProperty.presentableRewriteProperty;
+        matchRule.presentableRewriteProperty = presentableVersionInfo.presentableRewriteProperty;
         matchRule.presentableInfo = presentableInfo;
+
+        // 依赖树
+        matchRule.entityDependencyTree = this.getPresentableDependencyTree(presentableVersionInfo.presentableId, presentableVersionInfo.dependencyTree);
     }
 }

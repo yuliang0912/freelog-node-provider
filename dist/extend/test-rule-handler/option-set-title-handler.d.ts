@@ -1,6 +1,6 @@
 import { TestRuleMatchInfo } from "../../test-node-interface";
 export declare class OptionSetTitleHandler {
-    private setTagsOptionEfficientCountInfo;
+    private setTitleOptionEfficientCountInfo;
     /**
      * 替换展品标题操作
      * @param testRuleInfo

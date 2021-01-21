@@ -1,5 +1,5 @@
 import { TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
-import { IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo } from "../../interface";
+import { IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo, FlattenPresentableDependencyTree, PresentableVersionInfo } from "../../interface";
 import { PresentableCommonChecker } from "../presentable-common-checker";
 export declare class ImportPresentableEntityHandler {
     outsideApiService: IOutsideApiService;
@@ -15,15 +15,15 @@ export declare class ImportPresentableEntityHandler {
     /**
      * 获取展品依赖树
      * @param presentableId
-     * @param version
+     * @param flattenPresentableDependencyTree
      */
-    getPresentableDependencyTree(presentableId: string, version: string): Promise<TestResourceDependencyTree[]>;
+    getPresentableDependencyTree(presentableId: string, flattenPresentableDependencyTree: FlattenPresentableDependencyTree[]): TestResourceDependencyTree[];
     /**
      * 填充实体数据
      * @param matchRule
      * @param presentableInfo
      * @param resourceInfo
-     * @private
+     * @param presentableVersionInfo
      */
-    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableProperty: any): void;
+    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableVersionInfo: PresentableVersionInfo): void;
 }

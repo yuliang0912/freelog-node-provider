@@ -13,9 +13,6 @@ export declare class TestNodeController {
     updateTestRule(): Promise<void>;
     rematchTestRule(): Promise<void>;
     testResources(): Promise<void>;
-    /**
-     * 根据源资源获取测试资源.例如通过发行名称或者发行ID获取测试资源.API不再提供单一查询
-     */
     testResourceList(): Promise<void>;
     showTestResource(): Promise<void>;
     updateTestResource(): Promise<void>;

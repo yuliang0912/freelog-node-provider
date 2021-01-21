@@ -2,12 +2,15 @@ import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {IOutsideApiService, ResourceDependencyTree, ResourceInfo} from "../../interface";
 import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
+import {PresentableCommonChecker} from "../presentable-common-checker";
 
 @provide()
 export class ImportResourceEntityHandler {
 
     @inject()
     outsideApiService: IOutsideApiService;
+    @inject()
+    presentableCommonChecker: PresentableCommonChecker;
 
     /**
      * 从规则中分析需要导入的资源数据
@@ -17,13 +20,29 @@ export class ImportResourceEntityHandler {
 
         const resourceNames = addResourceRules.map(x => x.ruleInfo.candidate.name);
         const resources = await this.outsideApiService.getResourceListByNames(resourceNames, {
-            projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
+            projection: 'resourceId,resourceName,resourceType,latestVersion,resourceVersions,coverImages'
         });
 
+        const resourceVersionIds = [];
         addResourceRules.forEach(matchRule => {
             const resourceInfo = resources.find(x => x.resourceName.toLowerCase() === matchRule.ruleInfo.candidate.name.toLowerCase());
             this._fillRuleEntityInfo(matchRule, resourceInfo);
+            if (matchRule.isValid) {
+                resourceVersionIds.push(this.presentableCommonChecker.generateResourceVersionId(matchRule.testResourceOriginInfo.id, matchRule.testResourceOriginInfo.version));
+            }
         });
+
+        const resourceProperties = await this.outsideApiService.getResourceVersionList(resourceVersionIds, {
+            projection: 'resourceId,systemProperty,customPropertyDescriptors'
+        });
+
+        for (const matchRule of addResourceRules) {
+            if (!matchRule.isValid) {
+                continue;
+            }
+            const resourceProperty = resourceProperties.find(x => x.resourceId === matchRule.testResourceOriginInfo.id);
+            this._fillRuleEntityProperty(matchRule, resourceProperty);
+        }
     }
 
     /**
@@ -59,13 +78,19 @@ export class ImportResourceEntityHandler {
     }
 
     /**
-     * 获取资源属性
-     * @param resourceVersionIds
+     * 匹配发行版本
+     * @param resourceInfo
+     * @param versionRange
      */
-    async getResourceProperty(resourceVersionIds: string[]) {
-        return this.outsideApiService.getResourceVersionList(resourceVersionIds, {
-            projection: 'resourceId,systemProperty,customPropertyDescriptors'
-        })
+    matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string) {
+
+        const {resourceVersions, latestVersion} = resourceInfo;
+        if (!versionRange || versionRange === "latest") {
+            return resourceVersions.find(x => x.version === latestVersion);
+        }
+
+        const version = maxSatisfying(resourceVersions.map(x => x.version), versionRange);
+        return resourceVersions.find(x => x.version === version);
     }
 
     /**
@@ -74,7 +99,7 @@ export class ImportResourceEntityHandler {
      * @param resourceInfo
      * @private
      */
-    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo) {
+    _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo): void {
 
         if (!resourceInfo) {
             matchRule.isValid = false;
@@ -96,24 +121,21 @@ export class ImportResourceEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: resourceVersion.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages
-            // _originInfo: resourceInfo
+            coverImages: resourceInfo.coverImages,
         }
     }
 
     /**
-     * 匹配发行版本
-     * @param resourceInfo
-     * @param versionRange
+     * 填充资源对应版本的属性信息
+     * @param matchRule
+     * @param resourceProperty
      */
-    matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string) {
+    _fillRuleEntityProperty(matchRule: TestRuleMatchInfo, resourceProperty: any): void {
 
-        const {resourceVersions, latestVersion} = resourceInfo;
-        if (!versionRange || versionRange === "latest") {
-            return resourceVersions.find(x => x.version === latestVersion);
+        if (!matchRule.isValid || !resourceProperty) {
+            return;
         }
-
-        const version = maxSatisfying(resourceVersions.map(x => x.version), versionRange);
-        return resourceVersions.find(x => x.version === version);
+        matchRule.testResourceOriginInfo.systemProperty = resourceProperty.systemProperty;
+        matchRule.testResourceOriginInfo.customPropertyDescriptors = resourceProperty.customPropertyDescriptors;
     }
 }

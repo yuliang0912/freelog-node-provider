@@ -15,8 +15,15 @@ export declare class TestRuleHandler {
     optionSetAttrHandler: any;
     optionSetTitleHandler: any;
     optionSetCoverHandler: any;
+    activateThemeHandler: any;
     testNodeGenerator: any;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
+    /**
+     * 匹配激活主题规则
+     * @param nodeId
+     * @param testRuleMatchInfos
+     */
+    matchThemeRule(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]): Promise<TestRuleMatchInfo>;
     /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules
@@ -34,10 +41,6 @@ export declare class TestRuleHandler {
      * 检查add对应的presentableName或者resourceName是否已经存在
      */
     presentableNameAndResourceNameExistingCheck(): Promise<this>;
-    /**
-     * 导入属性
-     */
-    importEntityProperty(): Promise<void>;
     /**
      * 导入实体数据
      */

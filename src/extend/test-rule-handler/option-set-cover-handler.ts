@@ -1,11 +1,11 @@
 import {provide} from "midway";
-import {TestRuleMatchInfo, TestRuleEfficientInfo} from "../../test-node-interface";
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from "../../test-node-interface";
 import {isString} from 'lodash'
 
 @provide()
 export class OptionSetCoverHandler {
 
-    private setTagsOptionEfficientCountInfo: TestRuleEfficientInfo = {type: 'setTags', count: 1};
+    private setCoverOptionEfficientCountInfo: TestRuleEfficientInfo = {type: 'setCover', count: 1};
 
     /**
      * 替换展品封面操作
@@ -14,11 +14,11 @@ export class OptionSetCoverHandler {
     handle(testRuleInfo: TestRuleMatchInfo) {
 
         const {ruleInfo} = testRuleInfo;
-        if (!testRuleInfo.isValid || !isString(ruleInfo.cover) || !['alter', 'add'].includes(ruleInfo.operation)) {
+        if (!testRuleInfo.isValid || !isString(ruleInfo.cover) || ![TestNodeOperationEnum.Add, TestNodeOperationEnum.Alter].includes(ruleInfo.operation)) {
             return;
         }
 
-        testRuleInfo.cover = {cover: testRuleInfo.ruleInfo.cover, source: testRuleInfo.id};
-        testRuleInfo.efficientInfos.push(this.setTagsOptionEfficientCountInfo);
+        testRuleInfo.coverInfo = {coverImages: [testRuleInfo.ruleInfo.cover], source: testRuleInfo.id};
+        testRuleInfo.efficientInfos.push(this.setCoverOptionEfficientCountInfo);
     }
 }

@@ -4,8 +4,7 @@ import {
     BaseTestRuleInfo, TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo
 } from "../../test-node-interface";
 import {PresentableCommonChecker} from "../presentable-common-checker";
-
-const nmrTranslator = require('@freelog/nmr_translator');
+import {compile} from '@freelog/nmr_translator';
 
 @provide()
 export class TestRuleHandler {
@@ -38,6 +37,8 @@ export class TestRuleHandler {
     @inject()
     optionSetCoverHandler;
     @inject()
+    activateThemeHandler;
+    @inject()
     testNodeGenerator;
 
     async main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]> {
@@ -51,6 +52,20 @@ export class TestRuleHandler {
         await this.ruleOptionsHandle();
 
         return this.testRuleMatchInfos;
+    }
+
+    /**
+     * 匹配激活主题规则
+     * @param nodeId
+     * @param testRuleMatchInfos
+     */
+    async matchThemeRule(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]) {
+        const activeThemeRuleInfo = testRuleMatchInfos.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme)
+        if (!activeThemeRuleInfo) {
+            return null;
+        }
+        await this.activateThemeHandler.handle(activeThemeRuleInfo, nodeId, testRuleMatchInfos)
+        return activeThemeRuleInfo;
     }
 
     /**
@@ -79,7 +94,7 @@ export class TestRuleHandler {
             return {errors: [], rules: []}
         }
 
-        return nmrTranslator.compile(testRuleText);
+        return compile(testRuleText);
     }
 
     /**
@@ -88,29 +103,6 @@ export class TestRuleHandler {
     async presentableNameAndResourceNameExistingCheck() {
         await this.testRuleChecker.checkImportPresentableNameAndResourceNameIsExist(this.nodeId, this.testRuleMatchInfos);
         return this;
-    }
-
-    /**
-     * 导入属性
-     */
-    async importEntityProperty() {
-        const objectIds = []
-        const resourceVersionIds = [];
-        const presentableVersionIds = [];
-        const validRules = this.testRuleMatchInfos.filter(x => x.isValid && ['alter', 'add'].includes(x.ruleInfo.operation))
-        for (const testRuleInfo of validRules) {
-            switch (testRuleInfo.ruleInfo.candidate?.type) {
-                case TestResourceOriginType.Object:
-                    objectIds.push(testRuleInfo.testResourceOriginInfo.id);
-                    break;
-                case TestResourceOriginType.Resource:
-                    resourceVersionIds.push(this.presentableCommonChecker.generateResourceVersionId(testRuleInfo.testResourceOriginInfo.id, testRuleInfo.testResourceOriginInfo.version));
-                    break;
-                default:
-                    presentableVersionIds.push(this.presentableCommonChecker.generatePresentableVersionId(testRuleInfo.presentableInfo.presentableId, testRuleInfo.presentableInfo.version));
-                    break;
-            }
-        }
     }
 
     /**
@@ -159,11 +151,10 @@ export class TestRuleHandler {
                 case TestResourceOriginType.Resource:
                     generateDependencyTreeTask = this.importResourceEntityHandler.getResourceDependencyTree(testRuleInfo.testResourceOriginInfo.id, testRuleInfo.testResourceOriginInfo.version);
                     break;
-                default:
-                    generateDependencyTreeTask = this.importPresentableEntityHandler.getPresentableDependencyTree(testRuleInfo.presentableInfo.presentableId, testRuleInfo.presentableInfo.version);
-                    break;
             }
-            tasks.push(generateDependencyTreeTask.then(dependencyTree => testRuleInfo.entityDependencyTree = dependencyTree));
+            if (generateDependencyTreeTask !== null) {
+                tasks.push(generateDependencyTreeTask.then(dependencyTree => testRuleInfo.entityDependencyTree = dependencyTree));
+            }
         }
         await Promise.all(tasks);
     }

@@ -1,10 +1,8 @@
 import {inject, provide} from "midway";
 import {IOutsideApiService, ObjectStorageInfo} from "../../interface";
 import {
-    ObjectDependencyTreeInfo,
-    TestResourceDependencyTree,
-    TestResourceOriginType,
-    TestRuleMatchInfo
+    ObjectDependencyTreeInfo, TestResourceDependencyTree,
+    TestResourceOriginType, TestRuleMatchInfo
 } from "../../test-node-interface";
 
 @provide()
@@ -98,7 +96,6 @@ export class ImportObjectEntityHandler {
             coverImages: [],
             systemProperty: objectInfo.systemProperty,
             customPropertyDescriptors: objectInfo.customPropertyDescriptors
-            // _originInfo: objectInfo
         }
     }
 }

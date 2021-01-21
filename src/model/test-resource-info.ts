@@ -5,7 +5,7 @@ import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 @scope('Singleton')
 @provide('model.NodeTestResourceInfo')
 export class NodeTestResourceInfo extends MongooseModelBase {
-    
+
     constructor(@plugin('mongoose') mongoose) {
         super(mongoose);
     }
@@ -32,6 +32,12 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             versions: {type: [String], required: false, default: []}
         }, {_id: false})
 
+        const testResourcePropertySchema = new this.mongoose.Schema({
+            key: {type: String, required: true},
+            value: {type: this.mongoose.Schema.Types.Mixed, required: true},
+            remark: {type: String, required: false, default: ''},
+        }, {_id: false});
+
         const StateInfoSchema = new this.mongoose.Schema({
             onlineStatusInfo: {
                 isOnline: {type: Number, required: true},
@@ -39,6 +45,18 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             },
             tagsInfo: {
                 tags: {type: [String], required: true},
+                ruleId: {type: String, required: false},
+            },
+            titleInfo: {
+                title: {type: String, required: true},
+                ruleId: {type: String, required: false},
+            },
+            coverInfo: {
+                coverImages: {type: [String], default: [], required: false},
+                ruleId: {type: String, required: false},
+            },
+            propertyInfo: {
+                testResourceProperty: {type: [testResourcePropertySchema], default: [], required: false},
                 ruleId: {type: String, required: false},
             }
         }, {_id: false})
@@ -48,7 +66,6 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             userId: {type: Number, required: true},
             testResourceId: {type: String, required: true, unique: true},
             testResourceName: {type: String, required: true},
-            coverImages: {type: [String], default: [], required: false},
             associatedPresentableId: {type: String, default: "", required: false},
             resourceType: {type: String, required: true}, //资源类型
             intro: {type: String, required: false, default: ''}, //测试资源简介
@@ -63,7 +80,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
             toJSON: NodeTestResourceInfo.toObjectOptions,
             toObject: NodeTestResourceInfo.toObjectOptions
-        })
+        });
 
         TestResourceSchema.index({userId: 1, nodeId: 1});
 

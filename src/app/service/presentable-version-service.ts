@@ -32,6 +32,9 @@ export class PresentableVersionService implements IPresentableVersionService {
     }
 
     async findByIds(presentableVersionIds: string[], ...args): Promise<PresentableVersionInfo[]> {
+        if (!presentableVersionIds.length) {
+            return [];
+        }
         return this.find({presentableVersionId: {$in: presentableVersionIds}}, ...args);
     }
 

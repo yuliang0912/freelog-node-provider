@@ -39,13 +39,17 @@ export interface ReplaceOptionInfo {
     scopes: CandidateInfo[][];
 }
 
-export interface TestResourceProperty {
+export interface TestResourcePropertyRuleInfo {
     operation: 'add' | 'delete';
     key: string;
-    defaultValue: string;
+    value?: string;
     description?: string;
-    customType: 'base' | 'input' | 'select';
-    options?: string[];
+}
+
+export interface TestResourcePropertyInfo {
+    key: string;
+    value: string;
+    remark: string;
 }
 
 export interface BaseTestRuleInfo {
@@ -58,12 +62,12 @@ export interface BaseTestRuleInfo {
     online: boolean | null; // null代表不操作此项,沿用展品的上下线状态
     cover?: string;
     title?: string;
-    attrs?: TestResourceProperty[];
+    attrs?: TestResourcePropertyRuleInfo[];
     candidate?: CandidateInfo;
 }
 
 export interface TestRuleEfficientInfo {
-    type: 'setTags' | 'setOnlineStatus' | 'replace',
+    type: 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activeTheme',
     count: number;
 }
 
@@ -80,12 +84,13 @@ export interface TestRuleMatchInfo {
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
 
-    tags?: { tags: string[], source: string }
-    onlineStatus?: { status: number, source: string }
-    title?: { title: string, source: string }
-    cover?: { cover: string, source: string }
-    attrs?: { attrs: TestResourceProperty[] | null, source: string };
+    tagInfo?: { tags: string[], source: string };
+    onlineStatusInfo?: { status: number, source: string };
+    titleInfo?: { title: string, source: string };
+    coverInfo?: { coverImages: string[], source: string };
+    attrInfo?: { attrs: TestResourcePropertyInfo[] | null, source: string };
     efficientInfos: TestRuleEfficientInfo[];
+    themeInfo: { testResourceId: string, source: string };
 }
 
 
@@ -175,7 +180,12 @@ export interface ResolveResourceInfo {
 
 export interface StateInfo {
     onlineStatusInfo?: { isOnline: number, ruleId: string },
-    tagsInfo?: { tags: string[], ruleId: string }
+    tagsInfo?: { tags: string[], ruleId: string },
+    titleInfo?: { title: string, ruleId: string },
+    coverInfo?: { coverImages: string[], ruleId: string },
+    propertyInfo?: {
+        testResourceProperty: TestResourcePropertyInfo[], ruleId: string
+    }
 }
 
 export interface TestResourceInfo {
@@ -183,7 +193,6 @@ export interface TestResourceInfo {
     userId: number;
     testResourceId: string;
     testResourceName: string;
-    coverImages: string[];
     associatedPresentableId?: string;
     resourceType: string;
     originInfo: TestResourceOriginInfo;
@@ -199,6 +208,10 @@ export interface TestResourceTreeInfo {
     nodeId: number;
     testResourceId: string;
     testResourceName: string;
+    systemProperty?: object;
+    resourceCustomPropertyDescriptors?: any[];
+    presentableRewriteProperty?: any[];
+    testResourceProperty?: object;
     dependencyTree: FlattenTestResourceDependencyTree[];
     authTree: FlattenTestResourceAuthTree[];
 }
@@ -210,6 +223,7 @@ export interface NodeTestRuleInfo {
     themeId?: string;
     testRules: any[];
     status?: number;
+    matchResultDate?: Date;
 }
 
 export interface TestRuleMatchResult {

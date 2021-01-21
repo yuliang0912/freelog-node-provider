@@ -9,7 +9,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
     constructor(@plugin('mongoose') mongoose) {
         super(mongoose);
     }
-    
+
     buildMongooseModel() {
 
         const BaseReplacedInfoSchema = new this.mongoose.Schema({

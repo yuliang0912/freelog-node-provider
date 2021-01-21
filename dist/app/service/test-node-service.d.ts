@@ -1,14 +1,12 @@
-import { BaseTestRuleInfo, IMatchTestRuleEventHandler, ITestNodeService, NodeTestRuleInfo, ResolveResourceInfo, TestResourceInfo, TestResourceTreeInfo } from "../../test-node-interface";
-import { IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo } from "../../interface";
+import { IMatchTestRuleEventHandler, ITestNodeService, NodeTestRuleInfo, ResolveResourceInfo, TestResourceInfo, TestResourceTreeInfo } from '../../test-node-interface';
+import { IOutsideApiService } from '../../interface';
 import { PageResult, FreelogContext, IMongodbOperation } from 'egg-freelog-base';
+import { TestRuleHandler } from '../../extend/test-rule-handler';
 export declare class TestNodeService implements ITestNodeService {
     ctx: FreelogContext;
-    testRuleHandler: any;
+    testRuleHandler: TestRuleHandler;
     testNodeGenerator: any;
     outsideApiService: IOutsideApiService;
-    presentableService: IPresentableService;
-    nodeProvider: IMongodbOperation<NodeInfo>;
-    presentableVersionService: IPresentableVersionService;
     matchTestRuleEventHandler: IMatchTestRuleEventHandler;
     nodeTestRuleProvider: IMongodbOperation<NodeTestRuleInfo>;
     nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
@@ -32,5 +30,4 @@ export declare class TestNodeService implements ITestNodeService {
      * @param resolveResources
      */
     updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
-    _compileAndMatchTestRule(nodeId: number, testRuleText: string): BaseTestRuleInfo[];
 }

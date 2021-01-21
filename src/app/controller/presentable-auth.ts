@@ -104,7 +104,7 @@ export class ResourceAuthController {
     /**
      * 通过节点ID和资源ID获取展品,并且授权
      */
-    @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileSteam)', {middleware: ['authExceptionHandlerMiddleware']})
+    @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async nodeResourceAuth() {
 

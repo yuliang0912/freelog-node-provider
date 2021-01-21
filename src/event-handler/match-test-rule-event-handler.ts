@@ -1,8 +1,8 @@
 import {inject, provide} from 'midway';
 import {
     BaseTestRuleInfo,
-    FlattenTestResourceDependencyTree,
     FlattenTestResourceAuthTree,
+    FlattenTestResourceDependencyTree,
     IMatchTestRuleEventHandler,
     NodeTestRuleInfo,
     ResolveResourceInfo,
@@ -10,19 +10,21 @@ import {
     TestResourceDependencyTree,
     TestResourceInfo,
     TestResourceOriginType,
+    TestResourceTreeInfo,
     TestRuleMatchInfo,
-    TestRuleMatchResult, TestResourceTreeInfo
+    TestRuleMatchResult
 } from '../test-node-interface';
 import {
     FlattenPresentableAuthTree,
     FlattenPresentableDependencyTree,
     IOutsideApiService,
     IPresentableService,
-    IPresentableVersionService,
-    PresentableInfo, PresentableVersionInfo,
+    IPresentableVersionService, NodeInfo,
+    PresentableInfo,
+    PresentableVersionInfo,
     ResourceInfo
 } from "../interface";
-import {chain, chunk, first, isEmpty} from "lodash";
+import {assign, chain, chunk, first, isEmpty, omit} from "lodash";
 import {NodeTestRuleMatchStatus} from "../enum";
 import {IMongodbOperation} from "egg-freelog-base";
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
@@ -42,6 +44,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     @inject()
     nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
     @inject()
+    nodeProvider: IMongodbOperation<NodeInfo>;
+    @inject()
     presentableService: IPresentableService;
     @inject()
     outsideApiService: IOutsideApiService;
@@ -60,6 +64,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const allTestRuleMatchResults: TestRuleMatchResult[] = [];
         const nodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
         if (!nodeTestRuleInfo || nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {
+            return;
+        }
+
+        // 如果小于1分钟,则不重新匹配
+        if (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000) {
             return;
         }
 
@@ -88,8 +97,17 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             }
 
             await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds);
+            const activeThemeRule = await this.testRuleHandler.matchThemeRule(nodeId, nodeTestRuleInfo.testRules);
+            if (activeThemeRule) {
+                this.testNodeGenerator.generateTestResourceId(nodeId, activeThemeRule.testResourceOriginInfo)
+            }
+            // const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
+
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
-                status: NodeTestRuleMatchStatus.Completed, testRules: nodeTestRuleInfo.testRules
+                status: NodeTestRuleMatchStatus.Completed,
+                testRules: nodeTestRuleInfo.testRules,
+                themeId: activeThemeRule?.themeInfo?.testResourceId ?? '',
+                matchResultDate: new Date()
             });
         } catch (e) {
             console.log('节点测试规则匹配异常', e);
@@ -165,7 +183,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         if (!isEmpty(excludedPresentableIds)) {
             condition['_id'] = {$nin: excludedPresentableIds};
         }
-        const projection = ['presentableId', 'tag', 'onlineStatus', 'coverImages', 'presentableName', 'resourceInfo', 'version', 'resolveResources'];
+        const projection = ['presentableId', 'tag', 'onlineStatus', 'coverImages', 'presentableName', 'presentableTitle', 'resourceInfo', 'version', 'resolveResources'];
         while (true) {
             const presentables = await this.presentableService.find(condition, projection.join(' '), {
                 skip, limit, sort: {createDate: -1}
@@ -206,23 +224,34 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatus, tags, entityDependencyTree} = testRuleMatchInfo;
+        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
             resourceType: testResourceOriginInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
             testResourceName: ruleInfo.exhibitName,
-            coverImages: testRuleMatchInfo.presentableInfo?.coverImages ?? testResourceOriginInfo.coverImages ?? [],
             originInfo: testResourceOriginInfo,
             stateInfo: {
                 onlineStatusInfo: {
-                    isOnline: onlineStatus?.status ?? 0,
-                    ruleId: onlineStatus?.source ?? 'default'
+                    isOnline: onlineStatusInfo?.status ?? 0,
+                    ruleId: onlineStatusInfo?.source ?? 'default'
                 },
                 tagsInfo: {
-                    tags: tags?.tags ?? [],
-                    ruleId: tags?.source ?? 'default'
+                    tags: tagInfo?.tags ?? [],
+                    ruleId: tagInfo?.source ?? 'default'
+                },
+                titleInfo: {
+                    title: titleInfo?.title ?? testResourceOriginInfo.name,
+                    ruleId: titleInfo?.source ?? 'default'
+                },
+                coverInfo: {
+                    coverImages: coverInfo?.coverImages ?? testResourceOriginInfo.coverImages,
+                    ruleId: coverInfo?.source ?? 'default'
+                },
+                propertyInfo: {
+                    testResourceProperty: attrInfo?.attrs ?? [],
+                    ruleId: attrInfo?.source ?? 'default'
                 }
             }
         };
@@ -233,7 +262,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 resourceName: x.name,
                 contracts: []
             }
-        })
+        });
         // 如果根级资源的版本被替换掉了,则整个测试资源的版本重置为被替换之后的版本
         if (testResourceOriginInfo.type === TestResourceOriginType.Resource && !isEmpty(entityDependencyTree)) {
             testResourceInfo.originInfo.version = first(entityDependencyTree).version;
@@ -242,10 +271,42 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     }
 
     /**
+     * 获取测试资源的meta属性
+     * @param testRuleMatchInfo
+     */
+    getTestResourceProperty(testRuleMatchInfo: TestRuleMatchInfo) {
+        const resourceCustomReadonlyInfo: any = {};
+        const resourceCustomEditableInfo: any = {};
+        const presentableRewriteInfo: any = {};
+        const testRuleRewriteInfo: any = {};
+        testRuleMatchInfo.testResourceOriginInfo.customPropertyDescriptors?.forEach(({key, defaultValue, type}) => {
+            if (type === 'readonlyText') {
+                resourceCustomReadonlyInfo[key] = defaultValue;
+            } else {
+                resourceCustomEditableInfo[key] = defaultValue;
+            }
+        });
+        testRuleMatchInfo.presentableRewriteProperty?.forEach(({key, value}) => {
+            presentableRewriteInfo[key] = value;
+        });
+        testRuleMatchInfo.ruleInfo.attrs?.forEach(({key, operation, value}) => {
+            if (operation === 'add') {
+                testRuleRewriteInfo[key] = value;
+            }
+        });
+        // 属性优先级为: 1.系统属性 2:资源定义的不可编辑的属性 3:展品重写的属性 4:资源自定义的可编辑属性
+        const testResourceProperty = assign(resourceCustomEditableInfo, presentableRewriteInfo, resourceCustomReadonlyInfo, testRuleMatchInfo.testResourceOriginInfo.systemProperty);
+        const omitKeys = testRuleMatchInfo.ruleInfo.attrs?.filter(x => x.operation === 'delete').map(x => x.key);
+
+        return omit(testResourceProperty, omitKeys);
+    }
+
+    /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo
      * @param resourceInfo
      * @param nodeId
+     * @param userId
      */
     presentableInfoMapToTestResource(presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo {
         const testResourceOriginInfo = {
@@ -257,13 +318,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             versions: resourceInfo ? resourceInfo.resourceVersions.map(x => x.version) : [], // 容错处理
             coverImages: resourceInfo?.coverImages ?? []
         };
-        const testResourceInfo: TestResourceInfo = {
+        return {
             nodeId, userId,
             associatedPresentableId: presentableInfo.presentableId,
             resourceType: presentableInfo.resourceInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
             testResourceName: presentableInfo.presentableName,
-            coverImages: presentableInfo.coverImages,
             originInfo: testResourceOriginInfo,
             stateInfo: {
                 onlineStatusInfo: {
@@ -273,11 +333,22 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 tagsInfo: {
                     tags: presentableInfo.tags,
                     ruleId: 'default'
+                },
+                coverInfo: {
+                    coverImages: presentableInfo.coverImages,
+                    ruleId: 'default'
+                },
+                titleInfo: {
+                    title: presentableInfo.presentableTitle,
+                    ruleId: 'default'
+                },
+                propertyInfo: {
+                    testResourceProperty: [],
+                    ruleId: 'default'
                 }
             },
             resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[]
         };
-        return testResourceInfo;
     }
 
     /**
@@ -329,6 +400,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         });
     }
 
+    /**
+     * 展品授权树转换为测试资源授权树
+     * @param flattenAuthTree
+     * @param resourceMap
+     */
     convertPresentableAuthTreeToTestResourceAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], resourceMap: Map<string, ResourceInfo>): FlattenTestResourceAuthTree[] {
         return flattenAuthTree.map(item => {
             return {
@@ -346,11 +422,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     }
 
     /**
-     *
-     * @param authTree 平铺的授权树
-     * @param existingResolveResources 之前已经解决过的记录
-     * @param presentableInfo 展品信息
-     * @private
+     * 平铺的授权树
+     * @param authTree
+     * @param userId
+     * @param existingResolveResources
+     * @param presentableInfo
      */
     getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userId: number, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo) {
         // 自己的资源无需授权,自己的object也无需授权(只能测试自己的object).

@@ -1,5 +1,5 @@
 import {provide} from "midway";
-import {TestRuleMatchInfo, TestRuleEfficientInfo} from "../../test-node-interface";
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from "../../test-node-interface";
 import {isArray} from 'lodash'
 
 @provide()
@@ -14,11 +14,11 @@ export class OptionSetTagsHandler {
     handle(testRuleInfo: TestRuleMatchInfo) {
 
         const {ruleInfo} = testRuleInfo;
-        if (!testRuleInfo.isValid || !isArray(ruleInfo.labels) || !['alter', 'add'].includes(ruleInfo.operation)) {
+        if (!testRuleInfo.isValid || !isArray(ruleInfo.labels) || ![TestNodeOperationEnum.Add, TestNodeOperationEnum.Alter].includes(ruleInfo.operation)) {
             return;
         }
 
-        testRuleInfo.tags = {tags: testRuleInfo.ruleInfo.labels, source: testRuleInfo.id};
+        testRuleInfo.tagInfo = {tags: testRuleInfo.ruleInfo.labels, source: testRuleInfo.id};
         testRuleInfo.efficientInfos.push(this.setTagsOptionEfficientCountInfo);
     }
 }

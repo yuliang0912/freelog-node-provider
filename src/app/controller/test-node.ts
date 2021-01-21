@@ -4,8 +4,7 @@ import {controller, inject, get, post, put, provide} from 'midway';
 import {ITestNodeService, TestResourceOriginType} from "../../test-node-interface";
 import {isString, isArray, isUndefined, pick, chain, uniq, first, isEmpty} from 'lodash';
 import {
-    IdentityTypeEnum, ArgumentError,
-    FreelogContext, IJsonSchemaValidate, visitorIdentityValidator
+    IdentityTypeEnum, ArgumentError, FreelogContext, IJsonSchemaValidate, visitorIdentityValidator
 } from 'egg-freelog-base';
 
 @provide()
@@ -25,6 +24,7 @@ export class TestNodeController {
     @inject()
     resolveResourcesValidator: IJsonSchemaValidate;
 
+    // 查看节点测试规则
     @get('/:nodeId/rules')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async showTestRuleInfo() {
@@ -36,6 +36,7 @@ export class TestNodeController {
         await this.testNodeService.findNodeTestRuleInfoById(nodeId).then(ctx.success);
     }
 
+    // 创建节点测试规则
     @post('/:nodeId/rules')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async createTestRule() {
@@ -51,6 +52,7 @@ export class TestNodeController {
         await this.testNodeService.matchAndSaveNodeTestRule(nodeId, testRuleText ?? '').then(ctx.success);
     }
 
+    // 更新节点测试规则
     @put('/:nodeId/rules')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async updateTestRule() {
@@ -69,6 +71,7 @@ export class TestNodeController {
         await this.testNodeService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success);
     }
 
+    // 重新匹配节点测试规则
     @post('/:nodeId/rules/rematch')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async rematchTestRule() {
@@ -85,6 +88,7 @@ export class TestNodeController {
         await this.testNodeService.matchAndSaveNodeTestRule(nodeId, nodeTestRule?.ruleText ?? '').then(ctx.success);
     }
 
+    // 节点下的所有测试资源
     @get('/:nodeId/testResources')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResources() {
@@ -125,9 +129,7 @@ export class TestNodeController {
         await this.testNodeService.findIntervalResourceList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
-    /**
-     * 根据源资源获取测试资源.例如通过发行名称或者发行ID获取测试资源.API不再提供单一查询
-     */
+    // 根据源资源获取测试资源.例如通过发行名称或者发行ID获取测试资源.API不再提供单一查询
     @get('/:nodeId/testResources/list')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResourceList() {
@@ -161,6 +163,7 @@ export class TestNodeController {
         await this.testNodeService.findTestResources(condition, projection.join(' ')).then(ctx.success);
     }
 
+    // 查看测试资源详情
     @get('/testResources/:testResourceId')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async showTestResource() {
@@ -172,6 +175,7 @@ export class TestNodeController {
         await this.testNodeService.findOneTestResource({testResourceId}).then(ctx.success);
     }
 
+    // 解决测试资源的依赖授权
     @put('/testResources/:testResourceId')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async updateTestResource() {
@@ -196,6 +200,7 @@ export class TestNodeController {
         await this.testNodeService.updateTestResource(testResourceInfo, resolveResources).then(ctx.success);
     }
 
+    // 根据依赖项的ID和版本范围匹配测试资源信息
     @get('/:nodeId/testResources/searchByDependency')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async searchTestResources() {
@@ -218,6 +223,7 @@ export class TestNodeController {
         ctx.success(testResourceTreeInfos.map(x => pick(x, ['testResourceId', 'testResourceName'])));
     }
 
+    // 查看测试资源的依赖树
     @get('/testResources/:testResourceId/dependencyTree')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResourceDependencyTree() {
@@ -237,7 +243,7 @@ export class TestNodeController {
         ctx.success(dependencyTree);
     }
 
-
+    // 查看测试资源的授权树
     @get('/testResources/:testResourceId/authTree')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResourceAuthTree() {
@@ -257,7 +263,7 @@ export class TestNodeController {
         ctx.success(dependencyTree);
     }
 
-
+    // 搜索节点全部测试资源的依赖树.返回包含该依赖的测试资源信息
     @get('/:nodeId/testResources/dependencyTree/search')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async searchTestResourceDependencyTree() {

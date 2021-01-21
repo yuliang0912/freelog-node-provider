@@ -8,10 +8,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OptionSetTitleHandler = void 0;
 const midway_1 = require("midway");
+const test_node_interface_1 = require("../../test-node-interface");
 const lodash_1 = require("lodash");
 let OptionSetTitleHandler = class OptionSetTitleHandler {
     constructor() {
-        this.setTagsOptionEfficientCountInfo = { type: 'setTags', count: 1 };
+        this.setTitleOptionEfficientCountInfo = { type: 'setTitle', count: 1 };
     }
     /**
      * 替换展品标题操作
@@ -19,15 +20,15 @@ let OptionSetTitleHandler = class OptionSetTitleHandler {
      */
     handle(testRuleInfo) {
         const { ruleInfo } = testRuleInfo;
-        if (!testRuleInfo.isValid || !lodash_1.isString(ruleInfo.title) || !['alter', 'add'].includes(ruleInfo.operation)) {
+        if (!testRuleInfo.isValid || !lodash_1.isString(ruleInfo.title) || ![test_node_interface_1.TestNodeOperationEnum.Add, test_node_interface_1.TestNodeOperationEnum.Alter].includes(ruleInfo.operation)) {
             return;
         }
-        testRuleInfo.title = { title: testRuleInfo.ruleInfo.title, source: testRuleInfo.id };
-        testRuleInfo.efficientInfos.push(this.setTagsOptionEfficientCountInfo);
+        testRuleInfo.titleInfo = { title: testRuleInfo.ruleInfo.title, source: testRuleInfo.id };
+        testRuleInfo.efficientInfos.push(this.setTitleOptionEfficientCountInfo);
     }
 };
 OptionSetTitleHandler = __decorate([
     midway_1.provide()
 ], OptionSetTitleHandler);
 exports.OptionSetTitleHandler = OptionSetTitleHandler;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib3B0aW9uLXNldC10aXRsZS1oYW5kbGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2V4dGVuZC90ZXN0LXJ1bGUtaGFuZGxlci9vcHRpb24tc2V0LXRpdGxlLWhhbmRsZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsbUNBQStCO0FBRS9CLG1DQUErQjtBQUcvQixJQUFhLHFCQUFxQixHQUFsQyxNQUFhLHFCQUFxQjtJQUFsQztRQUVZLG9DQUErQixHQUEwQixFQUFDLElBQUksRUFBRSxTQUFTLEVBQUUsS0FBSyxFQUFFLENBQUMsRUFBQyxDQUFDO0lBZ0JqRyxDQUFDO0lBZEc7OztPQUdHO0lBQ0gsTUFBTSxDQUFDLFlBQStCO1FBRWxDLE1BQU0sRUFBQyxRQUFRLEVBQUMsR0FBRyxZQUFZLENBQUM7UUFDaEMsSUFBSSxDQUFDLFlBQVksQ0FBQyxPQUFPLElBQUksQ0FBQyxpQkFBUSxDQUFDLFFBQVEsQ0FBQyxLQUFLLENBQUMsSUFBSSxDQUFDLENBQUMsT0FBTyxFQUFFLEtBQUssQ0FBQyxDQUFDLFFBQVEsQ0FBQyxRQUFRLENBQUMsU0FBUyxDQUFDLEVBQUU7WUFDdEcsT0FBTztTQUNWO1FBRUQsWUFBWSxDQUFDLEtBQUssR0FBRyxFQUFDLEtBQUssRUFBRSxZQUFZLENBQUMsUUFBUSxDQUFDLEtBQUssRUFBRSxNQUFNLEVBQUUsWUFBWSxDQUFDLEVBQUUsRUFBQyxDQUFDO1FBQ25GLFlBQVksQ0FBQyxjQUFjLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQywrQkFBK0IsQ0FBQyxDQUFDO0lBQzNFLENBQUM7Q0FDSixDQUFBO0FBbEJZLHFCQUFxQjtJQURqQyxnQkFBTyxFQUFFO0dBQ0cscUJBQXFCLENBa0JqQztBQWxCWSxzREFBcUIifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib3B0aW9uLXNldC10aXRsZS1oYW5kbGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2V4dGVuZC90ZXN0LXJ1bGUtaGFuZGxlci9vcHRpb24tc2V0LXRpdGxlLWhhbmRsZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsbUNBQStCO0FBQy9CLG1FQUEwRztBQUMxRyxtQ0FBK0I7QUFHL0IsSUFBYSxxQkFBcUIsR0FBbEMsTUFBYSxxQkFBcUI7SUFBbEM7UUFFWSxxQ0FBZ0MsR0FBMEIsRUFBQyxJQUFJLEVBQUUsVUFBVSxFQUFFLEtBQUssRUFBRSxDQUFDLEVBQUMsQ0FBQztJQWdCbkcsQ0FBQztJQWRHOzs7T0FHRztJQUNILE1BQU0sQ0FBQyxZQUErQjtRQUVsQyxNQUFNLEVBQUMsUUFBUSxFQUFDLEdBQUcsWUFBWSxDQUFDO1FBQ2hDLElBQUksQ0FBQyxZQUFZLENBQUMsT0FBTyxJQUFJLENBQUMsaUJBQVEsQ0FBQyxRQUFRLENBQUMsS0FBSyxDQUFDLElBQUksQ0FBQyxDQUFDLDJDQUFxQixDQUFDLEdBQUcsRUFBRSwyQ0FBcUIsQ0FBQyxLQUFLLENBQUMsQ0FBQyxRQUFRLENBQUMsUUFBUSxDQUFDLFNBQVMsQ0FBQyxFQUFFO1lBQzlJLE9BQU87U0FDVjtRQUVELFlBQVksQ0FBQyxTQUFTLEdBQUcsRUFBQyxLQUFLLEVBQUUsWUFBWSxDQUFDLFFBQVEsQ0FBQyxLQUFLLEVBQUUsTUFBTSxFQUFFLFlBQVksQ0FBQyxFQUFFLEVBQUMsQ0FBQztRQUN2RixZQUFZLENBQUMsY0FBYyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsZ0NBQWdDLENBQUMsQ0FBQztJQUM1RSxDQUFDO0NBQ0osQ0FBQTtBQWxCWSxxQkFBcUI7SUFEakMsZ0JBQU8sRUFBRTtHQUNHLHFCQUFxQixDQWtCakM7QUFsQlksc0RBQXFCIn0=

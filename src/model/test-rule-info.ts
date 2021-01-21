@@ -27,7 +27,8 @@ export class TestRuleInfo extends MongooseModelBase {
             testRules: {
                 type: [TestRuleInfo], required: false
             },
-            status: {type: Number, default: 0}
+            status: {type: Number, default: 0}, // 1:规则处理中 2:规则匹配失败 3:规则匹配完成
+            matchResultDate: {type: Date, required: false, default: null}, // 匹配结果时间
         }, {
             minimize: false,
             versionKey: false,
