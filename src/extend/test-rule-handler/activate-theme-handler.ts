@@ -18,7 +18,7 @@ export class ActivateThemeHandler {
     @inject()
     presentableService: IPresentableService;
 
-    private activeThemeEfficientCountInfo: TestRuleEfficientInfo = {type: 'activeTheme', count: 1};
+    private activeThemeEfficientCountInfo: TestRuleEfficientInfo = {type: 'activateTheme', count: 1};
 
     /**
      * 激活主题操作

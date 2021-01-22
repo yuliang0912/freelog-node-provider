@@ -32,6 +32,11 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             versions: {type: [String], required: false, default: []}
         }, {_id: false})
 
+        const RuleInfoSchema = new this.mongoose.Schema({
+            ruleId: {type: String, required: false, default: ''},
+            operations: {type: [String], required: true}
+        }, {_id: false})
+
         const testResourcePropertySchema = new this.mongoose.Schema({
             key: {type: String, required: true},
             value: {type: this.mongoose.Schema.Types.Mixed, required: true},
@@ -40,10 +45,10 @@ export class NodeTestResourceInfo extends MongooseModelBase {
 
         const StateInfoSchema = new this.mongoose.Schema({
             onlineStatusInfo: {
-                isOnline: {type: Number, required: true},
+                onlineStatus: {type: Number, required: true},
                 ruleId: {type: String, default: '', required: false},//没有规则,代表默认原始的上线状态
             },
-            tagsInfo: {
+            tagInfo: {
                 tags: {type: [String], required: true},
                 ruleId: {type: String, required: false},
             },
@@ -73,7 +78,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             stateInfo: {type: StateInfoSchema, required: true},
             resolveResources: {type: [ResolveResourceSchema], default: [], required: false},
             resolveResourceSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
-            ruleId: {type: String, required: false, default: ''},
+            rules: {type: RuleInfoSchema, required: true},
             status: {type: Number, default: 0, required: true}
         }, {
             versionKey: false,

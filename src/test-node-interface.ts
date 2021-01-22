@@ -67,7 +67,7 @@ export interface BaseTestRuleInfo {
 }
 
 export interface TestRuleEfficientInfo {
-    type: 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activeTheme',
+    type: 'alter' | 'add' | 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activateTheme',
     count: number;
 }
 
@@ -179,8 +179,8 @@ export interface ResolveResourceInfo {
 }
 
 export interface StateInfo {
-    onlineStatusInfo?: { isOnline: number, ruleId: string },
-    tagsInfo?: { tags: string[], ruleId: string },
+    onlineStatusInfo?: { onlineStatus: number, ruleId: string },
+    tagInfo?: { tags: string[], ruleId: string },
     titleInfo?: { title: string, ruleId: string },
     coverInfo?: { coverImages: string[], ruleId: string },
     propertyInfo?: {
@@ -198,10 +198,15 @@ export interface TestResourceInfo {
     originInfo: TestResourceOriginInfo;
     stateInfo: StateInfo;
     resolveResources?: ResolveResourceInfo[];
+    resolveResourceSignStatus: number;
     dependencyTree?: FlattenTestResourceDependencyTree[];
     authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;
+    rules: {
+        ruleId: string;
+        operations: string[];
+    }
 }
 
 export interface TestResourceTreeInfo {

@@ -97,5 +97,7 @@ export class ImportObjectEntityHandler {
             systemProperty: objectInfo.systemProperty,
             customPropertyDescriptors: objectInfo.customPropertyDescriptors
         }
+        
+        matchRule.efficientInfos.push({type: 'add', count: 1});
     }
 }

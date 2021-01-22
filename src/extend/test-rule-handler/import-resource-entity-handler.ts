@@ -123,6 +123,7 @@ export class ImportResourceEntityHandler {
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages,
         }
+        matchRule.efficientInfos.push({type: 'add', count: 1});
     }
 
     /**

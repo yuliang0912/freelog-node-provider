@@ -147,6 +147,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             const resolveResources = existingTestResourceMap.get(testResource.testResourceId)?.resolveResources;
             testResource.authTree = this.testNodeGenerator.generateTestResourceAuthTree(testResource.dependencyTree, resourceMap);
             testResource.resolveResources = this.getTestResourceResolveResources(testResource.authTree, userId, resolveResources, testRuleMatchInfo.presentableInfo);
+            testResource.resolveResourceSignStatus = (testResource.resolveResources.length && testResource.resolveResources.some(x => !x.contracts.length)) ? 2 : 1;
             testResourceTreeInfos.push({
                 nodeId,
                 testResourceId: testResource.testResourceId,
@@ -234,10 +235,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             originInfo: testResourceOriginInfo,
             stateInfo: {
                 onlineStatusInfo: {
-                    isOnline: onlineStatusInfo?.status ?? 0,
+                    onlineStatus: onlineStatusInfo?.status ?? 0,
                     ruleId: onlineStatusInfo?.source ?? 'default'
                 },
-                tagsInfo: {
+                tagInfo: {
                     tags: tagInfo?.tags ?? [],
                     ruleId: tagInfo?.source ?? 'default'
                 },
@@ -253,7 +254,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     testResourceProperty: attrInfo?.attrs ?? [],
                     ruleId: attrInfo?.source ?? 'default'
                 }
-            }
+            },
+            rules: {
+                ruleId: testRuleMatchInfo.id,
+                operations: testRuleMatchInfo.efficientInfos.map(x => x.type)
+            },
+            resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
         testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.userId !== userId && x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => {
@@ -327,10 +333,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             originInfo: testResourceOriginInfo,
             stateInfo: {
                 onlineStatusInfo: {
-                    isOnline: presentableInfo.onlineStatus,
+                    onlineStatus: presentableInfo.onlineStatus,
                     ruleId: 'default'
                 },
-                tagsInfo: {
+                tagInfo: {
                     tags: presentableInfo.tags,
                     ruleId: 'default'
                 },
@@ -347,7 +353,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 }
             },
-            resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[]
+            resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
+            resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
+            rules: {
+                ruleId: '', operations: []
+            }
         };
     }
 

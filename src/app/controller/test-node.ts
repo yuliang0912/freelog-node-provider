@@ -101,7 +101,7 @@ export class TestNodeController {
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
-        const isOnline = ctx.checkQuery('isOnline').optional().toInt().default(1).in([0, 1, 2]).value;
+        const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).in([0, 1, 2]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         ctx.validateParams();
@@ -118,8 +118,8 @@ export class TestNodeController {
         if (isArray(tags)) {
             condition['stateInfo.tagsInfo.tags'] = {$in: tags};
         }
-        if (isOnline === 1 || isOnline === 0) {
-            condition['stateInfo.onlineStatusInfo.isOnline'] = isOnline;
+        if (onlineStatus === 1 || onlineStatus === 0) {
+            condition['stateInfo.onlineStatusInfo.onlineStatus'] = onlineStatus;
         }
         if (isString(keywords)) {
             const searchExp = {$regex: keywords, $options: 'i'};
@@ -290,6 +290,7 @@ export class TestNodeController {
         ctx.success(searchResults);
     }
 
+    // 过滤测试资源依赖树.只显示指定的依赖
     @get('/testResources/:testResourceId/dependencyTree/filter')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async filterTestResourceDependencyTree() {

@@ -83,6 +83,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
+        // realResponseResourceVersionInfo.nid === this.
         this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
     }
 

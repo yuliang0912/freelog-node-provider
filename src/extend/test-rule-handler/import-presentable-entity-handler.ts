@@ -118,5 +118,7 @@ export class ImportPresentableEntityHandler {
 
         // 依赖树
         matchRule.entityDependencyTree = this.getPresentableDependencyTree(presentableVersionInfo.presentableId, presentableVersionInfo.dependencyTree);
+
+        matchRule.efficientInfos.push({type: 'alter', count: 1});
     }
 }

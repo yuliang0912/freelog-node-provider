@@ -4,7 +4,7 @@ import {ITestNodeService, ITestResourceAuthService, TestResourceOriginType} from
 import {IdentityTypeEnum, visitorIdentityValidator, CommonRegex, ArgumentError, FreelogContext} from 'egg-freelog-base';
 
 @provide()
-@controller('/v2/auths/testResource') // 统一URL v2/auths/:subjectType
+@controller('/v2/auths/testResources') // 统一URL v2/auths/:subjectType
 export class TestNodeAuthController {
 
     @inject()
