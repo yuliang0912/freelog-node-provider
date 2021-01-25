@@ -1,8 +1,9 @@
-import { BaseTestRuleInfo, TestRuleMatchInfo } from "../../test-node-interface";
+import { BaseTestRuleInfo, TestResourceInfo, TestRuleMatchInfo } from "../../test-node-interface";
 import { PresentableCommonChecker } from "../presentable-common-checker";
 export declare class TestRuleHandler {
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[];
+    activateThemeRule: BaseTestRuleInfo;
     ctx: any;
     testRuleChecker: any;
     importObjectEntityHandler: any;
@@ -21,9 +22,9 @@ export declare class TestRuleHandler {
     /**
      * 匹配激活主题规则
      * @param nodeId
-     * @param testRuleMatchInfos
+     * @param activeThemeRuleInfo
      */
-    matchThemeRule(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]): Promise<TestRuleMatchInfo>;
+    matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo>;
     /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules

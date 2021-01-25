@@ -1,7 +1,7 @@
 import {isEmpty} from "lodash";
 import {provide, inject} from 'midway';
 import {
-    BaseTestRuleInfo, TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo
+    BaseTestRuleInfo, TestNodeOperationEnum, TestResourceInfo, TestResourceOriginType, TestRuleMatchInfo
 } from "../../test-node-interface";
 import {PresentableCommonChecker} from "../presentable-common-checker";
 import {compile} from '@freelog/nmr_translator';
@@ -11,6 +11,7 @@ export class TestRuleHandler {
 
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[] = [];
+    activateThemeRule: BaseTestRuleInfo;
 
     @inject()
     ctx;
@@ -57,15 +58,13 @@ export class TestRuleHandler {
     /**
      * 匹配激活主题规则
      * @param nodeId
-     * @param testRuleMatchInfos
+     * @param activeThemeRuleInfo
      */
-    async matchThemeRule(nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]) {
-        const activeThemeRuleInfo = testRuleMatchInfos.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme)
+    matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
         if (!activeThemeRuleInfo) {
             return null;
         }
-        await this.activateThemeHandler.handle(activeThemeRuleInfo, nodeId, testRuleMatchInfos)
-        return activeThemeRuleInfo;
+        return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo)
     }
 
     /**

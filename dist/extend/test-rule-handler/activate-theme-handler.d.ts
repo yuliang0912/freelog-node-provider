@@ -1,15 +1,12 @@
-import { TestRuleMatchInfo } from "../../test-node-interface";
-import { IPresentableService } from "../../interface";
-import { TestNodeGenerator } from "../test-node-generator";
+import { IMongodbOperation } from "egg-freelog-base";
+import { TestRuleMatchInfo, TestResourceInfo } from "../../test-node-interface";
 export declare class ActivateThemeHandler {
-    testNodeGenerator: TestNodeGenerator;
-    presentableService: IPresentableService;
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
     private activeThemeEfficientCountInfo;
     /**
-     * 激活主题操作
-     * @param testRuleInfo
+     * 激活主题操作(此规则需要后置单独处理)
      * @param nodeId
-     * @param testRuleMatchInfos
+     * @param activeThemeRuleInfo
      */
-    handle(testRuleInfo: TestRuleMatchInfo, nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]): Promise<void>;
+    handle(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo>;
 }

@@ -1,68 +1,34 @@
 import {inject, provide} from "midway";
-import {
-    TestRuleMatchInfo,
-    TestRuleEfficientInfo,
-    TestNodeOperationEnum, TestResourceOriginType,
-} from "../../test-node-interface";
-import {isString} from 'lodash'
-import {ResourceTypeEnum} from "egg-freelog-base";
-import {IPresentableService} from "../../interface";
-import {TestNodeGenerator} from "../test-node-generator";
-
+import {IMongodbOperation, ResourceTypeEnum} from "egg-freelog-base";
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestResourceInfo} from "../../test-node-interface";
 
 @provide()
 export class ActivateThemeHandler {
 
     @inject()
-    testNodeGenerator: TestNodeGenerator;
-    @inject()
-    presentableService: IPresentableService;
+    nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
 
     private activeThemeEfficientCountInfo: TestRuleEfficientInfo = {type: 'activateTheme', count: 1};
 
     /**
-     * 激活主题操作
-     * @param testRuleInfo
+     * 激活主题操作(此规则需要后置单独处理)
      * @param nodeId
-     * @param testRuleMatchInfos
+     * @param activeThemeRuleInfo
      */
-    async handle(testRuleInfo: TestRuleMatchInfo, nodeId: number, testRuleMatchInfos: TestRuleMatchInfo[]) {
+    async handle(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
 
-        const {ruleInfo} = testRuleInfo;
-        if (!testRuleInfo.isValid || !isString(ruleInfo.exhibitName) || ruleInfo.operation !== TestNodeOperationEnum.ActivateTheme) {
+        const themeResourceInfo = await this.nodeTestResourceProvider.findOne({
+            testResourceName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.themeName}$`, 'i')
+        });
+        if (!themeResourceInfo) {
+            activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}不是一个有效的主题资源`);
+            return;
+        } else if (themeResourceInfo.resourceType !== ResourceTypeEnum.THEME) {
+            activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}资源类型不是主题(${ResourceTypeEnum.THEME})`);
             return;
         }
 
-        const themeTestResourceInfo = testRuleMatchInfos.find(x => x.ruleInfo.exhibitName.toLowerCase() === ruleInfo.exhibitName.toLowerCase());
-        if (themeTestResourceInfo && (!themeTestResourceInfo.isValid || themeTestResourceInfo.testResourceOriginInfo.resourceType !== ResourceTypeEnum.THEME)) {
-            testRuleInfo.isValid = false;
-            testRuleInfo.matchErrors.push(`展品${testRuleInfo.ruleInfo.exhibitName}不是一个有效的主题资源`);
-            return;
-        } else if (themeTestResourceInfo) {
-            testRuleInfo.themeInfo = {
-                testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, themeTestResourceInfo.testResourceOriginInfo),
-                source: testRuleInfo.id
-            };
-            testRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
-            return;
-        }
-
-        const presentableInfo = await this.presentableService.findOne({
-            nodeId, presentableName: new RegExp(`^${testRuleInfo.ruleInfo.exhibitName}$`, 'i')
-        }, 'resourceInfo');
-
-        if (!presentableInfo || presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
-            testRuleInfo.isValid = false;
-            testRuleInfo.matchErrors.push(`展品${testRuleInfo.ruleInfo.exhibitName}不是一个有效的主题资源`);
-            return;
-        }
-
-        testRuleInfo.themeInfo = {
-            testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, {
-                id: presentableInfo.resourceInfo.resourceId,
-                type: TestResourceOriginType.Resource
-            } as any), source: testRuleInfo.id
-        };
-        testRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
+        activeThemeRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
+        return themeResourceInfo;
     }
 }

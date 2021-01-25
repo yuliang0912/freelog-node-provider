@@ -65,7 +65,7 @@ export class TestNodeService implements ITestNodeService {
     async matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo> {
 
         const {errors, rules} = this.testRuleHandler.compileTestRule(testRuleText);
-        if (errors) {
+        if (errors?.length) {
             throw new ApplicationError('测试节点策略编辑失败', {errors});
         }
         const nodeTestRuleInfo: NodeTestRuleInfo = {

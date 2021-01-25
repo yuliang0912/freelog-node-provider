@@ -67,16 +67,16 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             return;
         }
 
-        // 如果小于1分钟,则不重新匹配
-        if (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000) {
-            return;
-        }
+        // // 如果小于1分钟,则不重新匹配
+        // if (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000) {
+        //     return;
+        // }
 
         try {
             const task1 = this.nodeTestResourceProvider.deleteMany({nodeId});
             const task2 = this.nodeTestResourceTreeProvider.deleteMany({nodeId});
             await Promise.all([task1, task2]);
-
+            // const activateThemeRule = nodeTestRuleInfo.testRules.find(x => x.operation === 'activate_theme');
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 50)) {
                 await this.matchAndSaveTestResourceInfos(testRules, nodeId, nodeTestRuleInfo.userId).then(testRuleMatchResults => {
@@ -97,16 +97,14 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             }
 
             await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds);
-            const activeThemeRule = await this.testRuleHandler.matchThemeRule(nodeId, nodeTestRuleInfo.testRules);
-            if (activeThemeRule) {
-                this.testNodeGenerator.generateTestResourceId(nodeId, activeThemeRule.testResourceOriginInfo)
-            }
-            // const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
+            
+            const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
+            const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeId, activeThemeRuleInfo);
 
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
                 status: NodeTestRuleMatchStatus.Completed,
                 testRules: nodeTestRuleInfo.testRules,
-                themeId: activeThemeRule?.themeInfo?.testResourceId ?? '',
+                themeId: themeTestResourceInfo?.testResourceId ?? '',
                 matchResultDate: new Date()
             });
         } catch (e) {
