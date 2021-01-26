@@ -75,20 +75,20 @@ export class TestNodeController {
     @post('/:nodeId/rules/rematch')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async rematchTestRule() {
-
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
+        const isMandatoryMatch = ctx.checkBody('isMandatoryMatch').optional().toInt().in([0, 1]).default(0).value;
         ctx.validateParams();
 
         const nodeInfo = await this.nodeService.findById(nodeId);
         this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
 
-        const nodeTestRule = await this.testNodeService.findNodeTestRuleInfoById(nodeId, 'ruleText');
+        this.testNodeService.tryMatchNodeTestRule(nodeId, isMandatoryMatch).then();
 
-        await this.testNodeService.matchAndSaveNodeTestRule(nodeId, nodeTestRule?.ruleText ?? '').then(ctx.success);
+        ctx.success(true);
     }
 
-    // 节点下的所有测试资源
+    // 查询节点下的所有测试资源
     @get('/:nodeId/testResources')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResources() {

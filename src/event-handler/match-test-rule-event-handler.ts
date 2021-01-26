@@ -57,26 +57,27 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 开始规则测试匹配事件
      * @param nodeId
+     * @param isMandatoryMatch 是否强制匹配
      */
-    async handle(nodeId: number) {
+    async handle(nodeId: number, isMandatoryMatch: boolean = false) {
 
         const operatedPresentableIds = [];
         const allTestRuleMatchResults: TestRuleMatchResult[] = [];
         const nodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
-        if (!nodeTestRuleInfo || nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {
+        if (!nodeTestRuleInfo) {
             return;
         }
-
-        // // 如果小于1分钟,则不重新匹配
-        // if (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000) {
-        //     return;
-        // }
+        // 如果非强制化匹配的,并且上次匹配时间小于1分钟,则直接使用上次匹配结果
+        if (!isMandatoryMatch && nodeTestRuleInfo.status === NodeTestRuleMatchStatus.Completed && (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000)) {
+            return;
+        }
 
         try {
             const task1 = this.nodeTestResourceProvider.deleteMany({nodeId});
             const task2 = this.nodeTestResourceTreeProvider.deleteMany({nodeId});
-            await Promise.all([task1, task2]);
-            // const activateThemeRule = nodeTestRuleInfo.testRules.find(x => x.operation === 'activate_theme');
+            const task3 = nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending ? this.nodeTestRuleProvider.updateOne({nodeId}, {status: NodeTestRuleMatchStatus.Pending}) : undefined;
+            await Promise.all([task1, task2, task3]);
+
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 50)) {
                 await this.matchAndSaveTestResourceInfos(testRules, nodeId, nodeTestRuleInfo.userId).then(testRuleMatchResults => {
@@ -97,7 +98,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             }
 
             await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds);
-            
+
             const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
             const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeId, activeThemeRuleInfo);
 
@@ -207,7 +208,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     testResourceName: testResource.testResourceName,
                     authTree: this.convertPresentableAuthTreeToTestResourceAuthTree(presentableVersionMap.get(testResource.associatedPresentableId).authTree, resourceMap),
                     dependencyTree: this.convertPresentableDependencyTreeToTestResourceDependencyTree(testResource.testResourceId, presentableVersionMap.get(testResource.associatedPresentableId).dependencyTree)
-                })
+                });
             }
             await this.nodeTestResourceProvider.insertMany(testResources);
             await this.nodeTestResourceTreeProvider.insertMany(testResourceTreeInfos);

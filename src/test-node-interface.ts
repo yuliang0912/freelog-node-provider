@@ -240,7 +240,7 @@ export interface TestRuleMatchResult {
 }
 
 export interface IMatchTestRuleEventHandler {
-    handle(nodeId: number): Promise<void>;
+    handle(nodeId: number, isMandatoryMatch: boolean): Promise<void>;
 }
 
 export interface ITestNodeService {
@@ -258,6 +258,8 @@ export interface ITestNodeService {
     findNodeTestRuleInfoById(nodeId: number, ...args): Promise<NodeTestRuleInfo>;
 
     matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
+
+    tryMatchNodeTestRule(nodeId: number, isMandatoryMatch: boolean): Promise<NodeTestRuleInfo>;
 
     updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
 

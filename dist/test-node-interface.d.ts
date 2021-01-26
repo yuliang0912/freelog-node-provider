@@ -240,7 +240,7 @@ export interface TestRuleMatchResult {
     associatedPresentableId?: string;
 }
 export interface IMatchTestRuleEventHandler {
-    handle(nodeId: number): Promise<void>;
+    handle(nodeId: number, isMandatoryMatch: boolean): Promise<void>;
 }
 export interface ITestNodeService {
     testResourceCount(condition: object): Promise<number>;
@@ -250,6 +250,7 @@ export interface ITestNodeService {
     findTestResourceTreeInfos(condition: object, ...args: any[]): Promise<TestResourceTreeInfo[]>;
     findNodeTestRuleInfoById(nodeId: number, ...args: any[]): Promise<NodeTestRuleInfo>;
     matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
+    tryMatchNodeTestRule(nodeId: number, isMandatoryMatch: boolean): Promise<NodeTestRuleInfo>;
     updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo>;
     findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>>;
 }

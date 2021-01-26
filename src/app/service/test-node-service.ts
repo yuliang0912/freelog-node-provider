@@ -1,7 +1,8 @@
 import {inject, provide} from 'midway';
 import {
     IMatchTestRuleEventHandler, ITestNodeService,
-    NodeTestRuleInfo, ResolveResourceInfo, TestResourceInfo, TestResourceTreeInfo
+    NodeTestRuleInfo, ResolveResourceInfo,
+    TestResourceInfo, TestResourceTreeInfo
 } from '../../test-node-interface';
 import {IOutsideApiService} from '../../interface';
 import {NodeTestRuleMatchStatus} from "../../enum";
@@ -84,9 +85,24 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
             return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
         }).then(nodeTestRule => {
-            this.matchTestRuleEventHandler.handle(nodeId);
+            this.matchTestRuleEventHandler.handle(nodeId, true);
             return nodeTestRule;
         });
+    }
+
+    /**
+     * 尝试匹配规则
+     * @param nodeId
+     * @param isMandatoryMatch
+     */
+    async tryMatchNodeTestRule(nodeId: number, isMandatoryMatch: boolean) {
+
+        const nodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
+        if (!nodeTestRuleInfo) {
+            return this.matchAndSaveNodeTestRule(nodeId, '');
+        }
+        this.matchTestRuleEventHandler.handle(nodeId, isMandatoryMatch).then();
+        return nodeTestRuleInfo;
     }
 
     /**

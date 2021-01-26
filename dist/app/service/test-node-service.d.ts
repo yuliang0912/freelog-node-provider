@@ -25,6 +25,12 @@ export declare class TestNodeService implements ITestNodeService {
      */
     matchAndSaveNodeTestRule(nodeId: number, testRuleText: string): Promise<NodeTestRuleInfo>;
     /**
+     * 尝试匹配规则
+     * @param nodeId
+     * @param isMandatoryMatch
+     */
+    tryMatchNodeTestRule(nodeId: number, isMandatoryMatch: boolean): Promise<NodeTestRuleInfo>;
+    /**
      * 更新测试资源
      * @param testResource
      * @param resolveResources

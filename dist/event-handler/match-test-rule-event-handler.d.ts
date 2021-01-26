@@ -17,8 +17,9 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
     /**
      * 开始规则测试匹配事件
      * @param nodeId
+     * @param isMandatoryMatch 是否强制匹配
      */
-    handle(nodeId: number): Promise<void>;
+    handle(nodeId: number, isMandatoryMatch?: boolean): Promise<void>;
     /**
      * 匹配测试资源
      * @param ruleInfos
