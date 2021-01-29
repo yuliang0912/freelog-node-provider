@@ -89,6 +89,10 @@ export interface TestRuleMatchInfo {
         source: string;
     };
     efficientInfos: TestRuleEfficientInfo[];
+    themeInfo: {
+        isActivatedTheme: number;
+        ruleId: string;
+    };
 }
 export interface BaseReplacedInfo {
     id: string;
@@ -181,6 +185,10 @@ export interface StateInfo {
     };
     coverInfo?: {
         coverImages: string[];
+        ruleId: string;
+    };
+    themeInfo?: {
+        isActivatedTheme: number;
         ruleId: string;
     };
     propertyInfo?: {
