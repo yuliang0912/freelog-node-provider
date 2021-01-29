@@ -101,7 +101,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
             const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
             const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeId, activeThemeRuleInfo);
-
+            
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
                 status: NodeTestRuleMatchStatus.Completed,
                 testRules: nodeTestRuleInfo.testRules,
@@ -252,6 +252,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 propertyInfo: {
                     testResourceProperty: attrInfo?.attrs ?? [],
                     ruleId: attrInfo?.source ?? 'default'
+                },
+                themeInfo: {
+                    isActivatedTheme: 0,
+                    ruleId: 'default'
                 }
             },
             rules: {
@@ -349,6 +353,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 },
                 propertyInfo: {
                     testResourceProperty: [],
+                    ruleId: 'default'
+                },
+                themeInfo: {
+                    isActivatedTheme: 0,
                     ruleId: 'default'
                 }
             },

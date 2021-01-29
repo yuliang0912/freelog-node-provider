@@ -63,6 +63,10 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             propertyInfo: {
                 testResourceProperty: {type: [testResourcePropertySchema], default: [], required: false},
                 ruleId: {type: String, required: false},
+            },
+            themeInfo: {
+                isActivatedTheme: {type: Number, required: true},
+                ruleId: {type: String, required: false},
             }
         }, {_id: false})
 

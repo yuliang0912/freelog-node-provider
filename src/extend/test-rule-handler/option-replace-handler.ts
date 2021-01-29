@@ -33,6 +33,11 @@ export class OptionReplaceHandler {
         this.testRuleMatchInfo.efficientInfos.push(this.replaceOptionEfficientCountInfo);
 
         await this._recursionReplace(testRuleInfo.entityDependencyTree, []);
+        const rootDependency = first(testRuleInfo.entityDependencyTree);
+        // 如果测试资源通过规则替换了版本,则修改测试资源对应的版本号
+        if (rootDependency.id === testRuleInfo.testResourceOriginInfo.id && rootDependency.type === testRuleInfo.testResourceOriginInfo.type && rootDependency.type === TestResourceOriginType.Resource) {
+            testRuleInfo.testResourceOriginInfo.version = rootDependency.version ?? testRuleInfo.testResourceOriginInfo.version;
+        }
     }
 
     /**

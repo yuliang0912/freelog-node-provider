@@ -89,10 +89,6 @@ export interface TestRuleMatchInfo {
         source: string;
     };
     efficientInfos: TestRuleEfficientInfo[];
-    themeInfo: {
-        testResourceId: string;
-        source: string;
-    };
 }
 export interface BaseReplacedInfo {
     id: string;

@@ -90,7 +90,7 @@ export interface TestRuleMatchInfo {
     coverInfo?: { coverImages: string[], source: string };
     attrInfo?: { attrs: TestResourcePropertyInfo[] | null, source: string };
     efficientInfos: TestRuleEfficientInfo[];
-    themeInfo: { testResourceId: string, source: string };
+    themeInfo: { isActivatedTheme: number, ruleId: string };
 }
 
 
@@ -183,6 +183,7 @@ export interface StateInfo {
     tagInfo?: { tags: string[], ruleId: string },
     titleInfo?: { title: string, ruleId: string },
     coverInfo?: { coverImages: string[], ruleId: string },
+    themeInfo?: { isActivatedTheme: number, ruleId: string };
     propertyInfo?: {
         testResourceProperty: TestResourcePropertyInfo[], ruleId: string
     }
