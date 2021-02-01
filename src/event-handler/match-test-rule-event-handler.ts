@@ -98,9 +98,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             }
 
             await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds);
-
-            const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
-            const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeId, activeThemeRuleInfo);
+            const themeTestResourceInfo = await this.setThemeTestResource(nodeTestRuleInfo);
 
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
                 status: NodeTestRuleMatchStatus.Completed,
@@ -217,6 +215,24 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     }
 
     /**
+     * 设置主题
+     * @param nodeTestRuleInfo
+     */
+    async setThemeTestResource(nodeTestRuleInfo: NodeTestRuleInfo) {
+        const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
+        const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeTestRuleInfo.nodeId, activeThemeRuleInfo);
+        if (!themeTestResourceInfo) {
+            return;
+        }
+        await this.nodeTestResourceProvider.updateOne({testResourceId: themeTestResourceInfo.testResourceId}, {
+            'stateInfo.themeInfo': {
+                isActivatedTheme: 1, ruleId: activeThemeRuleInfo.id
+            }
+        })
+        return themeTestResourceInfo;
+    }
+
+    /**
      * 规则匹配结果转换为测试资源实体
      * @param testRuleMatchInfo
      * @param nodeId
@@ -255,9 +271,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 },
                 themeInfo:
                     {
-                    isActivatedTheme: 0,
-                    ruleId: 'default'
-                }
+                        isActivatedTheme: 0,
+                        ruleId: 'default'
+                    }
             },
             rules: {
                 ruleId: testRuleMatchInfo.id,
