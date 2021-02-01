@@ -225,10 +225,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             return;
         }
         await this.nodeTestResourceProvider.updateOne({testResourceId: themeTestResourceInfo.testResourceId}, {
-            'stateInfo.themeInfo': {
-                isActivatedTheme: 1, ruleId: activeThemeRuleInfo.id
-            }
-        })
+            'stateInfo.themeInfo.isActivatedTheme': 1,
+            'stateInfo.themeInfo.ruleId': activeThemeRuleInfo.id
+        });
         return themeTestResourceInfo;
     }
 

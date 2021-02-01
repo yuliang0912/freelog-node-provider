@@ -35,6 +35,11 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      */
     saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[]): Promise<void>;
     /**
+     * 设置主题
+     * @param nodeTestRuleInfo
+     */
+    setThemeTestResource(nodeTestRuleInfo: NodeTestRuleInfo): Promise<TestResourceInfo>;
+    /**
      * 规则匹配结果转换为测试资源实体
      * @param testRuleMatchInfo
      * @param nodeId
