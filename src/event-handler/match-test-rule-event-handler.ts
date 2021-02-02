@@ -26,7 +26,7 @@ import {
 } from "../interface";
 import {assign, chain, chunk, first, isEmpty, omit} from "lodash";
 import {NodeTestRuleMatchStatus} from "../enum";
-import {IMongodbOperation} from "egg-freelog-base";
+import {IMongodbOperation, ResourceTypeEnum} from "egg-freelog-base";
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
 import {TestRuleHandler} from '../extend/test-rule-handler';
 
@@ -219,15 +219,26 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param nodeTestRuleInfo
      */
     async setThemeTestResource(nodeTestRuleInfo: NodeTestRuleInfo) {
-        const activeThemeRuleInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
-        const themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeTestRuleInfo.nodeId, activeThemeRuleInfo);
+        const activeThemeRuleInfo: TestRuleMatchInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
+        let themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeTestRuleInfo.nodeId, activeThemeRuleInfo);
+        if (!themeTestResourceInfo) {
+            themeTestResourceInfo = await this.nodeTestResourceProvider.findOne(({
+                nodeId: nodeTestRuleInfo.nodeId,
+                resourceType: ResourceTypeEnum.THEME,
+                'onlineStatusInfo.onlineStatus': 1
+            }))
+        }
         if (!themeTestResourceInfo) {
             return;
         }
-        await this.nodeTestResourceProvider.updateOne({testResourceId: themeTestResourceInfo.testResourceId}, {
+        const updateModel = {
             'stateInfo.themeInfo.isActivatedTheme': 1,
             'stateInfo.themeInfo.ruleId': activeThemeRuleInfo.id
-        });
+        };
+        if (activeThemeRuleInfo?.isValid) {
+            updateModel['$push'] = {rules: {ruleId: activeThemeRuleInfo.id, operations: ['activateTheme']}};
+        }
+        await this.nodeTestResourceProvider.updateOne({testResourceId: themeTestResourceInfo.testResourceId}, updateModel);
         return themeTestResourceInfo;
     }
 
@@ -239,7 +250,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree} = testRuleMatchInfo;
+        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree, efficientInfos} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
@@ -274,10 +285,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                         ruleId: 'default'
                     }
             },
-            rules: {
-                ruleId: testRuleMatchInfo.id,
-                operations: testRuleMatchInfo.efficientInfos.map(x => x.type)
-            },
+            rules: [{
+                ruleId: id, operations: efficientInfos.map(x => x.type)
+            }],
             resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
@@ -378,9 +388,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             },
             resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
             resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
-            rules: {
-                ruleId: '', operations: []
-            }
+            rules: []
         };
     }
 

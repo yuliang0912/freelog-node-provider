@@ -21,9 +21,11 @@ export class ActivateThemeHandler {
             testResourceName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.themeName}$`, 'i')
         });
         if (!themeResourceInfo) {
+            activeThemeRuleInfo.isValid = false;
             activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}不是一个有效的主题资源`);
             return;
         } else if (themeResourceInfo.resourceType !== ResourceTypeEnum.THEME) {
+            activeThemeRuleInfo.isValid = false;
             activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}资源类型不是主题(${ResourceTypeEnum.THEME})`);
             return;
         }

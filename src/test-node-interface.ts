@@ -189,6 +189,11 @@ export interface StateInfo {
     }
 }
 
+export interface ruleOperationInfo {
+    ruleId: string;
+    operations: string[];
+}
+
 export interface TestResourceInfo {
     nodeId: number;
     userId: number;
@@ -204,10 +209,7 @@ export interface TestResourceInfo {
     authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;
-    rules: {
-        ruleId: string;
-        operations: string[];
-    }
+    rules: ruleOperationInfo[];
 }
 
 export interface TestResourceTreeInfo {

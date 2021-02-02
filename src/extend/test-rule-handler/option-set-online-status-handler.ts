@@ -19,12 +19,11 @@ export class OptionSetOnlineStatusHandler {
             return;
         }
 
-        if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME && ruleInfo.online) {
-            testRuleInfo.matchErrors.push('主题类型的展品不允许设置上下线状态');
-            return;
-        }
-
         if (isBoolean(ruleInfo.online)) {
+            if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME && ruleInfo.online) {
+                testRuleInfo.matchErrors.push('主题类型的展品不允许设置上下线状态');
+                return;
+            }
             testRuleInfo.onlineStatusInfo = {status: ruleInfo.online ? 1 : 0, source: testRuleInfo.id};
             // 用户只有显示声明了上下线状态,才算一次有效匹配
             testRuleInfo.efficientInfos.push(this.setOnlineStatusOptionEfficientCountInfo);
