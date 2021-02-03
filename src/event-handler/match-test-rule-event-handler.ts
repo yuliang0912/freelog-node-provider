@@ -250,7 +250,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree, efficientInfos} = testRuleMatchInfo;
+        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree, efficientInfos, replaceRecords} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
@@ -279,11 +279,14 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     testResourceProperty: attrInfo?.attrs ?? [],
                     ruleId: attrInfo?.source ?? 'default'
                 },
-                themeInfo:
-                    {
-                        isActivatedTheme: 0,
-                        ruleId: 'default'
-                    }
+                themeInfo: {
+                    isActivatedTheme: 0,
+                    ruleId: 'default'
+                },
+                replaceInfo: {
+                    replaceRecords: replaceRecords,
+                    ruleId: (replaceRecords ?? []).length ? id : "default"
+                }
             },
             rules: [{
                 ruleId: id, operations: efficientInfos.map(x => x.type)
@@ -384,6 +387,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 themeInfo: {
                     isActivatedTheme: 0,
                     ruleId: 'default'
+                },
+                replaceInfo: {
+                    replaceRecords: [],
+                    ruleId: 'default'
                 }
             },
             resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
@@ -404,8 +411,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     flattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
         for (const dependencyInfo of dependencyTree) {
             const nid = this.testNodeGenerator.generateDependencyNodeId(deep === 1 ? testResourceId : null);
-            const {id, fileSha1, name, type, version, versionId, dependencies, resourceType, replaced} = dependencyInfo;
-            results.push({fileSha1, nid, id, name, type, deep, version, versionId, parentNid, resourceType, replaced});
+            const {id, fileSha1, name, type, version, versionId, dependencies, resourceType, replaceRecords} = dependencyInfo;
+            results.push({
+                fileSha1, nid, id, name, type, deep, version, versionId,
+                parentNid, resourceType, replaced: first(replaceRecords ?? [])
+            });
             this.flattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
         }
         return results;

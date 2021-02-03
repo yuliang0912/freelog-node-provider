@@ -37,6 +37,7 @@ export interface ReplaceOptionInfo {
     replaced: CandidateInfo;
     replacer: CandidateInfo;
     scopes: CandidateInfo[][];
+    efficientCount: number;
 }
 
 export interface TestResourcePropertyRuleInfo {
@@ -91,6 +92,7 @@ export interface TestRuleMatchInfo {
     attrInfo?: { attrs: TestResourcePropertyInfo[] | null, source: string };
     efficientInfos: TestRuleEfficientInfo[];
     themeInfo: { isActivatedTheme: number, ruleId: string };
+    replaceRecords?: any[];
 }
 
 
@@ -132,7 +134,7 @@ export interface TestResourceDependencyTree {
     versionId: string;
     resourceType: string;
     fileSha1: string;
-    replaced?: BaseReplacedInfo;
+    replaceRecords?: BaseReplacedInfo[];
     dependencies: TestResourceDependencyTree[];
 }
 
@@ -186,6 +188,9 @@ export interface StateInfo {
     themeInfo?: { isActivatedTheme: number, ruleId: string };
     propertyInfo?: {
         testResourceProperty: TestResourcePropertyInfo[], ruleId: string
+    };
+    replaceInfo?: {
+        replaceRecords: any[], ruleId: string;
     }
 }
 

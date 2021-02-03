@@ -3,7 +3,7 @@ import {inject, provide} from "midway";
 import {isEmpty, pick, chain, first} from "lodash";
 import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from "../../interface";
 import {
-    CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType, TestRuleEfficientInfo
+    CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType
 } from "../../test-node-interface";
 
 @provide()
@@ -17,7 +17,6 @@ export class OptionReplaceHandler {
     outsideApiService: IOutsideApiService;
 
     testRuleMatchInfo: TestRuleMatchInfo;
-    private replaceOptionEfficientCountInfo: TestRuleEfficientInfo = {type: 'replace', count: 0};
 
     /**
      * 执行替换操作
@@ -30,22 +29,28 @@ export class OptionReplaceHandler {
         }
 
         this.testRuleMatchInfo = testRuleInfo;
-        this.testRuleMatchInfo.efficientInfos.push(this.replaceOptionEfficientCountInfo);
 
-        await this._recursionReplace(testRuleInfo.entityDependencyTree, []);
+        const replaceRecords = [];
+        await this._recursionReplace(testRuleInfo.entityDependencyTree, [], replaceRecords);
         const rootDependency = first(testRuleInfo.entityDependencyTree);
         // 如果测试资源通过规则替换了版本,则修改测试资源对应的版本号
         if (rootDependency.id === testRuleInfo.testResourceOriginInfo.id && rootDependency.type === testRuleInfo.testResourceOriginInfo.type && rootDependency.type === TestResourceOriginType.Resource) {
             testRuleInfo.testResourceOriginInfo.version = rootDependency.version ?? testRuleInfo.testResourceOriginInfo.version;
         }
+        // 替换合计生效次数
+        this.testRuleMatchInfo.efficientInfos.push({
+            type: 'replace', count: replaceRecords.length
+        });
+        testRuleInfo.replaceRecords = replaceRecords;
     }
 
     /**
      * 递归替换依赖树
      * @param dependencies
      * @param parents
+     * @param records
      */
-    async _recursionReplace(dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[]) {
+    async _recursionReplace(dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[], records: any[]) {
         if (isEmpty(dependencies ?? [])) {
             return;
         }
@@ -54,7 +59,7 @@ export class OptionReplaceHandler {
             const currPathChain = parents.concat([pick(currTreeNodeInfo, ['name', 'type', 'version'])]);
             const replacerInfo = await this._matchReplacer(currTreeNodeInfo, currPathChain);
             if (!replacerInfo) {
-                await this._recursionReplace(currTreeNodeInfo.dependencies, currPathChain);
+                await this._recursionReplace(currTreeNodeInfo.dependencies, currPathChain, records);
                 continue;
             }
             const {result, deep} = this._checkCycleDependency(dependencies, replacerInfo);
@@ -62,6 +67,9 @@ export class OptionReplaceHandler {
                 this.testRuleMatchInfo.isValid = false;
                 this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`);
                 continue;
+            }
+            if (replacerInfo.replaceRecords?.length) {
+                records.push(...replacerInfo.replaceRecords);
             }
             dependencies.splice(i, 1, replacerInfo);
         }
@@ -73,13 +81,16 @@ export class OptionReplaceHandler {
      * @param targetInfo
      * @param parents
      */
-    async _matchReplacer(targetInfo: TestResourceDependencyTree, parents = []): Promise<TestResourceDependencyTree> {
+    async _matchReplacer(targetInfo: TestResourceDependencyTree, parents): Promise<TestResourceDependencyTree> {
 
         const replaceRecords = [];
         let latestTestResourceDependencyTree = targetInfo;
         for (const replaceObjectInfo of this.testRuleMatchInfo.ruleInfo.replaces) {
 
             const {replaced, replacer, scopes} = replaceObjectInfo;
+            if (replaceObjectInfo.efficientCount === undefined) {
+                replaceObjectInfo.efficientCount = 0;
+            }
             if (!this._checkRuleScopeIsMatched(scopes, parents) || !this._entityIsMatched(replaced, latestTestResourceDependencyTree)) {
                 continue;
             }
@@ -98,14 +109,10 @@ export class OptionReplaceHandler {
                 return;
             }
 
-            replaceRecords.push({
-                id: latestTestResourceDependencyTree.id,
-                name: latestTestResourceDependencyTree.name,
-                type: latestTestResourceDependencyTree.type
-            });
-
             // 代码执行到此,说明已经匹配成功,然后接着再结果的基础上进行再次匹配,直到替换完所有的
-            this.replaceOptionEfficientCountInfo.count++;
+            const replaceRecordInfo: any = {
+                replaced: pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version'])
+            };
             latestTestResourceDependencyTree = {
                 id: replacerInfo[replacer.type === TestResourceOriginType.Resource ? 'resourceId' : 'objectId'],
                 name: replacer.name,
@@ -116,9 +123,13 @@ export class OptionReplaceHandler {
                 fileSha1: resourceVersionInfo.fileSha1,
                 dependencies: []
             }
+            replaceRecordInfo.replacer = pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version'])
+            replaceRecords.push(replaceRecordInfo);
+            // 单个替换统计生效次数
+            replaceObjectInfo.efficientCount += 1;
         }
 
-        if (!this.replaceOptionEfficientCountInfo.count) {
+        if (!replaceRecords.length) {
             return;
         }
         // 返回被替换之后的新的依赖树(已包含自身)
@@ -126,8 +137,7 @@ export class OptionReplaceHandler {
             ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id).then(first)
             : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first)
 
-        replacer.replaced = first(replaceRecords);
-
+        replacer.replaceRecords = replaceRecords;
         return replacer;
     }
 

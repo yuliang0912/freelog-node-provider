@@ -67,6 +67,10 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             themeInfo: {
                 isActivatedTheme: {type: Number, required: false},
                 ruleId: {type: String, required: false},
+            },
+            replaceInfo: {
+                replaceRecords: {type: this.mongoose.Schema.Types.Mixed, required: false},
+                ruleId: {type: String, required: false},
             }
         }, {_id: false})
 

@@ -5,7 +5,6 @@ export declare class OptionReplaceHandler {
     importResourceEntityHandler: any;
     outsideApiService: IOutsideApiService;
     testRuleMatchInfo: TestRuleMatchInfo;
-    private replaceOptionEfficientCountInfo;
     /**
      * 执行替换操作
      * @param testRuleInfo
@@ -15,19 +14,20 @@ export declare class OptionReplaceHandler {
      * 递归替换依赖树
      * @param dependencies
      * @param parents
+     * @param records
      */
     _recursionReplace(dependencies: TestResourceDependencyTree[], parents: {
         name: string;
         type: string;
         version?: string;
-    }[]): Promise<void>;
+    }[], records: any[]): Promise<void>;
     /**
      * 匹配替换对象,此函数会在替换之后的结果上做多次替换.具体需要看规则的定义.即支持A=>B,B=>C,C=>D. 综合替换之后的结果为A替换成D.最终返回D以及D的依赖信息.
      * 然后上游调用者会把A以及A的所有依赖信息移除,替换成D以及D的依赖信息.然后在新的依赖树下递归调用后续的规则
      * @param targetInfo
      * @param parents
      */
-    _matchReplacer(targetInfo: TestResourceDependencyTree, parents?: any[]): Promise<TestResourceDependencyTree>;
+    _matchReplacer(targetInfo: TestResourceDependencyTree, parents: any): Promise<TestResourceDependencyTree>;
     /**
      * 检查规则的作用域是否匹配
      * 1.scopes为空数组即代表全局替换.
