@@ -108,7 +108,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             });
         } catch (e) {
             console.log('节点测试规则匹配异常', e);
-            await this.nodeTestRuleProvider.updateOne({nodeId}, {status: NodeTestRuleMatchStatus.Failed});
+            await this.nodeTestRuleProvider.updateOne({nodeId}, {
+                status: NodeTestRuleMatchStatus.Failed,
+                matchErrorMsg: e.toString()
+            });
         }
     }
 
@@ -284,7 +287,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 },
                 replaceInfo: {
-                    replaceRecords: replaceRecords,
+                    replaceRecords: replaceRecords ?? [],
                     ruleId: (replaceRecords ?? []).length ? id : "default"
                 }
             },
