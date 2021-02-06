@@ -109,8 +109,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         } catch (e) {
             console.log('节点测试规则匹配异常', e);
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
-                status: NodeTestRuleMatchStatus.Failed,
-                matchErrorMsg: e.toString()
+                status: NodeTestRuleMatchStatus.Failed, matchErrorMsg: e.toString()
             });
         }
     }

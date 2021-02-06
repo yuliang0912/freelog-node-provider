@@ -273,21 +273,31 @@ export class TestNodeController {
         const keywords = ctx.checkQuery('keywords').exist().type('string').value;
         ctx.validateParams();
 
-        const searchRegexp = new RegExp(keywords, 'i');
-        const condition = {
-            nodeId, 'dependencyTree.name': searchRegexp
-        };
-
-        const nodeTestResourceDependencyTree = await this.testNodeService.findTestResourceTreeInfos(condition, 'dependencyTree');
-
         const searchResults = [];
-        chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
+        const nodeTestResourceDependencyTree = await this.testNodeService.searchTestResourceTreeInfos(nodeId, keywords);
+
+        chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().groupBy(x => x.id).forIn((values) => {
             const model = pick(first(values), ['id', 'name', 'type']);
             model['versions'] = uniq(values.filter(x => x.version).map(x => x.version));
             searchResults.push(model);
         }).value();
 
         ctx.success(searchResults);
+
+        // const searchRegexp = new RegExp(keywords, 'i');
+        // const condition = {
+        //     nodeId, 'dependencyTree.name': searchRegexp
+        // };
+        // const nodeTestResourceDependencyTree = await this.testNodeService.findTestResourceTreeInfos(condition, 'dependencyTree');
+        //
+        // const searchResults = [];
+        // chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
+        //     const model = pick(first(values), ['id', 'name', 'type']);
+        //     model['versions'] = uniq(values.filter(x => x.version).map(x => x.version));
+        //     searchResults.push(model);
+        // }).value();
+        //
+        // ctx.success(searchResults);
     }
 
     // 过滤测试资源依赖树.只显示指定的依赖

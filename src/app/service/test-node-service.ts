@@ -54,6 +54,18 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestResourceTreeProvider.find(condition, ...args);
     }
 
+    async searchTestResourceTreeInfos(nodeId: number, keywords: string): Promise<TestResourceTreeInfo[]> {
+        const searchRegexp = new RegExp(keywords, 'i');
+
+        return this.nodeTestResourceTreeProvider.aggregate([
+            {$match: {nodeId}},
+            {$unwind: '$dependencyTree'},
+            {$match: {'dependencyTree.name': searchRegexp}},
+            {$group: {_id: null, dependencyTree: {$push: '$dependencyTree'}}},
+            {$project: {dependencyTree: 1, _id: 0}}
+        ]);
+    }
+
     async findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>> {
         return this.nodeTestResourceProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort);
     }

@@ -161,10 +161,17 @@ export class TestNodeGenerator {
                 return false
             }
             for (let i = 0, j = dependencies.length; i < j; i++) {
-                let dependencyInfo = dependencies[i]
-                //自身匹配或者子依赖有匹配的
-                if (entityIsMatched(dependencyInfo) || recursionSetMatchResult(dependencyInfo.dependencies)) {
+                let dependencyInfo = dependencies[i];
+                if (entityIsMatched(dependencyInfo)) {
                     matchedIdSet.add(dependencyInfo.nid);
+                    return true;
+                }
+                //自身匹配或者子依赖有匹配的
+                if (recursionSetMatchResult(dependencyInfo.dependencies)) {
+                    matchedIdSet.add(dependencyInfo.nid);
+                    if (i + 1 < j) { // 最后一个则返回,否则需要把所有分支都遍历
+                        continue;
+                    }
                     return true;
                 }
                 //当前依赖的全部子依赖全部遍历完依然没有匹配的,则当前依赖不匹配
