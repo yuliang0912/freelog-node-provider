@@ -22,11 +22,10 @@ export class ImportObjectEntityHandler {
         const objects = await this.outsideApiService.getObjectListByFullNames(objectNames, {
             projection: 'bucketId,bucketName,objectName,userId,resourceType,systemProperty,customPropertyDescriptors'
         });
-
-        addObjectRules.forEach(matchRule => {
+        for (const matchRule of addObjectRules) {
             const objectInfo = objects.find(x => `${x.bucketName}/${x.objectName}`.toLowerCase() === matchRule.ruleInfo.candidate.name.toLowerCase());
             this._fillRuleEntityInfo(matchRule, objectInfo, userId);
-        });
+        }
     }
 
     /**
@@ -97,7 +96,7 @@ export class ImportObjectEntityHandler {
             systemProperty: objectInfo.systemProperty,
             customPropertyDescriptors: objectInfo.customPropertyDescriptors
         }
-        
+
         matchRule.efficientInfos.push({type: 'add', count: 1});
     }
 }
