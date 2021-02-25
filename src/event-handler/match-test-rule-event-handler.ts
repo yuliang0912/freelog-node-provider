@@ -235,7 +235,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         }
         const updateModel = {
             'stateInfo.themeInfo.isActivatedTheme': 1,
-            'stateInfo.themeInfo.ruleId': activeThemeRuleInfo.id
+            'stateInfo.themeInfo.ruleId': activeThemeRuleInfo?.id ?? 'default'
         };
         if (activeThemeRuleInfo?.isValid) {
             updateModel['$push'] = {rules: {ruleId: activeThemeRuleInfo.id, operations: ['activateTheme']}};
@@ -413,10 +413,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     flattenTestResourceDependencyTree(testResourceId: string, dependencyTree: TestResourceDependencyTree[], parentNid: string = '', results: FlattenTestResourceDependencyTree[] = [], deep: number = 1): FlattenTestResourceDependencyTree[] {
         for (const dependencyInfo of dependencyTree) {
             const nid = this.testNodeGenerator.generateDependencyNodeId(deep === 1 ? testResourceId : null);
-            const {id, fileSha1, name, type, version, versionId, dependencies, resourceType, replaceRecords} = dependencyInfo;
+            const {id, fileSha1, name, type, version, versionId, dependencies, resourceType} = dependencyInfo; // replaceRecords
             results.push({
                 fileSha1, nid, id, name, type, deep, version, versionId,
-                parentNid, resourceType, replaced: first(replaceRecords ?? [])
+                parentNid, resourceType,
+                // replaced: first(replaceRecords ?? [])
             });
             this.flattenTestResourceDependencyTree(testResourceId, dependencies ?? [], nid, results, deep + 1);
         }

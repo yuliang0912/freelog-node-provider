@@ -12,11 +12,11 @@ export class TestResourceTreeInfo extends MongooseModelBase {
 
     buildMongooseModel() {
 
-        const BaseReplacedInfoSchema = new this.mongoose.Schema({
-            id: {type: String, required: true},
-            name: {type: String, required: true},
-            type: {type: String, required: true}
-        }, {_id: false});
+        // const BaseReplacedInfoSchema = new this.mongoose.Schema({
+        //     id: {type: String, required: true},
+        //     name: {type: String, required: true},
+        //     type: {type: String, required: true}
+        // }, {_id: false});
 
         const DependencyTreeSchema = new this.mongoose.Schema({
             nid: {type: String, required: true},
@@ -28,8 +28,8 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             versionId: {type: String, required: false},
             fileSha1: {type: String, required: false},
             resourceType: {type: String, required: false},
-            parentNid: {type: String, required: false},
-            replaced: {type: BaseReplacedInfoSchema, required: false}
+            parentNid: {type: String, required: false}
+            // replaced: {type: BaseReplacedInfoSchema, required: false}
         }, {_id: false});
 
         const AuthTreeSchema = new this.mongoose.Schema({

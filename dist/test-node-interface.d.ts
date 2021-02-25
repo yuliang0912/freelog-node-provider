@@ -146,7 +146,6 @@ export interface FlattenTestResourceDependencyTree {
     deep: number;
     parentNid: string;
     userId?: number;
-    replaced?: BaseReplacedInfo;
 }
 export interface ObjectDependencyTreeInfo {
     id: string;
