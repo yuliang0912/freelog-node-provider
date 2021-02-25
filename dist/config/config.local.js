@@ -26,7 +26,7 @@ exports.default = () => {
     //     url: 'mongodb://39.108.77.211:30772/node-beta'
     // };
     config.localIdentity = {
-        userId: 50021,
+        userId: 50028,
         username: 'yuliang',
         email: 'support@freelog.com'
     };

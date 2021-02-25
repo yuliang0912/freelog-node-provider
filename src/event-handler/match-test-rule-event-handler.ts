@@ -99,7 +99,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
             await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds);
             const themeTestResourceInfo = await this.setThemeTestResource(nodeTestRuleInfo);
-
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
                 status: NodeTestRuleMatchStatus.Completed,
                 testRules: nodeTestRuleInfo.testRules,
@@ -224,11 +223,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const activeThemeRuleInfo: TestRuleMatchInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
         let themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeTestRuleInfo.nodeId, activeThemeRuleInfo);
         if (!themeTestResourceInfo) {
-            themeTestResourceInfo = await this.nodeTestResourceProvider.findOne(({
+            themeTestResourceInfo = await this.nodeTestResourceProvider.findOne({
                 nodeId: nodeTestRuleInfo.nodeId,
                 resourceType: ResourceTypeEnum.THEME,
-                'onlineStatusInfo.onlineStatus': 1
-            }))
+                'stateInfo.onlineStatusInfo.onlineStatus': 1
+            })
         }
         if (!themeTestResourceInfo) {
             return;
