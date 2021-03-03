@@ -72,7 +72,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         if (!isMandatoryMatch && nodeTestRuleInfo.status === NodeTestRuleMatchStatus.Completed && isLessThan1Minute) {
             return;
         }
-
         try {
             const tasks = [];
             if (nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {

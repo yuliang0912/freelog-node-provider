@@ -85,7 +85,7 @@ export class TestNodeService implements ITestNodeService {
             nodeId,
             ruleText: testRuleText,
             userId: this.ctx.userId,
-            status: NodeTestRuleMatchStatus.Pending,
+            status: NodeTestRuleMatchStatus.ToBePending,
             testRules: rules.map(ruleInfo => Object({
                 id: this.testNodeGenerator.generateTestRuleId(nodeId, ruleInfo.text),
                 ruleInfo,

@@ -45,6 +45,12 @@ export enum PresentableAuthStatusEnum {
 }
 
 export enum NodeTestRuleMatchStatus {
+
+    /**
+     * 待处理
+     */
+    ToBePending = 0,
+
     /**
      * 规则处理中
      */
