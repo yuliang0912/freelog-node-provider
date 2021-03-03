@@ -64,19 +64,25 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const operatedPresentableIds = [];
         const allTestRuleMatchResults: TestRuleMatchResult[] = [];
         const nodeTestRuleInfo = await this.nodeTestRuleProvider.findOne({nodeId});
-        if (!nodeTestRuleInfo) {
+        const isLessThan1Minute = (new Date().getTime() - nodeTestRuleInfo?.updateDate.getTime() < 60000);
+        if (!nodeTestRuleInfo || nodeTestRuleInfo.status === NodeTestRuleMatchStatus.Pending && isLessThan1Minute) {
             return;
         }
         // 如果非强制化匹配的,并且上次匹配时间小于1分钟,则直接使用上次匹配结果
-        if (!isMandatoryMatch && nodeTestRuleInfo.status === NodeTestRuleMatchStatus.Completed && (new Date().getTime() - nodeTestRuleInfo.matchResultDate.getTime() < 60000)) {
+        if (!isMandatoryMatch && nodeTestRuleInfo.status === NodeTestRuleMatchStatus.Completed && isLessThan1Minute) {
             return;
         }
 
         try {
-            const task1 = this.nodeTestResourceProvider.deleteMany({nodeId});
-            const task2 = this.nodeTestResourceTreeProvider.deleteMany({nodeId});
-            const task3 = nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending ? this.nodeTestRuleProvider.updateOne({nodeId}, {status: NodeTestRuleMatchStatus.Pending}) : undefined;
-            await Promise.all([task1, task2, task3]);
+            const tasks = [];
+            if (nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {
+                tasks.push(this.nodeTestRuleProvider.updateOne({nodeId}, {
+                    status: NodeTestRuleMatchStatus.Pending, matchErrorMsg: ''
+                }));
+            }
+            tasks.push(this.nodeTestResourceProvider.deleteMany({nodeId}));
+            tasks.push(this.nodeTestResourceTreeProvider.deleteMany({nodeId}));
+            await Promise.all(tasks);
 
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 50)) {
@@ -126,9 +132,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         }
 
         const testRuleMatchInfos = await this.testRuleHandler.main(nodeId, ruleInfos);
+        const matchedNodeTestResources = chain(testRuleMatchInfos).filter(x => x.isValid && [TestNodeOperationEnum.Alter, TestNodeOperationEnum.Add].includes(x.ruleInfo.operation))
+            .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userId)).uniqBy(data => data.testResourceId).value();
 
-        const matchedNodeTestResources: TestResourceInfo[] = testRuleMatchInfos.filter(x => x.isValid && [TestNodeOperationEnum.Alter, TestNodeOperationEnum.Add].includes(x.ruleInfo.operation))
-            .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userId));
+        // const matchedNodeTestResources: TestResourceInfo[] = testRuleMatchInfos.filter(x => x.isValid && [TestNodeOperationEnum.Alter, TestNodeOperationEnum.Add].includes(x.ruleInfo.operation))
+        //     .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userId));
 
         const resourceMap = new Map<string, ResourceInfo>();
         const existingTestResourceMap = new Map<string, TestResourceInfo>();
@@ -140,7 +148,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         }
 
         const testResourceTreeInfos = [];
-        for (const testResource of matchedNodeTestResources) {
+        for (let testResource of matchedNodeTestResources) {
             const testRuleMatchInfo = testRuleMatchInfos.find(x => x.id === testResource.ruleId);
             const resolveResources = existingTestResourceMap.get(testResource.testResourceId)?.resolveResources;
             testResource.authTree = this.testNodeGenerator.generateTestResourceAuthTree(testResource.dependencyTree, resourceMap);

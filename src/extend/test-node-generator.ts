@@ -20,7 +20,7 @@ export class TestNodeGenerator {
      * @param originInfo
      */
     generateTestResourceId(nodeId: number, originInfo: TestResourceOriginInfo): string {
-        return CryptoHelper.md5(`${nodeId}-${originInfo.id}-${originInfo.type}`);
+        return CryptoHelper.md5(`freelog_test_resourceId_generate#nodeId_${nodeId}#id_${originInfo.id}#type_${originInfo.type}`);
     }
 
     /**

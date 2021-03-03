@@ -237,6 +237,7 @@ export interface NodeTestRuleInfo {
     testRules: any[];
     status?: number;
     matchResultDate?: Date;
+    updateDate?: Date;
 }
 
 export interface TestRuleMatchResult {

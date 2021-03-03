@@ -83,7 +83,7 @@ export class TestNodeController {
         const nodeInfo = await this.nodeService.findById(nodeId);
         this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
 
-        this.testNodeService.tryMatchNodeTestRule(nodeId, isMandatoryMatch).then();
+        await this.testNodeService.tryMatchNodeTestRule(nodeId, isMandatoryMatch).then();
 
         ctx.success(true);
     }

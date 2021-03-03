@@ -94,12 +94,16 @@ export class TestNodeService implements ITestNodeService {
             }))
         };
 
-        return this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
+        const nodeTestRule = await this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
             return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
-        }).then(nodeTestRule => {
-            this.matchTestRuleEventHandler.handle(nodeId, true);
-            return nodeTestRule;
         });
+        this.matchTestRuleEventHandler.handle(nodeId, true).then()
+
+        return new Promise<NodeTestRuleInfo>((resolve) => {
+            setTimeout(function () {
+                resolve(nodeTestRule);
+            }, 50)
+        })
     }
 
     /**
@@ -114,7 +118,11 @@ export class TestNodeService implements ITestNodeService {
             return this.matchAndSaveNodeTestRule(nodeId, '');
         }
         this.matchTestRuleEventHandler.handle(nodeId, isMandatoryMatch).then();
-        return nodeTestRuleInfo;
+        return new Promise<NodeTestRuleInfo>((resolve) => {
+            setTimeout(function () {
+                resolve(nodeTestRuleInfo);
+            }, 50)
+        })
     }
 
     /**
