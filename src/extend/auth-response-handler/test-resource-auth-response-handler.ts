@@ -67,6 +67,7 @@ export class TestResourceAuthResponseHandler {
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseTestResourceDependencyTree.dependencies)));
         this.ctx.set('freelog-resource-type', responseTestResourceDependencyTree.resourceType);
         // this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-sub-dependencies,freelog-resource-type');
     }
 
 

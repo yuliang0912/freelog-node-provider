@@ -85,6 +85,8 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
         // realResponseResourceVersionInfo.nid === this.
         this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        // MDN: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
     }
 
 
