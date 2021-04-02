@@ -30,6 +30,7 @@ export class PresentableVersionModel extends MongooseModelBase {
             nid: {type: String, required: true},
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
+            resourceType: {type: String, default: '', required: false},
             version: {type: String, required: true},
             versionId: {type: String, required: true},
             deep: {type: Number, required: true},

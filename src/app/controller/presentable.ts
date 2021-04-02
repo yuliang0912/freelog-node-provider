@@ -436,6 +436,27 @@ export class PresentableController {
         ctx.success(presentableAuthTree);
     }
 
+    @get('/:presentableId/relationTree')
+    async relationTree() {
+
+        const {ctx} = this;
+        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const presentableInfo = await this.presentableService.findById(presentableId);
+        const condition: any = {presentableId};
+        if (isString(version)) {
+            condition.version = version;
+        } else {
+            condition.version = presentableInfo.version;
+        }
+        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        if (!presentableVersionInfo) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
+        }
+    }
+
     /**
      * 策略格式校验
      * @param policies

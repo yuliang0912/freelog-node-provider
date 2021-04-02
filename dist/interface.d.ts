@@ -210,6 +210,7 @@ export interface FlattenPresentableAuthTree {
     nid: string;
     resourceId: string;
     resourceName: string;
+    resourceType: string;
     version: string;
     versionId: string;
     parentNid: string;
@@ -226,6 +227,7 @@ export interface PresentableAuthTree {
 }
 export interface PresentableResolveResource {
     resourceId: string;
+    resourceType: string;
     resourceName: string;
     versions: Array<{
         version: string;

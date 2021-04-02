@@ -14,10 +14,21 @@ export declare class PresentableVersionService implements IPresentableVersionSer
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     /**
      * 平铺结构的授权树转换为递归结构的授权树
+     * @param presentableInfo
      * @param flattenAuthTree
-     * @param startNid
-     * @param isContainRootNode
-     * @param maxDeep
+     */
+    getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo, flattenDependencies: FlattenPresentableDependencyTree[]): Promise<{
+        resourceId: string;
+        resourceName: string;
+        resourceType: string;
+        versionRanges: any[];
+        versions: string[];
+        children: import("../../interface").ResolveResource[];
+    }[]>;
+    /**
+     * 平铺结构的授权树转换为递归结构的授权树
+     * @param presentableInfo
+     * @param flattenAuthTree
      */
     convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]>;
     /**

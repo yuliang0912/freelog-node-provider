@@ -86,10 +86,8 @@ export class PresentableVersionService implements IPresentableVersionService {
 
     /**
      * 平铺结构的授权树转换为递归结构的授权树
+     * @param presentableInfo
      * @param flattenAuthTree
-     * @param startNid
-     * @param isContainRootNode
-     * @param maxDeep
      */
     // convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableAuthTree[] {
     //
@@ -120,6 +118,22 @@ export class PresentableVersionService implements IPresentableVersionService {
     //     return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
     // }
 
+    async getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo, flattenDependencies: FlattenPresentableDependencyTree[]) {
+        return [{
+            resourceId: presentableInfo.resourceInfo.resourceId,
+            resourceName: presentableInfo.resourceInfo.resourceName,
+            resourceType: presentableInfo.resourceInfo.resourceType,
+            versionRanges: [],
+            versions: [versionInfo.version],
+            children: presentableInfo.resolveResources
+        }]
+    }
+
+    /**
+     * 平铺结构的授权树转换为递归结构的授权树
+     * @param presentableInfo
+     * @param flattenAuthTree
+     */
     async convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]> {
 
         const startedAuthTree = flattenAuthTree.filter(x => x.deep === 1);
@@ -152,6 +166,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                     nid: item.nid,
                     resourceId: item.resourceId,
                     resourceName: item.resourceName,
+                    resourceType: item.resourceType ?? '',
                     version: item.version,
                     versionId: item.versionId,
                     contracts: resourceResolveContracts.get(`${item.parentNid}_${item.resourceId}`) ?? [],
@@ -234,17 +249,18 @@ export class PresentableVersionService implements IPresentableVersionService {
         return resourceVersionMap.get(resourceVersionId).map(resolveResources => {
 
             const list = this._findResourceVersionFromDependencyTree(dependencies, resolveResources)
-
+            const resourceType = first(list)?.resourceType;
             return {
                 resourceId: resolveResources.resourceId,
                 resourceName: resolveResources.resourceName,
+                resourceType: resourceType,
                 versions: uniqBy(list, 'version').map(item => Object({
                     version: item.version,
                     versionId: item.versionId,
                     resolveResources: this._getResourceAuthTree(item.dependencies, item.versionId, resourceVersionMap)
                 }))
             }
-        })
+        }).filter(x => x.versions.length)
     }
 
     /**
@@ -254,23 +270,25 @@ export class PresentableVersionService implements IPresentableVersionService {
      */
     _getPresentableResolveResources(presentableInfo: PresentableInfo, rootDependency: ResourceDependencyTree): PresentableResolveResource[] {
 
-        const {resourceId, resourceName, version, versionId, dependencies, baseUpcastResources} = rootDependency
+        const {resourceId, resourceName, resourceType, version, versionId, dependencies, baseUpcastResources} = rootDependency
 
         const presentableResolveResources: PresentableResolveResource[] = [{
-            resourceId, resourceName,
+            resourceId, resourceName, resourceType,
             versions: [{version, versionId, dependencies}]
         }]
 
         for (const upcastResource of baseUpcastResources) {
             const list = this._findResourceVersionFromDependencyTree(dependencies, upcastResource)
+            const upcastResourceType = first(list)?.resourceType;
             presentableResolveResources.push({
                 resourceId: upcastResource.resourceId,
                 resourceName: upcastResource.resourceName,
+                resourceType: upcastResourceType,
                 versions: uniqBy(list, 'version').map(item => pick(item, ['version', 'versionId', 'dependencies']))
             })
         }
 
-        return presentableResolveResources;
+        return presentableResolveResources.filter(x => x.versions?.length);
     }
 
     /**
@@ -359,11 +377,16 @@ export class PresentableVersionService implements IPresentableVersionService {
     _flattenPresentableAuthTree(presentableResolveResources): FlattenPresentableAuthTree[] {
         const treeNodes: FlattenPresentableAuthTree[] = [];
         const recursion = (children, parentNid = '', deep = 1) => {
-            for (const {resourceId, resourceName, versions} of children) {
+            for (const {resourceId, resourceName, resourceType, versions} of children) {
                 for (const versionInfo of versions) {
                     const nid = this._generateRandomStr();
                     const {version, versionId, resolveResources} = versionInfo;
-                    treeNodes.push({resourceId, resourceName, version, versionId, nid, parentNid, deep});
+                    treeNodes.push({
+                        resourceId, resourceName,
+                        resourceType: resourceType ?? '',
+                        version, versionId, nid,
+                        parentNid, deep
+                    });
                     recursion(resolveResources, nid, deep + 1);
                 }
             }
