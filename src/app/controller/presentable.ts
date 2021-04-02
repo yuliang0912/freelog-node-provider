@@ -416,26 +416,22 @@ export class PresentableController {
 
         const {ctx} = this;
         const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
-        const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
-        // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
-        const nid = ctx.checkQuery('nid').optional().type('string').value;
-        // 与依赖树不同的是presentable授权树没有根节点(节点签约的,不能作为根),所以此参数一般是配合nid一起使用才有正确的效果
-        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(true).toBoolean().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
+        const presentableInfo = await this.presentableService.findById(presentableId);
         const condition: any = {presentableId};
         if (isString(version)) {
             condition.version = version;
         } else {
-            await this.presentableService.findById(presentableId, 'version').then(data => condition.version = data.version);
+            condition.version = presentableInfo.version;
         }
         const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'authTree');
         if (!presentableVersionInfo) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
         }
 
-        const presentableAuthTree = this.presentableVersionService.convertPresentableAuthTree(presentableVersionInfo.authTree, nid, isContainRootNode, maxDeep);
+        const presentableAuthTree = await this.presentableVersionService.convertPresentableAuthTreeWithContracts(presentableInfo, presentableVersionInfo.authTree);
 
         ctx.success(presentableAuthTree);
     }

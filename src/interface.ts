@@ -263,7 +263,8 @@ export interface PresentableAuthTree {
     resourceName: string;
     version: string;
     versionId: string;
-    children: PresentableAuthTree[];
+    contracts?: BaseContractInfo[];
+    children: PresentableAuthTree[][];
 }
 
 export interface PresentableResolveResource {
@@ -416,7 +417,9 @@ export interface IPresentableVersionService {
 
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
 
-    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number);
+    // convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number);
+
+    convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]>;
 
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
 

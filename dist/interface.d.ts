@@ -221,7 +221,8 @@ export interface PresentableAuthTree {
     resourceName: string;
     version: string;
     versionId: string;
-    children: PresentableAuthTree[];
+    contracts?: BaseContractInfo[];
+    children: PresentableAuthTree[][];
 }
 export interface PresentableResolveResource {
     resourceId: string;
@@ -311,7 +312,7 @@ export interface IPresentableVersionService {
     findByIds(presentableVersionIds: string[], ...args: any[]): Promise<PresentableVersionInfo[]>;
     find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
     createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
-    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): any;
+    convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]>;
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
     updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
 }

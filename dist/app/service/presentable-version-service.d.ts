@@ -19,7 +19,7 @@ export declare class PresentableVersionService implements IPresentableVersionSer
      * @param isContainRootNode
      * @param maxDeep
      */
-    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode?: boolean, maxDeep?: number): PresentableAuthTree[];
+    convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]>;
     /**
      * 平铺结构的依赖树转换为递归结构的依赖树
      * @param flattenDependencies

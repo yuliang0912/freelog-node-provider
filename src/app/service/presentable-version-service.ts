@@ -1,7 +1,7 @@
 import {v4} from 'uuid';
 import {provide, inject} from 'midway';
 import {FreelogContext} from "egg-freelog-base";
-import {assign, pick, uniqBy, first, isEmpty} from 'lodash';
+import {assign, pick, uniqBy, first, isEmpty, groupBy} from 'lodash';
 import {
     FlattenPresentableDependencyTree,
     IOutsideApiService,
@@ -91,33 +91,76 @@ export class PresentableVersionService implements IPresentableVersionService {
      * @param isContainRootNode
      * @param maxDeep
      */
-    convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableAuthTree[] {
+    // convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableAuthTree[] {
+    //
+    //     const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
+    //     if (isEmpty(startedAuthTree)) {
+    //         return [];
+    //     }
+    //     maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
+    //
+    //     function recursionBuildAuthTree(dependencies: FlattenPresentableAuthTree[], currDeep: number = 1): PresentableAuthTree[] {
+    //         if (isEmpty(dependencies) || currDeep++ >= maxDeep) {
+    //             return [];
+    //         }
+    //         return dependencies.map(item => {
+    //             return {
+    //                 nid: item.nid,
+    //                 resourceId: item.resourceId,
+    //                 resourceName: item.resourceName,
+    //                 version: item.version,
+    //                 versionId: item.versionId,
+    //                 children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
+    //             }
+    //         });
+    //     }
+    //
+    //     const convertedAuthTree = recursionBuildAuthTree(startedAuthTree);
+    //
+    //     return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
+    // }
 
-        const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
+    async convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]> {
+
+        const startedAuthTree = flattenAuthTree.filter(x => x.deep === 1);
         if (isEmpty(startedAuthTree)) {
             return [];
         }
-        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
+        const versionInfoMap = await this.outsideApiService.getResourceVersionList(flattenAuthTree.map(x => x.versionId), {
+            projection: 'versionId,resolveResources'
+        }).then(list => {
+            return new Map(list.map(x => [x.versionId, x]));
+        });
 
-        function recursionBuildAuthTree(dependencies: FlattenPresentableAuthTree[], currDeep: number = 1): PresentableAuthTree[] {
-            if (isEmpty(dependencies) || currDeep++ >= maxDeep) {
+        const resourceResolveContracts = new Map(presentableInfo.resolveResources.map(x => [`_${x.resourceId}`, x.contracts]));
+        for (const item of flattenAuthTree) {
+            const versionInfo = versionInfoMap.get(item.versionId);
+            if (!versionInfo) {
+                continue;
+            }
+            for (const resolveResource of versionInfo.resolveResources) {
+                resourceResolveContracts.set(`${item.nid}_${resolveResource.resourceId}`, resolveResource.contracts);
+            }
+        }
+
+        function recursionBuildAuthTree(children: FlattenPresentableAuthTree[], currDeep: number = 1): PresentableAuthTree[][] {
+            if (isEmpty(children)) {
                 return [];
             }
-            return dependencies.map(item => {
+            return Object.values(groupBy(children, x => x.parentNid + x.resourceId)).map(items => items.map(item => {
                 return {
                     nid: item.nid,
                     resourceId: item.resourceId,
                     resourceName: item.resourceName,
                     version: item.version,
                     versionId: item.versionId,
+                    contracts: resourceResolveContracts.get(`${item.parentNid}_${item.resourceId}`) ?? [],
                     children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
                 }
-            });
+            }))
         }
 
-        const convertedAuthTree = recursionBuildAuthTree(startedAuthTree);
-
-        return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
+        return recursionBuildAuthTree(startedAuthTree).filter(x => x.length);
     }
 
     /**
@@ -327,6 +370,6 @@ export class PresentableVersionService implements IPresentableVersionService {
         }
         recursion(presentableResolveResources);
 
-        return treeNodes
+        return treeNodes;
     }
 }

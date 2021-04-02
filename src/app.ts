@@ -1,12 +1,13 @@
-// export default class AppBootHook {
-//     private readonly app;
-//
-//     public constructor(app) {
-//         this.app = app;
-//     }
-//
-//     async willReady() {
-//         const rabbitMqSubscribeHandler = this.app.applicationContext.get('rabbitMqSubscribeHandler');
-//         rabbitMqSubscribeHandler.subscribe();
-//     }
-// }
+import mongoose from 'egg-freelog-base/database/mongoose';
+
+export default class AppBootHook {
+    private readonly app;
+
+    public constructor(app) {
+        this.app = app;
+    }
+
+    async willReady() {
+        return mongoose(this.app)
+    }
+}

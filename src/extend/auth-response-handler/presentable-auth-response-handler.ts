@@ -89,7 +89,6 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
     }
 
-
     /**
      * 文件流响应处理
      * @param versionId
