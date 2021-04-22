@@ -1,6 +1,6 @@
 import {isURL} from 'validator';
 import * as semver from 'semver';
-import {PresentableOnlineStatusEnum} from "../../enum";
+import {PresentableOnlineStatusEnum} from '../../enum';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {isString, isUndefined, isNumber, isEmpty, first, isDate} from 'lodash';
 import {
@@ -51,7 +51,7 @@ export class PresentableController {
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
-        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -144,7 +144,7 @@ export class PresentableController {
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
-        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -166,12 +166,12 @@ export class PresentableController {
         }
 
         if (!resourceIds && !presentableIds && !resourceNames) {
-            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'))
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'));
         }
 
         let presentableList = await this.presentableService.find(condition, projection.join(' '));
         if (isLoadPolicyInfo) {
-            presentableList = await this.presentableService.fillPresentablePolicyInfo(presentableList)
+            presentableList = await this.presentableService.fillPresentablePolicyInfo(presentableList);
         }
         if (isLoadVersionProperty) {
             presentableList = await this.presentableService.fillPresentableVersionProperty(presentableList, false, false);
@@ -211,7 +211,7 @@ export class PresentableController {
         }
         const subjectVersionInfo = resourceInfo.resourceVersions.find(x => x.version === version);
         if (!subjectVersionInfo) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'), {version})
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'), {version});
         }
 
         await this.presentableService.createPresentable({
@@ -228,7 +228,7 @@ export class PresentableController {
     async updatePresentable() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').exist().isPresentableId().value;
         const presentableTitle = ctx.checkBody('presentableTitle').optional().type('string').value;
         const tags = ctx.checkBody('tags').optional().isArray().value;
         const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
@@ -263,8 +263,8 @@ export class PresentableController {
     async updatePresentableOnlineStatus() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
-        const onlineStatus = ctx.checkBody("onlineStatus").exist().toInt().in([PresentableOnlineStatusEnum.Offline, PresentableOnlineStatusEnum.Online]).value;
+        const presentableId = ctx.checkParams('presentableId').exist().isPresentableId().value;
+        const onlineStatus = ctx.checkBody('onlineStatus').exist().toInt().in([PresentableOnlineStatusEnum.Offline, PresentableOnlineStatusEnum.Online]).value;
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);
@@ -280,7 +280,7 @@ export class PresentableController {
     async updatePresentableVersion() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').exist().isPresentableId().value;
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
@@ -303,7 +303,7 @@ export class PresentableController {
     async updatePresentableRewriteProperty() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").exist().isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').exist().isPresentableId().value;
         const rewriteProperty = ctx.checkBody('rewriteProperty').exist().isArray().value;
         ctx.validateParams();
 
@@ -332,8 +332,8 @@ export class PresentableController {
         const presentableName = ctx.checkQuery('presentableName').optional().isPresentableName().value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
-        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
-        const isLoadCustomPropertyDescriptors = ctx.checkQuery("isLoadCustomPropertyDescriptors").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadCustomPropertyDescriptors = ctx.checkQuery('isLoadCustomPropertyDescriptors').optional().toInt().default(0).in([0, 1]).value;
         ctx.validateParams();
 
         if ([resourceId, resourceName, presentableName].every(isUndefined)) {
@@ -366,10 +366,10 @@ export class PresentableController {
     async show() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').isPresentableId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
-        const isLoadVersionProperty = ctx.checkQuery("isLoadVersionProperty").optional().toInt().default(0).in([0, 1]).value;
-        const isLoadCustomPropertyDescriptors = ctx.checkQuery("isLoadCustomPropertyDescriptors").optional().toInt().default(0).in([0, 1]).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadCustomPropertyDescriptors = ctx.checkQuery('isLoadCustomPropertyDescriptors').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -387,7 +387,7 @@ export class PresentableController {
     async dependencyTree() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').isPresentableId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().toInt().default(100).lt(101).value;
         // 不传则默认从根节点开始,否则从指定的树节点ID开始往下构建依赖树
         const nid = ctx.checkQuery('nid').optional().type('string').value;
@@ -415,7 +415,7 @@ export class PresentableController {
     async authTree() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').isPresentableId().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
@@ -440,7 +440,7 @@ export class PresentableController {
     async relationTree() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams("presentableId").isPresentableId().value;
+        const presentableId = ctx.checkParams('presentableId').isPresentableId().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 

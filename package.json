@@ -8,7 +8,7 @@
     "ali-oss": "^6.15.0",
     "amqp": "^0.2.7",
     "async": "^3.2.0",
-    "egg-freelog-base": "^3.1.4",
+    "egg-freelog-base": "^3.1.12",
     "egg-scripts": "^2.10.0",
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.4.0",
@@ -61,6 +61,6 @@
     "type": "git",
     "url": ""
   },
-  "author": "anonymous",
+  "author": "yuliang",
   "license": "MIT"
 }

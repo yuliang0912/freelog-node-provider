@@ -1,6 +1,6 @@
 import {v4} from 'uuid';
 import {provide, inject} from 'midway';
-import {FreelogContext} from "egg-freelog-base";
+import {FreelogContext} from 'egg-freelog-base';
 import {assign, pick, uniqBy, first, isEmpty, groupBy} from 'lodash';
 import {
     FlattenPresentableDependencyTree,
@@ -54,7 +54,7 @@ export class PresentableVersionService implements IPresentableVersionService {
         const updateModel = {
             presentableRewriteProperty,
             versionProperty: this._calculatePresentableVersionProperty(presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableRewriteProperty)
-        }
+        };
         return this.presentableVersionProvider.updateOne({presentableVersionId: presentableVersionInfo.presentableVersionId}, updateModel).then(data => Boolean(data.ok));
     }
 
@@ -126,7 +126,7 @@ export class PresentableVersionService implements IPresentableVersionService {
             versionRanges: [],
             versions: [versionInfo.version],
             children: presentableInfo.resolveResources
-        }]
+        }];
     }
 
     /**
@@ -171,8 +171,8 @@ export class PresentableVersionService implements IPresentableVersionService {
                     versionId: item.versionId,
                     contracts: resourceResolveContracts.get(`${item.parentNid}_${item.resourceId}`) ?? [],
                     children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
-                }
-            }))
+                };
+            }));
         }
 
         return recursionBuildAuthTree(startedAuthTree).filter(x => x.length);
@@ -208,7 +208,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                     resourceType: item.resourceType,
                     fileSha1: item.fileSha1,
                     dependencies: recursionBuildDependencyTree(flattenDependencies.filter(x => x.parentNid === item.nid), currDeep)
-                }
+                };
             });
         }
 
@@ -248,7 +248,7 @@ export class PresentableVersionService implements IPresentableVersionService {
 
         return resourceVersionMap.get(resourceVersionId).map(resolveResources => {
 
-            const list = this._findResourceVersionFromDependencyTree(dependencies, resolveResources)
+            const list = this._findResourceVersionFromDependencyTree(dependencies, resolveResources);
             const resourceType = first(list)?.resourceType;
             return {
                 resourceId: resolveResources.resourceId,
@@ -259,8 +259,8 @@ export class PresentableVersionService implements IPresentableVersionService {
                     versionId: item.versionId,
                     resolveResources: this._getResourceAuthTree(item.dependencies, item.versionId, resourceVersionMap)
                 }))
-            }
-        }).filter(x => x.versions.length)
+            };
+        }).filter(x => x.versions.length);
     }
 
     /**
@@ -270,22 +270,22 @@ export class PresentableVersionService implements IPresentableVersionService {
      */
     _getPresentableResolveResources(presentableInfo: PresentableInfo, rootDependency: ResourceDependencyTree): PresentableResolveResource[] {
 
-        const {resourceId, resourceName, resourceType, version, versionId, dependencies, baseUpcastResources} = rootDependency
+        const {resourceId, resourceName, resourceType, version, versionId, dependencies, baseUpcastResources} = rootDependency;
 
         const presentableResolveResources: PresentableResolveResource[] = [{
             resourceId, resourceName, resourceType,
             versions: [{version, versionId, dependencies}]
-        }]
+        }];
 
         for (const upcastResource of baseUpcastResources) {
-            const list = this._findResourceVersionFromDependencyTree(dependencies, upcastResource)
+            const list = this._findResourceVersionFromDependencyTree(dependencies, upcastResource);
             const upcastResourceType = first(list)?.resourceType;
             presentableResolveResources.push({
                 resourceId: upcastResource.resourceId,
                 resourceName: upcastResource.resourceName,
                 resourceType: upcastResourceType,
                 versions: uniqBy(list, 'version').map(item => pick(item, ['version', 'versionId', 'dependencies']))
-            })
+            });
         }
 
         return presentableResolveResources.filter(x => x.versions?.length);
@@ -307,7 +307,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                 return acc;
             }
             return this._findResourceVersionFromDependencyTree(dependency.dependencies, resourceInfo, acc);
-        }, list)
+        }, list);
     }
 
     /**
@@ -366,7 +366,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                 recursionFillAttribute(dependencyInfo.dependencies, results, nid, deep + 1);
             }
             return results;
-        }
+        };
         return recursionFillAttribute(resourceDependencyTree, [], '', 1);
     }
 
@@ -390,7 +390,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                     recursion(resolveResources, nid, deep + 1);
                 }
             }
-        }
+        };
         recursion(presentableResolveResources);
 
         return treeNodes;
