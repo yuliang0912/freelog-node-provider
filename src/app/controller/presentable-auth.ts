@@ -1,8 +1,7 @@
 import {differenceWith, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
-    IPresentableAuthResponseHandler,
-    IPresentableAuthService, IPresentableService, IPresentableVersionService
+    IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService
 } from '../../interface';
 import {ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext} from 'egg-freelog-base';
 
@@ -31,7 +30,7 @@ export class ResourceAuthController {
         this.ctx.success([
             {name: 'active', type: 'authorization', value: 1},
             {name: 'testActive', type: 'testAuthorization', value: 2}
-        ])
+        ]);
     }
 
     /**

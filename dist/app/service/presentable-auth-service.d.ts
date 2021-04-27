@@ -1,6 +1,6 @@
 import { ContractInfo, FlattenPresentableAuthTree, IOutsideApiService, IPresentableAuthService, PresentableInfo } from '../../interface';
 import { FreelogContext, FreelogUserInfo } from 'egg-freelog-base';
-import { SubjectAuthResult } from "../../auth-interface";
+import { SubjectAuthResult } from '../../auth-interface';
 export declare class PresentableAuthService implements IPresentableAuthService {
     ctx: FreelogContext;
     outsideApiService: IOutsideApiService;

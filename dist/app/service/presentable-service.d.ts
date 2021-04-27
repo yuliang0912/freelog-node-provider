@@ -1,4 +1,4 @@
-import { PresentableOnlineStatusEnum } from "../../enum";
+import { PresentableOnlineStatusEnum } from '../../enum';
 import { CreatePresentableOptions, findOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 import { PresentableCommonChecker } from '../../extend/presentable-common-checker';

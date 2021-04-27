@@ -81,12 +81,12 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         }));
 
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
+        this.ctx.set('freelog-presentable-id', presentableVersionInfo.presentableId);
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
-        // realResponseResourceVersionInfo.nid === this.
         this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
         // MDN: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-presentable-id,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
     }
 
     /**
@@ -154,7 +154,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
     subjectAuthProcessExceptionHandle(error) {
         const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthApiException)
             .setData({errorMsg: error.toString()})
-            .setErrorMsg('授权过程中出现异常')
+            .setErrorMsg('授权过程中出现异常');
         this.subjectAuthFailedResponseHandle(authResult);
     }
 
@@ -178,7 +178,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         if (subResourceIdOrName || parentNid) {
             function filterTestResourceDependencyTree(dependencyTree: FlattenPresentableDependencyTree) {
                 return (parentNid ? dependencyTree.parentNid === parentNid : true)
-                    && (subResourceIdOrName ? dependencyTree.resourceId === subResourceIdOrName || dependencyTree.resourceName.toLowerCase() === subResourceIdOrName.toLowerCase() : true)
+                    && (subResourceIdOrName ? dependencyTree.resourceId === subResourceIdOrName || dependencyTree.resourceName.toLowerCase() === subResourceIdOrName.toLowerCase() : true);
             }
 
             const matchedResources = flattenPresentableDependencyTree.filter(filterTestResourceDependencyTree);

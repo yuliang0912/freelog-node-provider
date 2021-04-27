@@ -11,7 +11,7 @@ import {
     SubjectAuthCodeEnum,
     SubjectTypeEnum
 } from 'egg-freelog-base';
-import {SubjectAuthResult} from "../../auth-interface";
+import {SubjectAuthResult} from '../../auth-interface';
 
 @provide()
 export class PresentableAuthService implements IPresentableAuthService {
@@ -177,9 +177,8 @@ export class PresentableAuthService implements IPresentableAuthService {
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {
-            isDefault: 1,
-            projection: 'authStatus'
-        })
+            isDefault: 1, projection: 'authStatus'
+        });
 
         if (!isEmpty(contracts)) {
             return this.contractAuth(presentableInfo.presentableId, contracts);

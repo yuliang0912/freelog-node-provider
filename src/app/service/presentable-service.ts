@@ -1,6 +1,6 @@
 import {inject, provide} from 'midway';
 import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from "../../enum";
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from '../../enum';
 import {
     BasePolicyInfo, CreatePresentableOptions, findOptions, INodeService,
     IOutsideApiService, IPresentableAuthService,
@@ -9,12 +9,7 @@ import {
     ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
 import {
-    ApplicationError,
-    FreelogContext,
-    IMongodbOperation,
-    PageResult,
-    SubjectTypeEnum,
-    ResourceTypeEnum
+    ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum, ResourceTypeEnum
 } from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 
@@ -199,7 +194,7 @@ export class PresentableService implements IPresentableService {
             return isSuccessful;
         }
 
-        await this.nodeService.updateNodeInfo(presentableInfo.nodeId, {nodeThemeId: isOnline ? presentableInfo.presentableId : ''})
+        await this.nodeService.updateNodeInfo(presentableInfo.nodeId, {nodeThemeId: isOnline ? presentableInfo.presentableId : ''});
         await this.presentableProvider.updateMany({
             _id: {$ne: presentableInfo.presentableId},
             nodeId: presentableInfo.nodeId,
@@ -233,7 +228,7 @@ export class PresentableService implements IPresentableService {
             pipeline.push({$match: {$or: [{presentableName: searchExp}, {'resourceInfo.resourceName': searchExp}, {'nodes.nodeName': searchExp}]}});
         }
 
-        const [totalItemInfo] = await this.presentableProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]])
+        const [totalItemInfo] = await this.presentableProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]]);
         const {totalItem = 0} = totalItemInfo ?? {};
 
         pipeline.push({$sort: options?.sort ?? {userId: -1}}, {$skip: options?.skip ?? 0}, {$limit: options?.limit ?? 10});
@@ -241,7 +236,7 @@ export class PresentableService implements IPresentableService {
 
         return {
             skip: options?.skip ?? 0, limit: options?.limit ?? 10, totalItem, dataList
-        }
+        };
     }
 
     async findOne(condition: object, ...args): Promise<PresentableInfo> {
@@ -310,7 +305,7 @@ export class PresentableService implements IPresentableService {
                 const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
                 policyInfo.policyText = policyText;
                 policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
-            })
+            });
             return presentableInfo;
         });
     }
@@ -390,7 +385,7 @@ export class PresentableService implements IPresentableService {
                 fsmDescriptionInfo: policyInfo.fsmDescriptionInfo,
                 policyName: policies[i].policyName,
                 status: policies[i].status ?? 1,
-            })
+            });
         }
         return result;
     }

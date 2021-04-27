@@ -1,4 +1,4 @@
-import { FreelogContext } from "egg-freelog-base";
+import { FreelogContext } from 'egg-freelog-base';
 import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, FlattenPresentableAuthTree, PresentableDependencyTree, PresentableVersionInfo, ResourceDependencyTree, PresentableResolveResource, PresentableAuthTree } from '../../interface';
 export declare class PresentableVersionService implements IPresentableVersionService {
     ctx: FreelogContext;
