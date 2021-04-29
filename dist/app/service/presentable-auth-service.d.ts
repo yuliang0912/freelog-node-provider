@@ -38,7 +38,7 @@ export declare class PresentableAuthService implements IPresentableAuthService {
      * @param subjectId
      * @param contracts
      */
-    contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;
+    contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult;
     /**
      * 用户合同授权
      * @param presentableInfo

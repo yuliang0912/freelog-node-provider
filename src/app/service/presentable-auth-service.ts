@@ -149,7 +149,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param subjectId
      * @param contracts
      */
-    contractAuth(subjectId, contracts: ContractInfo[]): SubjectAuthResult {
+    contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult {
 
         const authResult = new SubjectAuthResult();
         if (!isArray(contracts) || isEmpty(contracts)) {
@@ -176,9 +176,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      */
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
-        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {
-            isDefault: 1, projection: 'authStatus'
-        });
+        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus'});
 
         if (!isEmpty(contracts)) {
             return this.contractAuth(presentableInfo.presentableId, contracts);
