@@ -3,7 +3,7 @@ import {controller, inject, get, post, provide, put} from 'midway';
 import {isUndefined, isNumber, isArray, isString} from 'lodash';
 import {IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext} from 'egg-freelog-base';
 import {isDate, omit, first, pick, differenceWith} from 'lodash';
-import {NodeStatus} from "../../enum";
+import {NodeStatus} from '../../enum';
 
 @provide()
 @controller('/v2/nodes')
@@ -76,7 +76,7 @@ export class NodeController {
 
         const tagMap = await this.tagService.find({status: 0}).then(list => {
             return new Map(list.map(x => [x.tagId.toString(), pick(x, ['tagId', 'tag'])]));
-        })
+        });
 
         const list = [];
         for (const nodeInfo of pageResult.dataList) {
@@ -106,8 +106,8 @@ export class NodeController {
 
         ctx.success(userIds.map(userId => {
             const record = list.find(x => x.userId.toString() === userId);
-            return {userId: parseInt(userId), createdNodeCount: record?.count ?? 0}
-        }))
+            return {userId: parseInt(userId), createdNodeCount: record?.count ?? 0};
+        }));
     }
 
     @get('/list')
@@ -121,7 +121,7 @@ export class NodeController {
         ctx.validateParams();
 
         if (isUndefined(nodeIds) && isUndefined(nodeDomains)) {
-            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeIds or nodeDomains'))
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeIds or nodeDomains'));
         }
 
         const condition: any = {};
@@ -151,7 +151,6 @@ export class NodeController {
     }
 
     @get('/detail')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async detail() {
 
         const {ctx} = this;
@@ -161,7 +160,7 @@ export class NodeController {
         ctx.validateParams();
 
         if ([nodeDomain, nodeName].every(isUndefined)) {
-            throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
 
         const condition: any = {};
@@ -176,7 +175,6 @@ export class NodeController {
     }
 
     @get('/:nodeId')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show() {
 
         const {ctx} = this;
@@ -192,17 +190,17 @@ export class NodeController {
     async setNodeTag() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().value;
-        const tagIds = ctx.checkBody("tagIds").exist().isArray().len(1, 100).value;
+        const tagIds = ctx.checkBody('tagIds').exist().isArray().len(1, 100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
         if (tagIds.some(x => !isNumber(x) || x < 1)) {
-            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'tagIds'))
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'tagIds'));
         }
 
         const tagList = await this.tagService.find({_id: {$in: tagIds}, status: 0});
         const invalidTagIds = differenceWith(tagIds, tagList, (x, y) => x.toString() === y.tagId.toString());
         if (invalidTagIds.length) {
-            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'tagIds'), {invalidTagIds})
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'tagIds'), {invalidTagIds});
         }
 
         const nodeInfo = await this.nodeService.findOne({nodeId});
@@ -216,10 +214,10 @@ export class NodeController {
     async unsetNodeTag() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const tagId = ctx.checkBody("tagId").exist().toInt().gt(0).value;
+        const tagId = ctx.checkBody('tagId').exist().toInt().gt(0).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const tagInfo = await this.tagService.findOne({_id: tagId, status: 0})
+        const tagInfo = await this.tagService.findOne({_id: tagId, status: 0});
         ctx.entityNullObjectCheck(tagInfo);
 
         const nodeInfo = await this.nodeService.findOne({nodeId});
@@ -234,8 +232,8 @@ export class NodeController {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const status = ctx.checkBody("status").exist().toInt().in([NodeStatus.Freeze, NodeStatus.Normal]).value;
-        const remark = ctx.checkBody("remark").ignoreParamWhenEmpty().type('string').len(0, 500).default('').value;
+        const status = ctx.checkBody('status').exist().toInt().in([NodeStatus.Freeze, NodeStatus.Normal]).value;
+        const remark = ctx.checkBody('remark').ignoreParamWhenEmpty().type('string').len(0, 500).default('').value;
         ctx.validateParams().validateOfficialAuditAccount();
 
         const nodeInfo = await this.nodeService.findOne({nodeId});
