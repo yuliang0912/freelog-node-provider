@@ -136,7 +136,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param presentableInfo
      */
     async presentableClientUserSideAuth(presentableInfo: PresentableInfo): Promise<SubjectAuthResult> {
-        return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
+        // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
         try {
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
         } catch (e) {
@@ -193,7 +193,7 @@ export class PresentableAuthService implements IPresentableAuthService {
     async _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
 
         // 目前先通过
-        return new SubjectAuthResult(SubjectAuthCodeEnum.SubjectContractNotFound).setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
+        return new SubjectAuthResult(SubjectAuthCodeEnum.SubjectContractNotFound); //.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
 
         /**
          * TODO: 分析presentable策略中是否有免费策略,如果有,则签约.否则返回无授权
