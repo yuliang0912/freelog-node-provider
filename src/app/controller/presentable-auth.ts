@@ -49,7 +49,7 @@ export class ResourceAuthController {
         const presentableInfo = await this.presentableService.findById(presentableId);
         ctx.entityNullObjectCheck(presentableInfo);
 
-        const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
+        const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
         await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
@@ -90,6 +90,8 @@ export class ResourceAuthController {
         for (const presentableInfo of presentables) {
             const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
                 presentableId: presentableInfo.presentableId,
+                presentableName: presentableInfo.presentableName,
+                referee: authResult.referee,
                 authCode: authResult.authCode,
                 isAuth: authResult.isAuth,
                 error: authResult.errorMsg
