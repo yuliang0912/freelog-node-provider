@@ -178,11 +178,10 @@ export class PresentableAuthService implements IPresentableAuthService {
 
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus'});
 
-        if (!isEmpty(contracts)) {
-            return this.contractAuth(presentableInfo.presentableId, contracts);
-        }
+        return this.contractAuth(presentableInfo.presentableId, contracts);
 
-        return this._tryCreateFreeUserContract(presentableInfo, userInfo);
+        // 先不实现自动签约免费策略的功能
+        // return this._tryCreateFreeUserContract(presentableInfo, userInfo);
     }
 
     /**
@@ -191,9 +190,6 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param userInfo
      */
     async _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
-
-        // 目前先通过
-        return new SubjectAuthResult(SubjectAuthCodeEnum.SubjectContractNotFound); //.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
 
         /**
          * TODO: 分析presentable策略中是否有免费策略,如果有,则签约.否则返回无授权

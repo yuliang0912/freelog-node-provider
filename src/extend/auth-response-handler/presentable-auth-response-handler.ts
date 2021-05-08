@@ -44,7 +44,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
             this.subjectAuthFailedResponseHandle(authResult);
         }
 
-        this.commonResponseHeaderHandle(presentableVersionInfo, realResponseResourceVersionInfo);
+        this.commonResponseHeaderHandle(presentableInfo, presentableVersionInfo, realResponseResourceVersionInfo);
 
         const apiResponseType = chain(parse(this.ctx.request.url, false).pathname).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
@@ -71,22 +71,24 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
 
     /**
      * 公共响应头处理
+     * @param presentableInfo
      * @param presentableVersionInfo
      * @param realResponseResourceVersionInfo
      */
-    commonResponseHeaderHandle(presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
+    commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
 
         const responseDependencies = realResponseResourceVersionInfo.dependencies.map(x => Object({
             id: x.resourceId, name: x.resourceName, type: 'resource', resourceType: x.resourceType
         }));
 
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
-        this.ctx.set('freelog-presentable-id', presentableVersionInfo.presentableId);
+        this.ctx.set('freelog-presentable-id', presentableInfo.presentableId);
+        this.ctx.set('freelog-presentable-name', encodeURIComponent(presentableInfo.presentableName));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
         this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
         // MDN: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-presentable-id,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-presentable-id,freelog-presentable-name,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
     }
 
     /**
