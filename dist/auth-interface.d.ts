@@ -7,19 +7,43 @@
  * 以9开头代表API内部异常,例如内部API调用失败、代码异常、参数不全等错误
  */
 import { SubjectTypeEnum, ISubjectAuthResult, SubjectAuthCodeEnum } from 'egg-freelog-base';
+/**
+ * 授权出错时的责任方
+ */
+export declare enum BreachResponsibilityTypeEnum {
+    /**
+     * 资源方
+     */
+    Resource = 1,
+    /**
+     * 节点
+     */
+    Node = 2,
+    /**
+     * C端消费者
+     */
+    ClientUser = 4,
+    /**
+     * 未知的
+     */
+    Unknown = 128
+}
 export declare class SubjectAuthResult implements ISubjectAuthResult {
     data: any;
     errorMsg: string;
     authCode: SubjectAuthCodeEnum;
     referee: SubjectTypeEnum;
+    breachResponsibilityType: BreachResponsibilityTypeEnum;
     constructor(authCode?: SubjectAuthCodeEnum);
     setErrorMsg(errorMsg: string): this;
     setData(data: any): this;
     setReferee(subjectType: SubjectTypeEnum): this;
+    setBreachResponsibilityType(breachResponsibilityType: BreachResponsibilityTypeEnum): this;
     setAuthCode(authCode: SubjectAuthCodeEnum): this;
     get isAuth(): boolean;
     toJSON(): {
         referee: SubjectTypeEnum;
+        breachResponsibilityType: BreachResponsibilityTypeEnum;
         authCode: SubjectAuthCodeEnum;
         isAuth: boolean;
         data: any;

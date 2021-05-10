@@ -8,12 +8,38 @@
  */
 import {SubjectTypeEnum, ISubjectAuthResult, SubjectAuthCodeEnum} from 'egg-freelog-base';
 
+/**
+ * 授权出错时的责任方
+ */
+export enum BreachResponsibilityTypeEnum {
+    /**
+     * 资源方
+     */
+    Resource = 1,
+
+    /**
+     * 节点
+     */
+    Node = 2,
+
+    /**
+     * C端消费者
+     */
+    ClientUser = 4,
+
+    /**
+     * 未知的
+     */
+    Unknown = 128
+}
+
 export class SubjectAuthResult implements ISubjectAuthResult {
 
     data = null;
     errorMsg = '';
     authCode = SubjectAuthCodeEnum.Default;
     referee = SubjectTypeEnum.Presentable;
+    breachResponsibilityType = BreachResponsibilityTypeEnum.Unknown;
 
     constructor(authCode?: SubjectAuthCodeEnum) {
         if (authCode) {
@@ -36,6 +62,12 @@ export class SubjectAuthResult implements ISubjectAuthResult {
         return this;
     }
 
+    // 设置违约责任类型(例如用户的责任,或者节点的责任,资源提供方的责任等等信息)
+    setBreachResponsibilityType(breachResponsibilityType: BreachResponsibilityTypeEnum) {
+        this.breachResponsibilityType = breachResponsibilityType;
+        return this;
+    }
+
     setAuthCode(authCode: SubjectAuthCodeEnum) {
         this.authCode = authCode;
         return this;
@@ -48,10 +80,11 @@ export class SubjectAuthResult implements ISubjectAuthResult {
     toJSON() {
         return {
             referee: this.referee,
+            breachResponsibilityType: this.breachResponsibilityType,
             authCode: this.authCode,
             isAuth: this.isAuth,
             data: this.data,
             errorMsg: this.errorMsg
-        }
+        };
     }
 }

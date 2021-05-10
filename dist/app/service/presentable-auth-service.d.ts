@@ -40,6 +40,10 @@ export declare class PresentableAuthService implements IPresentableAuthService {
      */
     contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult;
     /**
+     * 未登录用户授权(看是否有免费策略)
+     */
+    _unLoginUserPolicyAuth(presentableInfo: PresentableInfo): SubjectAuthResult;
+    /**
      * 用户合同授权
      * @param presentableInfo
      * @param userInfo
