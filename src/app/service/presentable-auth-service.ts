@@ -137,6 +137,9 @@ export class PresentableAuthService implements IPresentableAuthService {
      */
     async presentableClientUserSideAuth(presentableInfo: PresentableInfo): Promise<SubjectAuthResult> {
         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
+        if (!this.ctx.isLoginUser()) {
+            return new SubjectAuthResult().setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable);
+        }
         try {
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
         } catch (e) {
