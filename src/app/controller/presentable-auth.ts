@@ -3,7 +3,15 @@ import {controller, get, inject, provide} from 'midway';
 import {
     IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService
 } from '../../interface';
-import {ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext} from 'egg-freelog-base';
+import {
+    ArgumentError,
+    IdentityTypeEnum,
+    visitorIdentityValidator,
+    CommonRegex,
+    FreelogContext,
+    SubjectAuthCodeEnum
+} from 'egg-freelog-base';
+import {SubjectAuthResult} from '../../auth-interface';
 
 @provide()
 @controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectType/:subjectId
@@ -47,7 +55,14 @@ export class ResourceAuthController {
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);
-        ctx.entityNullObjectCheck(presentableInfo);
+        if (!presentableInfo) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('标的物不存在,请检查参数');
+            return ctx.success(subjectAuthResult);
+        }
+        if (presentableInfo.onlineStatus !== 1) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
+            return ctx.success(subjectAuthResult);
+        }
 
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
@@ -73,7 +88,8 @@ export class ResourceAuthController {
         const invalidPresentableIds = differenceWith(presentableIds, presentables, (x: string, y) => x === y.presentableId);
 
         if (!isEmpty(invalidPresentableIds)) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'presentableIds'), {invalidPresentableIds});
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setData({invalidPresentableIds}).setErrorMsg('标的物不存在,请检查参数');
+            return ctx.success(subjectAuthResult);
         }
 
         const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));

@@ -14,11 +14,11 @@ export declare class ResourceAuthController {
     /**
      * 通过展品ID获取展品并且授权
      */
-    presentableAuth(): Promise<void>;
+    presentableAuth(): Promise<FreelogContext>;
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    presentableNodeSideAndUpstreamAuth(): Promise<void>;
+    presentableNodeSideAndUpstreamAuth(): Promise<FreelogContext>;
     /**
      * 通过节点ID和资源ID获取展品,并且授权
      */
