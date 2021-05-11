@@ -17,7 +17,7 @@ import {
     FreelogContext,
     FreelogUserInfo,
     SubjectTypeEnum
-} from "egg-freelog-base";
+} from 'egg-freelog-base';
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
@@ -208,7 +208,7 @@ export class OutsideApiService implements IOutsideApiService {
      */
     async getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectId=${subjectId}&licensorId=${licensorId}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`).then(pageResult => {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectIds=${subjectId}&licensorId=${licensorId}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`).then(pageResult => {
             return pageResult?.dataList ?? [];
         });
     }

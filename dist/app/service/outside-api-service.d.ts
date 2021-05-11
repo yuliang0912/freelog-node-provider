@@ -1,6 +1,6 @@
 import { BasePolicyInfo, ContractInfo, IOutsideApiService, ObjectStorageInfo, ResourceDependencyTree, ResourceInfo, ResourceVersionInfo, SubjectInfo } from '../../interface';
 import { ObjectDependencyTreeInfo } from '../../test-node-interface';
-import { FreelogContext, FreelogUserInfo, SubjectTypeEnum } from "egg-freelog-base";
+import { FreelogContext, FreelogUserInfo, SubjectTypeEnum } from 'egg-freelog-base';
 export declare class OutsideApiService implements IOutsideApiService {
     ctx: FreelogContext;
     /**

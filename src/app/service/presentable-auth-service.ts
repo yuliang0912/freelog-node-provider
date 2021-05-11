@@ -162,6 +162,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         }
 
         const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
+        console.log(subjectId);
         if (!isEmpty(invalidContracts)) {
             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
@@ -190,7 +191,6 @@ export class PresentableAuthService implements IPresentableAuthService {
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,subjectId'});
-
         const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
         if (!contractAuthResult.isAuth) {
             contractAuthResult.setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
