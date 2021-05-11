@@ -161,7 +161,7 @@ export class PresentableAuthService implements IPresentableAuthService {
             return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound);
         }
 
-        const invalidContracts = contracts.filter(x => x?.subjectType !== SubjectTypeEnum.Resource || x?.subjectId !== subjectId);
+        const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
         if (!isEmpty(invalidContracts)) {
             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
