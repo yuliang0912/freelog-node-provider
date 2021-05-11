@@ -160,7 +160,7 @@ let PresentableAuthService = class PresentableAuthService {
      * @param userInfo
      */
     async _loginUserContractAuth(presentableInfo, userInfo) {
-        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, { projection: 'authStatus subjectId' });
+        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, { projection: 'authStatus,subjectId' });
         const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
         if (!contractAuthResult.isAuth) {
             contractAuthResult.setBreachResponsibilityType(auth_interface_1.BreachResponsibilityTypeEnum.ClientUser);
