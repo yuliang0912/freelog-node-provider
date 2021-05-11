@@ -162,7 +162,6 @@ export class PresentableAuthService implements IPresentableAuthService {
         }
 
         const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
-        console.log(subjectId);
         if (!isEmpty(invalidContracts)) {
             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }

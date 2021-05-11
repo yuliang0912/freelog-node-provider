@@ -343,7 +343,7 @@ export class PresentableService implements IPresentableService {
             }
             resolveResource.resourceName = resourceInfo.resourceName;
             for (const resolveContract of resolveResource.contracts) {
-                if (!resourceInfo.policies.some(x => x.policyId === resolveContract.policyId && x.status === 1)) {
+                if (!resourceInfo.policies.some(x => x.policyId === resolveContract.policyId)) {
                     invalidPolicies.push(pick(resourceInfo, ['resourceId', 'resourceName']));
                 }
             }
