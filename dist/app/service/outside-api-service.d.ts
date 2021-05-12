@@ -111,7 +111,7 @@ export declare class OutsideApiService implements IOutsideApiService {
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
     /**
      * 获取文件流
-     * @param fileSha1
+     * @param versionId
      */
     getFileStream(versionId: string): Promise<any>;
 }

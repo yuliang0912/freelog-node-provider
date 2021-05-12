@@ -32,6 +32,23 @@ export class PresentableService implements IPresentableService {
     presentableCommonChecker: PresentableCommonChecker;
 
     /**
+     * 查询合约被应用于那些展品
+     * @param nodeId
+     * @param contractIds
+     */
+    async contractAppliedPresentable(nodeId: number, contractIds: string[]) {
+        const presentables = await this.presentableProvider.find({
+            nodeId, 'resolveResources.contracts.contractId': {$in: contractIds}
+        }, 'presentableId presentableName resolveResources');
+        return contractIds.map(contractId => {
+            const presentableList = presentables.filter(x => x.resolveResources.some(y => y.contracts.some(z => z.contractId === contractId)));
+            return {
+                contractId, presentables: presentableList.map(x => pick(x, ['presentableId', 'presentableName']))
+            };
+        });
+    }
+
+    /**
      * 创建展品
      * @param {CreatePresentableOptions} options
      * @returns {Promise<any>}

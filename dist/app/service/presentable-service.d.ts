@@ -11,6 +11,15 @@ export declare class PresentableService implements IPresentableService {
     presentableProvider: IMongodbOperation<PresentableInfo>;
     presentableCommonChecker: PresentableCommonChecker;
     /**
+     * 查询合约被应用于那些展品
+     * @param nodeId
+     * @param contractIds
+     */
+    contractAppliedPresentable(nodeId: number, contractIds: string[]): Promise<{
+        contractId: string;
+        presentables: Pick<PresentableInfo, "tags" | "nodeId" | "onlineStatus" | "presentableId" | "presentableName" | "presentableTitle" | "policies" | "userId" | "version" | "resourceInfo" | "resolveResources" | "coverImages" | "authStatus">[];
+    }[]>;
+    /**
      * 创建展品
      * @param {CreatePresentableOptions} options
      * @returns {Promise<any>}

@@ -1,7 +1,7 @@
-import { SubjectAuthResult } from "./auth-interface";
-import { ObjectDependencyTreeInfo } from "./test-node-interface";
+import { SubjectAuthResult } from './auth-interface';
+import { ObjectDependencyTreeInfo } from './test-node-interface';
 import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum } from './enum';
-import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from "egg-freelog-base";
+import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from 'egg-freelog-base';
 export interface findOptions<T> {
     sort?: {
         [P in keyof T]?: 1 | -1 | boolean;
@@ -267,6 +267,7 @@ export interface INodeService {
     updateNodeDetailInfo(nodeId: number, model: Partial<NodeDetailInfo>): Promise<boolean>;
 }
 export interface IPresentableService {
+    contractAppliedPresentable(nodeId: number, contractIds: string[]): Promise<any[]>;
     createPresentable(options: CreatePresentableOptions): Promise<PresentableInfo>;
     findOne(condition: object, ...args: any[]): Promise<PresentableInfo>;
     findById(presentableId: string, ...args: any[]): Promise<PresentableInfo>;

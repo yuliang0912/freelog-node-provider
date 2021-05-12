@@ -1,5 +1,5 @@
-import {SubjectAuthResult} from "./auth-interface";
-import {ObjectDependencyTreeInfo} from "./test-node-interface";
+import {SubjectAuthResult} from './auth-interface';
+import {ObjectDependencyTreeInfo} from './test-node-interface';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from './enum';
 import {
     ContractLicenseeIdentityTypeEnum,
@@ -7,7 +7,7 @@ import {
     FreelogUserInfo,
     SubjectTypeEnum,
     PageResult
-} from "egg-freelog-base";
+} from 'egg-freelog-base';
 
 export interface findOptions<T> {
     sort?: {
@@ -326,6 +326,8 @@ export interface INodeService {
 }
 
 export interface IPresentableService {
+
+    contractAppliedPresentable(nodeId: number, contractIds: string[]): Promise<any[]>;
 
     createPresentable(options: CreatePresentableOptions): Promise<PresentableInfo>;
 

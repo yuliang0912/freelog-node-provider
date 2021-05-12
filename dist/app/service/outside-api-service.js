@@ -213,7 +213,7 @@ let OutsideApiService = class OutsideApiService {
     }
     /**
      * 获取文件流
-     * @param fileSha1
+     * @param versionId
      */
     async getFileStream(versionId) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/${versionId}/internalClientDownload`, null, egg_freelog_base_1.CurlResFormatEnum.Original);

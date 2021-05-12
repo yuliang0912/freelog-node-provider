@@ -457,6 +457,16 @@ export class PresentableController {
         }
     }
 
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @get('/:nodeId/contractAppliedPresentable')
+    async contractAppliedPresentable() {
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
+        const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
+        ctx.validateParams();
+        await this.presentableService.contractAppliedPresentable(nodeId, contractIds).then(ctx.success);
+    }
+
     /**
      * 策略格式校验
      * @param policies
