@@ -28,7 +28,7 @@ export declare class PresentableController {
     dependencyTree(): Promise<void>;
     authTree(): Promise<void>;
     relationTree(): Promise<void>;
-    contractAppliedPresentable(): Promise<void>;
+    contractAppliedPresentables(): Promise<void>;
     /**
      * 策略格式校验
      * @param policies

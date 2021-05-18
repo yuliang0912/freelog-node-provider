@@ -142,6 +142,7 @@ export class PresentableController {
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
         const presentableIds = ctx.checkQuery('presentableIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const resolveResourceIds = ctx.checkQuery('resolveResourceIds').optional().isSplitResourceId().toSplitArray().len(1, 300).value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
@@ -164,8 +165,10 @@ export class PresentableController {
         if (resourceNames) {
             condition['resourceInfo.resourceNames'] = {$in: resourceNames.map(decodeURIComponent)};
         }
-
-        if (!resourceIds && !presentableIds && !resourceNames) {
+        if (resolveResourceIds && nodeId) {
+            condition['resolveResources.resourceId'] = {$in: resolveResourceIds};
+        }
+        if (!resourceIds && !presentableIds && !resourceNames && !resolveResourceIds) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'));
         }
 
@@ -459,7 +462,7 @@ export class PresentableController {
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/:nodeId/contractAppliedPresentable')
-    async contractAppliedPresentable() {
+    async contractAppliedPresentables() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 300).value;

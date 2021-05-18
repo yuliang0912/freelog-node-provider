@@ -39,11 +39,12 @@ export class PresentableService implements IPresentableService {
     async contractAppliedPresentable(nodeId: number, contractIds: string[]) {
         const presentables = await this.presentableProvider.find({
             nodeId, 'resolveResources.contracts.contractId': {$in: contractIds}
-        }, 'presentableId presentableName resolveResources');
+        }, 'presentableId presentableName presentableTitle resolveResources');
         return contractIds.map(contractId => {
             const presentableList = presentables.filter(x => x.resolveResources.some(y => y.contracts.some(z => z.contractId === contractId)));
             return {
-                contractId, presentables: presentableList.map(x => pick(x, ['presentableId', 'presentableName']))
+                contractId,
+                presentables: presentableList.map(x => pick(x, ['presentableId', 'presentableName', 'presentableTitle']))
             };
         });
     }
