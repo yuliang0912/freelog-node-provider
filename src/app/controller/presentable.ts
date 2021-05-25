@@ -4,8 +4,7 @@ import {PresentableOnlineStatusEnum} from '../../enum';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {isString, isUndefined, isNumber, isEmpty, first, isDate} from 'lodash';
 import {
-    INodeService, IOutsideApiService, IPresentableService,
-    IPresentableVersionService, NodeInfo
+    INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo
 } from '../../interface';
 import {
     IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext, IJsonSchemaValidate
@@ -448,16 +447,21 @@ export class PresentableController {
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);
+        if (!presentableInfo) {
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed'));
+        }
         const condition: any = {presentableId};
         if (isString(version)) {
             condition.version = version;
         } else {
             condition.version = presentableInfo.version;
         }
-        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'dependencyTree');
+        const presentableVersionInfo = await this.presentableVersionService.findOne(condition, 'version dependencyTree authTree');
         if (!presentableVersionInfo) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'));
         }
+
+        await this.presentableVersionService.getRelationTree(presentableInfo, presentableVersionInfo).then(ctx.success);
     }
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)

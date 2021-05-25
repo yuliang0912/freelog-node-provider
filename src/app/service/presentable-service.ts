@@ -5,7 +5,7 @@ import {
     BasePolicyInfo, CreatePresentableOptions, findOptions, INodeService,
     IOutsideApiService, IPresentableAuthService,
     IPresentableService, IPresentableVersionService,
-    PolicyInfo, PresentableInfo, ResolveResource,
+    PolicyInfo, PresentableInfo, PresentableVersionInfo, ResolveResource,
     ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
 import {
@@ -327,6 +327,11 @@ export class PresentableService implements IPresentableService {
             return presentableInfo;
         });
     }
+
+    async relationTree(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo) {
+
+    }
+
 
     /**
      * 校验resolveResources参数

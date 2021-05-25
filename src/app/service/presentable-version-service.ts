@@ -12,6 +12,7 @@ import {
     PresentableVersionInfo,
     ResourceDependencyTree, PresentableResolveResource, PresentableAuthTree
 } from '../../interface';
+import {PresentableAuthService} from './presentable-auth-service';
 
 @provide()
 export class PresentableVersionService implements IPresentableVersionService {
@@ -26,6 +27,8 @@ export class PresentableVersionService implements IPresentableVersionService {
     presentableVersionProvider;
     @inject()
     presentableCommonChecker;
+    @inject()
+    presentableAuthService: PresentableAuthService;
 
     async findById(presentableId: string, version: string, ...args): Promise<PresentableVersionInfo> {
         return this.findOne({presentableId, version}, ...args);
@@ -118,15 +121,80 @@ export class PresentableVersionService implements IPresentableVersionService {
     //     return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
     // }
 
-    async getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo, flattenDependencies: FlattenPresentableDependencyTree[]) {
-        return [{
+    /**
+     * 获取展品关系树(带授权)
+     * @param presentableInfo
+     * @param versionInfo
+     */
+    async getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo) {
+
+        const presentableResolveResourceIdSet = new Set(versionInfo.authTree.filter(x => x.deep === 1).map(x => x.resourceId));
+        // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
+        const toBeAuthorizedResources = presentableInfo.resolveResources.filter(x => presentableResolveResourceIdSet.has(x.resourceId));
+
+        const flattenAuthTree = (authTree: PresentableAuthTree[][], list: PresentableAuthTree[] = []) => {
+            for (const authTreeInfo of authTree) {
+                for (const item of authTreeInfo) {
+                    list.push(item, ...flattenAuthTree(item.children));
+                }
+            }
+            return list;
+        };
+
+        const authTree = await this.convertPresentableAuthTreeWithContracts(presentableInfo, versionInfo.authTree);
+        const resourceContractIds = flattenAuthTree(authTree).map(x => x.contracts).flat().map(x => x.contractId);
+        const allNodeContractIds = toBeAuthorizedResources.map(x => x.contracts).flat().map(x => x.contractId);
+
+        const contractMap = await this.outsideApiService.getContractByContractIds([...resourceContractIds, ...allNodeContractIds], {
+            licenseeId: presentableInfo.nodeId, projection: 'contractId,subjectId,subjectType,authStatus'
+        }).then(list => {
+            return new Map(list.map(x => [x.contractId, x]));
+        });
+
+        const nodeResolveResourceIsAuth = (resourceId: string) => {
+            const resolveContracts = presentableInfo.resolveResources.find(x => x.resourceId === resourceId)?.contracts.filter(x => contractMap.has(x.contractId)).map(x => contractMap.get(x.contractId));
+            const isAuth = this.presentableAuthService.contractAuth(resourceId, resolveContracts).isAuth;
+            return {isAuth, contracts: resolveContracts};
+        };
+
+        const upstreamResourceIsAuth = (authTree: PresentableAuthTree[][]) => {
+            for (const item of flattenAuthTree(authTree).filter(x => !isEmpty(x.contracts))) {
+                const contracts = item.contracts.filter(x => contractMap.has(x.contractId)).map(x => contractMap.get(x.contractId));
+                if (isEmpty(contracts)) {
+                    continue;
+                }
+                if (!this.presentableAuthService.contractAuth(item.resourceId, contracts).isAuth) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        const rootResourceAuthResult = nodeResolveResourceIsAuth(presentableInfo.resourceInfo.resourceId);
+        const rootResourceAuthTree = authTree.filter(x => x.some(m => m.resourceId === presentableInfo.resourceInfo.resourceId));
+        const presentableRelationTree = {
             resourceId: presentableInfo.resourceInfo.resourceId,
             resourceName: presentableInfo.resourceInfo.resourceName,
             resourceType: presentableInfo.resourceInfo.resourceType,
-            versionRanges: [],
             versions: [versionInfo.version],
-            children: presentableInfo.resolveResources
-        }];
+            downstreamIsAuth: rootResourceAuthResult.isAuth,
+            downstreamAuthContractIds: rootResourceAuthResult.contracts.map(x => x.contractId),
+            selfAndUpstreamIsAuth: upstreamResourceIsAuth(rootResourceAuthTree),
+            children: []
+        };
+        for (const upcast of toBeAuthorizedResources.filter(x => x.resourceId !== presentableInfo.resourceInfo.resourceId)) {
+            const upcastAuthResult = nodeResolveResourceIsAuth(upcast.resourceId);
+            const upcastResourceAuthTree = authTree.filter(x => x.some(m => m.resourceId === upcast.resourceId));
+            presentableRelationTree.children.push({
+                resourceId: upcast.resourceId,
+                resourceName: upcast.resourceName,
+                resourceType: versionInfo.dependencyTree.find(x => x.resourceId === upcast.resourceName)?.resourceType,
+                downstreamIsAuth: upcastAuthResult.isAuth,
+                downstreamAuthContractIds: upcastAuthResult.contracts.map(x => x.contractId),
+                selfAndUpstreamIsAuth: upstreamResourceIsAuth(upcastResourceAuthTree),
+                children: []
+            });
+        }
+        return [presentableRelationTree];
     }
 
     /**
