@@ -314,10 +314,11 @@ export interface IPresentableVersionService {
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
     findByIds(presentableVersionIds: string[], ...args: any[]): Promise<PresentableVersionInfo[]>;
     find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
-    createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
+    createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string, newVersion: string): Promise<PresentableVersionInfo>;
     convertPresentableAuthTreeWithContracts(presentableInfo: PresentableInfo, flattenAuthTree: FlattenPresentableAuthTree[]): Promise<PresentableAuthTree[][]>;
     convertPresentableDependencyTree(flattenDependencies: FlattenPresentableDependencyTree[], startNid: string, isContainRootNode: boolean, maxDeep: number): PresentableDependencyTree[];
     updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
+    getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo): Promise<any[]>;
 }
 export interface IPresentableAuthResponseHandler {
     handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;

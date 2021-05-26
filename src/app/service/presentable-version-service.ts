@@ -61,65 +61,47 @@ export class PresentableVersionService implements IPresentableVersionService {
         return this.presentableVersionProvider.updateOne({presentableVersionId: presentableVersionInfo.presentableVersionId}, updateModel).then(data => Boolean(data.ok));
     }
 
-    async createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo> {
+    /**
+     * 创建或更新展品版本信息
+     * @param presentableInfo
+     * @param resourceVersionId
+     * @param newVersion
+     */
+    async createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string, newVersion: string): Promise<PresentableVersionInfo> {
 
-        const {presentableId, resourceInfo, version} = presentableInfo;
-        const {systemProperty, customPropertyDescriptors, resourceId} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
+        const {presentableId, resourceInfo} = presentableInfo;
         const dependencyTree = await this.outsideApiService.getResourceDependencyTree(resourceInfo.resourceId, {
-            version, isContainRootNode: 1
+            version: newVersion, isContainRootNode: 1
         });
 
-        const model: PresentableVersionInfo = {
-            presentableId, version, resourceId,
-            presentableVersionId: this.presentableCommonChecker.generatePresentableVersionId(presentableId, version),
-            resourceSystemProperty: systemProperty,
+        const model: Partial<PresentableVersionInfo> = {
+            presentableId,
+            resourceId: resourceInfo.resourceId,
+            version: newVersion,
+            presentableVersionId: this.presentableCommonChecker.generatePresentableVersionId(presentableId, newVersion),
             dependencyTree: this._flattenDependencyTree(presentableId, dependencyTree),
-            authTree: [],
-            resourceCustomPropertyDescriptors: customPropertyDescriptors,
-            versionProperty: this._calculatePresentableVersionProperty(systemProperty, customPropertyDescriptors, [])
+            authTree: []
         };
 
         const presentableAuthTree = await this._buildPresentableAuthTree(presentableInfo, dependencyTree, model.dependencyTree.map(x => x.versionId));
         model.authTree = this._flattenPresentableAuthTree(presentableAuthTree);
 
-        return this.presentableVersionProvider.findOneAndUpdate({presentableVersionId: model.presentableVersionId}, model, {new: true}).then(data => {
-            return data || this.presentableVersionProvider.create(model);
-        });
-    }
+        const updatedVersionInfo = await this.presentableVersionProvider.findOneAndUpdate({presentableVersionId: model.presentableVersionId}, model, {new: true});
+        if (updatedVersionInfo) {
+            return updatedVersionInfo;
+        }
 
-    /**
-     * 平铺结构的授权树转换为递归结构的授权树
-     * @param presentableInfo
-     * @param flattenAuthTree
-     */
-    // convertPresentableAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], startNid: string, isContainRootNode = true, maxDeep = 100): PresentableAuthTree[] {
-    //
-    //     const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
-    //     if (isEmpty(startedAuthTree)) {
-    //         return [];
-    //     }
-    //     maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
-    //
-    //     function recursionBuildAuthTree(dependencies: FlattenPresentableAuthTree[], currDeep: number = 1): PresentableAuthTree[] {
-    //         if (isEmpty(dependencies) || currDeep++ >= maxDeep) {
-    //             return [];
-    //         }
-    //         return dependencies.map(item => {
-    //             return {
-    //                 nid: item.nid,
-    //                 resourceId: item.resourceId,
-    //                 resourceName: item.resourceName,
-    //                 version: item.version,
-    //                 versionId: item.versionId,
-    //                 children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
-    //             }
-    //         });
-    //     }
-    //
-    //     const convertedAuthTree = recursionBuildAuthTree(startedAuthTree);
-    //
-    //     return isContainRootNode ? convertedAuthTree : first(convertedAuthTree).children;
-    // }
+        const oldPresentableVersionId = this.presentableCommonChecker.generatePresentableVersionId(presentableId, presentableInfo.version);
+        const oldPresentableVersionInfo = await this.presentableVersionProvider.find({presentableVersionId: oldPresentableVersionId});
+        const {systemProperty, customPropertyDescriptors} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
+        model.resourceSystemProperty = systemProperty;
+        model.resourceCustomPropertyDescriptors = customPropertyDescriptors;
+        // 如果新版本存在,则更新时不需要覆盖属性,否则就需要把旧的属性直接继承到新的版本上
+        model.presentableRewriteProperty = oldPresentableVersionInfo?.presentableRewriteProperty ?? [];
+        model.versionProperty = this._calculatePresentableVersionProperty(systemProperty, customPropertyDescriptors, model.presentableRewriteProperty);
+
+        return this.presentableVersionProvider.create(model);
+    }
 
     /**
      * 获取展品关系树(带授权)

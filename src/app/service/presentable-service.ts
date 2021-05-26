@@ -91,7 +91,7 @@ export class PresentableService implements IPresentableService {
 
         //TODO:后期待生产环境部署副本集,此处需要加入事务支持
         const presentableInfo = await this.presentableProvider.create(model);
-        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, versionId);
+        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, versionId, presentableInfo.version);
 
         return presentableInfo;
     }
@@ -176,8 +176,7 @@ export class PresentableService implements IPresentableService {
      */
     async updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean> {
         await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {version});
-        presentableInfo.version = version;
-        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, resourceVersionId);
+        await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, resourceVersionId, version);
         return true;
     }
 

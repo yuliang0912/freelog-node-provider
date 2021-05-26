@@ -1,29 +1,39 @@
 import { FreelogContext } from 'egg-freelog-base';
 import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, FlattenPresentableAuthTree, PresentableDependencyTree, PresentableVersionInfo, ResourceDependencyTree, PresentableResolveResource, PresentableAuthTree } from '../../interface';
+import { PresentableAuthService } from './presentable-auth-service';
 export declare class PresentableVersionService implements IPresentableVersionService {
     ctx: FreelogContext;
     presentableProvider: any;
     outsideApiService: IOutsideApiService;
     presentableVersionProvider: any;
     presentableCommonChecker: any;
+    presentableAuthService: PresentableAuthService;
     findById(presentableId: string, version: string, ...args: any[]): Promise<PresentableVersionInfo>;
     findByIds(presentableVersionIds: string[], ...args: any[]): Promise<PresentableVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<PresentableVersionInfo>;
     find(condition: object, ...args: any[]): Promise<PresentableVersionInfo[]>;
     updatePresentableRewriteProperty(presentableInfo: PresentableInfo, presentableRewriteProperty: any[]): Promise<boolean>;
-    createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string): Promise<PresentableVersionInfo>;
     /**
-     * 平铺结构的授权树转换为递归结构的授权树
+     * 创建或更新展品版本信息
      * @param presentableInfo
-     * @param flattenAuthTree
+     * @param resourceVersionId
+     * @param newVersion
      */
-    getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo, flattenDependencies: FlattenPresentableDependencyTree[]): Promise<{
+    createOrUpdatePresentableVersion(presentableInfo: PresentableInfo, resourceVersionId: string, newVersion: string): Promise<PresentableVersionInfo>;
+    /**
+     * 获取展品关系树(带授权)
+     * @param presentableInfo
+     * @param versionInfo
+     */
+    getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo): Promise<{
         resourceId: string;
         resourceName: string;
         resourceType: string;
-        versionRanges: any[];
         versions: string[];
-        children: import("../../interface").ResolveResource[];
+        downstreamIsAuth: boolean;
+        downstreamAuthContractIds: string[];
+        selfAndUpstreamIsAuth: boolean;
+        children: any[];
     }[]>;
     /**
      * 平铺结构的授权树转换为递归结构的授权树
