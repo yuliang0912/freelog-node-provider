@@ -97,7 +97,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      * @param resourceType
      * @param attachmentName
      */
-    async fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string,) {
+    async fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string) {
 
         const response = await this.outsideApiService.getFileStream(versionId);
         if (!response.res.statusCode.toString().startsWith('2')) {

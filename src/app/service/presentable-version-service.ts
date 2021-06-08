@@ -169,7 +169,7 @@ export class PresentableVersionService implements IPresentableVersionService {
             presentableRelationTree.children.push({
                 resourceId: upcast.resourceId,
                 resourceName: upcast.resourceName,
-                resourceType: versionInfo.dependencyTree.find(x => x.resourceId === upcast.resourceName)?.resourceType,
+                resourceType: versionInfo.dependencyTree.find(x => x.resourceId === upcast.resourceId)?.resourceType,
                 downstreamIsAuth: upcastAuthResult.isAuth,
                 downstreamAuthContractIds: upcastAuthResult.contracts.map(x => x.contractId),
                 selfAndUpstreamIsAuth: upstreamResourceIsAuth(upcastResourceAuthTree),

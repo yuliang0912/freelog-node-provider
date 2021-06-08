@@ -52,6 +52,7 @@ export class ResourceAuthController {
         const presentableId = ctx.checkParams('subjectId').isPresentableId().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
+        // const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);

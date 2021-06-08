@@ -1,12 +1,12 @@
 import {parse} from 'url';
 import {inject, provide} from 'midway';
-import {chain, first, isEmpty, isString} from "lodash";
+import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
 import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum, FreelogContext} from 'egg-freelog-base';
 import {IOutsideApiService} from '../../interface';
 import {
     FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo
-} from "../../test-node-interface";
+} from '../../test-node-interface';
 
 @provide()
 export class TestResourceAuthResponseHandler {
@@ -121,12 +121,12 @@ export class TestResourceAuthResponseHandler {
         if (!authResult.isAuth) {
             throw new AuthorizationError(this.ctx.gettext('subject-authorization-failed'), {
                 authCode: authResult.authCode, authResult
-            })
+            });
         }
     }
 
     subjectAuthProcessExceptionHandle(error) {
-        const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthApiException).setData({error}).setErrorMsg('授权过程中出现异常')
+        const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthApiException).setData({error}).setErrorMsg('授权过程中出现异常');
         this.subjectAuthFailedResponseHandle(authResult);
     }
 
@@ -152,7 +152,7 @@ export class TestResourceAuthResponseHandler {
             function filterTestResourceDependencyTree(dependencyTree: FlattenTestResourceDependencyTree) {
                 return (parentNid ? dependencyTree.parentNid === parentNid : true)
                     && (subEntityType ? dependencyTree.type === subEntityType : true)
-                    && (subEntityIdOrName ? dependencyTree.id === subEntityIdOrName || dependencyTree.name.toLowerCase() === subEntityIdOrName.toLowerCase() : true)
+                    && (subEntityIdOrName ? dependencyTree.id === subEntityIdOrName || dependencyTree.name.toLowerCase() === subEntityIdOrName.toLowerCase() : true);
             }
 
             const matchedEntities = flattenTestResourceDependencyTree.filter(filterTestResourceDependencyTree);
