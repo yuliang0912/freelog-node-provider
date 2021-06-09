@@ -92,14 +92,14 @@ export class PresentableVersionService implements IPresentableVersionService {
         }
 
         const oldPresentableVersionId = this.presentableCommonChecker.generatePresentableVersionId(presentableId, presentableInfo.version);
-        const oldPresentableVersionInfo = await this.presentableVersionProvider.find({presentableVersionId: oldPresentableVersionId});
+        const oldPresentableVersionInfo = await this.presentableVersionProvider.findOne({presentableVersionId: oldPresentableVersionId});
+
         const {systemProperty, customPropertyDescriptors} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
         model.resourceSystemProperty = systemProperty;
         model.resourceCustomPropertyDescriptors = customPropertyDescriptors;
         // 如果新版本存在,则更新时不需要覆盖属性,否则就需要把旧的属性直接继承到新的版本上
         model.presentableRewriteProperty = oldPresentableVersionInfo?.presentableRewriteProperty ?? [];
         model.versionProperty = this._calculatePresentableVersionProperty(systemProperty, customPropertyDescriptors, model.presentableRewriteProperty);
-
         return this.presentableVersionProvider.create(model);
     }
 
