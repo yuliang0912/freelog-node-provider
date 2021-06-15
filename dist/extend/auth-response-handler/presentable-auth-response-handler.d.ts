@@ -12,8 +12,9 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
      * @param authResult
      * @param parentNid
      * @param subResourceIdOrName
+     * @param subResourceFile
      */
-    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
+    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string, subResourceFile?: string): Promise<void>;
     /**
      * 公共响应头处理
      * @param presentableInfo

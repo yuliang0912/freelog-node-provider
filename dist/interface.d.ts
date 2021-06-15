@@ -321,7 +321,7 @@ export interface IPresentableVersionService {
     getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo): Promise<any[]>;
 }
 export interface IPresentableAuthResponseHandler {
-    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string): Promise<void>;
+    handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string, subResourceFile?: string): Promise<void>;
     subjectAuthFailedResponseHandle(authResult: SubjectAuthResult): any;
     subjectAuthProcessExceptionHandle(error: any): any;
 }

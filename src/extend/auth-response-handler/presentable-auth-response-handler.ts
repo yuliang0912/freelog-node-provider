@@ -34,8 +34,9 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      * @param authResult
      * @param parentNid
      * @param subResourceIdOrName
+     * @param subResourceFile
      */
-    async handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string) {
+    async handle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, authResult: SubjectAuthResult, parentNid?: string, subResourceIdOrName?: string, subResourceFile?: string) {
 
         const realResponseResourceVersionInfo = this.getRealResponseResourceInfo(presentableVersionInfo.dependencyTree, parentNid, subResourceIdOrName);
         if (!realResponseResourceVersionInfo) {

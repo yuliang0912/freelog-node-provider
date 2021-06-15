@@ -42,7 +42,7 @@ export class PresentableController {
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
-        const sort = ctx.checkQuery('sort').optional().value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;

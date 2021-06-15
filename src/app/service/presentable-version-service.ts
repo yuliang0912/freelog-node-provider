@@ -93,7 +93,6 @@ export class PresentableVersionService implements IPresentableVersionService {
 
         const oldPresentableVersionId = this.presentableCommonChecker.generatePresentableVersionId(presentableId, presentableInfo.version);
         const oldPresentableVersionInfo = await this.presentableVersionProvider.findOne({presentableVersionId: oldPresentableVersionId});
-
         const {systemProperty, customPropertyDescriptors} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
         model.resourceSystemProperty = systemProperty;
         model.resourceCustomPropertyDescriptors = customPropertyDescriptors;

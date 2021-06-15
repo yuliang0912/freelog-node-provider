@@ -9,7 +9,8 @@ import {
     visitorIdentityValidator,
     CommonRegex,
     FreelogContext,
-    SubjectAuthCodeEnum
+    SubjectAuthCodeEnum,
+    ResourceTypeEnum
 } from 'egg-freelog-base';
 import {SubjectAuthResult} from '../../auth-interface';
 
@@ -52,7 +53,7 @@ export class ResourceAuthController {
         const presentableId = ctx.checkParams('subjectId').isPresentableId().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
-        // const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
+        const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);
@@ -64,11 +65,14 @@ export class ResourceAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
             return ctx.success(subjectAuthResult);
         }
+        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
+        }
 
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
+        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
     }
 
     /**

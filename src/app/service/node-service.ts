@@ -124,7 +124,7 @@ export class NodeService implements INodeService {
     /**
      * 设置标签
      * @param nodeId
-     * @param tagInfo
+     * @param tagInfos
      */
     async setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean> {
 

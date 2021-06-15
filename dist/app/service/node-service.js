@@ -93,7 +93,7 @@ let NodeService = class NodeService {
     /**
      * 设置标签
      * @param nodeId
-     * @param tagInfo
+     * @param tagInfos
      */
     async setTag(nodeId, tagInfos) {
         const tagIds = tagInfos.map(x => x.tagId);

@@ -22,7 +22,7 @@ export declare class NodeService implements INodeService {
     /**
      * 设置标签
      * @param nodeId
-     * @param tagInfo
+     * @param tagInfos
      */
     setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean>;
     /**
