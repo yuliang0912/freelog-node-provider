@@ -1,5 +1,5 @@
 import { INodeService } from '../../interface';
-import { ITestNodeService } from "../../test-node-interface";
+import { ITestNodeService } from '../../test-node-interface';
 import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
 export declare class TestNodeController {
     ctx: FreelogContext;

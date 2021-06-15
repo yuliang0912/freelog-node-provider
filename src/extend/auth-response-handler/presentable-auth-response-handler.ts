@@ -2,19 +2,22 @@ import {parse} from 'url';
 import {inject, provide} from 'midway';
 import {
     FlattenPresentableDependencyTree,
-    IOutsideApiService, IPresentableVersionService,
-    PresentableInfo, PresentableDependencyTree,
-    PresentableVersionInfo, IPresentableAuthResponseHandler
+    IOutsideApiService,
+    IPresentableAuthResponseHandler,
+    IPresentableVersionService,
+    PresentableDependencyTree,
+    PresentableInfo,
+    PresentableVersionInfo
 } from '../../interface';
 import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
 import {
     ApplicationError,
-    SubjectAuthCodeEnum,
+    BreakOffError,
+    ErrCodeEnum,
     FreelogContext,
     RetCodeEnum,
-    ErrCodeEnum,
-    IApiDataFormat, BreakOffError
+    SubjectAuthCodeEnum
 } from 'egg-freelog-base';
 
 @provide()
@@ -62,7 +65,11 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
                 break;
             case 'fileStream':
                 this.subjectAuthFailedResponseHandle(authResult);
-                await this.fileStreamResponseHandle(realResponseResourceVersionInfo.versionId, realResponseResourceVersionInfo.resourceType, presentableInfo.presentableTitle);
+                if (!subResourceFile) {
+                    await this.fileStreamResponseHandle(realResponseResourceVersionInfo.versionId, realResponseResourceVersionInfo.resourceType, presentableInfo.presentableTitle);
+                } else {
+                    await this.subResourceFileResponseHandle(realResponseResourceVersionInfo.resourceId, realResponseResourceVersionInfo.version, subResourceFile);
+                }
                 break;
             default:
                 this.ctx.error(new ApplicationError('未实现的授权展示方式'));
@@ -117,6 +124,16 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
     }
 
     /**
+     * 获取子资源文件
+     * @param resourceId
+     * @param version
+     * @param subResourceFile
+     */
+    async subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string) {
+        return this.outsideApiService.getSubResourceFile(resourceId, version, subResourceFile);
+    }
+
+    /**
      * 标的物自身信息展示
      * @param presentableInfo
      */
@@ -139,13 +156,12 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      */
     subjectAuthFailedResponseHandle(authResult: SubjectAuthResult) {
         if (!authResult.isAuth) {
-            const body: IApiDataFormat = {
+            this.ctx.body = {
                 ret: RetCodeEnum.success,
                 errCode: ErrCodeEnum.authorizationError,
                 msg: this.ctx.gettext('subject-authorization-failed'),
                 data: authResult
             };
-            this.ctx.body = body;
             throw new BreakOffError();
         }
     }

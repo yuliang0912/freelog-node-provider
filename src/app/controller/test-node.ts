@@ -1,7 +1,7 @@
 import {satisfies} from 'semver';
 import {INodeService} from '../../interface';
 import {controller, inject, get, post, put, provide} from 'midway';
-import {ITestNodeService, TestResourceOriginType} from "../../test-node-interface";
+import {ITestNodeService, TestResourceOriginType} from '../../test-node-interface';
 import {isString, isArray, isUndefined, pick, chain, uniq, first, isEmpty} from 'lodash';
 import {
     IdentityTypeEnum, ArgumentError, FreelogContext, IJsonSchemaValidate, visitorIdentityValidator
@@ -66,7 +66,7 @@ export class TestNodeController {
         this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
 
         const nodeTestRule = await this.testNodeService.findNodeTestRuleInfoById(nodeId, 'ruleText');
-        const currentRuleText = (nodeTestRule?.ruleText ?? '') + '   ' + additionalTestRule;
+        const currentRuleText = additionalTestRule + '   ' + (nodeTestRule?.ruleText ?? '');
 
         await this.testNodeService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success);
     }
@@ -143,7 +143,7 @@ export class TestNodeController {
         ctx.validateParams();
 
         if ([entityType, entityIds, entityNames].every(isUndefined)) {
-            throw new ArgumentError('params-required-validate-failed', 'entityType,entityIds,entityNames')
+            throw new ArgumentError('params-required-validate-failed', 'entityType,entityIds,entityNames');
         }
 
         const nodeInfo = await this.nodeService.findById(nodeId);
@@ -217,7 +217,7 @@ export class TestNodeController {
             nodeId, 'dependencyTree.id': dependentEntityId
         }, projection);
         if (isFilterVersionRange) {
-            testResourceTreeInfos = testResourceTreeInfos.filter(item => item.dependencyTree.some(x => x.id === dependentEntityId && satisfies(dependentEntityVersionRange, x.version)))
+            testResourceTreeInfos = testResourceTreeInfos.filter(item => item.dependencyTree.some(x => x.id === dependentEntityId && satisfies(dependentEntityVersionRange, x.version)));
         }
 
         ctx.success(testResourceTreeInfos.map(x => pick(x, ['testResourceId', 'testResourceName'])));

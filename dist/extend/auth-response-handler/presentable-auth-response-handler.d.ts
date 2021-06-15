@@ -1,4 +1,4 @@
-import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableVersionService, PresentableInfo, PresentableDependencyTree, PresentableVersionInfo, IPresentableAuthResponseHandler } from '../../interface';
+import { FlattenPresentableDependencyTree, IOutsideApiService, IPresentableAuthResponseHandler, IPresentableVersionService, PresentableDependencyTree, PresentableInfo, PresentableVersionInfo } from '../../interface';
 import { SubjectAuthResult } from '../../auth-interface';
 import { FreelogContext } from 'egg-freelog-base';
 export declare class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
@@ -29,6 +29,13 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
      * @param attachmentName
      */
     fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string): Promise<void>;
+    /**
+     * 获取子资源文件
+     * @param resourceId
+     * @param version
+     * @param subResourceFile
+     */
+    subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string): Promise<any>;
     /**
      * 标的物自身信息展示
      * @param presentableInfo

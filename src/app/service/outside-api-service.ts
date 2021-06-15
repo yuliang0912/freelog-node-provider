@@ -243,7 +243,11 @@ export class OutsideApiService implements IOutsideApiService {
      * 获取文件流
      * @param versionId
      */
-    async getFileStream(versionId: string): Promise<any> {
+    getFileStream(versionId: string): Promise<any> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/${versionId}/internalClientDownload`, null, CurlResFormatEnum.Original);
+    }
+
+    async getSubResourceFile(resourceId: string, versionId: string) {
+
     }
 }

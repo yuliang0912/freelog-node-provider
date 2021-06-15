@@ -391,6 +391,8 @@ export interface IOutsideApiService {
 
     getFileStream(fileSha1: string): Promise<any>;
 
+    getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
+
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
 
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>
