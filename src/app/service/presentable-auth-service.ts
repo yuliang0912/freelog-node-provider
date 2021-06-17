@@ -67,7 +67,6 @@ export class PresentableAuthService implements IPresentableAuthService {
         const startDate = new Date();
         const authResult = new SubjectAuthResult();
         try {
-
             // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.
             const presentableResolveResourceIdSet = new Set(presentableAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
             // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
@@ -165,9 +164,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         if (!isEmpty(invalidContracts)) {
             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
-
-        const isExistAuthContracts = contracts.some(x => x.isAuth);
-        if (!isExistAuthContracts) {
+        if (!contracts.some(x => x.isAuth)) {
             return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
         }
 

@@ -1,10 +1,10 @@
 import {satisfies} from 'semver';
-import {inject, provide} from "midway";
-import {isEmpty, pick, chain, first} from "lodash";
-import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from "../../interface";
+import {inject, provide} from 'midway';
+import {isEmpty, pick, chain, first} from 'lodash';
+import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from '../../interface';
 import {
     CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType
-} from "../../test-node-interface";
+} from '../../test-node-interface';
 
 @provide()
 export class OptionReplaceHandler {
@@ -62,11 +62,14 @@ export class OptionReplaceHandler {
                 await this._recursionReplace(currTreeNodeInfo.dependencies, currPathChain, records);
                 continue;
             }
-            const {result, deep} = this._checkCycleDependency(dependencies, replacerInfo);
-            if (result) {
-                this.testRuleMatchInfo.isValid = false;
-                this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? "重复" : "循环"}依赖,无法替换`);
-                continue;
+            // 自己替换自己是被允许的,不用做循环检测
+            if (currTreeNodeInfo.id !== replacerInfo.id) {
+                const {result, deep} = this._checkCycleDependency(dependencies, replacerInfo);
+                if (result) {
+                    this.testRuleMatchInfo.isValid = false;
+                    this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? '重复' : '循环'}依赖,无法替换`);
+                    continue;
+                }
             }
             if (replacerInfo.replaceRecords?.length) {
                 records.push(...replacerInfo.replaceRecords);
@@ -122,8 +125,8 @@ export class OptionReplaceHandler {
                 versionId: resourceVersionInfo?.versionId,
                 fileSha1: resourceVersionInfo.fileSha1,
                 dependencies: []
-            }
-            replaceRecordInfo.replacer = pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version'])
+            };
+            replaceRecordInfo.replacer = pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version']);
             replaceRecords.push(replaceRecordInfo);
             // 单个替换统计生效次数
             replaceObjectInfo.efficientCount += 1;
@@ -135,7 +138,7 @@ export class OptionReplaceHandler {
         // 返回被替换之后的新的依赖树(已包含自身)
         const replacer: TestResourceDependencyTree = latestTestResourceDependencyTree.type === TestResourceOriginType.Object
             ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id).then(first)
-            : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first)
+            : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first);
 
         replacer.replaceRecords = replaceRecords;
         return replacer;
@@ -198,8 +201,7 @@ export class OptionReplaceHandler {
         if (isEmpty(dependencies)) {
             return {result: false, deep};
         }
-        //如果只有一个元素,自己替换自己的不同版本可以被允许,检测的目的是防止多个依赖一致
-        if (dependencies.length > 1 && dependencies.some(x => x.id === targetInfo.id && x.type === targetInfo.type)) {
+        if (dependencies.some(x => x.id === targetInfo.id && x.type === targetInfo.type)) {
             return {result: true, deep};
         }
         if (deep > 100) { //内部限制最大依赖树深度

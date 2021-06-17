@@ -135,6 +135,7 @@ export class ResourceAuthController {
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
+        const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
         ctx.validateParams();
 
         const condition = {nodeId};
@@ -149,9 +150,13 @@ export class ResourceAuthController {
         const presentableInfo = await this.presentableService.findOne(condition);
         ctx.entityNullObjectCheck(presentableInfo);
 
+        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
+        }
+
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName);
+        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
     }
 }

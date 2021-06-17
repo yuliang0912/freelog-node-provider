@@ -164,7 +164,6 @@ export class PresentableService implements IPresentableService {
             });
         }
 
-
         return this.presentableProvider.findOneAndUpdate({_id: presentableInfo.presentableId}, updateModel, {new: true});
     }
 

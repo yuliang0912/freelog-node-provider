@@ -1,5 +1,5 @@
-import { IOutsideApiService, ObjectStorageInfo, ResourceInfo } from "../../interface";
-import { CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
+import { IOutsideApiService, ObjectStorageInfo, ResourceInfo } from '../../interface';
+import { CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree } from '../../test-node-interface';
 export declare class OptionReplaceHandler {
     importObjectEntityHandler: any;
     importResourceEntityHandler: any;
