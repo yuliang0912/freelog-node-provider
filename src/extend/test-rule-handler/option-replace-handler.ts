@@ -31,7 +31,7 @@ export class OptionReplaceHandler {
         this.testRuleMatchInfo = testRuleInfo;
 
         const replaceRecords = [];
-        await this._recursionReplace(testRuleInfo.entityDependencyTree, [], replaceRecords);
+        await this._recursionReplace(testRuleInfo.entityDependencyTree, testRuleInfo.entityDependencyTree, [], replaceRecords);
         const rootDependency = first(testRuleInfo.entityDependencyTree);
         // 如果测试资源通过规则替换了版本,则修改测试资源对应的版本号
         if (rootDependency.id === testRuleInfo.testResourceOriginInfo.id && rootDependency.type === testRuleInfo.testResourceOriginInfo.type && rootDependency.type === TestResourceOriginType.Resource) {
@@ -46,11 +46,12 @@ export class OptionReplaceHandler {
 
     /**
      * 递归替换依赖树
+     * @param rootDependencies
      * @param dependencies
      * @param parents
      * @param records
      */
-    async _recursionReplace(dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[], records: any[]) {
+    async _recursionReplace(rootDependencies: TestResourceDependencyTree[], dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[], records: any[]) {
         if (isEmpty(dependencies ?? [])) {
             return;
         }
@@ -59,12 +60,12 @@ export class OptionReplaceHandler {
             const currPathChain = parents.concat([pick(currTreeNodeInfo, ['name', 'type', 'version'])]);
             const replacerInfo = await this._matchReplacer(currTreeNodeInfo, currPathChain);
             if (!replacerInfo) {
-                await this._recursionReplace(currTreeNodeInfo.dependencies, currPathChain, records);
+                await this._recursionReplace(rootDependencies, currTreeNodeInfo.dependencies, currPathChain, records);
                 continue;
             }
             // 自己替换自己是被允许的,不用做循环检测
             if (currTreeNodeInfo.id !== replacerInfo.id) {
-                const {result, deep} = this._checkCycleDependency(dependencies, replacerInfo);
+                const {result, deep} = this._checkCycleDependency(rootDependencies, replacerInfo);
                 if (result) {
                     this.testRuleMatchInfo.isValid = false;
                     this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? '重复' : '循环'}依赖,无法替换`);

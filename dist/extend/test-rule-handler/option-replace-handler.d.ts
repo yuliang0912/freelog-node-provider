@@ -12,11 +12,12 @@ export declare class OptionReplaceHandler {
     handle(testRuleInfo: TestRuleMatchInfo): Promise<void>;
     /**
      * 递归替换依赖树
+     * @param rootDependencies
      * @param dependencies
      * @param parents
      * @param records
      */
-    _recursionReplace(dependencies: TestResourceDependencyTree[], parents: {
+    _recursionReplace(rootDependencies: TestResourceDependencyTree[], dependencies: TestResourceDependencyTree[], parents: {
         name: string;
         type: string;
         version?: string;
