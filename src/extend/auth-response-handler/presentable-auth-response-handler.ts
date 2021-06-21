@@ -19,6 +19,7 @@ import {
     RetCodeEnum,
     SubjectAuthCodeEnum
 } from 'egg-freelog-base';
+import {convertIntranetApiResponseData} from 'egg-freelog-base/lib/freelog-common-func';
 
 @provide()
 export class PresentableAuthResponseHandler implements IPresentableAuthResponseHandler {
@@ -130,7 +131,22 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      * @param subResourceFile
      */
     async subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string) {
-        return this.outsideApiService.getSubResourceFile(resourceId, version, subResourceFile);
+        const response = await this.outsideApiService.getSubResourceFile(resourceId, version, subResourceFile);
+        if (!response.res.statusCode.toString().startsWith('2')) {
+            throw new ApplicationError('文件读取失败');
+        }
+        if (!response.res.headers['content-disposition']) {
+            if (response.res.headers['content-type'].includes('application/json')) {
+                convertIntranetApiResponseData(response.data.toString(), 'getSubResourceFile');
+            }
+            throw new ApplicationError('文件读取失败');
+        }
+
+        this.ctx.body = response.data;
+        this.ctx.set('content-disposition', response.res.headers['content-disposition']);
+        this.ctx.set('content-length', response.res.headers['content-length']);
+        // 代码需要放到ctx.attachment以后,否则不可控.
+        this.ctx.set('content-type', response.res.headers['content-type']);
     }
 
     /**

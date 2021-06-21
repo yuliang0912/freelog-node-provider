@@ -247,7 +247,13 @@ export class OutsideApiService implements IOutsideApiService {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/${versionId}/internalClientDownload`, null, CurlResFormatEnum.Original);
     }
 
-    async getSubResourceFile(resourceId: string, versionId: string) {
-
+    /**
+     * 获取子文件
+     * @param resourceId
+     * @param version
+     * @param subResourceFile
+     */
+    getSubResourceFile(resourceId: string, version: string, subResourceFile: string) {
+        return this.ctx.curlIntranetApi(`http://api.testfreelog.com/client/v2/resource-decompressions/getResourceFile?name=${resourceId}&version=${version}&tarPath=${subResourceFile}`, null, CurlResFormatEnum.Original);
     }
 }

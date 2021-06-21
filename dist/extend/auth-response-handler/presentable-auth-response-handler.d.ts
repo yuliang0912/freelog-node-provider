@@ -35,7 +35,7 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
      * @param version
      * @param subResourceFile
      */
-    subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string): Promise<any>;
+    subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string): Promise<void>;
     /**
      * 标的物自身信息展示
      * @param presentableInfo
