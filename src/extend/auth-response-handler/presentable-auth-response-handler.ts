@@ -137,7 +137,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         }
         if (!response.res.headers['content-disposition']) {
             if (response.res.headers['content-type'].includes('application/json')) {
-                convertIntranetApiResponseData(response.data.toString(), 'getSubResourceFile');
+                convertIntranetApiResponseData(JSON.parse(response.data.toString()), 'getSubResourceFile');
             }
             throw new ApplicationError('文件读取失败');
         }
