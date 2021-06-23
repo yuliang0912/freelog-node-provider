@@ -1,5 +1,5 @@
-import { PresentableInfo } from "./interface";
-import { SubjectAuthResult } from "./auth-interface";
+import { PresentableInfo } from './interface';
+import { SubjectAuthResult } from './auth-interface';
 import { PageResult } from 'egg-freelog-base';
 export declare enum TestResourceOriginType {
     Resource = "resource",
@@ -21,6 +21,7 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     id: string;
     version?: string;
     versions?: string[];
+    versionRange?: string;
     coverImages?: string[];
     resourceType: string;
     systemProperty?: object;

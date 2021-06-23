@@ -1,8 +1,8 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
-import {IOutsideApiService, ResourceDependencyTree, ResourceInfo} from "../../interface";
-import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
-import {PresentableCommonChecker} from "../presentable-common-checker";
+import {IOutsideApiService, ResourceDependencyTree, ResourceInfo} from '../../interface';
+import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from '../../test-node-interface';
+import {PresentableCommonChecker} from '../presentable-common-checker';
 
 @provide()
 export class ImportResourceEntityHandler {
@@ -70,7 +70,7 @@ export class ImportResourceEntityHandler {
                     versionId: model.versionId,
                     fileSha1: model.fileSha1,
                     dependencies: recursionConvertSubNodes(model.dependencies)
-                }
+                };
             });
         }
 
@@ -85,7 +85,7 @@ export class ImportResourceEntityHandler {
     matchResourceVersion(resourceInfo: ResourceInfo, versionRange: string) {
 
         const {resourceVersions, latestVersion} = resourceInfo;
-        if (!versionRange || versionRange === "latest") {
+        if (!versionRange || versionRange === 'latest') {
             return resourceVersions.find(x => x.version === latestVersion);
         }
 
@@ -116,13 +116,14 @@ export class ImportResourceEntityHandler {
 
         matchRule.testResourceOriginInfo = {
             id: resourceInfo.resourceId,
+            versionRange: matchRule.ruleInfo.candidate.versionRange,
             name: resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,
             resourceType: resourceInfo.resourceType ?? '',
             version: resourceVersion.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages,
-        }
+        };
         matchRule.efficientInfos.push({type: 'add', count: 1});
     }
 

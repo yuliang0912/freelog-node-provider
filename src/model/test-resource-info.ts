@@ -15,27 +15,28 @@ export class NodeTestResourceInfo extends MongooseModelBase {
         const BaseContractInfo = new this.mongoose.Schema({
             policyId: {type: String, required: true},  //不确定是否需要在新建方案时就确定策略.因为此时不签约.担心后续签约时,策略不存在.然后需要重新新建方案.
             contractId: {type: String, default: '', required: false}, //方案解决所使用的合同ID
-        }, {_id: false})
+        }, {_id: false});
 
         //声明处理的依赖
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
             contracts: [BaseContractInfo],
-        }, {_id: false})
+        }, {_id: false});
 
         const OriginInfoSchema = new this.mongoose.Schema({
             id: {type: String, required: true},
             name: {type: String, required: true},
             type: {type: String, required: true},  // resource or object
             version: {type: String, required: false, default: ''},
+            versionRange: {type: String, required: false, default: ''},
             versions: {type: [String], required: false, default: []}
-        }, {_id: false})
+        }, {_id: false});
 
         const RuleInfoSchema = new this.mongoose.Schema({
             ruleId: {type: String, required: false, default: ''},
             operations: {type: [String], required: true}
-        }, {_id: false})
+        }, {_id: false});
 
         const testResourcePropertySchema = new this.mongoose.Schema({
             key: {type: String, required: true},
@@ -72,14 +73,14 @@ export class NodeTestResourceInfo extends MongooseModelBase {
                 replaceRecords: {type: this.mongoose.Schema.Types.Mixed, required: false},
                 ruleId: {type: String, required: false},
             }
-        }, {_id: false})
+        }, {_id: false});
 
         const TestResourceSchema = new this.mongoose.Schema({
             nodeId: {type: Number, required: true},
             userId: {type: Number, required: true},
             testResourceId: {type: String, required: true, unique: true},
             testResourceName: {type: String, required: true},
-            associatedPresentableId: {type: String, default: "", required: false},
+            associatedPresentableId: {type: String, default: '', required: false},
             resourceType: {type: String, required: true}, //资源类型
             intro: {type: String, required: false, default: ''}, //测试资源简介
             originInfo: {type: OriginInfoSchema, required: true},

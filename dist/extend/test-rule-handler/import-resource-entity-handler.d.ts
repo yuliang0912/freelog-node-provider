@@ -1,6 +1,6 @@
-import { IOutsideApiService, ResourceInfo } from "../../interface";
-import { TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
-import { PresentableCommonChecker } from "../presentable-common-checker";
+import { IOutsideApiService, ResourceInfo } from '../../interface';
+import { TestRuleMatchInfo, TestResourceDependencyTree } from '../../test-node-interface';
+import { PresentableCommonChecker } from '../presentable-common-checker';
 export declare class ImportResourceEntityHandler {
     outsideApiService: IOutsideApiService;
     presentableCommonChecker: PresentableCommonChecker;
