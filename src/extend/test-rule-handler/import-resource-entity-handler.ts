@@ -103,7 +103,7 @@ export class ImportResourceEntityHandler {
 
         if (!resourceInfo) {
             matchRule.isValid = false;
-            matchRule.matchErrors.push(`资源市场中不存在资源${matchRule.ruleInfo.candidate.name}`);
+            matchRule.matchErrors.push(`不存在名称为${matchRule.ruleInfo.candidate.name}的资源`);
             return;
         }
 

@@ -69,7 +69,7 @@ export class ImportObjectEntityHandler {
 
         if (!objectInfo) {
             matchRule.isValid = false;
-            matchRule.matchErrors.push(`存储空间中不存在名称为${matchRule.ruleInfo.candidate.name}的对象`);
+            matchRule.matchErrors.push(`不存在名称为${matchRule.ruleInfo.candidate.name}的对象`);
             return;
         }
 
