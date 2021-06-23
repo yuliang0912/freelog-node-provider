@@ -6,7 +6,7 @@
   "dependencies": {
     "@freelog/nmr_translator": "^5.0.10",
     "async": "^3.2.0",
-    "egg-freelog-base": "^3.1.17",
+    "egg-freelog-base": "^3.1.18",
     "egg-scripts": "^2.10.0",
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.4.0",

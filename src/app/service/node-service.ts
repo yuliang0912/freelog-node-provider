@@ -76,12 +76,12 @@ export class NodeService implements INodeService {
                 $match: {ownerUserId: {$in: userIds}}
             },
             {
-                $group: {_id: "$ownerUserId", count: {"$sum": 1}}
+                $group: {_id: '$ownerUserId', count: {'$sum': 1}}
             },
             {
-                $project: {_id: 0, userId: "$_id", count: "$count"}
+                $project: {_id: 0, userId: '$_id', count: '$count'}
             }
-        ])
+        ]);
     }
 
     async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>> {
@@ -106,7 +106,7 @@ export class NodeService implements INodeService {
         if (Object.keys(condition).length) {
             pipeline.unshift({$match: condition});
         }
-        const [totalItemInfo] = await this.nodeProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]])
+        const [totalItemInfo] = await this.nodeProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]]);
         const {totalItem = 0} = totalItemInfo ?? {};
 
         pipeline.push({$sort: options?.sort ?? {userId: -1}}, {$skip: options?.skip ?? 0}, {$limit: options?.limit ?? 10});
@@ -114,7 +114,7 @@ export class NodeService implements INodeService {
 
         return {
             skip: options?.skip ?? 0, limit: options?.limit ?? 10, totalItem, dataList
-        }
+        };
     }
 
     async count(condition: object): Promise<number> {
@@ -133,10 +133,10 @@ export class NodeService implements INodeService {
         if (!nodeDetail) {
             await this.nodeDetailProvider.create({nodeId, tagIds});
         } else {
-            await this.nodeDetailProvider.updateOne({nodeId}, {$addToSet: {tagIds}})
+            await this.nodeDetailProvider.updateOne({nodeId}, {$addToSet: {tagIds}});
         }
 
-        const effectiveTagIds = difference(tagIds, nodeDetail?.tagIds ?? [])
+        const effectiveTagIds = difference(tagIds, nodeDetail?.tagIds ?? []);
 
         return this.tagService.setTagAutoIncrementCounts(effectiveTagIds, 1);
     }
@@ -153,7 +153,7 @@ export class NodeService implements INodeService {
         }
         await this.nodeDetailProvider.updateOne({nodeId}, {
             tagIds: nodeDetail.tagIds.filter(x => x !== tagInfo.tagId)
-        })
+        });
         return this.tagService.setTagAutoIncrementCount(tagInfo, -1);
     }
 

@@ -254,6 +254,6 @@ export class OutsideApiService implements IOutsideApiService {
      * @param subResourceFile
      */
     getSubResourceFile(resourceId: string, version: string, subResourceFile: string) {
-        return this.ctx.curlIntranetApi(`http://api.testfreelog.com/client/v2/resource-decompressions/getResourceFile?name=${resourceId}&version=${version}&tarPath=${subResourceFile}`, null, CurlResFormatEnum.Original);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getResourceFile?name=${resourceId}&version=${version}&tarPath=${subResourceFile}`, null, CurlResFormatEnum.Original);
     }
 }
