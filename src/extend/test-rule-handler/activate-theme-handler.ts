@@ -20,7 +20,7 @@ export class ActivateThemeHandler {
         const themeResourceInfo = await this.nodeTestResourceProvider.findOne({
             testResourceName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.themeName}$`, 'i')
         });
-        if (!activeThemeRuleInfo.isValid) {
+        if (activeThemeRuleInfo.isValid === false) {
             return themeResourceInfo;
         }
         if (!themeResourceInfo) {
