@@ -18,9 +18,10 @@ export class ActivateThemeHandler {
     async handle(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
 
         const themeResourceInfo = await this.nodeTestResourceProvider.findOne({
+            nodeId,
             testResourceName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.themeName}$`, 'i')
         });
-        if (activeThemeRuleInfo.isValid === false) {
+        if (activeThemeRuleInfo?.isValid === false) {
             return themeResourceInfo;
         }
         if (!themeResourceInfo) {

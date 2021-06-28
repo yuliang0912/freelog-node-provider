@@ -229,7 +229,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     async setThemeTestResource(nodeTestRuleInfo: NodeTestRuleInfo) {
         const activeThemeRuleInfo: TestRuleMatchInfo = nodeTestRuleInfo.testRules.find(x => x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
         let themeTestResourceInfo = await this.testRuleHandler.matchThemeRule(nodeTestRuleInfo.nodeId, activeThemeRuleInfo);
-
         if (!themeTestResourceInfo) {
             themeTestResourceInfo = await this.nodeTestResourceProvider.findOne({
                 nodeId: nodeTestRuleInfo.nodeId,
