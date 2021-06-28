@@ -23,10 +23,10 @@ import {
     PresentableInfo,
     PresentableVersionInfo,
     ResourceInfo
-} from "../interface";
-import {assign, chain, chunk, first, isEmpty, omit} from "lodash";
-import {NodeTestRuleMatchStatus} from "../enum";
-import {IMongodbOperation, ResourceTypeEnum} from "egg-freelog-base";
+} from '../interface';
+import {assign, chain, chunk, first, isEmpty, omit} from 'lodash';
+import {NodeTestRuleMatchStatus} from '../enum';
+import {IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
 import {TestRuleHandler} from '../extend/test-rule-handler';
 
@@ -87,7 +87,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 50)) {
                 await this.matchAndSaveTestResourceInfos(testRules, nodeId, nodeTestRuleInfo.userId).then(testRuleMatchResults => {
                     allTestRuleMatchResults.push(...testRuleMatchResults);
-                })
+                });
             }
 
             for (const matchResult of allTestRuleMatchResults) {
@@ -141,9 +141,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const existingTestResourceMap = new Map<string, TestResourceInfo>();
         const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
         for (const resourceIds of chunk(allResourceIds, 200)) {
-            await this.outsideApiService.getResourceListByIds(resourceIds, {projection: "resourceId,baseUpcastResources,userId"}).then(list => {
+            await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
                 list.forEach(resource => resourceMap.set(resource.resourceId, resource));
-            })
+            });
         }
 
         const testResourceTreeInfos = [];
@@ -159,7 +159,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 testResourceName: testResource.testResourceName,
                 authTree: testResource.authTree,
                 dependencyTree: testResource.dependencyTree
-            })
+            });
         }
 
         await this.nodeTestResourceProvider.insertMany(matchedNodeTestResources);
@@ -172,7 +172,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 matchErrors: x.matchErrors,
                 efficientInfos: x.efficientInfos,
                 associatedPresentableId: x.presentableInfo?.presentableId
-            }
+            };
         });
     }
 
@@ -193,7 +193,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         while (true) {
             const presentables = await this.presentableService.find(condition, projection.join(' '), {
                 skip, limit, sort: {createDate: -1}
-            })
+            });
             if (isEmpty(presentables)) {
                 break;
             }
@@ -234,7 +234,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 nodeId: nodeTestRuleInfo.nodeId,
                 resourceType: ResourceTypeEnum.THEME,
                 'stateInfo.onlineStatusInfo.onlineStatus': 1
-            })
+            });
         }
         if (!themeTestResourceInfo) {
             return;
@@ -293,7 +293,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 },
                 replaceInfo: {
                     replaceRecords: replaceRecords ?? [],
-                    ruleId: (replaceRecords ?? []).length ? id : "default"
+                    ruleId: (replaceRecords ?? []).length ? id : 'default'
                 }
             },
             rules: [{
@@ -307,7 +307,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 resourceId: x.id,
                 resourceName: x.name,
                 contracts: []
-            }
+            };
         });
         // 如果根级资源的版本被替换掉了,则整个测试资源的版本重置为被替换之后的版本
         if (testResourceOriginInfo.type === TestResourceOriginType.Resource && !isEmpty(entityDependencyTree)) {
@@ -456,7 +456,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 fileSha1: item.fileSha1,
                 parentNid: item.parentNid,
                 deep: item.deep
-            }
+            };
         });
     }
 
@@ -477,7 +477,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 deep: item.deep,
                 parentNid: item.parentNid,
                 userId: resourceMap.get(item.resourceId)?.userId
-            }
+            };
         });
     }
 

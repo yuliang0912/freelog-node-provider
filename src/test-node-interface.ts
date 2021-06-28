@@ -276,6 +276,8 @@ export interface ITestNodeService {
     findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>>;
 
     searchTestResourceTreeInfos(nodeId: number, keywords: string): Promise<TestResourceTreeInfo[]>;
+
+    preExecutionNodeTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]>;
 }
 
 export interface ITestResourceAuthService {

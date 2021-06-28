@@ -2,10 +2,10 @@ import {inject, provide} from 'midway';
 import {
     IMatchTestRuleEventHandler, ITestNodeService,
     NodeTestRuleInfo, ResolveResourceInfo,
-    TestResourceInfo, TestResourceTreeInfo
+    TestResourceInfo, TestResourceTreeInfo, TestRuleMatchInfo
 } from '../../test-node-interface';
 import {IOutsideApiService} from '../../interface';
-import {NodeTestRuleMatchStatus} from "../../enum";
+import {NodeTestRuleMatchStatus} from '../../enum';
 import {assign, chain, differenceBy, isEmpty} from 'lodash';
 import {ApplicationError, PageResult, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {TestRuleHandler} from '../../extend/test-rule-handler';
@@ -71,6 +71,19 @@ export class TestNodeService implements ITestNodeService {
     }
 
     /**
+     * 获取测试规则预执行结果
+     * @param nodeId
+     * @param testRuleText
+     */
+    async preExecutionNodeTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]> {
+        const {errors, rules} = this.testRuleHandler.compileTestRule(testRuleText);
+        if (errors?.length) {
+            throw new ApplicationError('测试节点策略编辑失败', {errors});
+        }
+        return this.testRuleHandler.main(nodeId, rules);
+    }
+
+    /**
      * 匹配规则并且保存结果
      * @param nodeId
      * @param testRuleText
@@ -97,13 +110,13 @@ export class TestNodeService implements ITestNodeService {
         const nodeTestRule = await this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
             return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
         });
-        this.matchTestRuleEventHandler.handle(nodeId, true).then()
+        this.matchTestRuleEventHandler.handle(nodeId, true).then();
 
         return new Promise<NodeTestRuleInfo>((resolve) => {
             setTimeout(function () {
                 resolve(nodeTestRule);
-            }, 50)
-        })
+            }, 50);
+        });
     }
 
     /**
@@ -121,8 +134,8 @@ export class TestNodeService implements ITestNodeService {
         return new Promise<NodeTestRuleInfo>((resolve) => {
             setTimeout(function () {
                 resolve(nodeTestRuleInfo);
-            }, 50)
-        })
+            }, 50);
+        });
     }
 
     /**
@@ -133,7 +146,7 @@ export class TestNodeService implements ITestNodeService {
     async updateTestResource(testResource: TestResourceInfo, resolveResources: ResolveResourceInfo[]): Promise<TestResourceInfo> {
         const invalidResolves = differenceBy(resolveResources, testResource.resolveResources, 'resourceId');
         if (!isEmpty(invalidResolves)) {
-            throw new ApplicationError(this.ctx.gettext('node-test-resolve-release-invalid-error'), {invalidResolves})
+            throw new ApplicationError(this.ctx.gettext('node-test-resolve-release-invalid-error'), {invalidResolves});
         }
         const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
             subjectId: resourceId, policyId

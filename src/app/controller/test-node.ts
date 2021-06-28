@@ -71,6 +71,24 @@ export class TestNodeController {
         await this.testNodeService.matchAndSaveNodeTestRule(nodeId, currentRuleText).then(ctx.success);
     }
 
+    // 节点测试规则预执行
+    @post('/:nodeId/rules/preExecution')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testRulePreExecution() {
+
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
+        const testRuleText = ctx.checkBody('testRuleText').exist().type('string').decodeURIComponent().value;
+        ctx.validateParams();
+
+        const nodeInfo = await this.nodeService.findById(nodeId);
+        this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
+
+        const ruleMatchedInfos = await this.testNodeService.preExecutionNodeTestRule(nodeId, testRuleText ?? '');
+
+        ctx.success(ruleMatchedInfos.map(x => pick(x, ['id', 'isValid', 'matchErrors', 'efficientInfos', 'effectiveMatchCount', 'ruleInfo'])));
+    }
+
     // 重新匹配节点测试规则
     @post('/:nodeId/rules/rematch')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)

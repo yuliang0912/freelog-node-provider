@@ -1,6 +1,6 @@
-import {inject, provide} from "midway";
-import {IMongodbOperation, ResourceTypeEnum} from "egg-freelog-base";
-import {TestRuleMatchInfo, TestRuleEfficientInfo, TestResourceInfo} from "../../test-node-interface";
+import {inject, provide} from 'midway';
+import {IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestResourceInfo} from '../../test-node-interface';
 
 @provide()
 export class ActivateThemeHandler {
@@ -20,6 +20,9 @@ export class ActivateThemeHandler {
         const themeResourceInfo = await this.nodeTestResourceProvider.findOne({
             testResourceName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.themeName}$`, 'i')
         });
+        if (!activeThemeRuleInfo.isValid) {
+            return themeResourceInfo;
+        }
         if (!themeResourceInfo) {
             activeThemeRuleInfo.isValid = false;
             activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}不是一个有效的主题资源`);
