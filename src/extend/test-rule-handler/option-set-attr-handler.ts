@@ -1,7 +1,7 @@
-import {provide} from "midway";
+import {provide} from 'midway';
 import {
     TestRuleMatchInfo, TestRuleEfficientInfo, TestResourcePropertyInfo, TestNodeOperationEnum
-} from "../../test-node-interface";
+} from '../../test-node-interface';
 import {isArray} from 'lodash';
 
 @provide()
@@ -24,23 +24,23 @@ export class OptionSetAttrHandler {
         const editablePropertyMap = new Map<string, TestResourcePropertyInfo>();
         // 以下4个for循环需要严格遵守顺序.属性的优先级分别为1.系统属性 2:资源定义的不可编辑的属性 3:测试规则规定的属性 4:展品重写的属性 5:资源自定义的可编辑属性.
         for (const [key, value] of Object.entries(testRuleInfo.testResourceOriginInfo.systemProperty ?? {})) {
-            readonlyPropertyMap.set(key, {key, value, remark: ''});
+            readonlyPropertyMap.set(key, {key, value, authority: 1, remark: ''});
         }
         for (const {key, defaultValue, remark, type} of testRuleInfo.testResourceOriginInfo.customPropertyDescriptors ?? []) {
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }
             if (type === 'readonlyText') {
-                readonlyPropertyMap.set(key, {key, value: defaultValue, remark});
+                readonlyPropertyMap.set(key, {key, value: defaultValue, authority: 1, remark});
             } else {
-                editablePropertyMap.set(key, {key, value: defaultValue, remark});
+                editablePropertyMap.set(key, {key, value: defaultValue, authority: 2, remark});
             }
         }
         for (const {key, value, remark} of testRuleInfo?.presentableRewriteProperty ?? []) {
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }
-            editablePropertyMap.set(key, {key, value, remark});
+            editablePropertyMap.set(key, {key, authority: 6, value, remark});
         }
         for (const attrRule of ruleInfo.attrs ?? []) {
             if (attrRule.operation === 'delete') {
@@ -53,6 +53,7 @@ export class OptionSetAttrHandler {
             editablePropertyMap.set(attrRule.key, {
                 key: attrRule.key,
                 value: attrRule.value,
+                authority: 6,
                 remark: attrRule.description
             });
         }

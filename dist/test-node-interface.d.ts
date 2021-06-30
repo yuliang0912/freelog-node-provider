@@ -43,6 +43,7 @@ export interface TestResourcePropertyInfo {
     key: string;
     value: string;
     remark: string;
+    authority: 1 | 2 | 4 | 6;
 }
 export interface BaseTestRuleInfo {
     text: string;

@@ -1,4 +1,4 @@
-import { TestRuleMatchInfo } from "../../test-node-interface";
+import { TestRuleMatchInfo } from '../../test-node-interface';
 export declare class OptionSetAttrHandler {
     private setAttrOptionEfficientCountInfo;
     /**
