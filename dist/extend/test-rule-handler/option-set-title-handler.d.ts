@@ -1,4 +1,4 @@
-import { TestRuleMatchInfo } from "../../test-node-interface";
+import { TestRuleMatchInfo } from '../../test-node-interface';
 export declare class OptionSetTitleHandler {
     private setTitleOptionEfficientCountInfo;
     /**

@@ -1,6 +1,6 @@
-import {provide} from "midway";
-import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from "../../test-node-interface";
-import {isString} from 'lodash'
+import {provide} from 'midway';
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from '../../test-node-interface';
+import {isString} from 'lodash';
 
 @provide()
 export class OptionSetTitleHandler {

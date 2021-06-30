@@ -95,6 +95,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 if (!matchResult.isValid) {
                     testRuleInfo.matchErrors = matchResult.matchErrors;
                 } else {
+                    testRuleInfo.matchErrors = matchResult.matchErrors;
                     testRuleInfo.efficientInfos = matchResult.efficientInfos;
                 }
                 if (matchResult.associatedPresentableId) {

@@ -1,7 +1,7 @@
-import {provide} from "midway";
-import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from "../../test-node-interface";
-import {isBoolean} from 'lodash'
-import {ResourceTypeEnum} from "egg-freelog-base";
+import {provide} from 'midway';
+import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from '../../test-node-interface';
+import {isBoolean} from 'lodash';
+import {ResourceTypeEnum} from 'egg-freelog-base';
 
 @provide()
 export class OptionSetOnlineStatusHandler {
