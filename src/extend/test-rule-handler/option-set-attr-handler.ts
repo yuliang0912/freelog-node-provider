@@ -68,7 +68,7 @@ export class OptionSetAttrHandler {
         // 只读属性包括系统属性以及自定义属性中的只读属性.只读属性不允许修改或者删除
         const invalidKeys = ruleInfo.attrs.filter(x => readonlyPropertyMap.has(x.key));
         if (invalidKeys.length) {
-            testRuleInfo.matchErrors.push(`自定义属性中存在无效操作.key值为:${invalidKeys.toString()}`);
+            testRuleInfo.matchErrors.push(`自定义属性中存在无效操作.key值为:${invalidKeys.map(x => x.key).toString()}`);
         }
 
         testRuleInfo.attrInfo = {
