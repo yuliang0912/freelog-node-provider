@@ -41,6 +41,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
         const testResourcePropertySchema = new this.mongoose.Schema({
             key: {type: String, required: true},
             value: {type: this.mongoose.Schema.Types.Mixed, required: true},
+            authority: {type: Number, required: true, default: 1},
             remark: {type: String, required: false, default: ''},
         }, {_id: false});
 
