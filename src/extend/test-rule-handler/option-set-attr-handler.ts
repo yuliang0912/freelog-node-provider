@@ -42,6 +42,7 @@ export class OptionSetAttrHandler {
             }
             editablePropertyMap.set(key, {key, authority: 6, value, remark});
         }
+        const editablePropertyKeys = new Set([...editablePropertyMap.keys()]);
         for (const attrRule of ruleInfo.attrs ?? []) {
             if (attrRule.operation === 'delete') {
                 editablePropertyMap.delete(attrRule.key);
@@ -53,6 +54,7 @@ export class OptionSetAttrHandler {
             editablePropertyMap.set(attrRule.key, {
                 key: attrRule.key,
                 value: attrRule.value,
+                isRuleAdd: !editablePropertyKeys.has(attrRule.key),
                 authority: 6,
                 remark: attrRule.description
             });
@@ -68,6 +70,7 @@ export class OptionSetAttrHandler {
         // 只读属性包括系统属性以及自定义属性中的只读属性.只读属性不允许修改或者删除
         const invalidKeys = ruleInfo.attrs.filter(x => readonlyPropertyMap.has(x.key));
         if (invalidKeys.length) {
+            testRuleInfo.isValid = false;
             testRuleInfo.matchErrors.push(`自定义属性中存在无效操作.key值为:${invalidKeys.map(x => x.key).toString()}`);
         }
 

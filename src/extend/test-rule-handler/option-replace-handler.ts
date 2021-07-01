@@ -205,7 +205,7 @@ export class OptionReplaceHandler {
         if (dependencies.some(x => x.id === targetInfo.id && x.type === targetInfo.type)) {
             return {result: true, deep};
         }
-        if (deep > 100) { //内部限制最大依赖树深度
+        if (deep > 50) { //内部限制最大依赖树深度
             return {result: false, deep, errorMsg: '依赖的嵌套层级过大'};
         }
         const subDependencies = chain(dependencies).map(m => m.dependencies).flattenDeep().value();

@@ -9,7 +9,7 @@ import {
     TestNodeOperationEnum,
     TestResourceDependencyTree,
     TestResourceInfo,
-    TestResourceOriginType,
+    TestResourceOriginType, TestResourcePropertyInfo,
     TestResourceTreeInfo,
     TestRuleMatchInfo,
     TestRuleMatchResult
@@ -207,7 +207,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             });
 
             const testResourceTreeInfos = [];
-            const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, resourceMap.get(x.resourceInfo.resourceId), nodeId, userId));
+            const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, presentableVersionMap.get(x.presentableId), resourceMap.get(x.resourceInfo.resourceId), nodeId, userId));
             for (const testResource of testResources) {
                 testResourceTreeInfos.push({
                     nodeId,
@@ -351,11 +351,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo
+     * @param presentableVersionInfo
      * @param resourceInfo
      * @param nodeId
      * @param userId
      */
-    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo {
+    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo {
         const testResourceOriginInfo = {
             id: presentableInfo.resourceInfo.resourceId,
             name: presentableInfo.resourceInfo.resourceName,
@@ -390,7 +391,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 },
                 propertyInfo: {
-                    testResourceProperty: [],
+                    testResourceProperty: this.getPresentablePropertyInfo(presentableVersionInfo),
                     ruleId: 'default'
                 },
                 themeInfo: {
@@ -497,5 +498,36 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resourceName: m.name,
             contracts: resolveResourceMap.get(m.id) ?? []
         }));
+    }
+
+    /**
+     * 展品版本信息
+     * @param presentableVersionInfo
+     */
+    getPresentablePropertyInfo(presentableVersionInfo: PresentableVersionInfo) {
+        const readonlyPropertyMap = new Map<string, TestResourcePropertyInfo>();
+        const editablePropertyMap = new Map<string, TestResourcePropertyInfo>();
+
+        // 以下4个for循环需要严格遵守顺序.属性的优先级分别为1.系统属性 2:资源定义的不可编辑的属性 3:测试规则规定的属性 4:展品重写的属性 5:资源自定义的可编辑属性.
+        for (const [key, value] of Object.entries(presentableVersionInfo.resourceSystemProperty ?? {})) {
+            readonlyPropertyMap.set(key, {key, value, authority: 1, remark: ''});
+        }
+        for (const {key, defaultValue, remark, type} of presentableVersionInfo.resourceCustomPropertyDescriptors ?? []) {
+            if (readonlyPropertyMap.has(key)) {
+                continue;
+            }
+            if (type === 'readonlyText') {
+                readonlyPropertyMap.set(key, {key, value: defaultValue, authority: 1, remark});
+            } else {
+                editablePropertyMap.set(key, {key, value: defaultValue, authority: 2, remark});
+            }
+        }
+        for (const {key, value, remark} of presentableVersionInfo.presentableRewriteProperty ?? []) {
+            if (readonlyPropertyMap.has(key)) {
+                continue;
+            }
+            editablePropertyMap.set(key, {key, authority: 6, value, remark});
+        }
+        return [...readonlyPropertyMap.values(), ...editablePropertyMap.values()];
     }
 }

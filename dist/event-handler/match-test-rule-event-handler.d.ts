@@ -1,5 +1,5 @@
-import { BaseTestRuleInfo, FlattenTestResourceAuthTree, FlattenTestResourceDependencyTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestResourceTreeInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
-import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo, PresentableInfo, ResourceInfo } from '../interface';
+import { BaseTestRuleInfo, FlattenTestResourceAuthTree, FlattenTestResourceDependencyTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestResourcePropertyInfo, TestResourceTreeInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
+import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo, PresentableInfo, PresentableVersionInfo, ResourceInfo } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { PresentableCommonChecker } from '../extend/presentable-common-checker';
 import { TestRuleHandler } from '../extend/test-rule-handler';
@@ -54,11 +54,12 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
     /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo
+     * @param presentableVersionInfo
      * @param resourceInfo
      * @param nodeId
      * @param userId
      */
-    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo;
+    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo;
     /**
      * 平铺依赖树
      * @param testResourceId
@@ -89,4 +90,9 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * @param presentableInfo
      */
     getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userId: number, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo): any[];
+    /**
+     * 展品版本信息
+     * @param presentableVersionInfo
+     */
+    getPresentablePropertyInfo(presentableVersionInfo: PresentableVersionInfo): TestResourcePropertyInfo[];
 }
