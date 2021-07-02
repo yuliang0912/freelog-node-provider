@@ -1,7 +1,9 @@
-import { TestRuleMatchInfo, TestResourceDependencyTree } from "../../test-node-interface";
-import { IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo, FlattenPresentableDependencyTree, PresentableVersionInfo } from "../../interface";
-import { PresentableCommonChecker } from "../presentable-common-checker";
+import { TestRuleMatchInfo, TestResourceDependencyTree } from '../../test-node-interface';
+import { IOutsideApiService, IPresentableService, IPresentableVersionService, PresentableInfo, ResourceInfo, FlattenPresentableDependencyTree, PresentableVersionInfo } from '../../interface';
+import { PresentableCommonChecker } from '../presentable-common-checker';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class ImportPresentableEntityHandler {
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     presentableService: IPresentableService;
     presentableVersionService: IPresentableVersionService;

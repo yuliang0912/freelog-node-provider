@@ -1,11 +1,15 @@
-import {provide} from 'midway';
+import {inject, provide} from 'midway';
 import {
     TestRuleMatchInfo, TestRuleEfficientInfo, TestResourcePropertyInfo, TestNodeOperationEnum
 } from '../../test-node-interface';
 import {isArray} from 'lodash';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class OptionSetAttrHandler {
+
+    @inject()
+    ctx: FreelogContext;
 
     private setAttrOptionEfficientCountInfo: TestRuleEfficientInfo = {type: 'setAttr', count: 1};
 
@@ -44,11 +48,19 @@ export class OptionSetAttrHandler {
         }
         const editablePropertyKeys = new Set([...editablePropertyMap.keys()]);
         for (const attrRule of ruleInfo.attrs ?? []) {
+            const isReadonlyProperty = readonlyPropertyMap.has(attrRule.key);
             if (attrRule.operation === 'delete') {
-                editablePropertyMap.delete(attrRule.key);
+                if (isReadonlyProperty) {
+                    testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_attribute_access_limited', attrRule.key));
+                } else if (!editablePropertyMap.has(attrRule.key)) {
+                    testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_attribute_not_exist', attrRule.key));
+                } else {
+                    editablePropertyMap.delete(attrRule.key);
+                }
                 continue;
             }
             if (readonlyPropertyMap.has(attrRule.key)) {
+                testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_value_access_limited', attrRule.key));
                 continue;
             }
             editablePropertyMap.set(attrRule.key, {
@@ -65,13 +77,6 @@ export class OptionSetAttrHandler {
                 attrs: [...readonlyPropertyMap.values(), ...editablePropertyMap.values()], source: null
             };
             return;
-        }
-
-        // 只读属性包括系统属性以及自定义属性中的只读属性.只读属性不允许修改或者删除
-        const invalidKeys = ruleInfo.attrs.filter(x => readonlyPropertyMap.has(x.key));
-        if (invalidKeys.length) {
-            testRuleInfo.isValid = false;
-            testRuleInfo.matchErrors.push(`自定义属性中存在无效操作.key值为:${invalidKeys.map(x => x.key).toString()}`);
         }
 
         testRuleInfo.attrInfo = {

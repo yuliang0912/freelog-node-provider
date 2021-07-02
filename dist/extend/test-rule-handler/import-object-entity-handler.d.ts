@@ -1,6 +1,8 @@
-import { IOutsideApiService, ObjectStorageInfo } from "../../interface";
-import { TestResourceDependencyTree, TestRuleMatchInfo } from "../../test-node-interface";
+import { IOutsideApiService, ObjectStorageInfo } from '../../interface';
+import { TestResourceDependencyTree, TestRuleMatchInfo } from '../../test-node-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class ImportObjectEntityHandler {
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     /**
      * 从规则中分析需要导入的资源数据

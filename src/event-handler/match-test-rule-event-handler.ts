@@ -92,10 +92,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
             for (const matchResult of allTestRuleMatchResults) {
                 const testRuleInfo = nodeTestRuleInfo.testRules.find(x => x.id === matchResult.ruleId) ?? {};
-                if (!matchResult.isValid) {
-                    testRuleInfo.matchErrors = matchResult.matchErrors;
-                } else {
-                    testRuleInfo.matchErrors = matchResult.matchErrors;
+                testRuleInfo.matchErrors = matchResult.matchErrors;
+                if (matchResult.isValid) {
                     testRuleInfo.efficientInfos = matchResult.efficientInfos;
                 }
                 if (matchResult.associatedPresentableId) {

@@ -1,5 +1,5 @@
-import { BaseTestRuleInfo, TestResourceInfo, TestRuleMatchInfo } from "../../test-node-interface";
-import { PresentableCommonChecker } from "../presentable-common-checker";
+import { BaseTestRuleInfo, TestResourceInfo, TestRuleMatchInfo } from '../../test-node-interface';
+import { PresentableCommonChecker } from '../presentable-common-checker';
 export declare class TestRuleHandler {
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[];

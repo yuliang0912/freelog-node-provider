@@ -1,11 +1,14 @@
 import {isEmpty, isString} from 'lodash';
 import {provide, inject} from 'midway';
-import {IPresentableService} from "../../interface";
-import {TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo} from "../../test-node-interface";
+import {IPresentableService} from '../../interface';
+import {TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo} from '../../test-node-interface';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class TestRuleChecker {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     presentableService: IPresentableService;
 
@@ -35,13 +38,12 @@ export class TestRuleChecker {
         for (const {presentableName, resourceInfo} of presentables) {
             const existingPresentableNameRule = addOperationRules.find(x => this._isEqualStr(x.ruleInfo.exhibitName, presentableName));
             if (existingPresentableNameRule) {
-                existingPresentableNameRule.isValid = false;
-                existingPresentableNameRule.matchErrors.push(`节点的已存在名称为${existingPresentableNameRule.ruleInfo.exhibitName}的展品,规则无法生效`);
+                existingPresentableNameRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_exhibit_name_existed', existingPresentableNameRule.ruleInfo.exhibitName));
             }
             const existingResourceNameRule = addOperationRules.find(x => x.ruleInfo.candidate?.type === TestResourceOriginType.Resource && this._isEqualStr(x.ruleInfo.candidate?.name, resourceInfo.resourceName));
             if (existingResourceNameRule) {
-                existingResourceNameRule.isValid = false;
-                existingResourceNameRule.matchErrors.push(`节点中已存在引用资源名称为${existingResourceNameRule.ruleInfo.candidate.name}的展品,规则无法生效`);
+                const msg = this.ctx.gettext(existingResourceNameRule.ruleInfo.candidate.type === 'resource' ? 'reflect_rule_pre_excute_error_test_resource_existed' : 'reflect_rule_pre_excute_error_test_object_existed', existingResourceNameRule.ruleInfo.candidate.name);
+                existingResourceNameRule.matchErrors.push(msg);
             }
         }
 

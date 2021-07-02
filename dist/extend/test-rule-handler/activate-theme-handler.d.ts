@@ -1,6 +1,7 @@
-import { IMongodbOperation } from 'egg-freelog-base';
+import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 import { TestRuleMatchInfo, TestResourceInfo } from '../../test-node-interface';
 export declare class ActivateThemeHandler {
+    ctx: FreelogContext;
     nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
     private activeThemeEfficientCountInfo;
     /**

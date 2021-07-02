@@ -1,14 +1,17 @@
 import {provide, inject} from 'midway';
-import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from "../../test-node-interface";
+import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from '../../test-node-interface';
 import {
     IOutsideApiService, IPresentableService, IPresentableVersionService,
     PresentableInfo, PresentableDependencyTree, ResourceInfo, FlattenPresentableDependencyTree, PresentableVersionInfo
-} from "../../interface";
-import {PresentableCommonChecker} from "../presentable-common-checker";
+} from '../../interface';
+import {PresentableCommonChecker} from '../presentable-common-checker';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class ImportPresentableEntityHandler {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
@@ -69,7 +72,7 @@ export class ImportPresentableEntityHandler {
                     versionId: model.versionId,
                     fileSha1: model.fileSha1,
                     dependencies: recursionConvertSubNodes(model.dependencies)
-                }
+                };
             });
         }
 
@@ -86,18 +89,7 @@ export class ImportPresentableEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableVersionInfo: PresentableVersionInfo) {
 
         if (!presentableInfo) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`节点中不存在名称为${matchRule.ruleInfo.exhibitName}的展品`);
-            return;
-        }
-        if (!resourceInfo) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`展品${matchRule.ruleInfo.exhibitName}引用的资源无法索引`);
-            return;
-        }
-        if (!presentableVersionInfo) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`展品${matchRule.ruleInfo.exhibitName}版本信息无法索引`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_exhibit_not_existed', matchRule.ruleInfo.exhibitName));
             return;
         }
 

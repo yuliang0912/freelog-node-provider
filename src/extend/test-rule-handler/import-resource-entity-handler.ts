@@ -3,10 +3,13 @@ import {provide, inject} from 'midway';
 import {IOutsideApiService, ResourceDependencyTree, ResourceInfo} from '../../interface';
 import {TestRuleMatchInfo, TestResourceOriginType, TestResourceDependencyTree} from '../../test-node-interface';
 import {PresentableCommonChecker} from '../presentable-common-checker';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class ImportResourceEntityHandler {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
@@ -102,15 +105,13 @@ export class ImportResourceEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo): void {
 
         if (!resourceInfo) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`不存在名称为${matchRule.ruleInfo.candidate.name}的资源`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_resource_not_existed', matchRule.ruleInfo.candidate.name));
             return;
         }
 
         const resourceVersion = this.matchResourceVersion(resourceInfo, matchRule.ruleInfo.candidate.versionRange);
         if (!resourceVersion) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`资源${matchRule.ruleInfo.candidate.name}版本范围${matchRule.ruleInfo.candidate.versionRange}设置无效,无法匹配到有效版本`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', matchRule.ruleInfo.candidate.name, matchRule.ruleInfo.candidate.versionRange));
             return;
         }
 

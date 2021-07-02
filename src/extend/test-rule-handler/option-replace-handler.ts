@@ -5,10 +5,13 @@ import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from '../../interfa
 import {
     CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType
 } from '../../test-node-interface';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class OptionReplaceHandler {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     importObjectEntityHandler;
     @inject()
@@ -67,8 +70,8 @@ export class OptionReplaceHandler {
             if (currTreeNodeInfo.id !== replacerInfo.id) {
                 const {result, deep} = this._checkCycleDependency(rootDependencies, replacerInfo);
                 if (result) {
-                    this.testRuleMatchInfo.isValid = false;
-                    this.testRuleMatchInfo.matchErrors.push(`规则作用于${this.testRuleMatchInfo.ruleInfo.exhibitName}时,检查到${deep == 1 ? '重复' : '循环'}依赖,无法替换`);
+                    const msg = this.ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_duplicate_rely' : 'reflect_rule_pre_excute_error_circular_rely', replacerInfo.name);
+                    this.testRuleMatchInfo.matchErrors.push(msg);
                     continue;
                 }
             }
@@ -101,15 +104,14 @@ export class OptionReplaceHandler {
 
             const replacerInfo = await this._getReplacerInfo(replacer);
             if (!replacerInfo) {
-                this.testRuleMatchInfo.isValid = false;
-                this.testRuleMatchInfo.matchErrors.push(`替换品名称${replacer.name}无效,未找到对应的对象`);
+                const msg = this.ctx.gettext(replacer.type === TestResourceOriginType.Resource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
+                this.testRuleMatchInfo.matchErrors.push(msg);
                 return;
             }
 
             const resourceVersionInfo = replacer.type === TestResourceOriginType.Resource ? this.importResourceEntityHandler.matchResourceVersion(replacerInfo as ResourceInfo, replacer.versionRange) : null;
             if (replacer.type === TestResourceOriginType.Resource && !resourceVersionInfo) {
-                this.testRuleMatchInfo.isValid = false;
-                this.testRuleMatchInfo.matchErrors.push(`替换品版本${replacer.versionRange}无效`);
+                this.testRuleMatchInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange));
                 return;
             }
 
@@ -206,7 +208,7 @@ export class OptionReplaceHandler {
             return {result: true, deep};
         }
         if (deep > 50) { //内部限制最大依赖树深度
-            return {result: false, deep, errorMsg: '依赖的嵌套层级过大'};
+            return {result: false, deep, errorMsg: this.ctx.gettext('reflect_rule_pre_excute_error_exceed_rely_limit')};
         }
         const subDependencies = chain(dependencies).map(m => m.dependencies).flattenDeep().value();
         return this._checkCycleDependency(subDependencies, targetInfo, deep + 1);

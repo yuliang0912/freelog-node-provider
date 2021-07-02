@@ -1,9 +1,9 @@
-import {isEmpty} from "lodash";
+import {isEmpty} from 'lodash';
 import {provide, inject} from 'midway';
 import {
     BaseTestRuleInfo, TestNodeOperationEnum, TestResourceInfo, TestResourceOriginType, TestRuleMatchInfo
-} from "../../test-node-interface";
-import {PresentableCommonChecker} from "../presentable-common-checker";
+} from '../../test-node-interface';
+import {PresentableCommonChecker} from '../presentable-common-checker';
 import {compile} from '@freelog/nmr_translator';
 
 @provide()
@@ -64,7 +64,7 @@ export class TestRuleHandler {
         if (!activeThemeRuleInfo) {
             return null;
         }
-        return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo)
+        return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo);
     }
 
     /**
@@ -72,6 +72,7 @@ export class TestRuleHandler {
      * @param testRules
      */
     initialTestRules(testRules: BaseTestRuleInfo[]) {
+
         this.testRuleMatchInfos = testRules.map(ruleInfo => Object({
             id: this.testNodeGenerator.generateTestRuleId(this.nodeId, ruleInfo.text ?? ''),
             isValid: true,
@@ -79,6 +80,11 @@ export class TestRuleHandler {
             effectiveMatchCount: 0,
             efficientInfos: [],
             ruleInfo
+        }));
+        this.testRuleMatchInfos.forEach(item => Object.defineProperty(item, 'isValid', {
+            get(): boolean {
+                return !item.matchErrors.length;
+            }
         }));
         return this;
     }
@@ -89,8 +95,8 @@ export class TestRuleHandler {
      */
     compileTestRule(testRuleText: string): { errors: string[], rules: BaseTestRuleInfo[] } {
 
-        if (testRuleText === null || testRuleText === undefined || testRuleText === "") {
-            return {errors: [], rules: []}
+        if (testRuleText === null || testRuleText === undefined || testRuleText === '') {
+            return {errors: [], rules: []};
         }
 
         return compile(testRuleText);

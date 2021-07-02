@@ -1,13 +1,16 @@
-import {inject, provide} from "midway";
-import {IOutsideApiService, ObjectStorageInfo} from "../../interface";
+import {inject, provide} from 'midway';
+import {IOutsideApiService, ObjectStorageInfo} from '../../interface';
 import {
     ObjectDependencyTreeInfo, TestResourceDependencyTree,
     TestResourceOriginType, TestRuleMatchInfo
-} from "../../test-node-interface";
+} from '../../test-node-interface';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class ImportObjectEntityHandler {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     outsideApiService: IOutsideApiService;
 
@@ -52,7 +55,7 @@ export class ImportObjectEntityHandler {
                     versionId: model.versionId,
                     fileSha1: model.fileSha1,
                     dependencies: recursionConvertSubNodes(model.dependencies)
-                }
+                };
             });
         }
 
@@ -68,20 +71,17 @@ export class ImportObjectEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, objectInfo: ObjectStorageInfo, userId: number) {
 
         if (!objectInfo) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`不存在名称为${matchRule.ruleInfo.candidate.name}的对象`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_object_not_existed', matchRule.ruleInfo.candidate.name));
             return;
         }
 
         if (objectInfo.userId && objectInfo.userId !== userId) {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`没有权限导入名称为${matchRule.ruleInfo.candidate.name}的存储对象`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_access_limited', matchRule.ruleInfo.candidate.name));
             return;
         }
 
         if ((objectInfo.resourceType ?? '').trim() === '') {
-            matchRule.isValid = false;
-            matchRule.matchErrors.push(`名称为${matchRule.ruleInfo.candidate.name}的存储对象暂未设置资源类型,无法被使用`);
+            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', matchRule.ruleInfo.candidate.name));
             return;
         }
 
@@ -95,7 +95,7 @@ export class ImportObjectEntityHandler {
             coverImages: [],
             systemProperty: objectInfo.systemProperty,
             customPropertyDescriptors: objectInfo.customPropertyDescriptors
-        }
+        };
 
         matchRule.efficientInfos.push({type: 'add', count: 1});
     }

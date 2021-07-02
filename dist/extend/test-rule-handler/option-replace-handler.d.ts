@@ -1,6 +1,8 @@
 import { IOutsideApiService, ObjectStorageInfo, ResourceInfo } from '../../interface';
 import { CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree } from '../../test-node-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class OptionReplaceHandler {
+    ctx: FreelogContext;
     importObjectEntityHandler: any;
     importResourceEntityHandler: any;
     outsideApiService: IOutsideApiService;

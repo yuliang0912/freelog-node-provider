@@ -1,10 +1,12 @@
 import {inject, provide} from 'midway';
-import {IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogContext, IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
 import {TestRuleMatchInfo, TestRuleEfficientInfo, TestResourceInfo} from '../../test-node-interface';
 
 @provide()
 export class ActivateThemeHandler {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
 
@@ -25,12 +27,10 @@ export class ActivateThemeHandler {
             return themeResourceInfo;
         }
         if (!themeResourceInfo) {
-            activeThemeRuleInfo.isValid = false;
-            activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}不是一个有效的主题资源`);
+            activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_existed`, activeThemeRuleInfo.ruleInfo.themeName));
             return;
         } else if (themeResourceInfo.resourceType !== ResourceTypeEnum.THEME) {
-            activeThemeRuleInfo.isValid = false;
-            activeThemeRuleInfo.matchErrors.push(`展品${activeThemeRuleInfo.ruleInfo.themeName}资源类型不是主题(${ResourceTypeEnum.THEME})`);
+            activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.themeName));
             return;
         }
 

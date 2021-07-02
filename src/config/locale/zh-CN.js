@@ -31,7 +31,26 @@ module.exports = {
     "presentable-online-auth-validate-error": "授权链路未通过,不能上线",
     "node-test-rule-compile-failed": "测试节点的测试规则编译失败",
     "node-test-resolve-release-invalid-error": "解决的发行中存在无效的数据",
-    "be-sign-subject-offline": "待签约的资源已下线"
+    "be-sign-subject-offline": "待签约的资源已下线",
+    // 测试节点错误
+    "reflect_rule_pre_excute_error_object_not_existed": "不存在名称为%s的对象",
+    "reflect_rule_pre_excute_error_resource_not_existed": "不存在名称为%s的资源",
+    "reflect_rule_pre_excute_error_exhibit_not_existed": "节点中不存在名称为%s的展品",
+    "reflect_rule_pre_excute_error_access_limited": "当前账户没有该测试资源的操作权限：%s",
+    "reflect_rule_pre_excute_error_no_resource_type": "对象%s导入失败，请先设置资源类型",
+    "reflect_rule_pre_excute_error_test_resource_existed": "测试资源重复：%s",
+    "reflect_rule_pre_excute_error_test_object_existed": "测试对象重复：%s",
+    "reflect_rule_pre_excute_error_exhibit_name_existed": "展品名称已存在：%s",
+    "reflect_rule_pre_excute_error_circular_rely": "不支持循环依赖：%s",
+    "reflect_rule_pre_excute_error_duplicate_rely": "不允许重复依赖：%s",
+    "reflect_rule_pre_excute_error_exceed_rely_limit": "依赖的嵌套层级超过限制",
+    "reflect_rule_pre_excute_error_attribute_not_exist": "不存在键名称为%s的属性",
+    "reflect_rule_pre_excute_error_attribute_access_limited": "属性删除指令只对展品属性生效：%s",
+    "reflect_rule_pre_excute_error_value_access_limited": "属性%s的值不可修改",
+    "reflect_rule_pre_excute_error_value_not_match": "选项%s的值不匹配",
+    "reflect_rule_pre_excute_error_exhibit_not_theme": "展品%s不是主题资源，无法激活",
+    "reflect_rule_pre_excute_error_version_invalid": "资源%s版本范围%s设置无效，版本不存在",
+    "reflect_rule_pre_excute_error_show_hide_unavailable_for_theme": "上线/下线指令对主题展品不生效: %s"
 }
 
 

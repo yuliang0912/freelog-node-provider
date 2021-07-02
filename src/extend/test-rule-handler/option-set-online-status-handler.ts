@@ -1,10 +1,13 @@
-import {provide} from 'midway';
+import {inject, provide} from 'midway';
 import {TestRuleMatchInfo, TestRuleEfficientInfo, TestNodeOperationEnum} from '../../test-node-interface';
 import {isBoolean} from 'lodash';
-import {ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogContext, ResourceTypeEnum} from 'egg-freelog-base';
 
 @provide()
 export class OptionSetOnlineStatusHandler {
+
+    @inject()
+    ctx: FreelogContext;
 
     private setOnlineStatusOptionEfficientCountInfo: TestRuleEfficientInfo = {type: 'setOnlineStatus', count: 1};
 
@@ -20,8 +23,8 @@ export class OptionSetOnlineStatusHandler {
         }
 
         if (isBoolean(ruleInfo.online)) {
-            if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME && ruleInfo.online) {
-                testRuleInfo.matchErrors.push('主题类型的展品不允许设置上下线状态');
+            if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME) {
+                testRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_show_hide_unavailable_for_theme`, testRuleInfo.ruleInfo.exhibitName));
                 return;
             }
             testRuleInfo.onlineStatusInfo = {status: ruleInfo.online ? 1 : 0, source: testRuleInfo.id};

@@ -1,7 +1,9 @@
 import { IOutsideApiService, ResourceInfo } from '../../interface';
 import { TestRuleMatchInfo, TestResourceDependencyTree } from '../../test-node-interface';
 import { PresentableCommonChecker } from '../presentable-common-checker';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class ImportResourceEntityHandler {
+    ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     presentableCommonChecker: PresentableCommonChecker;
     /**
