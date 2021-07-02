@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "tslint-midway-contrib"
+  ],
+  "rules": {
+    "no-bitwise": false,
+    "indent": [
+      2,
+      4
+    ]
+  }
+}
