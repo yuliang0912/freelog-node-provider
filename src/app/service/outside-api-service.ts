@@ -31,7 +31,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @returns {Promise<UserInfo>}
      */
     async getUserInfo(userId: number): Promise<FreelogUserInfo> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.userInfo}/${userId}`);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.userInfoV2}/${userId}`);
     }
 
     /**

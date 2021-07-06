@@ -15,12 +15,18 @@ import {
     SubjectTypeEnum
 } from 'egg-freelog-base';
 import {BreachResponsibilityTypeEnum, SubjectAuthResult} from '../../auth-interface';
+import {PolicyHelper} from '../../extend/policy-helper';
+import {PresentableService} from './presentable-service';
 
 @provide()
 export class PresentableAuthService implements IPresentableAuthService {
 
     @inject()
     ctx: FreelogContext;
+    @inject()
+    policyHelper: PolicyHelper;
+    @inject()
+    presentableService: PresentableService;
     @inject()
     outsideApiService: IOutsideApiService;
 
@@ -140,6 +146,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
         try {
             if (!this.ctx.isLoginUser()) {
+                await this.presentableService.fillPresentablePolicyInfo([presentableInfo]);
                 return this._unLoginUserPolicyAuth(presentableInfo);
             }
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
@@ -175,7 +182,12 @@ export class PresentableAuthService implements IPresentableAuthService {
      * 未登录用户授权(看是否有免费策略)
      */
     _unLoginUserPolicyAuth(presentableInfo: PresentableInfo): SubjectAuthResult {
-        // 后续判定展品的策略中是否包含免费策略,如果包含免费策略,则直接基于策略授权通过
+
+        const hasFreePolicy = presentableInfo.policies.some(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+        if (hasFreePolicy) {
+            return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(SubjectTypeEnum.Presentable);
+        }
+
         return new SubjectAuthResult().setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
     }
 
@@ -193,7 +205,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         }
         return contractAuthResult;
 
-        // 先不实现自动签约免费策略的功能
+        // 先屏蔽自动签约免费策略的功能,方便前端做调试
         // return this._tryCreateFreeUserContract(presentableInfo, userInfo);
     }
 
@@ -203,14 +215,17 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param userInfo
      */
     async _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
-        /**
-         * TODO: 分析presentable策略中是否有免费策略,如果有,则签约.否则返回无授权
-         */
-        const contract = await this.outsideApiService.signUserPresentableContract(userInfo.userId, {
+        const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+        // 如果没有免费策略,则直接返回找不到合约即可
+        if (!freePolicy) {
+            return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
+        }
+
+        await this.outsideApiService.signUserPresentableContract(userInfo.userId, {
             subjectId: presentableInfo.presentableId,
-            policyId: ''
+            policyId: freePolicy.policyId
         });
 
-        return this.contractAuth(presentableInfo.presentableId, [contract]);
+        return new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized);
     }
 }
