@@ -1,5 +1,6 @@
 import { BaseTestRuleInfo, TestResourceInfo, TestRuleMatchInfo } from '../../test-node-interface';
 import { PresentableCommonChecker } from '../presentable-common-checker';
+import { IOutsideApiService } from '../../interface';
 export declare class TestRuleHandler {
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[];
@@ -18,6 +19,7 @@ export declare class TestRuleHandler {
     optionSetCoverHandler: any;
     activateThemeHandler: any;
     testNodeGenerator: any;
+    outsideApiService: IOutsideApiService;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
     /**
      * 匹配激活主题规则

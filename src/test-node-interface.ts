@@ -96,6 +96,7 @@ export interface TestRuleMatchInfo {
     efficientInfos: TestRuleEfficientInfo[];
     themeInfo: { isActivatedTheme: number, ruleId: string };
     replaceRecords?: any[];
+    rootResourceReplacer?: TestResourceOriginInfo;
 }
 
 
@@ -137,8 +138,10 @@ export interface TestResourceDependencyTree {
     versionId: string;
     resourceType: string;
     fileSha1: string;
-    replaceRecords?: BaseReplacedInfo[];
     dependencies: TestResourceDependencyTree[];
+    replaceRecords?: BaseReplacedInfo[];
+    versions?: string[];
+    versionRange?: string;
 }
 
 export interface FlattenTestResourceDependencyTree {
@@ -193,7 +196,9 @@ export interface StateInfo {
         testResourceProperty: TestResourcePropertyInfo[], ruleId: string
     };
     replaceInfo?: {
-        replaceRecords: any[], ruleId: string;
+        rootResourceReplacer?: TestResourceOriginInfo;
+        replaceRecords: any[];
+        ruleId: string;
     }
 }
 
@@ -224,6 +229,7 @@ export interface TestResourceTreeInfo {
     nodeId: number;
     testResourceId: string;
     testResourceName: string;
+    resourceType: string;
     systemProperty?: object;
     resourceCustomPropertyDescriptors?: any[];
     presentableRewriteProperty?: any[];
@@ -277,7 +283,7 @@ export interface ITestNodeService {
 
     findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>>;
 
-    searchTestResourceTreeInfos(nodeId: number, keywords: string): Promise<TestResourceTreeInfo[]>;
+    searchTestResourceTreeInfos(nodeId: number, keywords: string, resourceType: string, omitResourceType: string): Promise<TestResourceTreeInfo[]>;
 
     preExecutionNodeTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]>;
 }

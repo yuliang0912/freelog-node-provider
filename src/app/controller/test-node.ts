@@ -227,13 +227,23 @@ export class TestNodeController {
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const dependentEntityId = ctx.checkQuery('dependentEntityId').exist().isMongoObjectId().value;
         const dependentEntityVersionRange = ctx.checkQuery('dependentEntityVersionRange').optional().toVersionRange().value;
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         ctx.validateParams();
 
         const isFilterVersionRange = isString(dependentEntityVersionRange) && dependentEntityVersionRange !== '*';
         const projection = isFilterVersionRange ? 'testResourceId testResourceName dependencyTree' : 'testResourceId testResourceName';
-        let testResourceTreeInfos = await this.testNodeService.findTestResourceTreeInfos({
-            nodeId, 'dependencyTree.id': dependentEntityId
-        }, projection);
+
+        const condition: any = {
+            nodeId, 'dependencyTree.id': dependentEntityId, 'dependencyTree.deep': {$gt: 1}
+        };
+        if (isString(resourceType)) {
+            condition.resourceType = resourceType;
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
+        }
+
+        let testResourceTreeInfos = await this.testNodeService.findTestResourceTreeInfos(condition, projection);
         if (isFilterVersionRange) {
             testResourceTreeInfos = testResourceTreeInfos.filter(item => item.dependencyTree.some(x => x.id === dependentEntityId && satisfies(dependentEntityVersionRange, x.version)));
         }
@@ -289,10 +299,12 @@ export class TestNodeController {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const keywords = ctx.checkQuery('keywords').exist().type('string').value;
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         ctx.validateParams();
 
         const searchResults = [];
-        const nodeTestResourceDependencyTree = await this.testNodeService.searchTestResourceTreeInfos(nodeId, keywords);
+        const nodeTestResourceDependencyTree = await this.testNodeService.searchTestResourceTreeInfos(nodeId, keywords, resourceType, omitResourceType);
 
         chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().groupBy(x => x.id).forIn((values) => {
             const model = pick(first(values), ['id', 'name', 'type']);
@@ -301,21 +313,6 @@ export class TestNodeController {
         }).value();
 
         ctx.success(searchResults);
-
-        // const searchRegexp = new RegExp(keywords, 'i');
-        // const condition = {
-        //     nodeId, 'dependencyTree.name': searchRegexp
-        // };
-        // const nodeTestResourceDependencyTree = await this.testNodeService.findTestResourceTreeInfos(condition, 'dependencyTree');
-        //
-        // const searchResults = [];
-        // chain(nodeTestResourceDependencyTree).map(x => x.dependencyTree).flattenDeep().filter(x => searchRegexp.test(x.name)).groupBy(x => x.id).forIn((values) => {
-        //     const model = pick(first(values), ['id', 'name', 'type']);
-        //     model['versions'] = uniq(values.filter(x => x.version).map(x => x.version));
-        //     searchResults.push(model);
-        // }).value();
-        //
-        // ctx.success(searchResults);
     }
 
     // 过滤测试资源依赖树.只显示指定的依赖

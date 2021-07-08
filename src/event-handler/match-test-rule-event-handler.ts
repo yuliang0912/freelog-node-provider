@@ -24,7 +24,7 @@ import {
     PresentableVersionInfo,
     ResourceInfo
 } from '../interface';
-import {assign, chain, chunk, first, isEmpty, omit} from 'lodash';
+import {assign, chain, chunk, isEmpty, omit} from 'lodash';
 import {NodeTestRuleMatchStatus} from '../enum';
 import {IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
@@ -156,6 +156,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 nodeId,
                 testResourceId: testResource.testResourceId,
                 testResourceName: testResource.testResourceName,
+                resourceType: testResource.resourceType,
                 authTree: testResource.authTree,
                 dependencyTree: testResource.dependencyTree
             });
@@ -211,6 +212,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     nodeId,
                     testResourceId: testResource.testResourceId,
                     testResourceName: testResource.testResourceName,
+                    resourceType: testResource.resourceType,
                     authTree: this.convertPresentableAuthTreeToTestResourceAuthTree(presentableVersionMap.get(testResource.associatedPresentableId).authTree, resourceMap),
                     dependencyTree: this.convertPresentableDependencyTreeToTestResourceDependencyTree(testResource.testResourceId, presentableVersionMap.get(testResource.associatedPresentableId).dependencyTree)
                 });
@@ -257,11 +259,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, entityDependencyTree, efficientInfos, replaceRecords} = testRuleMatchInfo;
+        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, rootResourceReplacer, efficientInfos, replaceRecords} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
-            resourceType: testResourceOriginInfo.resourceType,
+            resourceType: rootResourceReplacer?.resourceType ?? testResourceOriginInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
             testResourceName: ruleInfo.exhibitName,
             originInfo: testResourceOriginInfo,
@@ -291,6 +293,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 },
                 replaceInfo: {
+                    rootResourceReplacer,
                     replaceRecords: replaceRecords ?? [],
                     ruleId: (replaceRecords ?? []).length ? id : 'default'
                 }
@@ -308,10 +311,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 contracts: []
             };
         });
-        // 如果根级资源的版本被替换掉了,则整个测试资源的版本重置为被替换之后的版本
-        if (testResourceOriginInfo.type === TestResourceOriginType.Resource && !isEmpty(entityDependencyTree)) {
-            testResourceInfo.originInfo.version = first(entityDependencyTree).version;
-        }
         return testResourceInfo;
     }
 

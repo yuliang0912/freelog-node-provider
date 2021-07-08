@@ -1,9 +1,12 @@
 import {satisfies} from 'semver';
 import {inject, provide} from 'midway';
-import {isEmpty, pick, chain, first} from 'lodash';
+import {chain, first, isEmpty, pick} from 'lodash';
 import {IOutsideApiService, ObjectStorageInfo, ResourceInfo} from '../../interface';
 import {
-    CandidateInfo, TestRuleMatchInfo, TestResourceDependencyTree, TestResourceOriginType
+    CandidateInfo,
+    TestResourceDependencyTree, TestResourceOriginInfo,
+    TestResourceOriginType,
+    TestRuleMatchInfo
 } from '../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 
@@ -19,8 +22,6 @@ export class OptionReplaceHandler {
     @inject()
     outsideApiService: IOutsideApiService;
 
-    testRuleMatchInfo: TestRuleMatchInfo;
-
     /**
      * 执行替换操作
      * @param testRuleInfo
@@ -31,17 +32,11 @@ export class OptionReplaceHandler {
             return;
         }
 
-        this.testRuleMatchInfo = testRuleInfo;
-
         const replaceRecords = [];
-        await this._recursionReplace(testRuleInfo.entityDependencyTree, testRuleInfo.entityDependencyTree, [], replaceRecords);
-        const rootDependency = first(testRuleInfo.entityDependencyTree);
-        // 如果测试资源通过规则替换了版本,则修改测试资源对应的版本号
-        if (rootDependency.id === testRuleInfo.testResourceOriginInfo.id && rootDependency.type === testRuleInfo.testResourceOriginInfo.type && rootDependency.type === TestResourceOriginType.Resource) {
-            testRuleInfo.testResourceOriginInfo.version = rootDependency.version ?? testRuleInfo.testResourceOriginInfo.version;
-        }
+        await this._recursionReplace(testRuleInfo, testRuleInfo.entityDependencyTree, testRuleInfo.entityDependencyTree, [], replaceRecords);
+
         // 替换合计生效次数
-        this.testRuleMatchInfo.efficientInfos.push({
+        testRuleInfo.efficientInfos.push({
             type: 'replace', count: replaceRecords.length
         });
         testRuleInfo.replaceRecords = replaceRecords;
@@ -49,21 +44,22 @@ export class OptionReplaceHandler {
 
     /**
      * 递归替换依赖树
+     * @param testRuleInfo
      * @param rootDependencies
      * @param dependencies
      * @param parents
      * @param records
      */
-    async _recursionReplace(rootDependencies: TestResourceDependencyTree[], dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[], records: any[]) {
+    async _recursionReplace(testRuleInfo: TestRuleMatchInfo, rootDependencies: TestResourceDependencyTree[], dependencies: TestResourceDependencyTree[], parents: { name: string, type: string, version?: string }[], records: any[]) {
         if (isEmpty(dependencies ?? [])) {
             return;
         }
         for (let i = 0, j = dependencies.length; i < j; i++) {
             const currTreeNodeInfo = dependencies[i];
             const currPathChain = parents.concat([pick(currTreeNodeInfo, ['name', 'type', 'version'])]);
-            const replacerInfo = await this._matchReplacer(currTreeNodeInfo, currPathChain);
+            const replacerInfo = await this._matchReplacer(testRuleInfo, currTreeNodeInfo, currPathChain);
             if (!replacerInfo) {
-                await this._recursionReplace(rootDependencies, currTreeNodeInfo.dependencies, currPathChain, records);
+                await this._recursionReplace(testRuleInfo, rootDependencies, currTreeNodeInfo.dependencies, currPathChain, records);
                 continue;
             }
             // 自己替换自己是被允许的,不用做循环检测
@@ -71,7 +67,7 @@ export class OptionReplaceHandler {
                 const {result, deep} = this._checkCycleDependency(rootDependencies, replacerInfo);
                 if (result) {
                     const msg = this.ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_duplicate_rely' : 'reflect_rule_pre_excute_error_circular_rely', replacerInfo.name);
-                    this.testRuleMatchInfo.matchErrors.push(msg);
+                    testRuleInfo.matchErrors.push(msg);
                     continue;
                 }
             }
@@ -85,14 +81,15 @@ export class OptionReplaceHandler {
     /**
      * 匹配替换对象,此函数会在替换之后的结果上做多次替换.具体需要看规则的定义.即支持A=>B,B=>C,C=>D. 综合替换之后的结果为A替换成D.最终返回D以及D的依赖信息.
      * 然后上游调用者会把A以及A的所有依赖信息移除,替换成D以及D的依赖信息.然后在新的依赖树下递归调用后续的规则
+     * @param testRuleInfo
      * @param targetInfo
      * @param parents
      */
-    async _matchReplacer(targetInfo: TestResourceDependencyTree, parents): Promise<TestResourceDependencyTree> {
+    async _matchReplacer(testRuleInfo: TestRuleMatchInfo, targetInfo: TestResourceDependencyTree, parents): Promise<TestResourceDependencyTree> {
 
         const replaceRecords = [];
         let latestTestResourceDependencyTree = targetInfo;
-        for (const replaceObjectInfo of this.testRuleMatchInfo.ruleInfo.replaces) {
+        for (const replaceObjectInfo of testRuleInfo.ruleInfo.replaces) {
 
             const {replaced, replacer, scopes} = replaceObjectInfo;
             if (replaceObjectInfo.efficientCount === undefined) {
@@ -101,17 +98,21 @@ export class OptionReplaceHandler {
             if (!this._checkRuleScopeIsMatched(scopes, parents) || !this._entityIsMatched(replaced, latestTestResourceDependencyTree)) {
                 continue;
             }
-
+            const replacerIsResource = replacer.type === TestResourceOriginType.Resource;
             const replacerInfo = await this._getReplacerInfo(replacer);
             if (!replacerInfo) {
-                const msg = this.ctx.gettext(replacer.type === TestResourceOriginType.Resource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
-                this.testRuleMatchInfo.matchErrors.push(msg);
+                const msg = this.ctx.gettext(replacerIsResource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
+                testRuleInfo.matchErrors.push(msg);
                 return;
             }
 
-            const resourceVersionInfo = replacer.type === TestResourceOriginType.Resource ? this.importResourceEntityHandler.matchResourceVersion(replacerInfo as ResourceInfo, replacer.versionRange) : null;
-            if (replacer.type === TestResourceOriginType.Resource && !resourceVersionInfo) {
-                this.testRuleMatchInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange));
+            const resourceVersionInfo = replacerIsResource ? this.importResourceEntityHandler.matchResourceVersion(replacerInfo as ResourceInfo, replacer.versionRange) : null;
+            if (replacerIsResource && !resourceVersionInfo) {
+                testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange));
+                return;
+            }
+            if (replacer.type === TestResourceOriginType.Object && replacerInfo.userId !== this.ctx.userId) {
+                testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_access_limited', replacer.name));
                 return;
             }
 
@@ -120,30 +121,54 @@ export class OptionReplaceHandler {
                 replaced: pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version'])
             };
             latestTestResourceDependencyTree = {
-                id: replacerInfo[replacer.type === TestResourceOriginType.Resource ? 'resourceId' : 'objectId'],
+                id: replacerInfo[replacerIsResource ? 'resourceId' : 'objectId'],
                 name: replacer.name,
                 type: replacer.type,
+                versionRange: replacer.versionRange,
                 resourceType: replacerInfo.resourceType,
                 version: resourceVersionInfo?.version,
                 versionId: resourceVersionInfo?.versionId,
                 fileSha1: resourceVersionInfo.fileSha1,
-                dependencies: []
+                dependencies: [],
             };
+            latestTestResourceDependencyTree['replacerInfo'] = replacerInfo;
             replaceRecordInfo.replacer = pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version']);
             replaceRecords.push(replaceRecordInfo);
             // 单个替换统计生效次数
             replaceObjectInfo.efficientCount += 1;
         }
 
-        if (!replaceRecords.length) {
+        if (isEmpty(replaceRecords)) {
             return;
         }
+
         // 返回被替换之后的新的依赖树(已包含自身)
         const replacer: TestResourceDependencyTree = latestTestResourceDependencyTree.type === TestResourceOriginType.Object
             ? await this.importObjectEntityHandler.getObjectDependencyTree(latestTestResourceDependencyTree.id).then(first)
             : await this.importResourceEntityHandler.getResourceDependencyTree(latestTestResourceDependencyTree.id, latestTestResourceDependencyTree.version).then(first);
 
+        replacer.versionRange = latestTestResourceDependencyTree.versionRange;
         replacer.replaceRecords = replaceRecords;
+
+        // 主资源被替换,需要把新的替换者信息保存起来
+        if (parents.length === 1 && (replacer.id !== testRuleInfo.testResourceOriginInfo.id || replacer.version !== testRuleInfo.testResourceOriginInfo.version)) {
+            const rootResourceReplacer: TestResourceOriginInfo = {
+                id: replacer.id,
+                name: replacer.name,
+                type: replacer.type,
+                versions: replacer.versions,
+                versionRange: replacer.versionRange,
+                resourceType: replacer.resourceType,
+                version: replacer.version
+            };
+            if (replacer.type === TestResourceOriginType.Object) {
+                const objectInfo: ObjectStorageInfo = latestTestResourceDependencyTree['replacerInfo'];
+                rootResourceReplacer.systemProperty = objectInfo.systemProperty;
+                rootResourceReplacer.customPropertyDescriptors = objectInfo.customPropertyDescriptors;
+            }
+            testRuleInfo.rootResourceReplacer = rootResourceReplacer;
+        }
+
         return replacer;
     }
 

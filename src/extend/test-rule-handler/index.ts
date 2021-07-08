@@ -1,10 +1,15 @@
 import {isEmpty} from 'lodash';
-import {provide, inject} from 'midway';
+import {inject, provide} from 'midway';
 import {
-    BaseTestRuleInfo, TestNodeOperationEnum, TestResourceInfo, TestResourceOriginType, TestRuleMatchInfo
+    BaseTestRuleInfo,
+    TestNodeOperationEnum,
+    TestResourceInfo,
+    TestResourceOriginType,
+    TestRuleMatchInfo
 } from '../../test-node-interface';
 import {PresentableCommonChecker} from '../presentable-common-checker';
 import {compile} from '@freelog/nmr_translator';
+import {IOutsideApiService} from '../../interface';
 
 @provide()
 export class TestRuleHandler {
@@ -41,6 +46,8 @@ export class TestRuleHandler {
     activateThemeHandler;
     @inject()
     testNodeGenerator;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     async main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]> {
 
@@ -168,15 +175,29 @@ export class TestRuleHandler {
      * 选项规则处理
      */
     async ruleOptionsHandle(): Promise<void> {
-        const tasks = [];
+
+        const tasks = this.testRuleMatchInfos.map(testRuleInfo => this.optionReplaceHandler.handle(testRuleInfo));
+
+        await Promise.all(tasks);
+
+        const rootResourceReplacerRules = this.testRuleMatchInfos.filter(x => x.isValid && x.rootResourceReplacer?.type === TestResourceOriginType.Resource);
+        const resourceVersionIds = rootResourceReplacerRules.map(x => this.presentableCommonChecker.generateResourceVersionId(x.rootResourceReplacer.id, x.rootResourceReplacer.version));
+        const resourceProperties = await this.outsideApiService.getResourceVersionList(resourceVersionIds, {
+            projection: 'resourceId,systemProperty,customPropertyDescriptors'
+        });
+
+        for (const ruleInfo of rootResourceReplacerRules) {
+            const resourceProperty = resourceProperties.find(x => x.resourceId === ruleInfo.rootResourceReplacer.id);
+            ruleInfo.rootResourceReplacer.systemProperty = resourceProperty.systemProperty;
+            ruleInfo.rootResourceReplacer.customPropertyDescriptors = resourceProperty.customPropertyDescriptors;
+        }
+
         for (const testRuleInfo of this.testRuleMatchInfos) {
             this.optionSetTagsHandler.handle(testRuleInfo);
             this.optionSetTitleHandler.handle(testRuleInfo);
             this.optionSetCoverHandler.handle(testRuleInfo);
             this.optionSetAttrHandler.handle(testRuleInfo);
             this.optionSetOnlineStatusHandler.handle(testRuleInfo);
-            tasks.push(this.optionReplaceHandler.handle(testRuleInfo));
         }
-        await Promise.all(tasks);
     }
 }

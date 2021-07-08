@@ -1,6 +1,9 @@
 import {inject, provide} from 'midway';
 import {
-    TestRuleMatchInfo, TestRuleEfficientInfo, TestResourcePropertyInfo, TestNodeOperationEnum
+    TestNodeOperationEnum,
+    TestResourcePropertyInfo,
+    TestRuleEfficientInfo,
+    TestRuleMatchInfo
 } from '../../test-node-interface';
 import {isArray} from 'lodash';
 import {FreelogContext} from 'egg-freelog-base';
@@ -27,10 +30,10 @@ export class OptionSetAttrHandler {
         const readonlyPropertyMap = new Map<string, TestResourcePropertyInfo>();
         const editablePropertyMap = new Map<string, TestResourcePropertyInfo>();
         // 以下4个for循环需要严格遵守顺序.属性的优先级分别为1.系统属性 2:资源定义的不可编辑的属性 3:测试规则规定的属性 4:展品重写的属性 5:资源自定义的可编辑属性.
-        for (const [key, value] of Object.entries(testRuleInfo.testResourceOriginInfo.systemProperty ?? {})) {
+        for (const [key, value] of Object.entries(testRuleInfo.rootResourceReplacer?.systemProperty ?? testRuleInfo.testResourceOriginInfo.systemProperty ?? {})) {
             readonlyPropertyMap.set(key, {key, value, authority: 1, remark: ''});
         }
-        for (const {key, defaultValue, remark, type} of testRuleInfo.testResourceOriginInfo.customPropertyDescriptors ?? []) {
+        for (const {key, defaultValue, remark, type} of testRuleInfo.rootResourceReplacer?.customPropertyDescriptors ?? testRuleInfo.testResourceOriginInfo.customPropertyDescriptors ?? []) {
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }

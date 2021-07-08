@@ -28,6 +28,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             id: {type: String, required: true},
             name: {type: String, required: true},
             type: {type: String, required: true},  // resource or object
+            resourceType: {type: String, required: true},
             version: {type: String, required: false, default: ''},
             versionRange: {type: String, required: false, default: ''},
             versions: {type: [String], required: false, default: []}
@@ -72,6 +73,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
                 ruleId: {type: String, required: false},
             },
             replaceInfo: {
+                rootResourceReplacer: {type: this.mongoose.Schema.Types.Mixed, default: null, required: false},
                 replaceRecords: {type: this.mongoose.Schema.Types.Mixed, required: false},
                 ruleId: {type: String, required: false},
             }

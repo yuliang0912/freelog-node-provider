@@ -70,6 +70,8 @@ export class ImportResourceEntityHandler {
                     type: TestResourceOriginType.Resource,
                     resourceType: model.resourceType,
                     version: model.version,
+                    versions: model.versions,
+                    versionRange: model.versionRange,
                     versionId: model.versionId,
                     fileSha1: model.fileSha1,
                     dependencies: recursionConvertSubNodes(model.dependencies)

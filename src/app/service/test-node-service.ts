@@ -6,7 +6,7 @@ import {
 } from '../../test-node-interface';
 import {IOutsideApiService} from '../../interface';
 import {NodeTestRuleMatchStatus} from '../../enum';
-import {assign, chain, differenceBy, isEmpty} from 'lodash';
+import {assign, chain, differenceBy, isEmpty, isString} from 'lodash';
 import {ApplicationError, PageResult, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {TestRuleHandler} from '../../extend/test-rule-handler';
 
@@ -54,13 +54,20 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestResourceTreeProvider.find(condition, ...args);
     }
 
-    async searchTestResourceTreeInfos(nodeId: number, keywords: string): Promise<TestResourceTreeInfo[]> {
+    async searchTestResourceTreeInfos(nodeId: number, keywords: string, resourceType: string, omitResourceType: string): Promise<TestResourceTreeInfo[]> {
         const searchRegexp = new RegExp(keywords, 'i');
 
+        const condition: any = {nodeId};
+        if (isString(resourceType)) {
+            condition.resourceType = resourceType;
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
+        }
+
         return this.nodeTestResourceTreeProvider.aggregate([
-            {$match: {nodeId}},
+            {$match: condition},
             {$unwind: '$dependencyTree'},
-            {$match: {'dependencyTree.name': searchRegexp}},
+            {$match: {'dependencyTree.deep': {$gt: 1}, 'dependencyTree.name': searchRegexp}},
             {$group: {_id: null, dependencyTree: {$push: '$dependencyTree'}}},
             {$project: {dependencyTree: 1, _id: 0}}
         ]);

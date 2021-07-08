@@ -49,6 +49,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             nodeId: {type: Number, required: true},
             testResourceId: {type: String, required: true, unique: true},
             testResourceName: {type: String, required: true},
+            resourceType: {type: String, required: true},
             dependencyTree: {type: [DependencyTreeSchema], required: true},
             authTree: {type: [AuthTreeSchema], required: true},
         }, {
@@ -56,7 +57,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
             toJSON: TestResourceTreeInfo.toObjectOptions,
             toObject: TestResourceTreeInfo.toObjectOptions
-        })
+        });
 
         return this.mongoose.model('node-test-resource-tree-infos', TestResourceTreeSchema);
     }
