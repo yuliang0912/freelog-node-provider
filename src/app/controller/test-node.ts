@@ -248,7 +248,24 @@ export class TestNodeController {
             testResourceTreeInfos = testResourceTreeInfos.filter(item => item.dependencyTree.some(x => x.id === dependentEntityId && satisfies(dependentEntityVersionRange, x.version)));
         }
 
-        ctx.success(testResourceTreeInfos.map(x => pick(x, ['testResourceId', 'testResourceName'])));
+        if (isEmpty(testResourceTreeInfos)) {
+            return ctx.success([]);
+        }
+
+        const testResourceIds = testResourceTreeInfos.map(x => x.testResourceId);
+        const testResources = await this.testNodeService.findTestResources({testResourceId: {$in: testResourceIds}}, 'testResourceId testResourceName resourceType originInfo stateInfo.replaceInfo.rootResourceReplacer');
+
+        ctx.success(testResources.map(x => {
+            const entityInfo = x.stateInfo.replaceInfo?.rootResourceReplacer ?? x.originInfo;
+            return {
+                testResourceId: x.testResourceId,
+                testResourceName: x.testResourceName,
+                resourceType: x.resourceType,
+                entityName: entityInfo.name,
+                entityId: entityInfo.id,
+                entityType: entityInfo.type
+            };
+        }));
     }
 
     // 查看测试资源的依赖树

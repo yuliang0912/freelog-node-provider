@@ -293,7 +293,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 },
                 replaceInfo: {
-                    rootResourceReplacer,
+                    rootResourceReplacer: omit(rootResourceReplacer, ['systemProperty', 'customPropertyDescriptors']),
                     replaceRecords: replaceRecords ?? [],
                     ruleId: (replaceRecords ?? []).length ? id : 'default'
                 }
