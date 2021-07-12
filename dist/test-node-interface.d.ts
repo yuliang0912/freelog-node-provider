@@ -274,6 +274,7 @@ export interface ITestNodeService {
     findIntervalResourceList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<TestResourceInfo>>;
     searchTestResourceTreeInfos(nodeId: number, keywords: string, resourceType: string, omitResourceType: string): Promise<TestResourceTreeInfo[]>;
     preExecutionNodeTestRule(nodeId: number, testRuleText: string): Promise<TestRuleMatchInfo[]>;
+    matchTestResourceTreeInfos(nodeId: number, dependentEntityId: string, resourceType: string, omitResourceType: string): any;
 }
 export interface ITestResourceAuthService {
     testResourceAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;

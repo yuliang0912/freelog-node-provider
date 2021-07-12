@@ -54,6 +54,22 @@ export class TestNodeService implements ITestNodeService {
         return this.nodeTestResourceTreeProvider.find(condition, ...args);
     }
 
+    async matchTestResourceTreeInfos(nodeId: number, dependentEntityId: string, resourceType: string, omitResourceType: string) {
+        const condition: any = {nodeId};
+        if (isString(resourceType)) {
+            condition.resourceType = resourceType;
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
+        }
+        return this.nodeTestResourceTreeProvider.aggregate([
+            {$match: condition},
+            {$unwind: '$dependencyTree'},
+            {$match: {'dependencyTree.deep': {$gt: 1}, 'dependencyTree.id': dependentEntityId}},
+            {$group: {_id: '$testResourceId', dependencyTree: {$push: '$dependencyTree'}}},
+            {$project: {testResourceId: `$_id`, _id: 0, dependencyTree: 1}},
+        ]);
+    }
+
     async searchTestResourceTreeInfos(nodeId: number, keywords: string, resourceType: string, omitResourceType: string): Promise<TestResourceTreeInfo[]> {
         const searchRegexp = new RegExp(keywords, 'i');
 

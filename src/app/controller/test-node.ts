@@ -232,18 +232,8 @@ export class TestNodeController {
         ctx.validateParams();
 
         const isFilterVersionRange = isString(dependentEntityVersionRange) && dependentEntityVersionRange !== '*';
-        const projection = isFilterVersionRange ? 'testResourceId testResourceName dependencyTree' : 'testResourceId testResourceName';
 
-        const condition: any = {
-            nodeId, 'dependencyTree.id': dependentEntityId, 'dependencyTree.deep': {$gt: 1}
-        };
-        if (isString(resourceType)) {
-            condition.resourceType = resourceType;
-        } else if (isString(omitResourceType)) {
-            condition.resourceType = {$ne: omitResourceType};
-        }
-
-        let testResourceTreeInfos = await this.testNodeService.findTestResourceTreeInfos(condition, projection);
+        let testResourceTreeInfos = await this.testNodeService.matchTestResourceTreeInfos(nodeId, dependentEntityId, resourceType, omitResourceType);
         if (isFilterVersionRange) {
             testResourceTreeInfos = testResourceTreeInfos.filter(item => item.dependencyTree.some(x => x.id === dependentEntityId && satisfies(dependentEntityVersionRange, x.version)));
         }
