@@ -6,7 +6,7 @@ import {
     IPresentableAuthService,
     PresentableInfo
 } from '../../interface';
-import {chain, isArray, isEmpty} from 'lodash';
+import {chain, first, isArray, isEmpty} from 'lodash';
 import {
     ApplicationError,
     FreelogContext,
@@ -146,11 +146,12 @@ export class PresentableAuthService implements IPresentableAuthService {
         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
         try {
             if (!this.ctx.isLoginUser()) {
-                await this.presentableService.fillPresentablePolicyInfo([presentableInfo]);
-                return this._unLoginUserPolicyAuth(presentableInfo);
+                const presentable = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
+                return this._unLoginUserPolicyAuth(presentable);
             }
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
         } catch (e) {
+            console.log(e);
             return new SubjectAuthResult().setData({error: e}).setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
         }
     }

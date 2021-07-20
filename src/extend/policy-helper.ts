@@ -14,7 +14,6 @@ export class PolicyHelper {
      * @param policyInfo
      */
     isFreePolicy(policyInfo: BasePolicyInfo): boolean {
-
         const stateDescriptionInfos = Object.values(policyInfo.fsmDescriptionInfo);
         if (stateDescriptionInfos.length !== 1) {
             return false;
