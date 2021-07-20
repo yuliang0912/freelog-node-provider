@@ -6,7 +6,7 @@ import {
     IPresentableAuthService,
     PresentableInfo
 } from '../../interface';
-import {chain, first, isArray, isEmpty} from 'lodash';
+import {chain, isArray, isEmpty} from 'lodash';
 import {
     ApplicationError,
     FreelogContext,
@@ -16,7 +16,6 @@ import {
 } from 'egg-freelog-base';
 import {BreachResponsibilityTypeEnum, SubjectAuthResult} from '../../auth-interface';
 import {PolicyHelper} from '../../extend/policy-helper';
-import {PresentableService} from './presentable-service';
 
 @provide()
 export class PresentableAuthService implements IPresentableAuthService {
@@ -26,8 +25,6 @@ export class PresentableAuthService implements IPresentableAuthService {
     @inject()
     policyHelper: PolicyHelper;
     @inject()
-    presentableService: PresentableService;
-    @inject()
     outsideApiService: IOutsideApiService;
 
     /**
@@ -36,7 +33,6 @@ export class PresentableAuthService implements IPresentableAuthService {
      * @param presentableAuthTree
      */
     async presentableAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-
         const clientUserSideAuthResult = await this.presentableClientUserSideAuth(presentableInfo);
         if (!clientUserSideAuthResult.isAuth) {
             return clientUserSideAuthResult;
@@ -146,8 +142,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
         try {
             if (!this.ctx.isLoginUser()) {
-                const presentable = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
-                return this._unLoginUserPolicyAuth(presentable);
+                return this._unLoginUserPolicyAuth(presentableInfo);
             }
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
         } catch (e) {

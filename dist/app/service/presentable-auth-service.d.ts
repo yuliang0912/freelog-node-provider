@@ -2,11 +2,9 @@ import { ContractInfo, FlattenPresentableAuthTree, IOutsideApiService, IPresenta
 import { FreelogContext, FreelogUserInfo } from 'egg-freelog-base';
 import { SubjectAuthResult } from '../../auth-interface';
 import { PolicyHelper } from '../../extend/policy-helper';
-import { PresentableService } from './presentable-service';
 export declare class PresentableAuthService implements IPresentableAuthService {
     ctx: FreelogContext;
     policyHelper: PolicyHelper;
-    presentableService: PresentableService;
     outsideApiService: IOutsideApiService;
     /**
      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)

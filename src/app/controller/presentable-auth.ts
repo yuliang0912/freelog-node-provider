@@ -1,4 +1,4 @@
-import {differenceWith, isEmpty} from 'lodash';
+import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
     IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService
@@ -56,7 +56,7 @@ export class ResourceAuthController {
         const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
         ctx.validateParams();
 
-        const presentableInfo = await this.presentableService.findById(presentableId);
+        let presentableInfo = await this.presentableService.findById(presentableId);
         if (!presentableInfo) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('标的物不存在,请检查参数');
             return ctx.success(subjectAuthResult);
@@ -68,7 +68,7 @@ export class ResourceAuthController {
         if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
-
+        presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
