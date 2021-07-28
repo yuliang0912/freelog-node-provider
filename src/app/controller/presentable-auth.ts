@@ -15,7 +15,7 @@ import {
 import {SubjectAuthResult} from '../../auth-interface';
 
 @provide()
-@controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectType/:subjectId
+@controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectTypes/:subjectId
 export class ResourceAuthController {
 
     @inject()

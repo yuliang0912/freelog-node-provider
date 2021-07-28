@@ -26,11 +26,11 @@ export default () => {
     };
     config.gatewayUrl = 'http://api.testfreelog.com';
 
-    // config.localIdentity = {
-    //     userId: 50028,
-    //     username: 'yuliang',
-    //     email: 'support@freelog.com'
-    // };
+    config.localIdentity = {
+        userId: 50024,
+        username: 'yuliang',
+        email: 'support@freelog.com'
+    };
 
     return config;
 };

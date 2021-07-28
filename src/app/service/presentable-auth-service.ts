@@ -146,7 +146,6 @@ export class PresentableAuthService implements IPresentableAuthService {
             }
             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
         } catch (e) {
-            console.log(e);
             return new SubjectAuthResult().setData({error: e}).setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
         }
     }
@@ -194,10 +193,15 @@ export class PresentableAuthService implements IPresentableAuthService {
      */
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
-        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,subjectId'});
+        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,subjectId,contractName,fsmCurrentState'});
         const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
         if (!contractAuthResult.isAuth) {
-            contractAuthResult.setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
+            contractAuthResult.setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser).setData({
+                presentableId: presentableInfo.presentableId,
+                presentableName: presentableInfo.presentableName,
+                policies: presentableInfo.policies,
+                contracts
+            });
         }
         return contractAuthResult;
 
