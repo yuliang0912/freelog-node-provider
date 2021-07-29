@@ -77,6 +77,7 @@ export interface BasePolicyInfo {
     subjectType?: number;
     fsmDescriptionInfo: FsmDescriptionInfo;
     fsmDeclarationInfo?: any;
+    translateInfo?: any;
 }
 export interface FsmDescriptionInfo {
     [stateName: string]: FsmStateDescriptionInfo;
@@ -301,7 +302,7 @@ export interface IPresentableService {
     updatePresentable(presentableInfo: PresentableInfo, options: UpdatePresentableOptions): Promise<PresentableInfo>;
     updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
     updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean>;
-    fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate?: boolean): Promise<PresentableInfo[]>;
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
 }
 export interface IOutsideApiService {
@@ -314,7 +315,7 @@ export interface IOutsideApiService {
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getUserInfo(userId: number): Promise<FreelogUserInfo>;
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<BasePolicyInfo[]>;
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[], isTranslate: boolean): Promise<BasePolicyInfo[]>;
     batchSignNodeContracts(nodeId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;

@@ -63,7 +63,7 @@ export declare class PresentableService implements IPresentableService {
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>>;
     count(condition: object): Promise<number>;
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
-    fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate?: boolean): Promise<PresentableInfo[]>;
     relationTree(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo): Promise<void>;
     /**
      * 校验resolveResources参数

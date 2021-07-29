@@ -191,12 +191,12 @@ export class OutsideApiService implements IOutsideApiService {
      * @param subjectType
      * @param projection
      */
-    async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = []): Promise<BasePolicyInfo[]> {
+    async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = [], isTranslate = false): Promise<BasePolicyInfo[]> {
         if (isEmpty(policyIds)) {
             return [];
         }
         // 目前针对策略是否是自己创建的这块逻辑验证不严格.如果需要严格,则需要在下方url中追加参数userId
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${subjectType}&projection=${projection.toString()}`);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${subjectType}&projection=${projection.toString()}&isTranslate=${isTranslate}`);
     }
 
     /**

@@ -95,6 +95,7 @@ export interface BasePolicyInfo {
     subjectType?: number;
     fsmDescriptionInfo: FsmDescriptionInfo;
     fsmDeclarationInfo?: any;
+    translateInfo?: any;
 }
 
 export interface FsmDescriptionInfo {
@@ -376,7 +377,7 @@ export interface IPresentableService {
 
     updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean>;
 
-    fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate?: boolean): Promise<PresentableInfo[]>;
 
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
 
@@ -402,7 +403,7 @@ export interface IOutsideApiService {
 
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
 
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[]): Promise<BasePolicyInfo[]>;
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[], isTranslate: boolean): Promise<BasePolicyInfo[]>;
 
     batchSignNodeContracts(nodeId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 

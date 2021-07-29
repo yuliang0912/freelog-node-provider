@@ -88,7 +88,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param subjectType
      * @param projection
      */
-    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[]): Promise<BasePolicyInfo[]>;
+    getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
     /**
      * 获取用户与展品的合约
      * @param subjectId

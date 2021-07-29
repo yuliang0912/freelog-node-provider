@@ -68,7 +68,7 @@ export class ResourceAuthController {
         if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
-        presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo]).then(first);
+        presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
@@ -147,12 +147,20 @@ export class ResourceAuthController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        const presentableInfo = await this.presentableService.findOne(condition);
-        ctx.entityNullObjectCheck(presentableInfo);
-
+        let presentableInfo = await this.presentableService.findOne(condition);
+        if (!presentableInfo) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('标的物不存在,请检查参数');
+            return ctx.success(subjectAuthResult);
+        }
+        if (presentableInfo.onlineStatus !== 1) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
+            return ctx.success(subjectAuthResult);
+        }
         if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
+
+        presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
 
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);

@@ -304,7 +304,7 @@ export class PresentableService implements IPresentableService {
         });
     }
 
-    async fillPresentablePolicyInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]> {
+    async fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate: boolean = false): Promise<PresentableInfo[]> {
         if (!isArray(presentables) || isEmpty(presentables)) {
             return presentables;
         }
@@ -312,13 +312,14 @@ export class PresentableService implements IPresentableService {
         if (isEmpty(policyIds)) {
             return presentables;
         }
-        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getPolicies(policyIds, SubjectTypeEnum.Presentable, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
+        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getPolicies(policyIds, SubjectTypeEnum.Presentable, ['policyId', 'policyText', 'fsmDescriptionInfo'], isTranslate).then(list => {
             return new Map(list.map(x => [x.policyId, x]));
         });
         return presentables.map(presentable => {
             const presentableInfo = Reflect.has(presentable, 'toObject') ? (<any>presentable).toObject() : presentable;
             presentableInfo.policies.forEach(policyInfo => {
-                const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
+                const {policyText, fsmDescriptionInfo, translateInfo} = policyMap.get(policyInfo.policyId) ?? {};
+                policyInfo.translateInfo = translateInfo;
                 policyInfo.policyText = policyText;
                 policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
             });

@@ -22,5 +22,5 @@ export declare class ResourceAuthController {
     /**
      * 通过节点ID和资源ID获取展品,并且授权
      */
-    nodeResourceAuth(): Promise<void>;
+    nodeResourceAuth(): Promise<FreelogContext>;
 }
