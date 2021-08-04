@@ -183,7 +183,11 @@ export class PresentableAuthService implements IPresentableAuthService {
             return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(SubjectTypeEnum.Presentable);
         }
 
-        return new SubjectAuthResult().setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
+        return new SubjectAuthResult().setData({
+            presentableId: presentableInfo.presentableId,
+            presentableName: presentableInfo.presentableName,
+            policies: presentableInfo.policies
+        }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
     }
 
     /**
