@@ -1,12 +1,12 @@
-import {inject, provide} from "midway";
-import {chain, isArray, isEmpty} from "lodash";
-import {ContractInfo, IOutsideApiService} from "../../interface";
-import {SubjectAuthResult} from "../../auth-interface";
+import {inject, provide} from 'midway';
+import {chain, isArray, isEmpty} from 'lodash';
+import {ContractInfo, IOutsideApiService} from '../../interface';
+import {SubjectAuthResult} from '../../auth-interface';
 import {
     FlattenTestResourceAuthTree, ITestResourceAuthService,
     TestResourceInfo, TestResourceOriginType
-} from "../../test-node-interface";
-import {SubjectTypeEnum, FreelogContext, SubjectAuthCodeEnum} from 'egg-freelog-base'
+} from '../../test-node-interface';
+import {SubjectTypeEnum, FreelogContext, SubjectAuthCodeEnum} from 'egg-freelog-base';
 
 @provide()
 export class TestResourceAuthService implements ITestResourceAuthService {
@@ -40,7 +40,7 @@ export class TestResourceAuthService implements ITestResourceAuthService {
      * @param testResourceAuthTree
      */
     async testResourceNodeSideAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult> {
-
+        
         const authResult = new SubjectAuthResult();
         // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.(测试资源resolveResource)
         const testResourceResolveResourceIdSet = new Set(testResourceAuthTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => x.id));
