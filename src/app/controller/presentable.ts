@@ -36,7 +36,7 @@ export class PresentableController {
     presentableVersionService: IPresentableVersionService;
 
     @get('/')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async index() {
 
         const {ctx} = this;
@@ -134,7 +134,7 @@ export class PresentableController {
      * @returns {Promise<void>}
      */
     @get('/list')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async list() {
 
         const {ctx} = this;

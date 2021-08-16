@@ -112,7 +112,6 @@ export class PresentableAuthService implements IPresentableAuthService {
             if (isEmpty(resourceVersionIds)) {
                 throw new ApplicationError('presentable data has loused');
             }
-
             const startDate = new Date();
             const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds, {authType: 'auth'});
             this.ctx.set('presentableUpstreamAuthTime', (new Date().getTime() - startDate.getTime()).toString());
@@ -186,7 +185,8 @@ export class PresentableAuthService implements IPresentableAuthService {
         return new SubjectAuthResult().setData({
             presentableId: presentableInfo.presentableId,
             presentableName: presentableInfo.presentableName,
-            policies: presentableInfo.policies
+            policies: presentableInfo.policies,
+            contracts: []
         }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
     }
 
