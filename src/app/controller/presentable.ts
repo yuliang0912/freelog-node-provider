@@ -367,7 +367,6 @@ export class PresentableController {
     }
 
     @get('/:presentableId')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async show() {
 
         const {ctx} = this;
