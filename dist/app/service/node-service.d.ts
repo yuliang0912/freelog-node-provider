@@ -1,13 +1,13 @@
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
-import { CreateNodeOptions, findOptions, INodeService, ITageService, NodeDetailInfo, NodeInfo, TagInfo } from '../../interface';
+import { CreateNodeOptions, INodeService, ITageService, NodeInfo } from '../../interface';
 import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 export declare class NodeService implements INodeService {
     ctx: FreelogContext;
     nodeCommonChecker: any;
-    autoIncrementRecordProvider: AutoIncrementRecordProvider;
     tagService: ITageService;
     nodeProvider: IMongodbOperation<NodeInfo>;
-    nodeDetailProvider: IMongodbOperation<NodeDetailInfo>;
+    nodeFreezeRecordProvider: IMongodbOperation<any>;
+    autoIncrementRecordProvider: AutoIncrementRecordProvider;
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
     findById(nodeId: number, ...args: any[]): Promise<NodeInfo>;
@@ -17,24 +17,29 @@ export declare class NodeService implements INodeService {
     find(condition: object, ...args: any[]): Promise<NodeInfo[]>;
     findUserCreatedNodeCounts(userIds: number[]): Promise<any>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<NodeInfo>>;
-    searchIntervalListByTags(condition: object, tagIds?: number[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>>;
     count(condition: object): Promise<number>;
     /**
-     * 设置标签
-     * @param nodeId
-     * @param tagInfos
+     * 冻结或解冻节点
+     * @param nodeInfo
+     * @param remark
      */
-    setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean>;
+    freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean>;
+    /**
+     * 查找节点冻结操作记录
+     * @param nodeId
+     * @param args
+     */
+    findNodeFreezeRecords(nodeId: number, ...args: any[]): Promise<any>;
+    /**
+     * 设置标签
+     * @param nodeInfo
+     * @param tagNames
+     */
+    setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
     /**
      * 取消设置Tag
-     * @param nodeId
-     * @param tagInfo
+     * @param nodeInfo
+     * @param tagName
      */
-    unsetTag(nodeId: number, tagInfo: TagInfo): Promise<boolean>;
-    /**
-     * 更新节点详情
-     * @param nodeId
-     * @param model
-     */
-    updateNodeDetailInfo(nodeId: number, model: Partial<NodeDetailInfo>): Promise<boolean>;
+    unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
 }

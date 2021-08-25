@@ -53,15 +53,19 @@ export declare enum NodeTestRuleMatchStatus {
      */
     Completed = 3
 }
-export declare enum NodeStatus {
+export declare enum NodeStatusEnum {
     /**
-     * 正常.
+     * 上线
      */
-    Normal = 0,
+    Online = 1,
+    /**
+     * 下线
+     */
+    OffLine = 2,
     /**
      * 冻结
      */
-    Freeze = 1
+    Freeze = 4
 }
 export declare enum NodeAuditStatus {
     /**

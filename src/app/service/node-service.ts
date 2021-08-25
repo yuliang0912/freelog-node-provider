@@ -2,15 +2,13 @@ import {provide, inject} from 'midway';
 import {FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
 import {
     CreateNodeOptions,
-    findOptions,
     INodeService,
     ITageService,
-    NodeDetailInfo,
-    NodeInfo,
-    TagInfo
+    NodeInfo
 } from '../../interface';
-import {difference} from 'lodash';
+import {difference, differenceWith} from 'lodash';
 import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
+import {NodeStatusEnum} from '../../enum';
 
 @provide()
 export class NodeService implements INodeService {
@@ -20,13 +18,13 @@ export class NodeService implements INodeService {
     @inject()
     nodeCommonChecker;
     @inject()
-    autoIncrementRecordProvider: AutoIncrementRecordProvider;
-    @inject()
     tagService: ITageService;
     @inject()
     nodeProvider: IMongodbOperation<NodeInfo>;
     @inject()
-    nodeDetailProvider: IMongodbOperation<NodeDetailInfo>;
+    nodeFreezeRecordProvider: IMongodbOperation<any>;
+    @inject()
+    autoIncrementRecordProvider: AutoIncrementRecordProvider;
 
     async updateNodeInfo(nodeId: number, model: object): Promise<boolean> {
         return this.nodeProvider.updateOne({nodeId}, model).then(t => Boolean(t.ok));
@@ -43,6 +41,7 @@ export class NodeService implements INodeService {
             nodeDomain: options.nodeDomain,
             ownerUserId: userInfo.userId,
             ownerUserName: userInfo.username,
+            tags: [],
             uniqueKey: this.nodeCommonChecker.generateNodeUniqueKey(options.nodeDomain)
         };
 
@@ -88,81 +87,116 @@ export class NodeService implements INodeService {
         return this.nodeProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
     }
 
-    async searchIntervalListByTags(condition: object, tagIds?: number[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>> {
-
-        const pipeline: any = [
-            {
-                $lookup: {
-                    from: 'node-detail-infos',
-                    localField: 'nodeId',
-                    foreignField: 'nodeId',
-                    as: 'nodeDetails'
-                }
-            }
-        ];
-        if (Array.isArray(tagIds) && tagIds.length) {
-            pipeline.push({$match: {'nodeDetails.tagIds': {$in: tagIds}}});
-        }
-        if (Object.keys(condition).length) {
-            pipeline.unshift({$match: condition});
-        }
-        const [totalItemInfo] = await this.nodeProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]]);
-        const {totalItem = 0} = totalItemInfo ?? {};
-
-        pipeline.push({$sort: options?.sort ?? {userId: -1}}, {$skip: options?.skip ?? 0}, {$limit: options?.limit ?? 10});
-        const dataList = await this.nodeProvider.aggregate(pipeline);
-
-        return {
-            skip: options?.skip ?? 0, limit: options?.limit ?? 10, totalItem, dataList
-        };
-    }
+    // async searchIntervalListByTags(condition: object, tagNames?: string[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>> {
+    //
+    //     const pipeline: any = [
+    //         {
+    //             $lookup: {
+    //                 from: 'node-detail-infos',
+    //                 localField: 'nodeId',
+    //                 foreignField: 'nodeId',
+    //                 as: 'nodeDetails'
+    //             }
+    //         }
+    //     ];
+    //     if (Array.isArray(tagIds) && tagIds.length) {
+    //         pipeline.push({$match: {'nodeDetails.tagIds': {$in: tagIds}}});
+    //     }
+    //     if (Object.keys(condition).length) {
+    //         pipeline.unshift({$match: condition});
+    //     }
+    //     const [totalItemInfo] = await this.nodeProvider.aggregate([...pipeline, ...[{$count: 'totalItem'}]]);
+    //     const {totalItem = 0} = totalItemInfo ?? {};
+    //
+    //     pipeline.push({$sort: options?.sort ?? {userId: -1}}, {$skip: options?.skip ?? 0}, {$limit: options?.limit ?? 10});
+    //     const dataList = await this.nodeProvider.aggregate(pipeline);
+    //
+    //     return {
+    //         skip: options?.skip ?? 0, limit: options?.limit ?? 10, totalItem, dataList
+    //     };
+    // }
 
     async count(condition: object): Promise<number> {
         return this.nodeProvider.count(condition);
     }
 
     /**
-     * 设置标签
-     * @param nodeId
-     * @param tagInfos
+     * 冻结或解冻节点
+     * @param nodeInfo
+     * @param remark
      */
-    async setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean> {
+    async freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean> {
 
-        const tagIds = tagInfos.map(x => x.tagId);
-        const nodeDetail = await this.nodeDetailProvider.findOne({nodeId});
-        if (!nodeDetail) {
-            await this.nodeDetailProvider.create({nodeId, tagIds});
-        } else {
-            await this.nodeDetailProvider.updateOne({nodeId}, {$addToSet: {tagIds}});
-        }
+        // 已经冻结的就是做解封操作.反之亦然
+        const operatorType = (nodeInfo.status & NodeStatusEnum.Freeze) === NodeStatusEnum.Freeze ? 2 : 1;
+        const operatorRecordInfo = {
+            operatorUserId: this.ctx.userId,
+            operatorUserName: this.ctx.identityInfo.userInfo.username,
+            type: operatorType, remark: remark ?? ''
+        };
 
-        const effectiveTagIds = difference(tagIds, nodeDetail?.tagIds ?? []);
+        const nodeStatus = operatorType === 1 ? (nodeInfo.status | NodeStatusEnum.Freeze) : (nodeInfo.status ^ NodeStatusEnum.Freeze);
+        const session = await this.nodeProvider.model.startSession();
+        await session.withTransaction(async () => {
+            await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {status: nodeStatus}, {session});
+            await this.nodeFreezeRecordProvider.findOneAndUpdate({nodeId: nodeInfo.nodeId}, {
+                $push: {records: operatorRecordInfo}
+            }, {session}).then(model => {
+                return model || this.nodeFreezeRecordProvider.create([{
+                    nodeId: nodeInfo.nodeId,
+                    nodeName: nodeInfo.nodeName,
+                    records: [operatorRecordInfo]
+                }], {session});
+            });
+        }).catch(error => {
+            throw error;
+        }).finally(() => {
+            session.endSession();
+        });
+        return true;
+    }
 
-        return this.tagService.setTagAutoIncrementCounts(effectiveTagIds, 1);
+    /**
+     * 查找节点冻结操作记录
+     * @param nodeId
+     * @param args
+     */
+    async findNodeFreezeRecords(nodeId: number, ...args) {
+        return this.nodeFreezeRecordProvider.findOne({nodeId}, ...args);
+    }
+
+    /**
+     * 设置标签
+     * @param nodeInfo
+     * @param tagNames
+     */
+    async setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean> {
+
+        const effectiveTags = difference(tagNames, nodeInfo.tags);
+
+        const tagList = await this.tagService.find({tagName: {$in: tagNames}});
+        const additionalTags = differenceWith(tagNames, tagList, (x, y) => x.toString() === y.tagName.toString());
+
+        await this.tagService.create(additionalTags);
+        await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
+            $addToSet: {tags: tagNames}
+        });
+
+        return this.tagService.setTagAutoIncrementCounts(effectiveTags, 1);
     }
 
     /**
      * 取消设置Tag
-     * @param nodeId
-     * @param tagInfo
+     * @param nodeInfo
+     * @param tagName
      */
-    async unsetTag(nodeId: number, tagInfo: TagInfo): Promise<boolean> {
-        const nodeDetail = await this.nodeDetailProvider.findOne({nodeId});
-        if (!nodeDetail || !nodeDetail.tagIds.includes(tagInfo.tagId)) {
+    async unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean> {
+        if (!nodeInfo.tags?.includes(tagName)) {
             return true;
         }
-        await this.nodeDetailProvider.updateOne({nodeId}, {
-            tagIds: nodeDetail.tagIds.filter(x => x !== tagInfo.tagId)
+        await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
+            $pull: {tags: tagName}
         });
-        return this.tagService.setTagAutoIncrementCount(tagInfo, -1);
-    }
-
-    /**
-     * 更新节点详情
-     * @param nodeId
-     * @param model
-     */
-    async updateNodeDetailInfo(nodeId: number, model: Partial<NodeDetailInfo>): Promise<boolean> {
-        return this.nodeDetailProvider.updateOne({nodeId}, model).then(t => Boolean(t.nModified));
+        return this.tagService.setTagAutoIncrementCounts([tagName], -1);
     }
 }

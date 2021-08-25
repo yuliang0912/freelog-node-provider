@@ -1,27 +1,30 @@
-import {findOptions, ITageService, TagInfo} from "../../interface";
-import {inject, provide} from "midway";
-import TagInfoProvider from "../data-provider/tag-provider";
-import {PageResult} from "egg-freelog-base";
-import AutoIncrementRecordProvider from "../data-provider/auto-increment-record-provider";
+import {findOptions, ITageService, NodeInfo, TagInfo} from '../../interface';
+import {inject, provide} from 'midway';
+import TagInfoProvider from '../data-provider/tag-provider';
+import {FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
+import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 
 @provide()
 export class TagService implements ITageService {
 
     @inject()
+    ctx: FreelogContext;
+    @inject()
     tagInfoProvider: TagInfoProvider;
     @inject()
     autoIncrementRecordProvider: AutoIncrementRecordProvider;
+    @inject()
+    nodeProvider: IMongodbOperation<NodeInfo>;
 
     /**
      * 创建tag
-     * @param tag
-     * @param type
+     * @param tags
      */
-    async create(tags: string[], type: 1 | 2): Promise<TagInfo[]> {
+    async create(tags: string[]): Promise<TagInfo[]> {0
 
-        const tagLists: any[] = [];
-        for (const tag of tags) {
-            tagLists.push({tag, type, status: 0, _id: await this.autoIncrementRecordProvider.getNextTagId()});
+        const tagLists: Partial<TagInfo>[] = [];
+        for (const tagName of tags) {
+            tagLists.push({tagName, createUserId: this.ctx.userId});
         }
 
         return this.tagInfoProvider.insertMany(tagLists);
@@ -30,6 +33,7 @@ export class TagService implements ITageService {
     /**
      * 查询多条
      * @param condition
+     * @param options
      */
     async find(condition: object, options?: findOptions<TagInfo>): Promise<TagInfo[]> {
         return this.tagInfoProvider.find(condition, options?.projection, options);
@@ -38,6 +42,7 @@ export class TagService implements ITageService {
     /**
      * 查询单条
      * @param condition
+     * @param options
      */
     async findOne(condition: object, options?: findOptions<TagInfo>): Promise<TagInfo> {
         return this.tagInfoProvider.findOne(condition, options?.projection, options);
@@ -46,10 +51,14 @@ export class TagService implements ITageService {
     /**
      * 更新tag
      * @param tagInfo
-     * @param model
+     * @param tagName
      */
-    async updateOne(tagInfo: TagInfo, model: object): Promise<boolean> {
-        return this.tagInfoProvider.updateOne({_id: tagInfo.tagId}, model).then(t => Boolean(t.nModified));
+    async updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean> {
+        await this.tagInfoProvider.updateOne({_id: tagInfo.tagId}, {tagName}).then(t => Boolean(t.nModified));
+        await this.nodeProvider.updateMany({tags: tagInfo.tagName}, {
+            $set: {'tags.$': tagName}
+        });
+        return true;
     }
 
     /**
@@ -71,19 +80,10 @@ export class TagService implements ITageService {
 
     /**
      * 设置标签自增(自减)数量.
-     * @param tagInfo
+     * @param tagNames
      * @param number
      */
-    async setTagAutoIncrementCount(tagInfo: TagInfo, number: 1 | -1): Promise<boolean> {
-        return this.tagInfoProvider.updateOne({_id: tagInfo.tagId}, {$inc: {totalSetCount: number}}).then(x => Boolean(x.nModified));
-    }
-
-    /**
-     * 设置标签自增(自减)数量.
-     * @param tagInfo
-     * @param number
-     */
-    async setTagAutoIncrementCounts(tagIds: number[], number: 1 | -1): Promise<boolean> {
-        return this.tagInfoProvider.updateMany({_id: {$in: tagIds}}, {$inc: {totalSetCount: number}}).then(x => Boolean(x.nModified));
+    async setTagAutoIncrementCounts(tagNames: string[], number: 1 | -1): Promise<boolean> {
+        return this.tagInfoProvider.updateMany({tagName: {$in: tagNames}}, {$inc: {totalSetCount: number}}).then(x => Boolean(x.nModified));
     }
 }

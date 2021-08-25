@@ -50,9 +50,7 @@ export interface NodeInfo {
     nodeThemeId?: string;
     status?: number;
     uniqueKey?: string;
-
-    nodeDetail?: NodeDetailInfo;
-
+    tags: string[];
 }
 
 export interface NodeDetailInfo {
@@ -327,28 +325,30 @@ export interface INodeService {
 
     findUserCreatedNodeCounts(userIds: number[]);
 
-    searchIntervalListByTags(condition: object, tagIds?: number[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>>;
+    // searchIntervalListByTags(condition: object, tagNames?: string[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>>;
 
     /**
      * 设置标签
-     * @param nodeId
-     * @param tagInfos
+     * @param nodeInfo
+     * @param tagNames
      */
-    setTag(nodeId: number, tagInfos: TagInfo[]): Promise<boolean>;
+    setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
 
     /**
      * 取消设置Tag
-     * @param nodeId
-     * @param tagInfo
+     * @param nodeInfo
+     * @param tagName
      */
-    unsetTag(nodeId: number, tagInfo: TagInfo): Promise<boolean>;
+    unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
 
     /**
-     * 更新节点详情
-     * @param nodeId
-     * @param model
+     * 冻结或解冻节点
+     * @param nodeInfo
+     * @param remark
      */
-    updateNodeDetailInfo(nodeId: number, model: Partial<NodeDetailInfo>): Promise<boolean>;
+    freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean>;
+
+    findNodeFreezeRecords(nodeId: number, ...args): Promise<any>;
 }
 
 export interface IPresentableService {
@@ -486,28 +486,21 @@ export interface IBaseService<T> {
 
 export interface ITageService extends IBaseService<TagInfo> {
 
-    create(tags: string[], type: 1 | 2): Promise<TagInfo[]>;
+    create(tags: string[]): Promise<TagInfo[]>;
 
     /**
      * 更新tag
      * @param tagInfo
-     * @param model
+     * @param tagName
      */
-    updateOne(tagInfo: TagInfo, model: object): Promise<boolean>;
+    updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean>;
 
     /**
      * 设置标签自增(自减)数量.
-     * @param tagInfo
+     * @param tags
      * @param number
      */
-    setTagAutoIncrementCount(tagInfo: TagInfo, number: 1 | -1): Promise<boolean>;
-
-    /**
-     * 设置标签自增(自减)数量.
-     * @param tagInfo
-     * @param number
-     */
-    setTagAutoIncrementCounts(tagIds: number[], number: 1 | -1): Promise<boolean>;
+    setTagAutoIncrementCounts(tags: string[], number: 1 | -1): Promise<boolean>;
 }
 
 export interface TagInfo {
@@ -515,22 +508,20 @@ export interface TagInfo {
     /**
      * 标签ID
      */
-    tagId: number;
+    tagId: string;
 
     /**
      * 标签名称
      */
-    tag: string;
-
-    /**
-     * 标签类型 1:手动 2:自动
-     */
-    type: 1 | 2;
+    tagName: string;
 
     /**
      * 总设置数量
      */
     totalSetCount: number;
 
-    status: 0;
+    /**
+     * 创建人ID
+     */
+    createUserId: number;
 }

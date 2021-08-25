@@ -1,32 +1,35 @@
-import { findOptions, ITageService, TagInfo } from "../../interface";
-import TagInfoProvider from "../data-provider/tag-provider";
-import { PageResult } from "egg-freelog-base";
-import AutoIncrementRecordProvider from "../data-provider/auto-increment-record-provider";
+import { findOptions, ITageService, NodeInfo, TagInfo } from '../../interface';
+import TagInfoProvider from '../data-provider/tag-provider';
+import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
+import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 export declare class TagService implements ITageService {
+    ctx: FreelogContext;
     tagInfoProvider: TagInfoProvider;
     autoIncrementRecordProvider: AutoIncrementRecordProvider;
+    nodeProvider: IMongodbOperation<NodeInfo>;
     /**
      * 创建tag
-     * @param tag
-     * @param type
+     * @param tags
      */
-    create(tags: string[], type: 1 | 2): Promise<TagInfo[]>;
+    create(tags: string[]): Promise<TagInfo[]>;
     /**
      * 查询多条
      * @param condition
+     * @param options
      */
     find(condition: object, options?: findOptions<TagInfo>): Promise<TagInfo[]>;
     /**
      * 查询单条
      * @param condition
+     * @param options
      */
     findOne(condition: object, options?: findOptions<TagInfo>): Promise<TagInfo>;
     /**
      * 更新tag
      * @param tagInfo
-     * @param model
+     * @param tagName
      */
-    updateOne(tagInfo: TagInfo, model: object): Promise<boolean>;
+    updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean>;
     /**
      * 查询区间列表
      * @param condition
@@ -40,14 +43,8 @@ export declare class TagService implements ITageService {
     count(condition: object): Promise<number>;
     /**
      * 设置标签自增(自减)数量.
-     * @param tagInfo
+     * @param tagNames
      * @param number
      */
-    setTagAutoIncrementCount(tagInfo: TagInfo, number: 1 | -1): Promise<boolean>;
-    /**
-     * 设置标签自增(自减)数量.
-     * @param tagInfo
-     * @param number
-     */
-    setTagAutoIncrementCounts(tagIds: number[], number: 1 | -1): Promise<boolean>;
+    setTagAutoIncrementCounts(tagNames: string[], number: 1 | -1): Promise<boolean>;
 }

@@ -203,8 +203,7 @@ export class PresentableAuthService implements IPresentableAuthService {
             contractAuthResult.setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser).setData({
                 presentableId: presentableInfo.presentableId,
                 presentableName: presentableInfo.presentableName,
-                policies: presentableInfo.policies,
-                contracts
+                policies: presentableInfo.policies, contracts
             });
         }
         return contractAuthResult;

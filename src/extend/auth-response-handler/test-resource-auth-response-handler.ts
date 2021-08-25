@@ -1,4 +1,4 @@
-import {parse} from 'url';
+import {URL} from 'url';
 import {inject, provide} from 'midway';
 import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
@@ -38,7 +38,7 @@ export class TestResourceAuthResponseHandler {
 
         this.commonResponseHeaderHandle(realResponseEntityInfo);
 
-        const apiResponseType = chain(parse(this.ctx.request.url, false).pathname).trimEnd('/').split('/').last().value();
+        const apiResponseType = chain(new URL(this.ctx.request.url).pathname).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
             case 'result':
                 this.subjectAuthResultResponse(authResult);

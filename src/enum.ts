@@ -67,18 +67,24 @@ export enum NodeTestRuleMatchStatus {
     Completed = 3,
 }
 
-// 0:未发布 1:已发布 2:系统冻结
-export enum NodeStatus {
+// 1:上线 2:下线 4:冻结
+export enum NodeStatusEnum {
 
     /**
-     * 正常.
+     * 上线
      */
-    Normal = 0,
+    Online = 1,
+
+    /**
+     * 下线
+     */
+    OffLine = 2,
 
     /**
      * 冻结
      */
-    Freeze = 1
+    Freeze = 4
+
 }
 
 export enum NodeAuditStatus {

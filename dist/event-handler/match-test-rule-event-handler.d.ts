@@ -1,3 +1,4 @@
+/// <reference types="lodash" />
 import { BaseTestRuleInfo, FlattenTestResourceAuthTree, FlattenTestResourceDependencyTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestResourcePropertyInfo, TestResourceTreeInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
 import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo, PresentableInfo, PresentableVersionInfo, ResourceInfo } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
@@ -50,7 +51,7 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * 获取测试资源的meta属性
      * @param testRuleMatchInfo
      */
-    getTestResourceProperty(testRuleMatchInfo: TestRuleMatchInfo): Pick<any, number | symbol>;
+    getTestResourceProperty(testRuleMatchInfo: TestRuleMatchInfo): import("lodash").Omit<any, string>;
     /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo

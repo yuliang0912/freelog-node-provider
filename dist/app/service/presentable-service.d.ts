@@ -17,7 +17,7 @@ export declare class PresentableService implements IPresentableService {
      */
     contractAppliedPresentable(nodeId: number, contractIds: string[]): Promise<{
         contractId: string;
-        presentables: Pick<PresentableInfo, "tags" | "nodeId" | "onlineStatus" | "presentableId" | "presentableName" | "presentableTitle" | "policies" | "userId" | "version" | "resourceInfo" | "resolveResources" | "coverImages" | "authStatus">[];
+        presentables: Pick<PresentableInfo, keyof PresentableInfo>[];
     }[]>;
     /**
      * 创建展品
