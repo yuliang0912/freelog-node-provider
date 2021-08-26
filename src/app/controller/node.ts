@@ -282,27 +282,4 @@ export class NodeController {
         }
         ctx.success(record.records);
     }
-
-    // // 冻结或恢复用户
-    // @put('/:nodeId/freeOrRecoverNodeStatus')
-    // async freeOrRecoverNodeStatus() {
-    //
-    //     const {ctx} = this;
-    //     const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-    //     const status = ctx.checkBody('status').exist().toInt().in([NodeStatusEnum.Freeze, NodeStatusEnum.OffLine, NodeStatusEnum.OffLine]).value;
-    //     const remark = ctx.checkBody('remark').ignoreParamWhenEmpty().type('string').len(0, 500).default('').value;
-    //     ctx.validateParams().validateOfficialAuditAccount();
-    //
-    //     const nodeInfo = await this.nodeService.findOne({nodeId});
-    //     ctx.entityNullObjectCheck(nodeInfo);
-    //
-    //     if (nodeInfo.status === status) {
-    //         return ctx.success(true);
-    //     }
-    //
-    //     const task1 = this.nodeService.updateNodeInfo(nodeId, {status});
-    //     const task2 = this.nodeService.updateNodeDetailInfo(nodeId, {statusChangeRemark: status === NodeStatusEnum.Normal ? '' : remark ?? ''});
-    //
-    //     await Promise.all([task1, task2]).then(t => ctx.success(true));
-    // }
 }

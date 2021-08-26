@@ -38,7 +38,7 @@ export class TestResourceAuthResponseHandler {
 
         this.commonResponseHeaderHandle(realResponseEntityInfo);
 
-        const apiResponseType = chain(new URL(this.ctx.request.url).pathname).trimEnd('/').split('/').last().value();
+        const apiResponseType = chain(new URL(`http://${this.ctx.hostname + this.ctx.url}`).pathname).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
             case 'result':
                 this.subjectAuthResultResponse(authResult);
