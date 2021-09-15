@@ -20,8 +20,7 @@ export class TagService implements ITageService {
      * 创建tag
      * @param tags
      */
-    async create(tags: string[]): Promise<TagInfo[]> {0
-
+    async create(tags: string[]): Promise<TagInfo[]> {
         const tagLists: Partial<TagInfo>[] = [];
         for (const tagName of tags) {
             tagLists.push({tagName, createUserId: this.ctx.userId});
@@ -54,9 +53,34 @@ export class TagService implements ITageService {
      * @param tagName
      */
     async updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean> {
-        await this.tagInfoProvider.updateOne({_id: tagInfo.tagId}, {tagName}).then(t => Boolean(t.nModified));
-        await this.nodeProvider.updateMany({tags: tagInfo.tagName}, {
-            $set: {'tags.$': tagName}
+        const session = await this.tagInfoProvider.model.startSession();
+        await session.withTransaction(async () => {
+            const task1 = this.tagInfoProvider.updateOne({_id: tagInfo.tagId}, {tagName}, {session});
+            const task2 = this.nodeProvider.updateMany({tags: tagInfo.tagName}, {
+                $set: {'tags.$': tagName}
+            }, {session});
+            await Promise.all([task1, task2]);
+        }).finally(() => {
+            session.endSession();
+        });
+        return true;
+    }
+
+    /**
+     * 删除标签
+     * @param tagInfo
+     */
+    async deleteTag(tagInfo: TagInfo): Promise<boolean> {
+
+        const session = await this.tagInfoProvider.model.startSession();
+        await session.withTransaction(async () => {
+            const task1 = this.tagInfoProvider.deleteOne({_id: tagInfo.tagId}, {session});
+            const task2 = this.nodeProvider.updateMany({tags: tagInfo.tagName}, {
+                $pull: {tags: tagInfo.tagName}
+            }, {multi: true, session});
+            await Promise.all([task1, task2]);
+        }).finally(() => {
+            session.endSession();
         });
         return true;
     }

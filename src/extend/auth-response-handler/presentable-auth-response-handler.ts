@@ -1,4 +1,3 @@
-import {URL} from 'url';
 import {inject, provide} from 'midway';
 import {
     FlattenPresentableDependencyTree,
@@ -50,8 +49,8 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         }
 
         this.commonResponseHeaderHandle(presentableInfo, presentableVersionInfo, realResponseResourceVersionInfo);
-        
-        const apiResponseType = chain(new URL(`http://${this.ctx.hostname + this.ctx.url}`).pathname).trimEnd('/').split('/').last().value();
+
+        const apiResponseType = chain(this.ctx.path).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
             case 'result':
                 this.subjectAuthResultResponse(authResult);

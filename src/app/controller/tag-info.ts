@@ -1,6 +1,6 @@
 import {isString, uniqBy} from 'lodash';
 import {ITageService} from '../../interface';
-import {controller, get, inject, post, provide, put, priority} from 'midway';
+import {controller, get, inject, post, provide, put, priority, del} from 'midway';
 import {
     IdentityTypeEnum, visitorIdentityValidator, FreelogContext, ArgumentError
 } from 'egg-freelog-base';
@@ -38,35 +38,35 @@ export class TagInfoController {
     async index() {
         const {ctx} = this;
         ctx.validateOfficialAuditAccount();
-        await this.tagService.find({status: 0}).then(ctx.success);
+        await this.tagService.find(null).then(ctx.success);
     }
 
-    // @del('/:tagId')
-    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    // async destroy() {
-    //
-    //     const {ctx} = this;
-    //     const tagId = this.ctx.checkParams("tagId").exist().toInt().gt(0).value;
-    //     ctx.validateParams().validateOfficialAuditAccount();
-    //
-    //     const tagInfo = await this.tagService.findOne({_id: tagId});
-    //     ctx.entityNullObjectCheck(tagInfo);
-    //
-    //     await this.tagService.updateOne(tagInfo, {status: 1}).then(ctx.success);
-    // }
+    @del('/:tagId')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async destroy() {
+
+        const {ctx} = this;
+        const tagId = this.ctx.checkParams('tagId').exist().isMongoObjectId().value;
+        ctx.validateParams().validateOfficialAuditAccount();
+
+        const tagInfo = await this.tagService.findOne({_id: tagId});
+        ctx.entityNullObjectCheck(tagInfo);
+
+        await this.tagService.deleteTag(tagInfo).then(ctx.success);
+    }
 
     @put('/:tagId')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async update() {
 
         const {ctx} = this;
-        const tagId = this.ctx.checkParams('tagId').exist().toInt().gt(0).value;
-        const tag = ctx.checkBody('tag').exist().type('string').trim().len(1, 80).value;
+        const tagId = ctx.checkParams('tagId').exist().isMongoObjectId().value;
+        const tagName = ctx.checkBody('tag').exist().type('string').trim().len(1, 80).value;
         ctx.validateOfficialAuditAccount();
 
         const tagInfo = await this.tagService.findOne({_id: tagId});
         ctx.entityNullObjectCheck(tagInfo);
 
-        await this.tagService.updateOne(tagInfo, tag).then(ctx.success);
+        await this.tagService.updateOne(tagInfo, tagName).then(ctx.success);
     }
 }

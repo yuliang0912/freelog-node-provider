@@ -31,6 +31,11 @@ export declare class TagService implements ITageService {
      */
     updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean>;
     /**
+     * 删除标签
+     * @param tagInfo
+     */
+    deleteTag(tagInfo: TagInfo): Promise<boolean>;
+    /**
      * 查询区间列表
      * @param condition
      * @param options

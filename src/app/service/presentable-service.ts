@@ -279,6 +279,12 @@ export class PresentableService implements IPresentableService {
         return this.presentableProvider.count(condition);
     }
 
+    /**
+     * 填充展品版本属性
+     * @param presentables
+     * @param isLoadResourceCustomPropertyDescriptors
+     * @param isLoadPresentableRewriteProperty
+     */
     async fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]> {
         if (!isArray(presentables) || isEmpty(presentables)) {
             return presentables;
@@ -304,6 +310,11 @@ export class PresentableService implements IPresentableService {
         });
     }
 
+    /**
+     * 填充展品策略信息
+     * @param presentables
+     * @param isTranslate
+     */
     async fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate: boolean = false): Promise<PresentableInfo[]> {
         if (!isArray(presentables) || isEmpty(presentables)) {
             return presentables;
@@ -327,10 +338,46 @@ export class PresentableService implements IPresentableService {
         });
     }
 
+    /**
+     * 填充展品的资源信息
+     */
+    async fillPresentableResourceInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]> {
+        const resourceIds = presentables.map(x => x.resourceInfo?.resourceId).filter(x => Boolean(x));
+        const resourceList = await this.outsideApiService.getResourceListByIds(resourceIds, {
+            projection: 'resourceId,resourceName,resourceType,coverImages,intro,resourceVersions,tags'
+        });
+        if (isEmpty(resourceList)) {
+            return presentables;
+        }
+        return presentables.map(presentable => {
+            const presentableInfo = Reflect.has(presentable, 'toObject') ? (<any>presentable).toObject() : presentable;
+            presentableInfo.resourceInfo = resourceList.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId);
+            return presentableInfo;
+        });
+    }
+
+    /**
+     * 填充展品资源版本信息
+     * @param presentables
+     */
+    async fillPresentableResourceVersionInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]> {
+        const resourceVersionIds = presentables.map(x => this.presentableCommonChecker.generateResourceVersionId(x.resourceInfo.resourceId, x.version));
+        const resourceVersionList = await this.outsideApiService.getResourceVersionList(resourceVersionIds, {
+            projection: 'resourceId,fileSha1,description,createDate,updateDate'
+        });
+        if (isEmpty(resourceVersionList)) {
+            return presentables;
+        }
+        return presentables.map(presentable => {
+            const presentableInfo = Reflect.has(presentable, 'toObject') ? (<any>presentable).toObject() : presentable;
+            presentableInfo.resourceVersionInfo = resourceVersionList.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId);
+            return presentableInfo;
+        });
+    }
+
     async relationTree(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo) {
 
     }
-
 
     /**
      * 校验resolveResources参数

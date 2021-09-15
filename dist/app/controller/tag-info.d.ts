@@ -5,5 +5,6 @@ export declare class TagInfoController {
     tagService: ITageService;
     create(): Promise<void>;
     index(): Promise<void>;
+    destroy(): Promise<void>;
     update(): Promise<void>;
 }

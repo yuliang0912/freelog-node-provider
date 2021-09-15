@@ -304,6 +304,8 @@ export interface IPresentableService {
     updatePresentableVersion(presentableInfo: PresentableInfo, version: string, resourceVersionId: string): Promise<boolean>;
     fillPresentablePolicyInfo(presentables: PresentableInfo[], isTranslate?: boolean): Promise<PresentableInfo[]>;
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
+    fillPresentableResourceInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    fillPresentableResourceVersionInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
 }
 export interface IOutsideApiService {
     getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
@@ -366,6 +368,7 @@ export interface ITageService extends IBaseService<TagInfo> {
      * @param tagName
      */
     updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean>;
+    deleteTag(tagInfo: TagInfo): Promise<boolean>;
     /**
      * 设置标签自增(自减)数量.
      * @param tags

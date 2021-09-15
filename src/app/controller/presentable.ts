@@ -339,6 +339,8 @@ export class PresentableController {
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const isLoadCustomPropertyDescriptors = ctx.checkQuery('isLoadCustomPropertyDescriptors').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceDetailInfo = ctx.checkQuery('isLoadResourceDetailInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceVersionInfo = ctx.checkQuery('isLoadResourceVersionInfo').optional().toInt().default(0).in([0, 1]).value;
         ctx.validateParams();
 
         if ([resourceId, resourceName, presentableName].every(isUndefined)) {
@@ -363,6 +365,12 @@ export class PresentableController {
         if (presentableInfo && isLoadPolicyInfo) {
             presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
         }
+        if (presentableInfo && isLoadResourceDetailInfo) {
+            presentableInfo = await this.presentableService.fillPresentableResourceInfo([presentableInfo]).then(first);
+        }
+        if (presentableInfo && isLoadResourceVersionInfo) {
+            presentableInfo = await this.presentableService.fillPresentableResourceVersionInfo([presentableInfo]).then(first);
+        }
         ctx.success(presentableInfo);
     }
 
@@ -375,6 +383,8 @@ export class PresentableController {
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const isLoadCustomPropertyDescriptors = ctx.checkQuery('isLoadCustomPropertyDescriptors').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceDetailInfo = ctx.checkQuery('isLoadResourceDetailInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceVersionInfo = ctx.checkQuery('isLoadResourceVersionInfo').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -384,6 +394,12 @@ export class PresentableController {
         }
         if (presentableInfo && isLoadPolicyInfo) {
             presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
+        }
+        if (presentableInfo && isLoadResourceDetailInfo) {
+            presentableInfo = await this.presentableService.fillPresentableResourceInfo([presentableInfo]).then(first);
+        }
+        if (presentableInfo && isLoadResourceVersionInfo) {
+            presentableInfo = await this.presentableService.fillPresentableResourceVersionInfo([presentableInfo]).then(first);
         }
         ctx.success(presentableInfo);
     }
