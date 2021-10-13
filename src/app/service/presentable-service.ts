@@ -5,7 +5,7 @@ import {
     BasePolicyInfo, CreatePresentableOptions, findOptions, INodeService,
     IOutsideApiService, IPresentableAuthService,
     IPresentableService, IPresentableVersionService,
-    PolicyInfo, PresentableInfo, PresentableVersionInfo, ResolveResource,
+    PolicyInfo, PresentableInfo, ResolveResource,
     ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
 import {
@@ -89,7 +89,7 @@ export class PresentableService implements IPresentableService {
             }));
         });
 
-        //TODO:后期待生产环境部署副本集,此处需要加入事务支持
+        // TODO:后期待生产环境部署副本集,此处需要加入事务支持
         const presentableInfo = await this.presentableProvider.create(model);
         await this.presentableVersionService.createOrUpdatePresentableVersion(presentableInfo, versionId, presentableInfo.version);
 
@@ -373,10 +373,6 @@ export class PresentableService implements IPresentableService {
             presentableInfo.resourceVersionInfo = resourceVersionList.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId);
             return presentableInfo;
         });
-    }
-
-    async relationTree(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo) {
-
     }
 
     /**

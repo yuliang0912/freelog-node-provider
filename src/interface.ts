@@ -424,7 +424,9 @@ export interface IOutsideApiService {
 
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
 
-    getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>
+    getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
+
+    getResourceVersionProperty(resourceId: string, version: string): Promise<object>;
 }
 
 export interface IPresentableAuthService {

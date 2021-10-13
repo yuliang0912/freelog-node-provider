@@ -327,6 +327,7 @@ export interface IOutsideApiService {
     getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
+    getResourceVersionProperty(resourceId: string, version: string): Promise<object>;
 }
 export interface IPresentableAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;

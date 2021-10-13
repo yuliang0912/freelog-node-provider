@@ -65,6 +65,12 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getResourceVersionInfo(resourceVersionId: string, projection?: string[]): Promise<ResourceVersionInfo>;
     /**
+     * 获取资源版本的属性
+     * @param resourceId
+     * @param version
+     */
+    getResourceVersionProperty(resourceId: string, version: string): Promise<any>;
+    /**
      * 批量签约(已经签过不会重签)
      * @param nodeId
      * @param {SubjectInfo[]} subjects
@@ -87,6 +93,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param policyIds
      * @param subjectType
      * @param projection
+     * @param isTranslate
      */
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
     /**

@@ -139,6 +139,15 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 获取资源版本的属性
+     * @param resourceId
+     * @param version
+     */
+    async getResourceVersionProperty(resourceId: string, version: string) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${resourceId}/versions/${version}/property`);
+    }
+
+    /**
      * 批量签约(已经签过不会重签)
      * @param nodeId
      * @param {SubjectInfo[]} subjects
@@ -190,6 +199,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @param policyIds
      * @param subjectType
      * @param projection
+     * @param isTranslate
      */
     async getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[] = [], isTranslate = false): Promise<BasePolicyInfo[]> {
         if (isEmpty(policyIds)) {

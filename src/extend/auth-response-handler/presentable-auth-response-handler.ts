@@ -48,7 +48,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
             this.subjectAuthFailedResponseHandle(authResult);
         }
 
-        this.commonResponseHeaderHandle(presentableInfo, presentableVersionInfo, realResponseResourceVersionInfo);
+        await this.commonResponseHeaderHandle(presentableInfo, presentableVersionInfo, realResponseResourceVersionInfo);
 
         const apiResponseType = chain(this.ctx.path).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
@@ -83,7 +83,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      * @param presentableVersionInfo
      * @param realResponseResourceVersionInfo
      */
-    commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
+    async commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree) {
 
         const responseDependencies = realResponseResourceVersionInfo.dependencies.map(x => Object({
             id: x.resourceId, name: x.resourceName, type: 'resource', resourceType: x.resourceType
@@ -94,9 +94,15 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.set('freelog-presentable-name', encodeURIComponent(presentableInfo.presentableName));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
-        this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        // 如果加载的是子资源(依赖的资源),则需要读取依赖资源的meta信息
+        if (realResponseResourceVersionInfo.resourceId !== presentableVersionInfo.resourceId) {
+            const subResourceProperty = await this.outsideApiService.getResourceVersionProperty(realResponseResourceVersionInfo.resourceId, realResponseResourceVersionInfo.version);
+            this.ctx.set('freelog-sub-resource-property', encodeURIComponent(JSON.stringify(subResourceProperty)));
+        } else {
+            this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
+        }
         // MDN: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-presentable-id,freelog-presentable-name,freelog-sub-dependencies,freelog-resource-type,freelog-resource-property');
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-presentable-id,freelog-presentable-name,freelog-sub-dependencies,freelog-resource-type,freelog-sub-resource-property,freelog-resource-property');
     }
 
     /**

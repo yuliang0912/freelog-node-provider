@@ -21,7 +21,7 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
      * @param presentableVersionInfo
      * @param realResponseResourceVersionInfo
      */
-    commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): void;
+    commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): Promise<void>;
     /**
      * 文件流响应处理
      * @param versionId
