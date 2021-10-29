@@ -95,7 +95,7 @@ export class PresentableAuthService implements IPresentableAuthService {
             }
             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
         } catch (e) {
-            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
+            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Node);
         }
     }
 
@@ -129,7 +129,7 @@ export class PresentableAuthService implements IPresentableAuthService {
             }
             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
         } catch (e) {
-            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
+            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Resource);
         }
     }
 
@@ -200,7 +200,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
         const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
         if (!contractAuthResult.isAuth) {
-            contractAuthResult.setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser).setData({
+            contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser).setData({
                 presentableId: presentableInfo.presentableId,
                 presentableName: presentableInfo.presentableName,
                 policies: presentableInfo.policies, contracts
