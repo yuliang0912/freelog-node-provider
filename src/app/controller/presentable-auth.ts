@@ -80,12 +80,12 @@ export class ResourceAuthController {
      */
     @get('/nodes/:nodeId/batchAuth/result')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async presentableNodeSideAndUpstreamAuth() {
+    async presentableBatchAuth() {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        // 1:节点侧 2:上游侧  3:节点侧以及上游侧
-        const authType = ctx.checkQuery('authType').exist().toInt().in([1, 2, 3]).value;
+        // 1:节点侧  2:上游侧  3:节点侧以及上游侧 4:全链路(包含用户)
+        const authType = ctx.checkQuery('authType').exist().toInt().in([1, 2, 3, 4]).value;
         const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
@@ -104,7 +104,8 @@ export class ResourceAuthController {
 
         const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
             authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
-                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth : null;
+                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth :
+                    authType === 4 ? this.presentableAuthService.presentableAuth : null;
 
         const tasks = [];
         const returnResults = [];

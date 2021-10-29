@@ -18,7 +18,7 @@ export declare class ResourceAuthController {
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    presentableNodeSideAndUpstreamAuth(): Promise<FreelogContext>;
+    presentableBatchAuth(): Promise<FreelogContext>;
     /**
      * 通过节点ID和资源ID获取展品,并且授权
      */
