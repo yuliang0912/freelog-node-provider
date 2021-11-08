@@ -4,8 +4,10 @@ import {SubjectAuthResult} from '../../auth-interface';
 import {AuthorizationError, ApplicationError, SubjectAuthCodeEnum, FreelogContext} from 'egg-freelog-base';
 import {IOutsideApiService} from '../../interface';
 import {
-    FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo
+    FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo, TestResourceOriginType
 } from '../../test-node-interface';
+import {convertIntranetApiResponseData} from 'egg-freelog-base/lib/freelog-common-func';
+import {TestNodeGenerator} from '../test-node-generator';
 
 @provide()
 export class TestResourceAuthResponseHandler {
@@ -13,7 +15,7 @@ export class TestResourceAuthResponseHandler {
     @inject()
     ctx: FreelogContext;
     @inject()
-    testNodeGenerator;
+    testNodeGenerator: TestNodeGenerator;
     @inject()
     outsideApiService: IOutsideApiService;
 
@@ -25,8 +27,9 @@ export class TestResourceAuthResponseHandler {
      * @param parentNid
      * @param subEntityIdOrName
      * @param subEntityType
+     * @param subEntityFile
      */
-    async handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string) {
+    async handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string, subEntityFile?: string) {
 
         const realResponseEntityInfo = this.getRealResponseEntityInfo(flattenDependencyTree, parentNid, subEntityIdOrName, subEntityType);
         if (!realResponseEntityInfo) {
@@ -35,7 +38,7 @@ export class TestResourceAuthResponseHandler {
             this.subjectAuthFailedResponseHandle(authResult);
         }
 
-        this.commonResponseHeaderHandle(realResponseEntityInfo);
+        this.commonResponseHeaderHandle(testResourceInfo, realResponseEntityInfo);
         const apiResponseType = chain(this.ctx.path).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
             case 'result':
@@ -47,7 +50,11 @@ export class TestResourceAuthResponseHandler {
                 break;
             case 'fileStream':
                 this.subjectAuthFailedResponseHandle(authResult);
-                await this.fileStreamResponseHandle(realResponseEntityInfo.fileSha1, realResponseEntityInfo.id, realResponseEntityInfo.resourceType, realResponseEntityInfo.name);
+                if (!subEntityFile) {
+                    await this.fileStreamResponseHandle(realResponseEntityInfo.fileSha1, realResponseEntityInfo.id, realResponseEntityInfo.resourceType, realResponseEntityInfo.name);
+                } else {
+                    await this.subEntityFileResponseHandle(realResponseEntityInfo, subEntityFile);
+                }
                 break;
             default:
                 this.ctx.error(new ApplicationError('未实现的授权展示方式'));
@@ -57,15 +64,22 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 公共响应头处理
+     * @param testResourceInfo
      * @param responseTestResourceDependencyTree
      */
-    commonResponseHeaderHandle(responseTestResourceDependencyTree: TestResourceDependencyTree) {
-
+    commonResponseHeaderHandle(testResourceInfo: TestResourceInfo, responseTestResourceDependencyTree: TestResourceDependencyTree) {
         this.ctx.set('freelog-entity-nid', responseTestResourceDependencyTree.nid);
+        this.ctx.set('freelog-test-resource-id', testResourceInfo.testResourceId);
+        this.ctx.set('freelog-test-resource-name', encodeURIComponent(testResourceInfo.testResourceName));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseTestResourceDependencyTree.dependencies)));
         this.ctx.set('freelog-resource-type', responseTestResourceDependencyTree.resourceType);
-        // this.ctx.set('freelog-resource-property', encodeURIComponent(JSON.stringify(presentableVersionInfo.versionProperty)));
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-sub-dependencies,freelog-resource-type');
+        //if (responseTestResourceDependencyTree.id === testResourceInfo.originInfo.id) {
+        const versionProperty = this.testNodeGenerator._calculateTestResourceProperty(testResourceInfo);
+        this.ctx.set('freelog-entity-property', encodeURIComponent(JSON.stringify(versionProperty)));
+        // } else {
+        //
+        // }
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-entity-nid,freelog-test-resource-id,freelog-test-resource-name,freelog-sub-dependencies,freelog-resource-type,freelog-entity-property');
     }
 
 
@@ -78,7 +92,6 @@ export class TestResourceAuthResponseHandler {
      */
     async fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string) {
 
-        // entityType === TestResourceOriginType.Resource
         const response = await this.outsideApiService.getFileStream(fileSha1);
         if ((response.res.headers['content-type'] ?? '').includes('application/json')) {
             throw new ApplicationError('文件读取失败', {msg: JSON.parse(response.data.toString())?.msg});
@@ -88,14 +101,46 @@ export class TestResourceAuthResponseHandler {
         }
 
         this.ctx.body = response.data;
-        this.ctx.set('content-length', response.res.headers['content-length']);
-
         if (isString(attachmentName)) {
             this.ctx.attachment(attachmentName);
         }
         if (['video', 'audio'].includes(entityType)) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
+        this.ctx.set('content-length', response.res.headers['content-length']);
+        // 代码需要放到ctx.attachment以后,否则不可控.
+        this.ctx.set('content-type', response.res.headers['content-type']);
+    }
+
+    /**
+     * 获取子资源文件
+     * @param realResponseEntityInfo
+     * @param subEntityFile
+     */
+    async subEntityFileResponseHandle(realResponseEntityInfo: TestResourceDependencyTree, subEntityFile: string) {
+
+        let response = null;
+        if (realResponseEntityInfo.type === TestResourceOriginType.Resource) {
+            response = await this.outsideApiService.getSubResourceFile(realResponseEntityInfo.id, realResponseEntityInfo.versionId, subEntityFile);
+        } else {
+            response = await this.outsideApiService.getSubObjectFile(realResponseEntityInfo.id, subEntityFile);
+        }
+
+        if (!response.res.statusCode.toString().startsWith('2')) {
+            throw new ApplicationError('文件读取失败');
+        }
+        if (!response.res.headers['content-disposition']) {
+            if (response.res.headers['content-type'].includes('application/json')) {
+                convertIntranetApiResponseData(JSON.parse(response.data.toString()), 'getSubResourceFile');
+            }
+            throw new ApplicationError('文件读取失败');
+        }
+
+        this.ctx.body = response.data;
+        this.ctx.set('content-disposition', response.res.headers['content-disposition']);
+        this.ctx.set('content-length', response.res.headers['content-length']);
+        // 代码需要放到ctx.attachment以后,否则不可控.
+        this.ctx.set('content-type', response.res.headers['content-type']);
     }
 
     /**

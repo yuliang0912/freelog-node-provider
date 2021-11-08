@@ -122,10 +122,16 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getFileStream(versionId: string): Promise<any>;
     /**
-     * 获取子文件
+     * 获取资源子文件
      * @param resourceId
      * @param version
      * @param subResourceFile
      */
     getSubResourceFile(resourceId: string, version: string, subResourceFile: string): Promise<any>;
+    /**
+     * 获取对象子文件
+     * @param objectId
+     * @param subObjectFile
+     */
+    getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>;
 }

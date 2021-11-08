@@ -258,12 +258,21 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
-     * 获取子文件
+     * 获取资源子文件
      * @param resourceId
      * @param version
      * @param subResourceFile
      */
     getSubResourceFile(resourceId: string, version: string, subResourceFile: string) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getResourceFile?name=${resourceId}&version=${version}&tarPath=${subResourceFile}`, null, CurlResFormatEnum.Original);
+    }
+
+    /**
+     * 获取对象子文件
+     * @param objectId
+     * @param subObjectFile
+     */
+    getSubObjectFile(objectId: string, subObjectFile: string) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getResourceFile?name=${objectId}&tarPath=${subObjectFile}`, null, CurlResFormatEnum.Original);
     }
 }

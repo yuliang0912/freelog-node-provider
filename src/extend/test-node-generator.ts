@@ -3,11 +3,11 @@ import {provide} from 'midway';
 import {satisfies} from 'semver';
 import {
     FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree,
-    TestResourceDependencyTree, TestResourceOriginInfo, TestResourceOriginType, TestResourceAuthTree
+    TestResourceDependencyTree, TestResourceOriginInfo, TestResourceOriginType, TestResourceAuthTree, TestResourceInfo
 } from '../test-node-interface';
-import {ResourceInfo} from "../interface";
+import {ResourceInfo} from '../interface';
 import {first, isEmpty, isString} from 'lodash';
-import {CryptoHelper} from 'egg-freelog-base'
+import {CryptoHelper} from 'egg-freelog-base';
 
 @provide()
 export class TestNodeGenerator {
@@ -53,7 +53,7 @@ export class TestNodeGenerator {
      * @param maxDeep
      * @param isContainRootNode
      */
-    convertTestResourceAuthTree(flattenAuthTree: FlattenTestResourceAuthTree[], startNid: string = "", maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceAuthTree[] {
+    convertTestResourceAuthTree(flattenAuthTree: FlattenTestResourceAuthTree[], startNid: string = '', maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceAuthTree[] {
 
         const startedAuthTree = startNid ? flattenAuthTree.filter(x => x.nid === startNid) : flattenAuthTree.filter(x => x.deep === 1);
         if (isEmpty(startedAuthTree)) {
@@ -76,7 +76,7 @@ export class TestNodeGenerator {
                     versionId: item.versionId,
                     userId: item.userId,
                     children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
-                }
+                };
             });
         }
 
@@ -92,13 +92,13 @@ export class TestNodeGenerator {
      * @param maxDeep
      * @param isContainRootNode
      */
-    generateTestResourceDependencyTree(dependencyTree: FlattenTestResourceDependencyTree[], startNid: string = "", maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceDependencyTree[] {
+    generateTestResourceDependencyTree(dependencyTree: FlattenTestResourceDependencyTree[], startNid: string = '', maxDeep: number = 100, isContainRootNode: boolean = true): TestResourceDependencyTree[] {
 
         const targetDependencyInfo = startNid ? dependencyTree.find(x => x.nid === startNid) : dependencyTree.find(x => x.deep === 1);
         if (!targetDependencyInfo) {
             return [];
         }
-        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1
+        maxDeep = isContainRootNode ? maxDeep : maxDeep + 1;
 
         function recursionBuildDependencyTree(dependencies: FlattenTestResourceDependencyTree[], currDeep: number = 1): TestResourceDependencyTree[] {
             if (!dependencies.length || currDeep++ >= maxDeep) {
@@ -117,10 +117,10 @@ export class TestNodeGenerator {
                     // replaced: item.replaced,
                     dependencies: recursionBuildDependencyTree(dependencyTree.filter(x => x.parentNid === item.nid), currDeep)
                 };
-            })
+            });
         }
 
-        const convertedDependencyTree = recursionBuildDependencyTree([targetDependencyInfo])
+        const convertedDependencyTree = recursionBuildDependencyTree([targetDependencyInfo]);
 
         return isContainRootNode ? convertedDependencyTree : first(convertedDependencyTree)?.dependencies;
     }
@@ -153,12 +153,12 @@ export class TestNodeGenerator {
         const testResourceDependencyTree = this.generateTestResourceDependencyTree(dependencyTree, null, 999, true);
 
         function entityIsMatched(dependencyInfo: TestResourceDependencyTree) {
-            return dependencyInfo.id === dependentEntityId && (dependencyInfo.type === TestResourceOriginType.Object || !dependentEntityVersionRange || satisfies(dependencyInfo.version, dependentEntityVersionRange))
+            return dependencyInfo.id === dependentEntityId && (dependencyInfo.type === TestResourceOriginType.Object || !dependentEntityVersionRange || satisfies(dependencyInfo.version, dependentEntityVersionRange));
         }
 
         function recursionSetMatchResult(dependencies: TestResourceDependencyTree[]): boolean {
             if (isEmpty(dependencies)) {
-                return false
+                return false;
             }
             for (let i = 0, j = dependencies.length; i < j; i++) {
                 let dependencyInfo = dependencies[i];
@@ -189,8 +189,8 @@ export class TestNodeGenerator {
                     type: item.type,
                     version: item.version,
                     dependencies: recursionBuildDependencyTree(item.dependencies)
-                }
-            })
+                };
+            });
         }
 
         recursionSetMatchResult(testResourceDependencyTree);
@@ -243,5 +243,17 @@ export class TestNodeGenerator {
             this._buildAuthTree(dependencyTree, results, dependencyInfo, deep + 1);
         }
         return results;
+    }
+
+    /**
+     * 计算测试资源属性
+     * @param testResource
+     */
+    _calculateTestResourceProperty(testResource: TestResourceInfo) {
+        const testResourceProperty: any = {};
+        testResource.stateInfo.propertyInfo.testResourceProperty.forEach(({key, value}) => {
+            testResourceProperty[key] = value;
+        });
+        return testResourceProperty;
     }
 }

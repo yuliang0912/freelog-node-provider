@@ -2,9 +2,10 @@ import { SubjectAuthResult } from '../../auth-interface';
 import { FreelogContext } from 'egg-freelog-base';
 import { IOutsideApiService } from '../../interface';
 import { FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo } from '../../test-node-interface';
+import { TestNodeGenerator } from '../test-node-generator';
 export declare class TestResourceAuthResponseHandler {
     ctx: FreelogContext;
-    testNodeGenerator: any;
+    testNodeGenerator: TestNodeGenerator;
     outsideApiService: IOutsideApiService;
     /**
      * 授权结果统一响应处理
@@ -14,13 +15,15 @@ export declare class TestResourceAuthResponseHandler {
      * @param parentNid
      * @param subEntityIdOrName
      * @param subEntityType
+     * @param subEntityFile
      */
-    handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string): Promise<void>;
+    handle(testResourceInfo: TestResourceInfo, flattenDependencyTree: FlattenTestResourceDependencyTree[], authResult: SubjectAuthResult, parentNid?: string, subEntityIdOrName?: string, subEntityType?: string, subEntityFile?: string): Promise<void>;
     /**
      * 公共响应头处理
+     * @param testResourceInfo
      * @param responseTestResourceDependencyTree
      */
-    commonResponseHeaderHandle(responseTestResourceDependencyTree: TestResourceDependencyTree): void;
+    commonResponseHeaderHandle(testResourceInfo: TestResourceInfo, responseTestResourceDependencyTree: TestResourceDependencyTree): void;
     /**
      * 文件流响应处理
      * @param fileSha1
@@ -29,6 +32,12 @@ export declare class TestResourceAuthResponseHandler {
      * @param attachmentName
      */
     fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string): Promise<void>;
+    /**
+     * 获取子资源文件
+     * @param realResponseEntityInfo
+     * @param subEntityFile
+     */
+    subEntityFileResponseHandle(realResponseEntityInfo: TestResourceDependencyTree, subEntityFile: string): Promise<void>;
     /**
      * 标的物自身信息展示
      * @param testResourceInfo

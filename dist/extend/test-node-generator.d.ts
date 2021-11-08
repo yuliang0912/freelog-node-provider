@@ -1,5 +1,5 @@
-import { FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree, TestResourceDependencyTree, TestResourceOriginInfo, TestResourceAuthTree } from '../test-node-interface';
-import { ResourceInfo } from "../interface";
+import { FlattenTestResourceDependencyTree, FlattenTestResourceAuthTree, TestResourceDependencyTree, TestResourceOriginInfo, TestResourceAuthTree, TestResourceInfo } from '../test-node-interface';
+import { ResourceInfo } from '../interface';
 export declare class TestNodeGenerator {
     readonly dependencyNodeIdLength = 8;
     /**
@@ -66,4 +66,9 @@ export declare class TestNodeGenerator {
      * @private
      */
     _buildAuthTree(dependencyTree: FlattenTestResourceDependencyTree[], results?: FlattenTestResourceAuthTree[], parent?: FlattenTestResourceDependencyTree, deep?: number): FlattenTestResourceAuthTree[];
+    /**
+     * 计算测试资源属性
+     * @param testResource
+     */
+    _calculateTestResourceProperty(testResource: TestResourceInfo): any;
 }

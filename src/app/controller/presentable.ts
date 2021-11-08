@@ -44,7 +44,7 @@ export class PresentableController {
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
-        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
+        const resourceTypes = ctx.checkQuery('resourceType').optional().toSplitArray().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
@@ -56,8 +56,8 @@ export class PresentableController {
         ctx.validateParams();
 
         const condition: any = {nodeId};
-        if (isString(resourceType)) { //resourceType 与 omitResourceType互斥
-            condition['resourceInfo.resourceType'] = resourceType;
+        if (resourceTypes?.length) { //resourceType 与 omitResourceType互斥
+            condition['resourceInfo.resourceType'] = {$in: resourceTypes};
         } else if (isString(omitResourceType)) {
             condition['resourceInfo.resourceType'] = {$ne: omitResourceType};
         }

@@ -44,6 +44,7 @@ export class TestNodeAuthController {
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subEntityIdOrName = ctx.checkQuery('subEntityIdOrName').optional().decodeURIComponent().value;
         const subEntityType = ctx.checkQuery('subEntityType').optional().value;
+        const subEntityFile = ctx.checkQuery('subEntityFile').optional().decodeURIComponent().value;
         ctx.validateParams();
 
         const testResourceInfo = await this.testNodeService.findOneTestResource({testResourceId});
@@ -53,7 +54,7 @@ export class TestNodeAuthController {
 
         const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId}, 'authTree dependencyTree');
         const testResourceAuthResult = await this.testResourceAuthService.testResourceAuth(testResourceInfo, testResourceTreeInfo.authTree);
-        await this.testResourceAuthResponseHandler.handle(testResourceInfo, testResourceTreeInfo.dependencyTree, testResourceAuthResult, parentNid, subEntityIdOrName, subEntityType);
+        await this.testResourceAuthResponseHandler.handle(testResourceInfo, testResourceTreeInfo.dependencyTree, testResourceAuthResult, parentNid, subEntityIdOrName, subEntityType, subEntityFile);
     }
 
     /**

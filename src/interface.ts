@@ -422,6 +422,8 @@ export interface IOutsideApiService {
 
     getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
 
+    getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>
+
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
 
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
