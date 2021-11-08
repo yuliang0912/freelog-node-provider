@@ -273,6 +273,6 @@ export class OutsideApiService implements IOutsideApiService {
      * @param subObjectFile
      */
     getSubObjectFile(objectId: string, subObjectFile: string) {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getResourceFile?name=${objectId}&tarPath=${subObjectFile}`, null, CurlResFormatEnum.Original);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getObjectFile?objectId=${objectId}&tarPath=${subObjectFile}`, null, CurlResFormatEnum.Original);
     }
 }
