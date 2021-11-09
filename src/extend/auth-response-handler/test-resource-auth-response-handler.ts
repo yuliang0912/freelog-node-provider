@@ -121,7 +121,7 @@ export class TestResourceAuthResponseHandler {
 
         let response = null;
         if (realResponseEntityInfo.type === TestResourceOriginType.Resource) {
-            response = await this.outsideApiService.getSubResourceFile(realResponseEntityInfo.id, realResponseEntityInfo.versionId, subEntityFile);
+            response = await this.outsideApiService.getSubResourceFile(realResponseEntityInfo.id, realResponseEntityInfo.version, subEntityFile);
         } else {
             response = await this.outsideApiService.getSubObjectFile(realResponseEntityInfo.id, subEntityFile);
         }
