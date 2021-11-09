@@ -109,6 +109,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 themeId: themeTestResourceInfo?.testResourceId ?? '',
                 matchResultDate: new Date()
             });
+            await this.nodeProvider.updateOne({nodeId}, {
+                nodeTestThemeId: themeTestResourceInfo?.testResourceId ?? ''
+            });
         } catch (e) {
             console.log('节点测试规则匹配异常', e);
             await this.nodeTestRuleProvider.updateOne({nodeId}, {

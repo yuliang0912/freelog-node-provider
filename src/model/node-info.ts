@@ -17,6 +17,7 @@ export class NodeInfoModel extends MongooseModelBase {
             nodeName: {type: String, unique: true, required: true},
             nodeDomain: {type: String, unique: true, required: true},
             nodeThemeId: {type: String, required: false, default: ''},
+            nodeTestThemeId: {type: String, required: false, default: ''},
             ownerUserId: {type: Number, required: true},
             ownerUserName: {type: String, required: true},
             uniqueKey: {type: String, required: true},
