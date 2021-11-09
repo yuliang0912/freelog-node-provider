@@ -120,7 +120,7 @@ export class TestResourceAuthService implements ITestResourceAuthService {
             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
 
-        const isExistAuthContracts = contracts.some(x => x.isTestAuth);
+        const isExistAuthContracts = contracts.some(x => x.isAuth || x.isTestAuth);
         if (!isExistAuthContracts) {
             return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
         }
