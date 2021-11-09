@@ -418,9 +418,11 @@ export interface IOutsideApiService {
 
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
 
-    getFileStream(fileSha1: string): Promise<any>;
+    getResourceFileStream(versionId: string): Promise<any>;
 
     getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
+
+    getObjectFileStream(objectId: string): Promise<any>;
 
     getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>
 

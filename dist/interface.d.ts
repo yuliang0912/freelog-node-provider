@@ -323,8 +323,9 @@ export interface IOutsideApiService {
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
-    getFileStream(fileSha1: string): Promise<any>;
+    getResourceFileStream(versionId: string): Promise<any>;
     getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
+    getObjectFileStream(objectId: string): Promise<any>;
     getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>;
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;

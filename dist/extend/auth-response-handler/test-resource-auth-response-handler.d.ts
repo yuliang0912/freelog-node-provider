@@ -26,12 +26,9 @@ export declare class TestResourceAuthResponseHandler {
     commonResponseHeaderHandle(testResourceInfo: TestResourceInfo, responseTestResourceDependencyTree: TestResourceDependencyTree): void;
     /**
      * 文件流响应处理
-     * @param fileSha1
-     * @param entityId
-     * @param entityType
-     * @param attachmentName
+     * @param realResponseEntityInfo
      */
-    fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string): Promise<void>;
+    fileStreamResponseHandle(realResponseEntityInfo: TestResourceDependencyTree): Promise<void>;
     /**
      * 获取子资源文件
      * @param realResponseEntityInfo

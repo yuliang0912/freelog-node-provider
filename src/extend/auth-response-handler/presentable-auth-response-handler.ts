@@ -113,7 +113,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      */
     async fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string) {
 
-        const response = await this.outsideApiService.getFileStream(versionId);
+        const response = await this.outsideApiService.getResourceFileStream(versionId);
         if (!response.res.statusCode.toString().startsWith('2')) {
             throw new ApplicationError('文件读取失败');
         }

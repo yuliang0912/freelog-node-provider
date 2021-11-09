@@ -253,7 +253,7 @@ export class OutsideApiService implements IOutsideApiService {
      * 获取文件流
      * @param versionId
      */
-    getFileStream(versionId: string): Promise<any> {
+    getResourceFileStream(versionId: string): Promise<any> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/${versionId}/internalClientDownload`, null, CurlResFormatEnum.Original);
     }
 
@@ -265,6 +265,14 @@ export class OutsideApiService implements IOutsideApiService {
      */
     getSubResourceFile(resourceId: string, version: string, subResourceFile: string) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getResourceFile?name=${resourceId}&version=${version}&tarPath=${subResourceFile}`, null, CurlResFormatEnum.Original);
+    }
+
+    /**
+     * 获取对象文件流
+     * @param objectId
+     */
+    getObjectFileStream(objectId: string): Promise<any> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/objects/${objectId}/file`, null, CurlResFormatEnum.Original);
     }
 
     /**

@@ -120,7 +120,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * 获取文件流
      * @param versionId
      */
-    getFileStream(versionId: string): Promise<any>;
+    getResourceFileStream(versionId: string): Promise<any>;
     /**
      * 获取资源子文件
      * @param resourceId
@@ -128,6 +128,11 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param subResourceFile
      */
     getSubResourceFile(resourceId: string, version: string, subResourceFile: string): Promise<any>;
+    /**
+     * 获取对象文件流
+     * @param objectId
+     */
+    getObjectFileStream(objectId: string): Promise<any>;
     /**
      * 获取对象子文件
      * @param objectId

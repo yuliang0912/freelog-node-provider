@@ -51,7 +51,7 @@ export class TestResourceAuthResponseHandler {
             case 'fileStream':
                 this.subjectAuthFailedResponseHandle(authResult);
                 if (!subEntityFile) {
-                    await this.fileStreamResponseHandle(realResponseEntityInfo.fileSha1, realResponseEntityInfo.id, realResponseEntityInfo.resourceType, realResponseEntityInfo.name);
+                    await this.fileStreamResponseHandle(realResponseEntityInfo);
                 } else {
                     await this.subEntityFileResponseHandle(realResponseEntityInfo, subEntityFile);
                 }
@@ -85,14 +85,16 @@ export class TestResourceAuthResponseHandler {
 
     /**
      * 文件流响应处理
-     * @param fileSha1
-     * @param entityId
-     * @param entityType
-     * @param attachmentName
+     * @param realResponseEntityInfo
      */
-    async fileStreamResponseHandle(fileSha1: string, entityId: string, entityType: string, attachmentName?: string) {
+    async fileStreamResponseHandle(realResponseEntityInfo: TestResourceDependencyTree) {
 
-        const response = await this.outsideApiService.getFileStream(fileSha1);
+        let response = null;
+        if (realResponseEntityInfo.type === TestResourceOriginType.Resource) {
+            response = await this.outsideApiService.getResourceFileStream(realResponseEntityInfo.versionId);
+        } else {
+            response = await this.outsideApiService.getObjectFileStream(realResponseEntityInfo.id);
+        }
         if ((response.res.headers['content-type'] ?? '').includes('application/json')) {
             throw new ApplicationError('文件读取失败', {msg: JSON.parse(response.data.toString())?.msg});
         }
@@ -101,10 +103,8 @@ export class TestResourceAuthResponseHandler {
         }
 
         this.ctx.body = response.data;
-        if (isString(attachmentName)) {
-            this.ctx.attachment(attachmentName);
-        }
-        if (['video', 'audio'].includes(entityType)) {
+        this.ctx.attachment(realResponseEntityInfo.name);
+        if (['video', 'audio'].includes(realResponseEntityInfo.resourceType)) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
         this.ctx.set('content-length', response.res.headers['content-length']);
