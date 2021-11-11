@@ -1,12 +1,13 @@
-import { IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { IPresentableAuthService, IPresentableService, IPresentableVersionService } from '../../interface';
 import { FreelogContext } from 'egg-freelog-base';
-export declare class PresentableAuthController {
+import { SubjectPresentableAuthResponseHandler } from '../../extend/auth-response-handler/subject-presentable-auth-response-handler';
+export declare class PresentableSubjectAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
     presentableService: IPresentableService;
     presentableAuthService: IPresentableAuthService;
     presentableVersionService: IPresentableVersionService;
-    presentableAuthResponseHandler: IPresentableAuthResponseHandler;
+    subjectPresentableAuthResponseHandler: SubjectPresentableAuthResponseHandler;
     /**
      * 展品服务的色块(目前此接口未使用,网关层面通过已通过mock实现)
      */

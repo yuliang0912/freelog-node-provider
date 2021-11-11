@@ -10,7 +10,6 @@ export class AuthExceptionHandlerMiddleware implements WebMiddleware {
             try {
                 await next();
             } catch (error) {
-                console.log(error)
                 if ((error instanceof BreakOffError) || (error instanceof AuthorizationError)) {
                     throw error;
                 }

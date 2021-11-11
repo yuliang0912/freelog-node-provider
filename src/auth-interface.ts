@@ -7,11 +7,20 @@
  * 以9开头代表API内部异常,例如内部API调用失败、代码异常、参数不全等错误
  */
 import {SubjectTypeEnum, ISubjectAuthResult, SubjectAuthCodeEnum} from 'egg-freelog-base';
+import {BaseResourceInfo, ResolveResource} from './interface';
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from './enum';
+import {TestResourceOriginInfo} from './test-node-interface';
 
 /**
  * 授权出错时的责任方
  */
 export enum BreachResponsibilityTypeEnum {
+
+    /**
+     * 无违约方
+     */
+    Default = 0,
+
     /**
      * 资源方
      */
@@ -39,7 +48,7 @@ export class SubjectAuthResult implements ISubjectAuthResult {
     errorMsg = '';
     authCode = SubjectAuthCodeEnum.Default;
     referee = SubjectTypeEnum.Presentable;
-    breachResponsibilityType = BreachResponsibilityTypeEnum.Unknown;
+    breachResponsibilityType = BreachResponsibilityTypeEnum.Default;
 
     constructor(authCode?: SubjectAuthCodeEnum) {
         if (authCode) {
@@ -87,4 +96,46 @@ export class SubjectAuthResult implements ISubjectAuthResult {
             errorMsg: this.errorMsg
         };
     }
+}
+
+export interface SubjectPolicyInfo {
+    policyId: string;
+    policyName: string;
+    status: number;
+}
+
+export interface ISubjectBaseInfo {
+    subjectId: string;
+    subjectType: SubjectTypeEnum;
+    subjectName: string;
+    licensorId: string | number;
+    licensorName: string;
+    licensorOwnerId: number;
+    licensorOwnerName: string;
+    policies: SubjectPolicyInfo[];
+    status: number;
+    meta?: any;
+}
+
+/**
+ * 展品标的物
+ */
+export interface PresentableSubjectInfo extends ISubjectBaseInfo {
+    subjectTitle: string;
+    version: string;
+    resourceInfo: BaseResourceInfo;
+    resolveResources: ResolveResource[];
+    tags?: string[];
+    coverImages: string[];
+    onlineStatus: PresentableOnlineStatusEnum;
+    authStatus: PresentableAuthStatusEnum;
+}
+
+export interface TestResourceSubjectInfo extends ISubjectBaseInfo {
+    subjectTitle: string;
+    version: string;
+    entityInfo: TestResourceOriginInfo;
+    tags?: string[];
+    coverImages: string[];
+    onlineStatus: PresentableOnlineStatusEnum;
 }

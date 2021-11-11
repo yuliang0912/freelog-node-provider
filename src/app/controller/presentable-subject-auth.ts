@@ -1,22 +1,21 @@
 import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
-import {
-    IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService
-} from '../../interface';
+import {IPresentableAuthService, IPresentableService, IPresentableVersionService} from '../../interface';
 import {
     ArgumentError,
-    IdentityTypeEnum,
-    visitorIdentityValidator,
     CommonRegex,
     FreelogContext,
+    IdentityTypeEnum,
+    ResourceTypeEnum,
     SubjectAuthCodeEnum,
-    ResourceTypeEnum
+    visitorIdentityValidator
 } from 'egg-freelog-base';
-import {SubjectAuthResult} from '../../auth-interface';
+import {ISubjectBaseInfo, SubjectAuthResult} from '../../auth-interface';
+import {SubjectPresentableAuthResponseHandler} from '../../extend/auth-response-handler/subject-presentable-auth-response-handler';
 
 @provide()
-@controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectTypes/:subjectId
-export class PresentableAuthController {
+@controller('/v2/auths/subjects/presentable')
+export class PresentableSubjectAuthController {
 
     @inject()
     ctx: FreelogContext;
@@ -29,7 +28,7 @@ export class PresentableAuthController {
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
-    presentableAuthResponseHandler: IPresentableAuthResponseHandler;
+    subjectPresentableAuthResponseHandler: SubjectPresentableAuthResponseHandler;
 
     /**
      * 展品服务的色块(目前此接口未使用,网关层面通过已通过mock实现)
@@ -45,16 +44,22 @@ export class PresentableAuthController {
     /**
      * 通过展品ID获取展品并且授权
      */
-    @get('/:subjectId/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
+    @get('/:subjectIdentifiers/(result|info|resourceInfo|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.UnLoginUser | IdentityTypeEnum.InternalClient)
     async presentableAuth() {
 
         const {ctx} = this;
-        const presentableId = ctx.checkParams('subjectId').isPresentableId().value;
-        const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
-        const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
-        ctx.validateParams();
+        const presentableId = ctx.checkParams('subjectIdentifiers').isPresentableId().value;
+        // 依赖定位符,原parentNid
+        const parentNid = ctx.checkQuery('dependencyPosition').optional().value;
+        const subResourceIdOrName = ctx.checkQuery('dependencyIdentifiers').optional().decodeURIComponent().value;
+        const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
+
+        if (ctx.errors.length) {
+            this.subjectPresentableAuthResponseHandler.subjectAuthFailedResponseHandle({
+                subjectId: presentableId, subjectName: ''
+            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败'));
+        }
 
         let presentableInfo = await this.presentableService.findById(presentableId);
         if (!presentableInfo) {
@@ -65,14 +70,14 @@ export class PresentableAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
             return ctx.success(subjectAuthResult);
         }
-        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+        if (subFilePath && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
+        await this.subjectPresentableAuthResponseHandler.presentableHandle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subFilePath);
     }
 
     /**
@@ -137,7 +142,11 @@ export class PresentableAuthController {
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
         const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
-        ctx.validateParams();
+        if (ctx.errors.length) {
+            this.subjectPresentableAuthResponseHandler.subjectAuthFailedResponseHandle({
+                subjectId: resourceIdOrName, subjectName: ''
+            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败'));
+        }
 
         const condition = {nodeId};
         if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
@@ -166,6 +175,6 @@ export class PresentableAuthController {
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
-        await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
+        await this.subjectPresentableAuthResponseHandler.presentableHandle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
     }
 }
