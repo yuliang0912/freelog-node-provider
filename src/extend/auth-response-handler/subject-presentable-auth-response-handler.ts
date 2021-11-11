@@ -91,8 +91,8 @@ export class SubjectPresentableAuthResponseHandler {
         }));
 
         this.ctx.set('freelog-entity-nid', realResponseResourceVersionInfo.nid);
-        this.ctx.set('freelog-subject-id', subjectInfo.subjectId);
-        this.ctx.set('freelog-subject-name', subjectInfo.subjectName);
+        this.ctx.set('freelog-subject-id', subjectInfo?.subjectId);
+        this.ctx.set('freelog-subject-name', encodeURIComponent(subjectInfo?.subjectName ?? ''));
         this.ctx.set('freelog-subject-property', encodeURIComponent(JSON.stringify(subjectInfo.meta ?? {})));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
         this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);

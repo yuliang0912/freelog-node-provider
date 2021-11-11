@@ -58,7 +58,9 @@ export class PresentableSubjectAuthController {
         if (ctx.errors.length) {
             this.subjectPresentableAuthResponseHandler.subjectAuthFailedResponseHandle({
                 subjectId: presentableId, subjectName: ''
-            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败'));
+            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
+                errors: ctx.errors
+            }));
         }
 
         let presentableInfo = await this.presentableService.findById(presentableId);

@@ -50,7 +50,9 @@ export class TestResourceSubjectAuthController {
         if (ctx.errors.length) {
             this.subjectTestResourceAuthResponseHandler.subjectAuthFailedResponseHandle({
                 subjectId: testResourceId
-            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败'));
+            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
+                errors: ctx.errors
+            }));
         }
 
         const testResourceInfo = await this.testNodeService.findOneTestResource({testResourceId});
