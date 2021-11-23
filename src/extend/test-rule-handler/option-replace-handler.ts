@@ -128,8 +128,8 @@ export class OptionReplaceHandler {
                 resourceType: replacerInfo.resourceType,
                 version: resourceVersionInfo?.version,
                 versionId: resourceVersionInfo?.versionId,
-                fileSha1: resourceVersionInfo.fileSha1,
-                dependencies: [],
+                fileSha1: '', // resourceVersionInfo?.sha1, //fileSha1目前没有使用.此处没必要额外查询
+                dependencies: []
             };
             latestTestResourceDependencyTree['replacerInfo'] = replacerInfo;
             replaceRecordInfo.replacer = pick(latestTestResourceDependencyTree, ['id', 'name', 'type', 'version']);

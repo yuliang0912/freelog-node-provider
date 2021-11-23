@@ -59,7 +59,11 @@ export class SubjectPresentableAuthResponseHandler {
                 break;
             case 'info':
                 this.subjectAuthFailedResponseHandle(subjectInfo, authResult);
-                this.subjectInfoResponseHandle(subjectInfo);
+                if (realResponseResourceVersionInfo.resourceId === subjectInfo.subjectId) {
+                    this.subjectInfoResponseHandle(subjectInfo);
+                } else {
+                    this.subjectInfoResponseHandle(subjectInfo);
+                }
                 break;
             case 'resourceInfo':
                 this.subjectAuthFailedResponseHandle(subjectInfo, authResult);
