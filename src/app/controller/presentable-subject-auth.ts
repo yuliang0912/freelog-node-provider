@@ -1,8 +1,13 @@
 import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
-import {IPresentableAuthService, IPresentableService, IPresentableVersionService} from '../../interface';
 import {
-    ArgumentError,
+    ExhibitInfo,
+    IPresentableAuthService,
+    IPresentableService,
+    IPresentableVersionService,
+    PresentableInfo
+} from '../../interface';
+import {
     CommonRegex,
     FreelogContext,
     IdentityTypeEnum,
@@ -10,11 +15,13 @@ import {
     SubjectAuthCodeEnum,
     visitorIdentityValidator
 } from 'egg-freelog-base';
-import {ISubjectBaseInfo, SubjectAuthResult} from '../../auth-interface';
-import {SubjectPresentableAuthResponseHandler} from '../../extend/auth-response-handler/subject-presentable-auth-response-handler';
+import {SubjectAuthResult} from '../../auth-interface';
+import {ExhibitAuthResponseHandler} from '../../extend/auth-response-handler/exhibit-auth-response-handler';
+import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
+import {WorkTypeEnum} from '../../enum';
 
 @provide()
-@controller('/v2/auths/subjects/presentable')
+@controller('/v2/auths/exhibits')
 export class PresentableSubjectAuthController {
 
     @inject()
@@ -28,76 +35,84 @@ export class PresentableSubjectAuthController {
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
-    subjectPresentableAuthResponseHandler: SubjectPresentableAuthResponseHandler;
+    presentableAdapter: PresentableAdapter;
+    @inject()
+    exhibitAuthResponseHandler: ExhibitAuthResponseHandler;
 
     /**
-     * 展品服务的色块(目前此接口未使用,网关层面通过已通过mock实现)
+     * 通过展品ID获取展品
      */
-    @get('/serviceStates')
-    async serviceStates() {
-        this.ctx.success([
-            {name: 'active', type: 'authorization', value: 1},
-            {name: 'testActive', type: 'testAuthorization', value: 2}
-        ]);
-    }
-
-    /**
-     * 通过展品ID获取展品并且授权
-     */
-    @get('/:subjectIdentifiers/(result|info|resourceInfo|fileStream)')
+    @get('/:exhibitId/(result|info|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.UnLoginUser | IdentityTypeEnum.InternalClient)
-    async presentableAuth() {
-
+    async exhibitAuth() {
         const {ctx} = this;
-        const presentableId = ctx.checkParams('subjectIdentifiers').isPresentableId().value;
-        // 依赖定位符,原parentNid
-        const parentNid = ctx.checkQuery('dependencyPosition').optional().value;
-        const subResourceIdOrName = ctx.checkQuery('dependencyIdentifiers').optional().decodeURIComponent().value;
+        const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
+        const parentNid = ctx.checkQuery('parentNid').optional().value;
+        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
+        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
         const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
 
         if (ctx.errors.length) {
-            this.subjectPresentableAuthResponseHandler.subjectAuthFailedResponseHandle({
-                subjectId: presentableId, subjectName: ''
-            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
                 errors: ctx.errors
-            }));
+            });
+            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-
         let presentableInfo = await this.presentableService.findById(presentableId);
-        if (!presentableInfo) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('标的物不存在,请检查参数');
-            return ctx.success(subjectAuthResult);
-        }
-        if (presentableInfo.onlineStatus !== 1) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
-            return ctx.success(subjectAuthResult);
-        }
-        if (subFilePath && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
-        }
-        presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
-        const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
-        const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
+        await this._presentableAuthHandle(presentableInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+    }
 
-        await this.subjectPresentableAuthResponseHandler.presentableHandle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subFilePath);
+    /**
+     * 通过节点ID和作品ID获取展品
+     */
+    @get('/:nodeId/:workIdOrName/(result|info|fileStream)')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async exhibitAuthByNodeAndWork() {
+
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
+        const workIdOrName = ctx.checkParams('workIdOrName').exist().decodeURIComponent().value;
+        const parentNid = ctx.checkQuery('parentNid').optional().value;
+        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
+        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
+        const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
+        if (ctx.errors.length) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
+                errors: ctx.errors
+            });
+            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
+        }
+
+        const condition = {nodeId};
+        if (CommonRegex.mongoObjectId.test(workIdOrName)) {
+            condition['resourceInfo.resourceId'] = workIdOrName;
+        } else if (CommonRegex.fullResourceName.test(workIdOrName)) {
+            condition['resourceInfo.resourceName'] = workIdOrName;
+        } else {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败');
+            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
+        }
+
+        const presentableInfo = await this.presentableService.findOne(condition);
+        await this._presentableAuthHandle(presentableInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
     }
 
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    @get('/nodes/:nodeId/batchAuth/result')
+    @get('/:nodeId/batchAuth/results')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async presentableBatchAuth() {
+    async exhibitBatchAuth() {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        // 1:节点侧  2:上游侧  3:节点侧以及上游侧 4:全链路(包含用户)
+        // 1:节点侧 2:上游侧 3:节点侧以及上游侧 4:全链路(包含用户)
         const authType = ctx.checkQuery('authType').exist().toInt().in([1, 2, 3, 4]).value;
-        const presentableIds = ctx.checkQuery('presentableIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const exhibitIds = ctx.checkQuery('exhibitIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
-        const presentables = await this.presentableService.find({nodeId, _id: {$in: presentableIds}});
-        const invalidPresentableIds = differenceWith(presentableIds, presentables, (x: string, y) => x === y.presentableId);
+        const presentables = await this.presentableService.find({nodeId, _id: {$in: exhibitIds}});
+        const invalidPresentableIds = differenceWith(exhibitIds, presentables, (x: string, y) => x === y.presentableId);
 
         if (!isEmpty(invalidPresentableIds)) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setData({invalidPresentableIds}).setErrorMsg('标的物不存在,请检查参数');
@@ -118,10 +133,11 @@ export class PresentableSubjectAuthController {
         const returnResults = [];
         for (const presentableInfo of presentables) {
             const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
-                presentableId: presentableInfo.presentableId,
-                presentableName: presentableInfo.presentableName,
-                referee: authResult.referee,
+                exhibitId: presentableInfo.presentableId,
+                exhibitName: presentableInfo.presentableName,
                 authCode: authResult.authCode,
+                referee: authResult.referee,
+                defaulterIdentityType: authResult.defaulterIdentityType,
                 isAuth: authResult.isAuth,
                 error: authResult.errorMsg
             }));
@@ -132,51 +148,31 @@ export class PresentableSubjectAuthController {
     }
 
     /**
-     * 通过节点ID和资源ID获取展品,并且授权
+     * 展品授权处理
+     * @param presentableInfo
+     * @param parentNid
+     * @param subWorkName
+     * @param subWorkType
+     * @param subFilePath
      */
-    @get('/nodes/:nodeId/:resourceIdOrName/(result|info|resourceInfo|fileStream)', {middleware: ['authExceptionHandlerMiddleware']})
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
-    async nodeResourceAuth() {
-
-        const {ctx} = this;
-        const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
-        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subResourceIdOrName = ctx.checkQuery('subResourceIdOrName').optional().decodeURIComponent().value;
-        const subResourceFile = ctx.checkQuery('subResourceFile').optional().decodeURIComponent().value;
-        if (ctx.errors.length) {
-            this.subjectPresentableAuthResponseHandler.subjectAuthFailedResponseHandle({
-                subjectId: resourceIdOrName, subjectName: ''
-            } as ISubjectBaseInfo, new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败'));
-        }
-
-        const condition = {nodeId};
-        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
-            condition['resourceInfo.resourceId'] = resourceIdOrName;
-        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
-            condition['resourceInfo.resourceName'] = resourceIdOrName;
-        } else {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
-        }
-
-        let presentableInfo = await this.presentableService.findOne(condition);
+    async _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subWorkName: string, subWorkType: WorkTypeEnum, subFilePath: string) {
         if (!presentableInfo) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('标的物不存在,请检查参数');
-            return ctx.success(subjectAuthResult);
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('展品不存在,请检查参数');
+            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        if (presentableInfo.onlineStatus !== 1) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
-            return ctx.success(subjectAuthResult);
-        }
-        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
+        const exhibitPartialInfo: Partial<ExhibitInfo> = {
+            exhibitId: presentableInfo.presentableId,
+            exhibitName: presentableInfo.presentableName
+        };
+        if (subFilePath && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
+            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
         }
 
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
-
-        const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
+        const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
-
-        await this.subjectPresentableAuthResponseHandler.presentableHandle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
+        const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
+        await this.exhibitAuthResponseHandler.handle(exhibitInfo, presentableAuthResult, parentNid, subWorkName, subWorkType, subFilePath);
     }
 }

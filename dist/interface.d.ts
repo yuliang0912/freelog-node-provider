@@ -1,6 +1,6 @@
 import { SubjectAuthResult } from './auth-interface';
 import { ObjectDependencyTreeInfo } from './test-node-interface';
-import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum } from './enum';
+import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum, WorkTypeEnum } from './enum';
 import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from 'egg-freelog-base';
 export interface findOptions<T> {
     sort?: {
@@ -324,7 +324,7 @@ export interface IOutsideApiService {
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
     getResourceFileStream(versionId: string): Promise<any>;
-    getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
+    getSubResourceFile(resourceId: string, version: string, subResourceFile: string): Promise<any>;
     getObjectFileStream(objectId: string): Promise<any>;
     getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>;
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
@@ -396,4 +396,92 @@ export interface TagInfo {
      * 创建人ID
      */
     createUserId: number;
+}
+/**
+ * 展品信息
+ */
+export interface ExhibitInfo {
+    exhibitId: string;
+    exhibitName: string;
+    exhibitTitle: string;
+    exhibitSubjectType: SubjectTypeEnum;
+    tags: string[];
+    intro: string;
+    coverImages: string[];
+    version: string;
+    status: number;
+    onlineStatus: number;
+    nodeId: number;
+    userId: number;
+    policies: BasePolicyInfo[];
+    workInfo: MountWorkInfo;
+    versionInfo?: ExhibitVersionInfo;
+}
+/**
+ * 展品挂载的作品信息
+ */
+export interface MountWorkInfo {
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum;
+    workOwnerId: number;
+    workOwnerName: string;
+    resourceType: string;
+    otherInfo?: {
+        [key: string]: any;
+    };
+}
+/**
+ * 展品版本信息
+ */
+export interface ExhibitVersionInfo {
+    exhibitId: string;
+    version: string;
+    workId: string;
+    workSystemProperty?: {
+        [key: string]: number | string | boolean | null | object;
+    };
+    workCustomPropertyDescriptors?: any[];
+    exhibitRewriteProperty?: any[];
+    exhibitProperty?: {
+        [key: string]: number | string | boolean | null | object;
+    };
+    authTree: ExhibitAuthNodeInfo[];
+    dependencyTree: ExhibitDependencyNodeInfo[];
+}
+export interface ExhibitAuthNodeInfo {
+    nid: string;
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum;
+    resourceType: string;
+    version: string;
+    versionId: string;
+    parentNid: string;
+    deep: number;
+}
+export interface ExhibitDependencyNodeInfo {
+    nid: string;
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum;
+    version: string;
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    deep: number;
+    parentNid: string;
+}
+export interface ExhibitDependencyTree {
+    nid: string;
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum;
+    version: string;
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    deep: number;
+    parentNid: string;
+    dependencies: ExhibitDependencyTree[];
 }

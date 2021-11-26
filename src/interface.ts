@@ -1,6 +1,6 @@
 import {SubjectAuthResult} from './auth-interface';
 import {ObjectDependencyTreeInfo} from './test-node-interface';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from './enum';
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, WorkTypeEnum} from './enum';
 import {
     ContractLicenseeIdentityTypeEnum,
     ContractStatusEnum,
@@ -420,7 +420,7 @@ export interface IOutsideApiService {
 
     getResourceFileStream(versionId: string): Promise<any>;
 
-    getSubResourceFile(resourceId: string, versionId: string, subResourceFile: string): Promise<any>;
+    getSubResourceFile(resourceId: string, version: string, subResourceFile: string): Promise<any>;
 
     getObjectFileStream(objectId: string): Promise<any>;
 
@@ -536,3 +536,104 @@ export interface TagInfo {
      */
     createUserId: number;
 }
+
+/**
+ * 展品信息
+ */
+export interface ExhibitInfo {
+    exhibitId: string;
+    exhibitName: string;
+    exhibitTitle: string;
+    exhibitSubjectType: SubjectTypeEnum; // 展品或展品组合
+    tags: string[];
+    intro: string;
+    coverImages: string[];
+    version: string; // 默认使用的资源版本号
+    status: number; // 备用
+    onlineStatus: number;
+    nodeId: number;
+    userId: number;
+    policies: BasePolicyInfo[];
+    // createDate: Date;
+    // updateDate: Date;
+    workInfo: MountWorkInfo; // work(作品)指广义上的资源(单品资源,组合资源,节点组合资源)+存储对象
+    versionInfo?: ExhibitVersionInfo;
+}
+
+
+/**
+ * 展品挂载的作品信息
+ */
+export interface MountWorkInfo {
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum; // 1:独立资源 2:组合资源 3:节点组合资源 4:存储对象
+    workOwnerId: number;
+    workOwnerName: string;
+    resourceType: string;
+    otherInfo?: {
+        [key: string]: any;
+    }
+}
+
+/**
+ * 展品版本信息
+ */
+export interface ExhibitVersionInfo {
+    exhibitId: string;
+    version: string;
+    workId: string;
+    workSystemProperty?: {
+        [key: string]: number | string | boolean | null | object;
+    };
+    workCustomPropertyDescriptors?: any[];
+    exhibitRewriteProperty?: any[];
+    exhibitProperty?: {
+        [key: string]: number | string | boolean | null | object;
+    };
+    authTree: ExhibitAuthNodeInfo[];
+    dependencyTree: ExhibitDependencyNodeInfo[];
+    // createDate: Date;
+    // updateDate: Date;
+}
+
+export interface ExhibitAuthNodeInfo {
+    nid: string; // 树节点ID
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum
+    resourceType: string;
+    version: string;
+    versionId: string;
+    parentNid: string;
+    deep: number;
+}
+
+export interface ExhibitDependencyNodeInfo {
+    nid: string; // 树节点ID
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum
+    version: string;
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    deep: number;
+    parentNid: string;
+}
+
+//树节点ID
+export interface ExhibitDependencyTree {
+    nid: string;
+    workId: string;
+    workName: string;
+    workType: WorkTypeEnum;
+    version: string;
+    versionRange: string;
+    resourceType: string;
+    versionId: string;
+    deep: number;
+    parentNid: string;
+    dependencies: ExhibitDependencyTree[]
+}
+

@@ -1,7 +1,7 @@
 import {inject, provide} from 'midway';
 import {chain, isArray, isEmpty} from 'lodash';
 import {ContractInfo, IOutsideApiService} from '../../interface';
-import {SubjectAuthResult} from '../../auth-interface';
+import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
 import {
     FlattenTestResourceAuthTree,
     ITestResourceAuthService,
@@ -24,10 +24,6 @@ export class TestResourceAuthService implements ITestResourceAuthService {
      * @param testResourceAuthTree
      */
     async testResourceAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult> {
-
-        if (testResourceInfo.userId !== this.ctx.userId) {
-            return new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setErrorMsg('当前用户没有测试权限');
-        }
 
         const nodeSideAuthTask = this.testResourceNodeSideAuth(testResourceInfo, testResourceAuthTree);
         const upstreamResourceAuthTask = this.testResourceUpstreamAuth(testResourceInfo, testResourceAuthTree);
@@ -62,7 +58,8 @@ export class TestResourceAuthService implements ITestResourceAuthService {
         });
 
         if (!isEmpty(authFailedResources)) {
-            return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources});
+            return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过')
+                .setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
         }
 
         return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
@@ -96,7 +93,9 @@ export class TestResourceAuthService implements ITestResourceAuthService {
             const practicalUsedResources = testResourceAuthTree.filter(x => nids.includes(x.parentNid));
             const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'id').filter(x => !x.authResult?.isAuth).value();
             if (!isEmpty(authFailedResources)) {
-                return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setErrorMsg('测试展品上游链路授权未通过');
+                return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized)
+                    .setReferee(SubjectTypeEnum.Resource).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource)
+                    .setData({authFailedResources}).setErrorMsg('测试展品上游链路授权未通过');
             }
         }
 
@@ -117,12 +116,18 @@ export class TestResourceAuthService implements ITestResourceAuthService {
 
         const invalidContracts = contracts.filter(x => x?.subjectType !== SubjectTypeEnum.Resource || x?.subjectId !== subjectId);
         if (!isEmpty(invalidContracts)) {
-            return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
+            return authResult.setErrorMsg('存在无效的标的物合约')
+                .setReferee(SubjectTypeEnum.Presentable)
+                .setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node)
+                .setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
 
         const isExistAuthContracts = contracts.some(x => x.isAuth || x.isTestAuth);
         if (!isExistAuthContracts) {
-            return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
+            return authResult.setErrorMsg('合约授权未通过')
+                .setReferee(SubjectTypeEnum.Presentable)
+                .setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node)
+                .setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
         }
 
         return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);

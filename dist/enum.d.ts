@@ -85,3 +85,21 @@ export declare enum ServiceStateEnum {
     Active = 1,
     TestActive = 2
 }
+export declare enum WorkTypeEnum {
+    /**
+     * 独立资源
+     */
+    IndividualResource = 1,
+    /**
+     * 组合资源
+     */
+    CombinationResource = 2,
+    /**
+     * 节点组合资源
+     */
+    NodeCombinationResource = 3,
+    /**
+     * 存储对象
+     */
+    StorageObject = 4
+}

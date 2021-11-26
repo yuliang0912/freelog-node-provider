@@ -7,13 +7,13 @@
  * 以9开头代表API内部异常,例如内部API调用失败、代码异常、参数不全等错误
  */
 import { SubjectTypeEnum, ISubjectAuthResult, SubjectAuthCodeEnum } from 'egg-freelog-base';
-import { BasePolicyInfo, BaseResourceInfo, FlattenPresentableAuthTree, FlattenPresentableDependencyTree, ResolveResource } from './interface';
+import { BaseResourceInfo, ResolveResource } from './interface';
 import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum } from './enum';
 import { TestResourceOriginInfo } from './test-node-interface';
 /**
  * 授权出错时的责任方
  */
-export declare enum BreachResponsibilityTypeEnum {
+export declare enum DefaulterIdentityTypeEnum {
     /**
      * 无违约方
      */
@@ -40,17 +40,17 @@ export declare class SubjectAuthResult implements ISubjectAuthResult {
     errorMsg: string;
     authCode: SubjectAuthCodeEnum;
     referee: SubjectTypeEnum;
-    breachResponsibilityType: BreachResponsibilityTypeEnum;
+    defaulterIdentityType: DefaulterIdentityTypeEnum;
     constructor(authCode?: SubjectAuthCodeEnum);
     setErrorMsg(errorMsg: string): this;
     setData(data: any): this;
     setReferee(subjectType: SubjectTypeEnum): this;
-    setBreachResponsibilityType(breachResponsibilityType: BreachResponsibilityTypeEnum): this;
+    setDefaulterIdentityType(defaulterIdentityTypeEnum: DefaulterIdentityTypeEnum): this;
     setAuthCode(authCode: SubjectAuthCodeEnum): this;
     get isAuth(): boolean;
     toJSON(): {
         referee: SubjectTypeEnum;
-        breachResponsibilityType: BreachResponsibilityTypeEnum;
+        breachResponsibilityType: DefaulterIdentityTypeEnum;
         authCode: SubjectAuthCodeEnum;
         isAuth: boolean;
         data: any;
@@ -94,44 +94,4 @@ export interface TestResourceSubjectInfo extends ISubjectBaseInfo {
     tags?: string[];
     coverImages: string[];
     onlineStatus: PresentableOnlineStatusEnum;
-}
-export interface ExhibitsInfo {
-    exhibitsId: string;
-    exhibitsName: string;
-    exhibitsTitle: string;
-    exhibitsType: string;
-    tags: string[];
-    intro: string;
-    coverImages: string[];
-    version: string;
-    onlineStatus: number;
-    nodeId: number;
-    userId: number;
-    createDate: Date;
-    updateDate: Date;
-    policies: BasePolicyInfo[];
-    mountEntityInfo?: ExhibitsMountEntityInfo;
-}
-export interface ExhibitsVersionInfo {
-    exhibitsVersionId: string;
-    exhibitsId: string;
-    version: string;
-    entityId: string;
-    entitySystemProperty: object;
-    entityCustomPropertyDescriptors?: any[];
-    exhibitsRewriteProperty?: any[];
-    exhibitsProperty: object;
-    authTree: FlattenPresentableAuthTree[];
-    dependencyTree: FlattenPresentableDependencyTree[];
-}
-export interface ExhibitsMountEntityInfo {
-    entityId: string;
-    entityName: string;
-    entityType: string;
-    entityOwnerId: number;
-    entityOwnerName: string;
-    otherInfo: {
-        resourceType: string;
-        [key: string]: string | number;
-    };
 }

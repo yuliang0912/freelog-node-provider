@@ -8,10 +8,7 @@
  */
 import {SubjectTypeEnum, ISubjectAuthResult, SubjectAuthCodeEnum} from 'egg-freelog-base';
 import {
-    BasePolicyInfo,
     BaseResourceInfo,
-    FlattenPresentableAuthTree,
-    FlattenPresentableDependencyTree,
     ResolveResource
 } from './interface';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from './enum';
@@ -20,7 +17,7 @@ import {TestResourceOriginInfo} from './test-node-interface';
 /**
  * 授权出错时的责任方
  */
-export enum BreachResponsibilityTypeEnum {
+export enum DefaulterIdentityTypeEnum {
 
     /**
      * 无违约方
@@ -54,7 +51,7 @@ export class SubjectAuthResult implements ISubjectAuthResult {
     errorMsg = '';
     authCode = SubjectAuthCodeEnum.Default;
     referee = SubjectTypeEnum.Presentable;
-    breachResponsibilityType = BreachResponsibilityTypeEnum.Default;
+    defaulterIdentityType = DefaulterIdentityTypeEnum.Default;
 
     constructor(authCode?: SubjectAuthCodeEnum) {
         if (authCode) {
@@ -78,8 +75,8 @@ export class SubjectAuthResult implements ISubjectAuthResult {
     }
 
     // 设置违约责任类型(例如用户的责任,或者节点的责任,资源提供方的责任等等信息)
-    setBreachResponsibilityType(breachResponsibilityType: BreachResponsibilityTypeEnum) {
-        this.breachResponsibilityType = breachResponsibilityType;
+    setDefaulterIdentityType(defaulterIdentityTypeEnum: DefaulterIdentityTypeEnum) {
+        this.defaulterIdentityType = defaulterIdentityTypeEnum;
         return this;
     }
 
@@ -95,7 +92,7 @@ export class SubjectAuthResult implements ISubjectAuthResult {
     toJSON() {
         return {
             referee: this.referee,
-            breachResponsibilityType: this.breachResponsibilityType,
+            breachResponsibilityType: this.defaulterIdentityType,
             authCode: this.authCode,
             isAuth: this.isAuth,
             data: this.data,
@@ -144,47 +141,4 @@ export interface TestResourceSubjectInfo extends ISubjectBaseInfo {
     tags?: string[];
     coverImages: string[];
     onlineStatus: PresentableOnlineStatusEnum;
-}
-
-export interface ExhibitsInfo {
-    exhibitsId: string;
-    exhibitsName: string;
-    exhibitsTitle: string;
-    exhibitsType: string;
-    tags: string[];
-    intro: string;
-    coverImages: string[];
-    version: string;
-    onlineStatus: number;
-    nodeId: number;
-    userId: number;
-    createDate: Date;
-    updateDate: Date;
-    policies: BasePolicyInfo[];
-    mountEntityInfo?: ExhibitsMountEntityInfo;
-}
-
-export interface ExhibitsVersionInfo {
-    exhibitsVersionId: string;
-    exhibitsId: string;
-    version: string;
-    entityId: string;
-    entitySystemProperty: object;
-    entityCustomPropertyDescriptors?: any[];
-    exhibitsRewriteProperty?: any[];
-    exhibitsProperty: object;
-    authTree: FlattenPresentableAuthTree[]
-    dependencyTree: FlattenPresentableDependencyTree[];
-}
-
-export interface ExhibitsMountEntityInfo {
-    entityId: string;
-    entityName: string;
-    entityType: string;
-    entityOwnerId: number;
-    entityOwnerName: string;
-    otherInfo: {
-        resourceType: string;
-        [key: string]: string | number;
-    }
 }

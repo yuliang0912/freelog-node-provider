@@ -23,7 +23,7 @@ import {
 import {TestNodeGenerator} from '../test-node-generator';
 
 @provide()
-export class SubjectTestResourceAuthResponseHandler {
+export class ExhibitTestAuthResponseHandler {
 
     @inject()
     ctx: FreelogContext;
@@ -184,7 +184,7 @@ export class SubjectTestResourceAuthResponseHandler {
             authCode: authResult.authCode,
             errorMsg: authResult.errorMsg,
             verdictSubjectService: authResult.referee,
-            defaulterIdentityType: authResult.breachResponsibilityType,
+            defaulterIdentityType: authResult.defaulterIdentityType,
             data: authResult.data
         });
     }

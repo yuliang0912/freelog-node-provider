@@ -111,3 +111,25 @@ export enum ServiceStateEnum {
 
     TestActive = 2
 }
+
+export enum WorkTypeEnum {
+    /**
+     * 独立资源
+     */
+    IndividualResource = 1,
+
+    /**
+     * 组合资源
+     */
+    CombinationResource = 2,
+
+    /**
+     * 节点组合资源
+     */
+    NodeCombinationResource = 3,
+
+    /**
+     * 存储对象
+     */
+    StorageObject = 4
+}

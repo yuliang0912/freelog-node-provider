@@ -1,27 +1,35 @@
-import { IPresentableAuthService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { IPresentableAuthService, IPresentableService, IPresentableVersionService, PresentableInfo } from '../../interface';
 import { FreelogContext } from 'egg-freelog-base';
-import { SubjectPresentableAuthResponseHandler } from '../../extend/auth-response-handler/subject-presentable-auth-response-handler';
+import { ExhibitAuthResponseHandler } from '../../extend/auth-response-handler/exhibit-auth-response-handler';
+import { PresentableAdapter } from '../../extend/exhibit-adapter/presentable-adapter';
+import { WorkTypeEnum } from '../../enum';
 export declare class PresentableSubjectAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
     presentableService: IPresentableService;
     presentableAuthService: IPresentableAuthService;
     presentableVersionService: IPresentableVersionService;
-    subjectPresentableAuthResponseHandler: SubjectPresentableAuthResponseHandler;
+    presentableAdapter: PresentableAdapter;
+    exhibitAuthResponseHandler: ExhibitAuthResponseHandler;
     /**
-     * 展品服务的色块(目前此接口未使用,网关层面通过已通过mock实现)
+     * 通过展品ID获取展品
      */
-    serviceStates(): Promise<void>;
+    exhibitAuth(): Promise<void>;
     /**
-     * 通过展品ID获取展品并且授权
+     * 通过节点ID和作品ID获取展品
      */
-    presentableAuth(): Promise<FreelogContext>;
+    exhibitAuthByNodeAndWork(): Promise<void>;
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    presentableBatchAuth(): Promise<FreelogContext>;
+    exhibitBatchAuth(): Promise<FreelogContext>;
     /**
-     * 通过节点ID和资源ID获取展品,并且授权
+     * 展品授权处理
+     * @param presentableInfo
+     * @param parentNid
+     * @param subWorkName
+     * @param subWorkType
+     * @param subFilePath
      */
-    nodeResourceAuth(): Promise<FreelogContext>;
+    _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subWorkName: string, subWorkType: WorkTypeEnum, subFilePath: string): Promise<void>;
 }

@@ -14,7 +14,7 @@ import {
     SubjectAuthCodeEnum,
     SubjectTypeEnum
 } from 'egg-freelog-base';
-import {BreachResponsibilityTypeEnum, SubjectAuthResult} from '../../auth-interface';
+import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
 import {PolicyHelper} from '../../extend/policy-helper';
 
 @provide()
@@ -91,11 +91,11 @@ export class PresentableAuthService implements IPresentableAuthService {
 
             this.ctx.set('presentableNodeSideAuthTime', (new Date().getTime() - startDate.getTime()).toString());
             if (!isEmpty(authFailedResources)) {
-                return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources}).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Node);
+                return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
             }
             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
         } catch (e) {
-            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Node);
+            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
         }
     }
 
@@ -124,12 +124,12 @@ export class PresentableAuthService implements IPresentableAuthService {
                 const practicalUsedResources = presentableAuthTree.filter(x => nids.includes(x.parentNid));
                 const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'resourceId').filter(x => !x.authResult?.isAuth).value();
                 if (!isEmpty(authFailedResources)) {
-                    return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Resource).setErrorMsg('展品上游链路授权未通过');
+                    return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource).setErrorMsg('展品上游链路授权未通过');
                 }
             }
             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
         } catch (e) {
-            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.Resource);
+            return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource);
         }
     }
 
@@ -187,7 +187,7 @@ export class PresentableAuthService implements IPresentableAuthService {
             presentableName: presentableInfo.presentableName,
             policies: presentableInfo.policies,
             contracts: []
-        }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
+        }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
     }
 
     /**
@@ -200,7 +200,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
         const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
         if (!contractAuthResult.isAuth) {
-            contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser).setData({
+            contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
                 presentableId: presentableInfo.presentableId,
                 presentableName: presentableInfo.presentableName,
                 policies: presentableInfo.policies, contracts
@@ -221,7 +221,7 @@ export class PresentableAuthService implements IPresentableAuthService {
         const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
         // 如果没有免费策略,则直接返回找不到合约即可
         if (!freePolicy) {
-            return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setBreachResponsibilityType(BreachResponsibilityTypeEnum.ClientUser);
+            return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
         }
 
         await this.outsideApiService.signUserPresentableContract(userInfo.userId, {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubjectAuthResult = exports.BreachResponsibilityTypeEnum = void 0;
+exports.SubjectAuthResult = exports.DefaulterIdentityTypeEnum = void 0;
 /**
  * 授权码规则:
  * 以2开头的代表通过授权,例如200,201,202
@@ -13,35 +13,35 @@ const egg_freelog_base_1 = require("egg-freelog-base");
 /**
  * 授权出错时的责任方
  */
-var BreachResponsibilityTypeEnum;
-(function (BreachResponsibilityTypeEnum) {
+var DefaulterIdentityTypeEnum;
+(function (DefaulterIdentityTypeEnum) {
     /**
      * 无违约方
      */
-    BreachResponsibilityTypeEnum[BreachResponsibilityTypeEnum["Default"] = 0] = "Default";
+    DefaulterIdentityTypeEnum[DefaulterIdentityTypeEnum["Default"] = 0] = "Default";
     /**
      * 资源方
      */
-    BreachResponsibilityTypeEnum[BreachResponsibilityTypeEnum["Resource"] = 1] = "Resource";
+    DefaulterIdentityTypeEnum[DefaulterIdentityTypeEnum["Resource"] = 1] = "Resource";
     /**
      * 节点
      */
-    BreachResponsibilityTypeEnum[BreachResponsibilityTypeEnum["Node"] = 2] = "Node";
+    DefaulterIdentityTypeEnum[DefaulterIdentityTypeEnum["Node"] = 2] = "Node";
     /**
      * C端消费者
      */
-    BreachResponsibilityTypeEnum[BreachResponsibilityTypeEnum["ClientUser"] = 4] = "ClientUser";
+    DefaulterIdentityTypeEnum[DefaulterIdentityTypeEnum["ClientUser"] = 4] = "ClientUser";
     /**
      * 未知的
      */
-    BreachResponsibilityTypeEnum[BreachResponsibilityTypeEnum["Unknown"] = 128] = "Unknown";
-})(BreachResponsibilityTypeEnum = exports.BreachResponsibilityTypeEnum || (exports.BreachResponsibilityTypeEnum = {}));
+    DefaulterIdentityTypeEnum[DefaulterIdentityTypeEnum["Unknown"] = 128] = "Unknown";
+})(DefaulterIdentityTypeEnum = exports.DefaulterIdentityTypeEnum || (exports.DefaulterIdentityTypeEnum = {}));
 class SubjectAuthResult {
     data = null;
     errorMsg = '';
     authCode = egg_freelog_base_1.SubjectAuthCodeEnum.Default;
     referee = egg_freelog_base_1.SubjectTypeEnum.Presentable;
-    breachResponsibilityType = BreachResponsibilityTypeEnum.Default;
+    defaulterIdentityType = DefaulterIdentityTypeEnum.Default;
     constructor(authCode) {
         if (authCode) {
             this.authCode = authCode;
@@ -60,8 +60,8 @@ class SubjectAuthResult {
         return this;
     }
     // 设置违约责任类型(例如用户的责任,或者节点的责任,资源提供方的责任等等信息)
-    setBreachResponsibilityType(breachResponsibilityType) {
-        this.breachResponsibilityType = breachResponsibilityType;
+    setDefaulterIdentityType(defaulterIdentityTypeEnum) {
+        this.defaulterIdentityType = defaulterIdentityTypeEnum;
         return this;
     }
     setAuthCode(authCode) {
@@ -74,7 +74,7 @@ class SubjectAuthResult {
     toJSON() {
         return {
             referee: this.referee,
-            breachResponsibilityType: this.breachResponsibilityType,
+            breachResponsibilityType: this.defaulterIdentityType,
             authCode: this.authCode,
             isAuth: this.isAuth,
             data: this.data,
@@ -83,4 +83,4 @@ class SubjectAuthResult {
     }
 }
 exports.SubjectAuthResult = SubjectAuthResult;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXV0aC1pbnRlcmZhY2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvYXV0aC1pbnRlcmZhY2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBQUE7Ozs7Ozs7R0FPRztBQUNILHVEQUEwRjtBQVcxRjs7R0FFRztBQUNILElBQVksNEJBMEJYO0FBMUJELFdBQVksNEJBQTRCO0lBRXBDOztPQUVHO0lBQ0gscUZBQVcsQ0FBQTtJQUVYOztPQUVHO0lBQ0gsdUZBQVksQ0FBQTtJQUVaOztPQUVHO0lBQ0gsK0VBQVEsQ0FBQTtJQUVSOztPQUVHO0lBQ0gsMkZBQWMsQ0FBQTtJQUVkOztPQUVHO0lBQ0gsdUZBQWEsQ0FBQTtBQUNqQixDQUFDLEVBMUJXLDRCQUE0QixHQUE1QixvQ0FBNEIsS0FBNUIsb0NBQTRCLFFBMEJ2QztBQUVELE1BQWEsaUJBQWlCO0lBRTFCLElBQUksR0FBRyxJQUFJLENBQUM7SUFDWixRQUFRLEdBQUcsRUFBRSxDQUFDO0lBQ2QsUUFBUSxHQUFHLHNDQUFtQixDQUFDLE9BQU8sQ0FBQztJQUN2QyxPQUFPLEdBQUcsa0NBQWUsQ0FBQyxXQUFXLENBQUM7SUFDdEMsd0JBQXdCLEdBQUcsNEJBQTRCLENBQUMsT0FBTyxDQUFDO0lBRWhFLFlBQVksUUFBOEI7UUFDdEMsSUFBSSxRQUFRLEVBQUU7WUFDVixJQUFJLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztTQUM1QjtJQUNMLENBQUM7SUFFRCxXQUFXLENBQUMsUUFBZ0I7UUFDeEIsSUFBSSxDQUFDLFFBQVEsR0FBRyxRQUFRLENBQUM7UUFDekIsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELE9BQU8sQ0FBQyxJQUFTO1FBQ2IsSUFBSSxDQUFDLElBQUksR0FBRyxJQUFJLENBQUM7UUFDakIsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELFVBQVUsQ0FBQyxXQUE0QjtRQUNuQyxJQUFJLENBQUMsT0FBTyxHQUFHLFdBQVcsQ0FBQztRQUMzQixPQUFPLElBQUksQ0FBQztJQUNoQixDQUFDO0lBRUQseUNBQXlDO0lBQ3pDLDJCQUEyQixDQUFDLHdCQUFzRDtRQUM5RSxJQUFJLENBQUMsd0JBQXdCLEdBQUcsd0JBQXdCLENBQUM7UUFDekQsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELFdBQVcsQ0FBQyxRQUE2QjtRQUNyQyxJQUFJLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztRQUN6QixPQUFPLElBQUksQ0FBQztJQUNoQixDQUFDO0lBRUQsSUFBSSxNQUFNO1FBQ04sT0FBTyxJQUFJLENBQUMsUUFBUSxJQUFJLEdBQUcsSUFBSSxJQUFJLENBQUMsUUFBUSxHQUFHLEdBQUcsQ0FBQztJQUN2RCxDQUFDO0lBRUQsTUFBTTtRQUNGLE9BQU87WUFDSCxPQUFPLEVBQUUsSUFBSSxDQUFDLE9BQU87WUFDckIsd0JBQXdCLEVBQUUsSUFBSSxDQUFDLHdCQUF3QjtZQUN2RCxRQUFRLEVBQUUsSUFBSSxDQUFDLFFBQVE7WUFDdkIsTUFBTSxFQUFFLElBQUksQ0FBQyxNQUFNO1lBQ25CLElBQUksRUFBRSxJQUFJLENBQUMsSUFBSTtZQUNmLFFBQVEsRUFBRSxJQUFJLENBQUMsUUFBUTtTQUMxQixDQUFDO0lBQ04sQ0FBQztDQUNKO0FBdERELDhDQXNEQyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXV0aC1pbnRlcmZhY2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvYXV0aC1pbnRlcmZhY2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBQUE7Ozs7Ozs7R0FPRztBQUNILHVEQUEwRjtBQVExRjs7R0FFRztBQUNILElBQVkseUJBMEJYO0FBMUJELFdBQVkseUJBQXlCO0lBRWpDOztPQUVHO0lBQ0gsK0VBQVcsQ0FBQTtJQUVYOztPQUVHO0lBQ0gsaUZBQVksQ0FBQTtJQUVaOztPQUVHO0lBQ0gseUVBQVEsQ0FBQTtJQUVSOztPQUVHO0lBQ0gscUZBQWMsQ0FBQTtJQUVkOztPQUVHO0lBQ0gsaUZBQWEsQ0FBQTtBQUNqQixDQUFDLEVBMUJXLHlCQUF5QixHQUF6QixpQ0FBeUIsS0FBekIsaUNBQXlCLFFBMEJwQztBQUVELE1BQWEsaUJBQWlCO0lBRTFCLElBQUksR0FBRyxJQUFJLENBQUM7SUFDWixRQUFRLEdBQUcsRUFBRSxDQUFDO0lBQ2QsUUFBUSxHQUFHLHNDQUFtQixDQUFDLE9BQU8sQ0FBQztJQUN2QyxPQUFPLEdBQUcsa0NBQWUsQ0FBQyxXQUFXLENBQUM7SUFDdEMscUJBQXFCLEdBQUcseUJBQXlCLENBQUMsT0FBTyxDQUFDO0lBRTFELFlBQVksUUFBOEI7UUFDdEMsSUFBSSxRQUFRLEVBQUU7WUFDVixJQUFJLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztTQUM1QjtJQUNMLENBQUM7SUFFRCxXQUFXLENBQUMsUUFBZ0I7UUFDeEIsSUFBSSxDQUFDLFFBQVEsR0FBRyxRQUFRLENBQUM7UUFDekIsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELE9BQU8sQ0FBQyxJQUFTO1FBQ2IsSUFBSSxDQUFDLElBQUksR0FBRyxJQUFJLENBQUM7UUFDakIsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELFVBQVUsQ0FBQyxXQUE0QjtRQUNuQyxJQUFJLENBQUMsT0FBTyxHQUFHLFdBQVcsQ0FBQztRQUMzQixPQUFPLElBQUksQ0FBQztJQUNoQixDQUFDO0lBRUQseUNBQXlDO0lBQ3pDLHdCQUF3QixDQUFDLHlCQUFvRDtRQUN6RSxJQUFJLENBQUMscUJBQXFCLEdBQUcseUJBQXlCLENBQUM7UUFDdkQsT0FBTyxJQUFJLENBQUM7SUFDaEIsQ0FBQztJQUVELFdBQVcsQ0FBQyxRQUE2QjtRQUNyQyxJQUFJLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztRQUN6QixPQUFPLElBQUksQ0FBQztJQUNoQixDQUFDO0lBRUQsSUFBSSxNQUFNO1FBQ04sT0FBTyxJQUFJLENBQUMsUUFBUSxJQUFJLEdBQUcsSUFBSSxJQUFJLENBQUMsUUFBUSxHQUFHLEdBQUcsQ0FBQztJQUN2RCxDQUFDO0lBRUQsTUFBTTtRQUNGLE9BQU87WUFDSCxPQUFPLEVBQUUsSUFBSSxDQUFDLE9BQU87WUFDckIsd0JBQXdCLEVBQUUsSUFBSSxDQUFDLHFCQUFxQjtZQUNwRCxRQUFRLEVBQUUsSUFBSSxDQUFDLFFBQVE7WUFDdkIsTUFBTSxFQUFFLElBQUksQ0FBQyxNQUFNO1lBQ25CLElBQUksRUFBRSxJQUFJLENBQUMsSUFBSTtZQUNmLFFBQVEsRUFBRSxJQUFJLENBQUMsUUFBUTtTQUMxQixDQUFDO0lBQ04sQ0FBQztDQUNKO0FBdERELDhDQXNEQyJ9

@@ -3,7 +3,7 @@ import { ISubjectBaseInfo, SubjectAuthResult, TestResourceSubjectInfo } from '..
 import { FreelogContext } from 'egg-freelog-base';
 import { FlattenTestResourceDependencyTree, TestResourceDependencyTree, TestResourceInfo } from '../../test-node-interface';
 import { TestNodeGenerator } from '../test-node-generator';
-export declare class SubjectTestResourceAuthResponseHandler {
+export declare class ExhibitTestAuthResponseHandler {
     ctx: FreelogContext;
     outsideApiService: IOutsideApiService;
     testNodeGenerator: TestNodeGenerator;
