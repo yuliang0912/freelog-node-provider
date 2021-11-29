@@ -1,5 +1,5 @@
 import {controller, inject, get, provide} from 'midway';
-import {isArray, isString} from 'lodash';
+import {first, isArray, isNumber, isString, isUndefined} from 'lodash';
 import {
     ExhibitInfo,
     INodeService,
@@ -7,7 +7,7 @@ import {
     IPresentableVersionService,
     PresentableVersionInfo
 } from '../../interface';
-import {FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
+import {ArgumentError, FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
 import {ITestNodeService} from '../../test-node-interface';
@@ -33,6 +33,53 @@ export class ExhibitController {
     testNodeService: ITestNodeService;
     @inject()
     nodeService: INodeService;
+
+    /**
+     * 批量查询展品
+     */
+    @get('/list')
+    async exhibitList() {
+        const {ctx} = this;
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
+        const presentableIds = ctx.checkQuery('exhibitIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const condition: any = {};
+        if (isNumber(nodeId)) {
+            condition.nodeId = nodeId;
+        }
+        if (presentableIds) {
+            condition._id = {$in: presentableIds};
+        }
+        if (workIds) {
+            condition['resourceInfo.resourceId'] = {$in: workIds};
+        }
+        if (workIds && !nodeId) {
+            throw new ArgumentError('参数workIds或workNames需要和nodeId搭配一起使用');
+        }
+        if (!workIds && !presentableIds) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'));
+        }
+
+        let presentableVersionPropertyMap = new Map<string, PresentableVersionInfo>();
+        let presentableList = await this.presentableService.find(condition, projection.join(' '));
+        if (isLoadPolicyInfo) {
+            presentableList = await this.presentableService.fillPresentablePolicyInfo(presentableList, isTranslate);
+        }
+        if (isLoadVersionProperty) {
+            const presentableVersionIds = presentableList.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
+            presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId versionProperty').then(list => {
+                return new Map(list.map(x => [x.presentableId, x]));
+            });
+        }
+        const exhibitList = presentableList.map(item => this.presentableAdapter.presentableWrapToExhibitInfo(item, presentableVersionPropertyMap.get(item.presentableId)));
+        ctx.success(exhibitList);
+    }
 
     /**
      * 正式节点的展品
@@ -98,6 +145,63 @@ export class ExhibitController {
     }
 
     /**
+     * 查询单个展品
+     */
+    @get('/details/:exhibitId')
+    async exhibitDetail() {
+        const {ctx} = this;
+        const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        ctx.validateParams();
+
+        let presentableInfo = await this.presentableService.findById(presentableId);
+        if (!presentableInfo) {
+            return ctx.success(null);
+        }
+
+        let presentableVersionInfo = null;
+        if (isLoadVersionProperty) {
+            presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId versionProperty');
+        }
+        if (isLoadPolicyInfo) {
+            presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
+        }
+        const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
+        ctx.success(exhibitInfo);
+    }
+
+
+    /**
+     * 测试节点的展品
+     */
+    @get('/test/list')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testExhibitList() {
+        const {ctx} = this;
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
+        const testResourceIds = ctx.checkQuery('exhibitIds').optional().isSplitMd5().toSplitArray().len(1, 100).value;
+        const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        if ([testResourceIds, workIds].every(isUndefined)) {
+            throw new ArgumentError('params-required-validate-failed', 'exhibitIds,workIds');
+        }
+
+        const condition = {nodeId, userId: this.ctx.userId};
+        if (isArray(workIds)) {
+            condition['originInfo.id'] = {$in: workIds};
+        }
+
+        const testResources = await this.testNodeService.findTestResources(condition, projection.join(' '));
+        const exhibitList = testResources.map(item => this.testResourceAdapter.testResourceWrapToExhibitInfo(item, isLoadVersionProperty ? ({} as any) : null));
+        ctx.success(exhibitList);
+    }
+
+    /**
      * 测试节点的展品
      */
     @get('/test/:nodeId')
@@ -145,5 +249,25 @@ export class ExhibitController {
             exhibitPageResult.dataList.push(this.testResourceAdapter.testResourceWrapToExhibitInfo(item, isLoadVersionProperty ? ({} as any) : null));
         }
         return ctx.success(exhibitPageResult);
+    }
+
+    /**
+     * 查询单个测试展品
+     */
+    @get('/test/details/:exhibitId')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async testExhibitDetail() {
+        const {ctx} = this;
+        const testResourceId = ctx.checkParams('exhibitId').exist().isMd5().value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        ctx.validateParams();
+
+        const testResource = await this.testNodeService.findOneTestResource({testResourceId});
+        if (!testResource) {
+            return null;
+        }
+
+        const exhibitInfo = this.testResourceAdapter.testResourceWrapToExhibitInfo(testResource, isLoadVersionProperty ? ({} as any) : null);
+        ctx.success(exhibitInfo);
     }
 }

@@ -14,11 +14,27 @@ export declare class ExhibitController {
     testNodeService: ITestNodeService;
     nodeService: INodeService;
     /**
+     * 批量查询展品
+     */
+    exhibitList(): Promise<void>;
+    /**
      * 正式节点的展品
      */
     exhibits(): Promise<FreelogContext>;
     /**
+     * 查询单个展品
+     */
+    exhibitDetail(): Promise<FreelogContext>;
+    /**
+     * 测试节点的展品
+     */
+    testExhibitList(): Promise<void>;
+    /**
      * 测试节点的展品
      */
     testExhibits(): Promise<FreelogContext>;
+    /**
+     * 查询单个测试展品
+     */
+    testExhibitDetail(): Promise<any>;
 }
