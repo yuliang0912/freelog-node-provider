@@ -166,7 +166,6 @@ export class ExhibitAuthResponseHandler {
     exhibitAuthFailedResponseHandle(authResult: SubjectAuthResult, exhibitInfo?: Partial<ExhibitInfo>) {
         if (!authResult.isAuth) {
             this.exhibitAuthResultResponse(authResult, exhibitInfo);
-            this.ctx.status = 402;
             throw new BreakOffError();
         }
     }
@@ -187,6 +186,9 @@ export class ExhibitAuthResponseHandler {
             defaulterIdentityType: authResult.defaulterIdentityType,
             data: authResult.data
         });
+        if (!authResult.isAuth) {
+            this.ctx.status = 402;
+        }
     }
 
     /**

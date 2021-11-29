@@ -139,7 +139,7 @@ export class PresentableSubjectAuthController {
                 referee: authResult.referee,
                 defaulterIdentityType: authResult.defaulterIdentityType,
                 isAuth: authResult.isAuth,
-                error: authResult.errorMsg
+                errorMsg: authResult.errorMsg
             }));
             tasks.push(task);
         }

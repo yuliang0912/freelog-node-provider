@@ -15,7 +15,7 @@ import {WorkTypeEnum} from '../../enum';
 
 @provide()
 @priority(1)
-@controller('/v2/auths/exhibits/testResources')
+@controller('/v2/auths/exhibits/test')
 export class TestResourceSubjectAuthController {
 
     @inject()
