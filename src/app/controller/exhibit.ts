@@ -1,11 +1,8 @@
 import {controller, inject, get, provide} from 'midway';
-import {first, isArray, isNumber, isString, isUndefined} from 'lodash';
+import {first, isArray, isString, isUndefined} from 'lodash';
 import {
-    ExhibitInfo,
-    INodeService,
-    IPresentableService,
-    IPresentableVersionService,
-    PresentableVersionInfo
+    ExhibitInfo, INodeService, IPresentableService,
+    IPresentableVersionService, PresentableVersionInfo
 } from '../../interface';
 import {ArgumentError, FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
@@ -37,10 +34,10 @@ export class ExhibitController {
     /**
      * 批量查询展品
      */
-    @get('/list')
+    @get('/:nodeId/list')
     async exhibitList() {
         const {ctx} = this;
-        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const presentableIds = ctx.checkQuery('exhibitIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
@@ -49,18 +46,12 @@ export class ExhibitController {
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const condition: any = {};
-        if (isNumber(nodeId)) {
-            condition.nodeId = nodeId;
-        }
+        const condition: any = {nodeId};
         if (presentableIds) {
             condition._id = {$in: presentableIds};
         }
         if (workIds) {
             condition['resourceInfo.resourceId'] = {$in: workIds};
-        }
-        if (workIds && !nodeId) {
-            throw new ArgumentError('参数workIds或workNames需要和nodeId搭配一起使用');
         }
         if (!workIds && !presentableIds) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'));
@@ -172,15 +163,14 @@ export class ExhibitController {
         ctx.success(exhibitInfo);
     }
 
-
     /**
      * 测试节点的展品
      */
-    @get('/test/list')
+    @get('/test/:nodeId/list')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testExhibitList() {
         const {ctx} = this;
-        const nodeId = ctx.checkQuery('nodeId').optional().toInt().gt(0).value;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const testResourceIds = ctx.checkQuery('exhibitIds').optional().isSplitMd5().toSplitArray().len(1, 100).value;
         const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
@@ -191,9 +181,12 @@ export class ExhibitController {
             throw new ArgumentError('params-required-validate-failed', 'exhibitIds,workIds');
         }
 
-        const condition = {nodeId, userId: this.ctx.userId};
+        const condition: any = {nodeId, userId: this.ctx.userId};
         if (isArray(workIds)) {
             condition['originInfo.id'] = {$in: workIds};
+        }
+        if (isArray(testResourceIds)) {
+            condition._id = {$in: testResourceIds};
         }
 
         const testResources = await this.testNodeService.findTestResources(condition, projection.join(' '));
