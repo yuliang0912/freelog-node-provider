@@ -35,7 +35,7 @@ export class ExhibitInfoAdapter {
                     versionId: item.versionId,
                     deep: item.deep,
                     parentNid: item.parentNid,
-                    dependencies: recursionBuildDependencyTree(dependencies.filter(x => x.parentNid === item.nid), currDeep)
+                    dependencies: recursionBuildDependencyTree(dependencyTree.filter(x => x.parentNid === item.nid), currDeep)
                 };
             });
         }
