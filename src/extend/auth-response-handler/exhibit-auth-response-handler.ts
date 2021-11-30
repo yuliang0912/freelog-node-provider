@@ -186,9 +186,6 @@ export class ExhibitAuthResponseHandler {
             defaulterIdentityType: authResult.defaulterIdentityType,
             data: authResult.data
         });
-        if (!authResult.isAuth) {
-            this.ctx.status = 402;
-        }
     }
 
     /**
