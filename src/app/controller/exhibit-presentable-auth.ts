@@ -21,7 +21,7 @@ import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapt
 import {WorkTypeEnum} from '../../enum';
 
 @provide()
-@controller('/v2/auths/exhibits')
+@controller('/v2/auths/exhibits/:nodeId')
 export class PresentableSubjectAuthController {
 
     @inject()
@@ -46,6 +46,7 @@ export class PresentableSubjectAuthController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.UnLoginUser | IdentityTypeEnum.InternalClient)
     async exhibitAuth() {
         const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
@@ -58,14 +59,14 @@ export class PresentableSubjectAuthController {
             });
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        let presentableInfo = await this.presentableService.findById(presentableId);
+        const presentableInfo = await this.presentableService.findOne({nodeId, _id: presentableId});
         await this._presentableAuthHandle(presentableInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
     }
 
     /**
      * 通过节点ID和作品ID获取展品
      */
-    @get('/:nodeId/:workIdOrName/(result|info|fileStream)')
+    @get('/works/:workIdOrName/(result|info|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async exhibitAuthByNodeAndWork() {
 
@@ -100,7 +101,7 @@ export class PresentableSubjectAuthController {
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
-    @get('/:nodeId/batchAuth/results')
+    @get('/batchAuth/results')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async exhibitBatchAuth() {
 

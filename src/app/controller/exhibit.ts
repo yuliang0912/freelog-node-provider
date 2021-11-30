@@ -11,7 +11,7 @@ import {ITestNodeService} from '../../test-node-interface';
 import {TestResourceAdapter} from '../../extend/exhibit-adapter/test-resource-adapter';
 
 @provide()
-@controller('/v2/exhibits')
+@controller('/v2/exhibits/:nodeId')
 export class ExhibitController {
 
     @inject()
@@ -34,7 +34,7 @@ export class ExhibitController {
     /**
      * 批量查询展品
      */
-    @get('/:nodeId/list')
+    @get('/list')
     async exhibitList() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
@@ -75,7 +75,7 @@ export class ExhibitController {
     /**
      * 正式节点的展品
      */
-    @get('/:nodeId')
+    @get('/')
     async exhibits() {
 
         const {ctx} = this;
@@ -136,37 +136,9 @@ export class ExhibitController {
     }
 
     /**
-     * 查询单个展品
-     */
-    @get('/details/:exhibitId')
-    async exhibitDetail() {
-        const {ctx} = this;
-        const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
-        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
-        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
-        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
-        ctx.validateParams();
-
-        let presentableInfo = await this.presentableService.findById(presentableId);
-        if (!presentableInfo) {
-            return ctx.success(null);
-        }
-
-        let presentableVersionInfo = null;
-        if (isLoadVersionProperty) {
-            presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId versionProperty');
-        }
-        if (isLoadPolicyInfo) {
-            presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
-        }
-        const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
-        ctx.success(exhibitInfo);
-    }
-
-    /**
      * 测试节点的展品
      */
-    @get('/test/:nodeId/list')
+    @get('/test/list')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testExhibitList() {
         const {ctx} = this;
@@ -197,7 +169,7 @@ export class ExhibitController {
     /**
      * 测试节点的展品
      */
-    @get('/test/:nodeId')
+    @get('/test')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testExhibits() {
         const {ctx} = this;
@@ -247,20 +219,50 @@ export class ExhibitController {
     /**
      * 查询单个测试展品
      */
-    @get('/test/details/:exhibitId')
+    @get('/test/:exhibitId')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testExhibitDetail() {
         const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const testResourceId = ctx.checkParams('exhibitId').exist().isMd5().value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         ctx.validateParams();
 
-        const testResource = await this.testNodeService.findOneTestResource({testResourceId});
+        const testResource = await this.testNodeService.findOneTestResource({nodeId, testResourceId});
         if (!testResource) {
             return null;
         }
 
         const exhibitInfo = this.testResourceAdapter.testResourceWrapToExhibitInfo(testResource, isLoadVersionProperty ? ({} as any) : null);
+        ctx.success(exhibitInfo);
+    }
+
+    /**
+     * 查询单个展品
+     */
+    @get('/:exhibitId')
+    async exhibitDetail() {
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
+        const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        ctx.validateParams();
+
+        let presentableInfo = await this.presentableService.findOne({nodeId, _id: presentableId});
+        if (!presentableInfo) {
+            return ctx.success(null);
+        }
+
+        let presentableVersionInfo = null;
+        if (isLoadVersionProperty) {
+            presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId versionProperty');
+        }
+        if (isLoadPolicyInfo) {
+            presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
+        }
+        const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
         ctx.success(exhibitInfo);
     }
 }

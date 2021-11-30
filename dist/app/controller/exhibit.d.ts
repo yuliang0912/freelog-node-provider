@@ -22,10 +22,6 @@ export declare class ExhibitController {
      */
     exhibits(): Promise<FreelogContext>;
     /**
-     * 查询单个展品
-     */
-    exhibitDetail(): Promise<FreelogContext>;
-    /**
      * 测试节点的展品
      */
     testExhibitList(): Promise<void>;
@@ -37,4 +33,8 @@ export declare class ExhibitController {
      * 查询单个测试展品
      */
     testExhibitDetail(): Promise<any>;
+    /**
+     * 查询单个展品
+     */
+    exhibitDetail(): Promise<FreelogContext>;
 }

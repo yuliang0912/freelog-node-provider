@@ -15,7 +15,7 @@ import {WorkTypeEnum} from '../../enum';
 
 @provide()
 @priority(1)
-@controller('/v2/auths/exhibits/test')
+@controller('/v2/auths/exhibits/:nodeId/test')
 export class TestResourceSubjectAuthController {
 
     @inject()
@@ -36,6 +36,7 @@ export class TestResourceSubjectAuthController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.UnLoginUser | IdentityTypeEnum.InternalClient)
     async exhibitAuth() {
         const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const testResourceId = ctx.checkParams('exhibitId').isMd5().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
         const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
@@ -48,14 +49,14 @@ export class TestResourceSubjectAuthController {
             });
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        const testResourceInfo = await this.testNodeService.findOneTestResource({testResourceId});
+        const testResourceInfo = await this.testNodeService.findOneTestResource({nodeId, testResourceId});
         await this._testResourceAuthHandle(testResourceInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
     }
 
     /**
      * 测试资源或者子依赖授权,根据节点ID和源实体ID查找测试资源.
      */
-    @get('/:nodeId/:workIdOrName/(result|info|fileStream)')
+    @get('/works/:workIdOrName/(result|info|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async exhibitAuthByNodeAndWork() {
 
@@ -92,7 +93,7 @@ export class TestResourceSubjectAuthController {
     /**
      * 测试资源批量授权
      */
-    @get('/:nodeId/batchAuth/results')
+    @get('/batchAuth/results')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async testResourceBatchAuth() {
         const {ctx} = this;
