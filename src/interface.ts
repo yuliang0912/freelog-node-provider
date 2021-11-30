@@ -546,7 +546,6 @@ export interface ExhibitInfo {
     exhibitTitle: string;
     exhibitSubjectType: SubjectTypeEnum; // 展品或展品组合
     tags: string[];
-    intro: string;
     coverImages: string[];
     version: string; // 默认使用的资源版本号
     status: number; // 备用

@@ -406,7 +406,6 @@ export interface ExhibitInfo {
     exhibitTitle: string;
     exhibitSubjectType: SubjectTypeEnum;
     tags: string[];
-    intro: string;
     coverImages: string[];
     version: string;
     status: number;

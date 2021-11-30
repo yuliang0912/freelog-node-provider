@@ -29,7 +29,6 @@ export class PresentableAdapter {
             exhibitTitle: presentableInfo.presentableTitle,
             exhibitSubjectType: SubjectTypeEnum.Presentable,
             tags: presentableInfo.tags,
-            intro: '展品产品侧未提供简介字段',
             coverImages: presentableInfo.coverImages,
             version: presentableInfo.version,
             policies: presentableInfo.policies,

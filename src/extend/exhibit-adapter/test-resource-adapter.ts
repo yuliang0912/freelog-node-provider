@@ -36,7 +36,6 @@ export class TestResourceAdapter {
             exhibitTitle: testResource.testResourceName,
             exhibitSubjectType: SubjectTypeEnum.Presentable,
             tags: testResource.stateInfo.tagInfo.tags,
-            intro: '展品产品侧未提供简介字段',
             coverImages: testResource.originInfo.coverImages,
             version: testResource.originInfo.version,
             policies: [],
@@ -57,7 +56,6 @@ export class TestResourceAdapter {
         if (testResourceTreeInfo) {
             exhibitInfo.versionInfo = this.testResourceTreeInfoWrapToExhibitVersionInfo(testResource, testResourceTreeInfo);
         }
-
         return exhibitInfo;
     }
 
