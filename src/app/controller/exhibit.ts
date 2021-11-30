@@ -39,7 +39,7 @@ export class ExhibitController {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const presentableIds = ctx.checkQuery('exhibitIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
-        const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const articleIds = ctx.checkQuery('articleIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
@@ -50,10 +50,10 @@ export class ExhibitController {
         if (presentableIds) {
             condition._id = {$in: presentableIds};
         }
-        if (workIds) {
-            condition['resourceInfo.resourceId'] = {$in: workIds};
+        if (articleIds) {
+            condition['resourceInfo.resourceId'] = {$in: articleIds};
         }
-        if (!workIds && !presentableIds) {
+        if (!articleIds && !presentableIds) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'presentableIds,resourceIds,resourceNames'));
         }
 
@@ -83,8 +83,8 @@ export class ExhibitController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
-        const workResourceTypes = ctx.checkQuery('workResourceTypes').optional().toSplitArray().value;
-        const omitWorkResourceType = ctx.checkQuery('omitWorkResourceType').optional().isResourceType().value;
+        const articleResourceTypes = ctx.checkQuery('articleResourceTypes').optional().toSplitArray().value;
+        const omitArticleResourceType = ctx.checkQuery('omitArticleResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
@@ -95,10 +95,10 @@ export class ExhibitController {
         ctx.validateParams();
 
         const condition: any = {nodeId};
-        if (workResourceTypes?.length) { //resourceType 与 omitResourceType互斥
-            condition['resourceInfo.resourceType'] = {$in: workResourceTypes};
-        } else if (isString(omitWorkResourceType)) {
-            condition['resourceInfo.resourceType'] = {$ne: omitWorkResourceType};
+        if (articleResourceTypes?.length) { //resourceType 与 omitResourceType互斥
+            condition['resourceInfo.resourceType'] = {$in: articleResourceTypes};
+        } else if (isString(omitArticleResourceType)) {
+            condition['resourceInfo.resourceType'] = {$ne: omitArticleResourceType};
         }
         if (tags) {
             condition.tags = {$in: tags};
@@ -144,18 +144,18 @@ export class ExhibitController {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const testResourceIds = ctx.checkQuery('exhibitIds').optional().isSplitMd5().toSplitArray().len(1, 100).value;
-        const workIds = ctx.checkQuery('workIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const articleIds = ctx.checkQuery('articleIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        if ([testResourceIds, workIds].every(isUndefined)) {
-            throw new ArgumentError('params-required-validate-failed', 'exhibitIds,workIds');
+        if ([testResourceIds, articleIds].every(isUndefined)) {
+            throw new ArgumentError('params-required-validate-failed', 'exhibitIds,articleIds');
         }
 
         const condition: any = {nodeId, userId: this.ctx.userId};
-        if (isArray(workIds)) {
-            condition['originInfo.id'] = {$in: workIds};
+        if (isArray(articleIds)) {
+            condition['originInfo.id'] = {$in: articleIds};
         }
         if (isArray(testResourceIds)) {
             condition._id = {$in: testResourceIds};
@@ -177,8 +177,8 @@ export class ExhibitController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
-        const workResourceTypes = ctx.checkQuery('workResourceTypes').optional().toSplitArray().value;
-        const omitWorkResourceType = ctx.checkQuery('omitWorkResourceType').optional().isResourceType().value;
+        const articleResourceTypes = ctx.checkQuery('articleResourceTypes').optional().toSplitArray().value;
+        const omitArticleResourceType = ctx.checkQuery('omitArticleResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
@@ -187,10 +187,10 @@ export class ExhibitController {
         ctx.validateParams();
 
         const condition: any = {nodeId, userId: ctx.userId};
-        if (isString(workResourceTypes)) {
-            condition.resourceType = {$in: workResourceTypes};
-        } else if (isString(omitWorkResourceType)) {
-            condition.resourceType = {$ne: omitWorkResourceType};
+        if (isString(articleResourceTypes)) {
+            condition.resourceType = {$in: articleResourceTypes};
+        } else if (isString(omitArticleResourceType)) {
+            condition.resourceType = {$ne: omitArticleResourceType};
         }
         if (isArray(tags)) {
             condition['stateInfo.tagsInfo.tags'] = {$in: tags};

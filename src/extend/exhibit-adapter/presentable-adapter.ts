@@ -9,7 +9,7 @@ import {
     PresentableVersionInfo
 } from '../../interface';
 import {SubjectTypeEnum} from 'egg-freelog-base';
-import {WorkTypeEnum} from '../../enum';
+import {ArticleTypeEnum} from '../../enum';
 import {first} from 'lodash';
 import {provide} from 'midway';
 
@@ -36,13 +36,13 @@ export class PresentableAdapter {
             onlineStatus: presentableInfo.onlineStatus,
             nodeId: presentableInfo.nodeId,
             userId: presentableInfo.userId,
-            workInfo: {
-                workId: presentableInfo.resourceInfo.resourceId,
-                workName: presentableInfo.resourceInfo.resourceName,
+            articleInfo: {
+                articleId: presentableInfo.resourceInfo.resourceId,
+                articleName: presentableInfo.resourceInfo.resourceName,
                 resourceType: presentableInfo.resourceInfo.resourceType,
-                workType: 1,
-                workOwnerId: 0,
-                workOwnerName: first(presentableInfo.resourceInfo.resourceName.split('/'))
+                articleType: 1,
+                articleOwnerId: 0,
+                articleOwnerName: first(presentableInfo.resourceInfo.resourceName.split('/'))
             },
             status: 0
         };
@@ -62,9 +62,9 @@ export class PresentableAdapter {
         return {
             exhibitId: presentableVersionInfo.presentableId,
             version: presentableVersionInfo.version,
-            workId: presentableVersionInfo.resourceId,
-            workSystemProperty: presentableVersionInfo.resourceSystemProperty as any,
-            workCustomPropertyDescriptors: presentableVersionInfo.resourceCustomPropertyDescriptors,
+            articleId: presentableVersionInfo.resourceId,
+            articleSystemProperty: presentableVersionInfo.resourceSystemProperty as any,
+            articleCustomPropertyDescriptors: presentableVersionInfo.resourceCustomPropertyDescriptors,
             exhibitRewriteProperty: presentableVersionInfo.presentableRewriteProperty,
             exhibitProperty: presentableVersionInfo.versionProperty as any,
             authTree: PresentableAdapter.presentableAuthTreeWrapToExhibitDependencyNodeInfo(presentableVersionInfo.authTree),
@@ -80,9 +80,9 @@ export class PresentableAdapter {
         return presentableDependencyTree?.map(item => {
             return {
                 nid: item.nid ?? '',
-                workId: item.resourceId,
-                workName: item.resourceName,
-                workType: WorkTypeEnum.IndividualResource,
+                articleId: item.resourceId,
+                articleName: item.resourceName,
+                articleType: ArticleTypeEnum.IndividualResource,
                 version: item.version,
                 versionRange: item.versionRange,
                 resourceType: item.resourceType,
@@ -101,9 +101,9 @@ export class PresentableAdapter {
         return presentableAuthTree?.map(item => {
             return {
                 nid: item.nid,
-                workId: item.resourceId,
-                workName: item.resourceName,
-                workType: WorkTypeEnum.IndividualResource,
+                articleId: item.resourceId,
+                articleName: item.resourceName,
+                articleType: ArticleTypeEnum.IndividualResource,
                 resourceType: item.resourceType,
                 version: item.version,
                 versionId: item.versionId,

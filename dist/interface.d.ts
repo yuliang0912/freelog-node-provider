@@ -1,6 +1,6 @@
 import { SubjectAuthResult } from './auth-interface';
 import { ObjectDependencyTreeInfo } from './test-node-interface';
-import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum, WorkTypeEnum } from './enum';
+import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum, ArticleTypeEnum } from './enum';
 import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from 'egg-freelog-base';
 export interface findOptions<T> {
     sort?: {
@@ -414,18 +414,18 @@ export interface ExhibitInfo {
     nodeId: number;
     userId: number;
     policies: BasePolicyInfo[];
-    workInfo: MountWorkInfo;
+    articleInfo: MountArticleInfo;
     versionInfo?: ExhibitVersionInfo;
 }
 /**
  * 展品挂载的作品信息
  */
-export interface MountWorkInfo {
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum;
-    workOwnerId: number;
-    workOwnerName: string;
+export interface MountArticleInfo {
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum;
+    articleOwnerId: number;
+    articleOwnerName: string;
     resourceType: string;
     otherInfo?: {
         [key: string]: any;
@@ -437,11 +437,11 @@ export interface MountWorkInfo {
 export interface ExhibitVersionInfo {
     exhibitId: string;
     version: string;
-    workId: string;
-    workSystemProperty?: {
+    articleId: string;
+    articleSystemProperty?: {
         [key: string]: number | string | boolean | null | object;
     };
-    workCustomPropertyDescriptors?: any[];
+    articleCustomPropertyDescriptors?: any[];
     exhibitRewriteProperty?: any[];
     exhibitProperty?: {
         [key: string]: number | string | boolean | null | object;
@@ -451,9 +451,9 @@ export interface ExhibitVersionInfo {
 }
 export interface ExhibitAuthNodeInfo {
     nid: string;
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum;
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum;
     resourceType: string;
     version: string;
     versionId: string;
@@ -462,9 +462,9 @@ export interface ExhibitAuthNodeInfo {
 }
 export interface ExhibitDependencyNodeInfo {
     nid: string;
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum;
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
     resourceType: string;
@@ -474,9 +474,9 @@ export interface ExhibitDependencyNodeInfo {
 }
 export interface ExhibitDependencyTree {
     nid: string;
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum;
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
     resourceType: string;

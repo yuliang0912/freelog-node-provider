@@ -26,9 +26,9 @@ export class ExhibitInfoAdapter {
             return dependencies.map(item => {
                 return {
                     nid: item.nid,
-                    workId: item.workId,
-                    workName: item.workName,
-                    workType: item.workType,
+                    articleId: item.articleId,
+                    articleName: item.articleName,
+                    articleType: item.articleType,
                     resourceType: item.resourceType,
                     version: item.version,
                     versionRange: item.versionRange,

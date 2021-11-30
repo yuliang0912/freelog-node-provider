@@ -7,7 +7,7 @@ import {chain, first, isEmpty, isString} from 'lodash';
 import {SubjectAuthResult} from '../../auth-interface';
 import {ApplicationError, ArgumentError, BreakOffError, FreelogContext, SubjectAuthCodeEnum} from 'egg-freelog-base';
 import {convertIntranetApiResponseData} from 'egg-freelog-base/lib/freelog-common-func';
-import {WorkTypeEnum} from '../../enum';
+import {ArticleTypeEnum} from '../../enum';
 import {ExhibitInfoAdapter} from '../exhibit-adapter';
 
 @provide()
@@ -25,20 +25,20 @@ export class ExhibitAuthResponseHandler {
      * @param exhibitInfo
      * @param authResult
      * @param parentNid
-     * @param subWorkIdOrName
-     * @param subWorkType
-     * @param subWorkFilePath
+     * @param subArticleIdOrName
+     * @param subArticleType
+     * @param subArticleFilePath
      */
-    async handle(exhibitInfo: ExhibitInfo, authResult: SubjectAuthResult, parentNid: string, subWorkIdOrName ?: string, subWorkType?: WorkTypeEnum, subWorkFilePath?: string) {
+    async handle(exhibitInfo: ExhibitInfo, authResult: SubjectAuthResult, parentNid: string, subArticleIdOrName ?: string, subArticleType?: ArticleTypeEnum, subArticleFilePath?: string) {
 
-        const realResponseWorkBaseInfo = this._getRealResponseWorkBaseInfo(exhibitInfo, parentNid, subWorkIdOrName, subWorkType);
-        if (!realResponseWorkBaseInfo) {
+        const realResponseArticleBaseInfo = this._getRealResponseArticleBaseInfo(exhibitInfo, parentNid, subArticleIdOrName, subArticleType);
+        if (!realResponseArticleBaseInfo) {
             const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError)
                 .setErrorMsg(this.ctx.gettext('params-validate-failed', 'entityNid,subResourceIdOrName'));
             this.exhibitAuthFailedResponseHandle(authResult, exhibitInfo);
         }
 
-        await this.commonResponseHeaderHandle(exhibitInfo, realResponseWorkBaseInfo);
+        await this.commonResponseHeaderHandle(exhibitInfo, realResponseArticleBaseInfo);
 
         const apiResponseType = chain(this.ctx.path).trimEnd('/').split('/').last().value();
         switch (apiResponseType) {
@@ -51,10 +51,10 @@ export class ExhibitAuthResponseHandler {
                 break;
             case 'fileStream':
                 this.exhibitAuthFailedResponseHandle(authResult, exhibitInfo);
-                if (!subWorkFilePath) {
-                    await this.fileStreamResponseHandle(realResponseWorkBaseInfo, exhibitInfo.exhibitTitle);
+                if (!subArticleFilePath) {
+                    await this.fileStreamResponseHandle(realResponseArticleBaseInfo, exhibitInfo.exhibitTitle);
                 } else {
-                    await this.workSubFileStreamResponseHandle(realResponseWorkBaseInfo, subWorkFilePath);
+                    await this.articleSubFileStreamResponseHandle(realResponseArticleBaseInfo, subArticleFilePath);
                 }
                 break;
             default:
@@ -66,37 +66,37 @@ export class ExhibitAuthResponseHandler {
     /**
      * 公共响应头处理
      * @param exhibitInfo
-     * @param realResponseWorkBaseInfo
+     * @param realResponseArticleBaseInfo
      */
-    async commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseWorkBaseInfo: ExhibitDependencyTree) {
+    async commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree) {
 
-        const responseDependencies = realResponseWorkBaseInfo.dependencies.map(x => Object({
-            id: x.workId, name: x.workName, type: x.workType, resourceType: x.resourceType
+        const responseDependencies = realResponseArticleBaseInfo.dependencies.map(x => Object({
+            id: x.articleId, name: x.articleName, type: x.articleType, resourceType: x.resourceType
         }));
 
-        this.ctx.set('freelog-work-nid', realResponseWorkBaseInfo.nid);
-        this.ctx.set('freelog-work-id', exhibitInfo?.exhibitId);
-        this.ctx.set('freelog-work-name', encodeURIComponent(exhibitInfo?.exhibitName ?? ''));
-        this.ctx.set('freelog-work-property', encodeURIComponent(JSON.stringify(exhibitInfo.versionInfo?.exhibitProperty ?? {})));
-        this.ctx.set('freelog-work-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
-        this.ctx.set('freelog-resource-type', realResponseWorkBaseInfo.resourceType);
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-work-nid,freelog-work-id,freelog-work-name,freelog-work-property,freelog-resource-type,freelog-work-sub-dependencies');
+        this.ctx.set('freelog-article-nid', realResponseArticleBaseInfo.nid);
+        this.ctx.set('freelog-article-id', exhibitInfo?.exhibitId);
+        this.ctx.set('freelog-article-name', encodeURIComponent(exhibitInfo?.exhibitName ?? ''));
+        this.ctx.set('freelog-article-property', encodeURIComponent(JSON.stringify(exhibitInfo.versionInfo?.exhibitProperty ?? {})));
+        this.ctx.set('freelog-article-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
+        this.ctx.set('freelog-resource-type', realResponseArticleBaseInfo.resourceType);
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-article-nid,freelog-article-id,freelog-article-name,freelog-article-property,freelog-resource-type,freelog-article-sub-dependencies');
     }
 
     /**
      * 文件流响应处理
-     * @param realResponseWorkBaseInfo
+     * @param realResponseArticleBaseInfo
      * @param attachmentName
      */
-    async fileStreamResponseHandle(realResponseWorkBaseInfo: ExhibitDependencyTree, attachmentName: string) {
+    async fileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, attachmentName: string) {
 
         let response;
-        switch (realResponseWorkBaseInfo.workType) {
-            case WorkTypeEnum.IndividualResource:
-                response = await this.outsideApiService.getResourceFileStream(realResponseWorkBaseInfo.versionId);
+        switch (realResponseArticleBaseInfo.articleType) {
+            case ArticleTypeEnum.IndividualResource:
+                response = await this.outsideApiService.getResourceFileStream(realResponseArticleBaseInfo.versionId);
                 break;
-            case WorkTypeEnum.StorageObject:
-                response = await this.outsideApiService.getObjectFileStream(realResponseWorkBaseInfo.workId);
+            case ArticleTypeEnum.StorageObject:
+                response = await this.outsideApiService.getObjectFileStream(realResponseArticleBaseInfo.articleId);
                 break;
             default:
                 throw new ArgumentError('不支持的作品类型数据流读取');
@@ -106,7 +106,7 @@ export class ExhibitAuthResponseHandler {
         }
         this.ctx.body = response.data;
         this.ctx.attachment(attachmentName);
-        if (['video', 'audio'].includes(realResponseWorkBaseInfo.resourceType)) {
+        if (['video', 'audio'].includes(realResponseArticleBaseInfo.resourceType)) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
         this.ctx.set('content-length', response.res.headers['content-length']);
@@ -116,18 +116,18 @@ export class ExhibitAuthResponseHandler {
 
     /**
      * 获取子资源文件
-     * @param realResponseWorkBaseInfo
-     * @param subWorkFilePath
+     * @param realResponseArticleBaseInfo
+     * @param subArticleFilePath
      */
-    async workSubFileStreamResponseHandle(realResponseWorkBaseInfo: ExhibitDependencyTree, subWorkFilePath: string) {
+    async articleSubFileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, subArticleFilePath: string) {
 
         let response;
-        switch (realResponseWorkBaseInfo.workType) {
-            case WorkTypeEnum.IndividualResource:
-                response = await this.outsideApiService.getSubResourceFile(realResponseWorkBaseInfo.workId, realResponseWorkBaseInfo.version, subWorkFilePath);
+        switch (realResponseArticleBaseInfo.articleType) {
+            case ArticleTypeEnum.IndividualResource:
+                response = await this.outsideApiService.getSubResourceFile(realResponseArticleBaseInfo.articleId, realResponseArticleBaseInfo.version, subArticleFilePath);
                 break;
-            case WorkTypeEnum.StorageObject:
-                response = await this.outsideApiService.getSubObjectFile(realResponseWorkBaseInfo.workId, subWorkFilePath);
+            case ArticleTypeEnum.StorageObject:
+                response = await this.outsideApiService.getSubObjectFile(realResponseArticleBaseInfo.articleId, subArticleFilePath);
                 break;
             default:
                 throw new ArgumentError('不支持的作品类型数据流读取');
@@ -195,18 +195,18 @@ export class ExhibitAuthResponseHandler {
      * 获取实际需要的作品信息(或作品的依赖)
      * @param exhibitInfo
      * @param parentNid
-     * @param subWorkIdOrName
-     * @param subWorkType
+     * @param subArticleIdOrName
+     * @param subArticleType
      */
-    _getRealResponseWorkBaseInfo(exhibitInfo: ExhibitInfo, parentNid: string, subWorkIdOrName ?: string, subWorkType?: WorkTypeEnum): ExhibitDependencyTree {
+    _getRealResponseArticleBaseInfo(exhibitInfo: ExhibitInfo, parentNid: string, subArticleIdOrName ?: string, subArticleType?: ArticleTypeEnum): ExhibitDependencyTree {
 
         let matchedExhibitDependencyNodeInfo: ExhibitDependencyNodeInfo;
         // 参数传递不够精确时,系统会尽量匹配.如果能匹配出唯一结果即代表匹配成功
-        if (subWorkIdOrName || parentNid || subWorkType) {
+        if (subArticleIdOrName || parentNid || subArticleType) {
             function filterExhibitDependencyTree(dependencyTree: ExhibitDependencyNodeInfo) {
                 return (parentNid ? dependencyTree.parentNid === parentNid : true)
-                    && (subWorkType ? dependencyTree.workType === subWorkType : true)
-                    && (subWorkIdOrName ? dependencyTree.workId === subWorkIdOrName || dependencyTree.workName.toLowerCase() === subWorkIdOrName.toLowerCase() : true);
+                    && (subArticleType ? dependencyTree.articleType === subArticleType : true)
+                    && (subArticleIdOrName ? dependencyTree.articleId === subArticleIdOrName || dependencyTree.articleName.toLowerCase() === subArticleIdOrName.toLowerCase() : true);
             }
 
             const matchedEntities = exhibitInfo.versionInfo.dependencyTree.filter(filterExhibitDependencyTree);
@@ -222,10 +222,10 @@ export class ExhibitAuthResponseHandler {
         }
 
         const parentDependency = first(exhibitDependencyTree);
-        if (!isString(subWorkIdOrName)) {
+        if (!isString(subArticleIdOrName)) {
             return parentDependency;
         }
 
-        return parentDependency.dependencies.find(x => x.workId === matchedExhibitDependencyNodeInfo.workId && x.workType === matchedExhibitDependencyNodeInfo.workType);
+        return parentDependency.dependencies.find(x => x.articleId === matchedExhibitDependencyNodeInfo.articleId && x.articleType === matchedExhibitDependencyNodeInfo.articleType);
     }
 }

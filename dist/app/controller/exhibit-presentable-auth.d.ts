@@ -2,7 +2,7 @@ import { IPresentableAuthService, IPresentableService, IPresentableVersionServic
 import { FreelogContext } from 'egg-freelog-base';
 import { ExhibitAuthResponseHandler } from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import { PresentableAdapter } from '../../extend/exhibit-adapter/presentable-adapter';
-import { WorkTypeEnum } from '../../enum';
+import { ArticleTypeEnum } from '../../enum';
 export declare class PresentableSubjectAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
@@ -18,7 +18,7 @@ export declare class PresentableSubjectAuthController {
     /**
      * 通过节点ID和作品ID获取展品
      */
-    exhibitAuthByNodeAndWork(): Promise<void>;
+    exhibitAuthByNodeAndArticle(): Promise<void>;
     /**
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
@@ -27,9 +27,9 @@ export declare class PresentableSubjectAuthController {
      * 展品授权处理
      * @param presentableInfo
      * @param parentNid
-     * @param subWorkName
-     * @param subWorkType
+     * @param subArticleName
+     * @param subArticleType
      * @param subFilePath
      */
-    _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subWorkName: string, subWorkType: WorkTypeEnum, subFilePath: string): Promise<void>;
+    _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subArticleName: string, subArticleType: ArticleTypeEnum, subFilePath: string): Promise<void>;
 }

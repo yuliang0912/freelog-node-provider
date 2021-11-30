@@ -1,7 +1,7 @@
 import { ExhibitDependencyTree, ExhibitInfo, IOutsideApiService } from '../../interface';
 import { SubjectAuthResult } from '../../auth-interface';
 import { FreelogContext } from 'egg-freelog-base';
-import { WorkTypeEnum } from '../../enum';
+import { ArticleTypeEnum } from '../../enum';
 import { ExhibitInfoAdapter } from '../exhibit-adapter';
 export declare class ExhibitAuthResponseHandler {
     ctx: FreelogContext;
@@ -12,29 +12,29 @@ export declare class ExhibitAuthResponseHandler {
      * @param exhibitInfo
      * @param authResult
      * @param parentNid
-     * @param subWorkIdOrName
-     * @param subWorkType
-     * @param subWorkFilePath
+     * @param subArticleIdOrName
+     * @param subArticleType
+     * @param subArticleFilePath
      */
-    handle(exhibitInfo: ExhibitInfo, authResult: SubjectAuthResult, parentNid: string, subWorkIdOrName?: string, subWorkType?: WorkTypeEnum, subWorkFilePath?: string): Promise<void>;
+    handle(exhibitInfo: ExhibitInfo, authResult: SubjectAuthResult, parentNid: string, subArticleIdOrName?: string, subArticleType?: ArticleTypeEnum, subArticleFilePath?: string): Promise<void>;
     /**
      * 公共响应头处理
      * @param exhibitInfo
-     * @param realResponseWorkBaseInfo
+     * @param realResponseArticleBaseInfo
      */
-    commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseWorkBaseInfo: ExhibitDependencyTree): Promise<void>;
+    commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree): Promise<void>;
     /**
      * 文件流响应处理
-     * @param realResponseWorkBaseInfo
+     * @param realResponseArticleBaseInfo
      * @param attachmentName
      */
-    fileStreamResponseHandle(realResponseWorkBaseInfo: ExhibitDependencyTree, attachmentName: string): Promise<void>;
+    fileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, attachmentName: string): Promise<void>;
     /**
      * 获取子资源文件
-     * @param realResponseWorkBaseInfo
-     * @param subWorkFilePath
+     * @param realResponseArticleBaseInfo
+     * @param subArticleFilePath
      */
-    workSubFileStreamResponseHandle(realResponseWorkBaseInfo: ExhibitDependencyTree, subWorkFilePath: string): Promise<void>;
+    articleSubFileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, subArticleFilePath: string): Promise<void>;
     /**
      * 标的物自身信息展示
      * @param exhibitInfo
@@ -56,8 +56,8 @@ export declare class ExhibitAuthResponseHandler {
      * 获取实际需要的作品信息(或作品的依赖)
      * @param exhibitInfo
      * @param parentNid
-     * @param subWorkIdOrName
-     * @param subWorkType
+     * @param subArticleIdOrName
+     * @param subArticleType
      */
-    _getRealResponseWorkBaseInfo(exhibitInfo: ExhibitInfo, parentNid: string, subWorkIdOrName?: string, subWorkType?: WorkTypeEnum): ExhibitDependencyTree;
+    _getRealResponseArticleBaseInfo(exhibitInfo: ExhibitInfo, parentNid: string, subArticleIdOrName?: string, subArticleType?: ArticleTypeEnum): ExhibitDependencyTree;
 }

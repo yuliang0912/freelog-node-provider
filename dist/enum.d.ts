@@ -85,7 +85,7 @@ export declare enum ServiceStateEnum {
     Active = 1,
     TestActive = 2
 }
-export declare enum WorkTypeEnum {
+export declare enum ArticleTypeEnum {
     /**
      * 独立资源
      */

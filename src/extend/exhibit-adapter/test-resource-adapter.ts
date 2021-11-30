@@ -5,7 +5,7 @@ import {
     ExhibitVersionInfo
 } from '../../interface';
 import {SubjectTypeEnum} from 'egg-freelog-base';
-import {WorkTypeEnum} from '../../enum';
+import {ArticleTypeEnum} from '../../enum';
 import {first} from 'lodash';
 import {
     FlattenTestResourceAuthTree,
@@ -43,13 +43,13 @@ export class TestResourceAdapter {
             onlineStatus: testResource.stateInfo.onlineStatusInfo?.onlineStatus ?? 1,
             nodeId: testResource.nodeId,
             userId: testResource.userId,
-            workInfo: {
-                workId: testResource.originInfo.id,
-                workName: testResource.originInfo.name,
+            articleInfo: {
+                articleId: testResource.originInfo.id,
+                articleName: testResource.originInfo.name,
                 resourceType: testResource.originInfo.resourceType,
-                workType: testResource.originInfo.type === TestResourceOriginType.Resource ? WorkTypeEnum.IndividualResource : WorkTypeEnum.StorageObject,
-                workOwnerId: 0,
-                workOwnerName: testResource.originInfo.type === TestResourceOriginType.Resource ? first(testResource.originInfo.name.split('/')) : ''
+                articleType: testResource.originInfo.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
+                articleOwnerId: 0,
+                articleOwnerName: testResource.originInfo.type === TestResourceOriginType.Resource ? first(testResource.originInfo.name.split('/')) : ''
             },
             status: 0
         };
@@ -71,7 +71,7 @@ export class TestResourceAdapter {
         return {
             exhibitId: testResource.testResourceId,
             version: testResource.originInfo.version,
-            workId: testResource.originInfo.id,
+            articleId: testResource.originInfo.id,
             exhibitProperty: this.testNodeGenerator._calculateTestResourceProperty(testResource),
             authTree: TestResourceAdapter.testResourceAuthTreeWrapToExhibitDependencyNodeInfo(testResourceTreeInfo.authTree),
             dependencyTree: TestResourceAdapter.testResourceDependencyTreeWrapToExhibitDependencyNodeInfo(testResourceTreeInfo.dependencyTree)
@@ -86,9 +86,9 @@ export class TestResourceAdapter {
         return testResourceDependencyTree?.map(item => {
             return {
                 nid: item.nid ?? '',
-                workId: item.id,
-                workName: item.name,
-                workType: item.type === TestResourceOriginType.Resource ? WorkTypeEnum.IndividualResource : WorkTypeEnum.StorageObject,
+                articleId: item.id,
+                articleName: item.name,
+                articleType: item.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
                 version: item.version,
                 versionRange: '',
                 resourceType: item.resourceType,
@@ -107,9 +107,9 @@ export class TestResourceAdapter {
         return testResourceAuthTree?.map(item => {
             return {
                 nid: item.nid,
-                workId: item.id,
-                workName: item.name,
-                workType: item.type === TestResourceOriginType.Resource ? WorkTypeEnum.IndividualResource : WorkTypeEnum.StorageObject,
+                articleId: item.id,
+                articleName: item.name,
+                articleType: item.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
                 resourceType: '',
                 version: item.version,
                 versionId: item.versionId,

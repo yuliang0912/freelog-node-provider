@@ -18,7 +18,7 @@ import {
 import {SubjectAuthResult} from '../../auth-interface';
 import {ExhibitAuthResponseHandler} from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
-import {WorkTypeEnum} from '../../enum';
+import {ArticleTypeEnum} from '../../enum';
 
 @provide()
 @controller('/v2/auths/exhibits/:nodeId')
@@ -49,8 +49,8 @@ export class PresentableSubjectAuthController {
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
-        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
+        const subArticleIdOrName = ctx.checkQuery('subArticleIdOrName').optional().decodeURIComponent().value;
+        const subArticleType = ctx.checkQuery('subArticleType').optional().in([1, 2, 3, 4, 5]).value;
         const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
 
         if (ctx.errors.length) {
@@ -60,22 +60,22 @@ export class PresentableSubjectAuthController {
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
         const presentableInfo = await this.presentableService.findOne({nodeId, _id: presentableId});
-        await this._presentableAuthHandle(presentableInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+        await this._presentableAuthHandle(presentableInfo, parentNid, subArticleIdOrName, subArticleType, subFilePath);
     }
 
     /**
      * 通过节点ID和作品ID获取展品
      */
-    @get('/works/:workIdOrName/(result|info|fileStream)')
+    @get('/articles/:articleIdOrName/(result|info|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
-    async exhibitAuthByNodeAndWork() {
+    async exhibitAuthByNodeAndArticle() {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        const workIdOrName = ctx.checkParams('workIdOrName').exist().decodeURIComponent().value;
+        const articleIdOrName = ctx.checkParams('articleIdOrName').exist().decodeURIComponent().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
-        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
+        const subArticleIdOrName = ctx.checkQuery('subArticleIdOrName').optional().decodeURIComponent().value;
+        const subArticleType = ctx.checkQuery('subArticleType').optional().in([1, 2, 3, 4, 5]).value;
         const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
         if (ctx.errors.length) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败').setData({
@@ -85,17 +85,17 @@ export class PresentableSubjectAuthController {
         }
 
         const condition = {nodeId};
-        if (CommonRegex.mongoObjectId.test(workIdOrName)) {
-            condition['resourceInfo.resourceId'] = workIdOrName;
-        } else if (CommonRegex.fullResourceName.test(workIdOrName)) {
-            condition['resourceInfo.resourceName'] = workIdOrName;
+        if (CommonRegex.mongoObjectId.test(articleIdOrName)) {
+            condition['resourceInfo.resourceId'] = articleIdOrName;
+        } else if (CommonRegex.fullResourceName.test(articleIdOrName)) {
+            condition['resourceInfo.resourceName'] = articleIdOrName;
         } else {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数校验失败');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
 
         const presentableInfo = await this.presentableService.findOne(condition);
-        await this._presentableAuthHandle(presentableInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+        await this._presentableAuthHandle(presentableInfo, parentNid, subArticleIdOrName, subArticleType, subFilePath);
     }
 
     /**
@@ -152,11 +152,11 @@ export class PresentableSubjectAuthController {
      * 展品授权处理
      * @param presentableInfo
      * @param parentNid
-     * @param subWorkName
-     * @param subWorkType
+     * @param subArticleName
+     * @param subArticleType
      * @param subFilePath
      */
-    async _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subWorkName: string, subWorkType: WorkTypeEnum, subFilePath: string) {
+    async _presentableAuthHandle(presentableInfo: PresentableInfo, parentNid: string, subArticleName: string, subArticleType: ArticleTypeEnum, subFilePath: string) {
         if (!presentableInfo) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('展品不存在,请检查参数');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
@@ -174,6 +174,6 @@ export class PresentableSubjectAuthController {
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
         const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
         const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
-        await this.exhibitAuthResponseHandler.handle(exhibitInfo, presentableAuthResult, parentNid, subWorkName, subWorkType, subFilePath);
+        await this.exhibitAuthResponseHandler.handle(exhibitInfo, presentableAuthResult, parentNid, subArticleName, subArticleType, subFilePath);
     }
 }

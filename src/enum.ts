@@ -112,7 +112,7 @@ export enum ServiceStateEnum {
     TestActive = 2
 }
 
-export enum WorkTypeEnum {
+export enum ArticleTypeEnum {
     /**
      * 独立资源
      */

@@ -1,6 +1,6 @@
 import {SubjectAuthResult} from './auth-interface';
 import {ObjectDependencyTreeInfo} from './test-node-interface';
-import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, WorkTypeEnum} from './enum';
+import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, ArticleTypeEnum} from './enum';
 import {
     ContractLicenseeIdentityTypeEnum,
     ContractStatusEnum,
@@ -556,7 +556,7 @@ export interface ExhibitInfo {
     policies: BasePolicyInfo[];
     // createDate: Date;
     // updateDate: Date;
-    workInfo: MountWorkInfo; // work(作品)指广义上的资源(单品资源,组合资源,节点组合资源)+存储对象
+    articleInfo: MountArticleInfo; // article(作品)指广义上的资源(单品资源,组合资源,节点组合资源)+存储对象
     versionInfo?: ExhibitVersionInfo;
 }
 
@@ -564,12 +564,12 @@ export interface ExhibitInfo {
 /**
  * 展品挂载的作品信息
  */
-export interface MountWorkInfo {
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum; // 1:独立资源 2:组合资源 3:节点组合资源 4:存储对象
-    workOwnerId: number;
-    workOwnerName: string;
+export interface MountArticleInfo {
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum; // 1:独立资源 2:组合资源 3:节点组合资源 4:存储对象
+    articleOwnerId: number;
+    articleOwnerName: string;
     resourceType: string;
     otherInfo?: {
         [key: string]: any;
@@ -582,11 +582,11 @@ export interface MountWorkInfo {
 export interface ExhibitVersionInfo {
     exhibitId: string;
     version: string;
-    workId: string;
-    workSystemProperty?: {
+    articleId: string;
+    articleSystemProperty?: {
         [key: string]: number | string | boolean | null | object;
     };
-    workCustomPropertyDescriptors?: any[];
+    articleCustomPropertyDescriptors?: any[];
     exhibitRewriteProperty?: any[];
     exhibitProperty?: {
         [key: string]: number | string | boolean | null | object;
@@ -599,9 +599,9 @@ export interface ExhibitVersionInfo {
 
 export interface ExhibitAuthNodeInfo {
     nid: string; // 树节点ID
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum
     resourceType: string;
     version: string;
     versionId: string;
@@ -611,9 +611,9 @@ export interface ExhibitAuthNodeInfo {
 
 export interface ExhibitDependencyNodeInfo {
     nid: string; // 树节点ID
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum
     version: string;
     versionRange: string;
     resourceType: string;
@@ -625,9 +625,9 @@ export interface ExhibitDependencyNodeInfo {
 //树节点ID
 export interface ExhibitDependencyTree {
     nid: string;
-    workId: string;
-    workName: string;
-    workType: WorkTypeEnum;
+    articleId: string;
+    articleName: string;
+    articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
     resourceType: string;

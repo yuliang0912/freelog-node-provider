@@ -11,7 +11,7 @@ import {differenceWith, first, isEmpty} from 'lodash';
 import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
 import {TestResourceAdapter} from '../../extend/exhibit-adapter/test-resource-adapter';
 import {ExhibitAuthResponseHandler} from '../../extend/auth-response-handler/exhibit-auth-response-handler';
-import {WorkTypeEnum} from '../../enum';
+import {ArticleTypeEnum} from '../../enum';
 
 @provide()
 @priority(1)
@@ -39,8 +39,8 @@ export class TestResourceSubjectAuthController {
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         const testResourceId = ctx.checkParams('exhibitId').isMd5().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
-        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
+        const subArticleIdOrName = ctx.checkQuery('subArticleIdOrName').optional().decodeURIComponent().value;
+        const subArticleType = ctx.checkQuery('subArticleType').optional().in([1, 2, 3, 4, 5]).value;
         const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
 
         if (ctx.errors.length) {
@@ -50,22 +50,22 @@ export class TestResourceSubjectAuthController {
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
         const testResourceInfo = await this.testNodeService.findOneTestResource({nodeId, testResourceId});
-        await this._testResourceAuthHandle(testResourceInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+        await this._testResourceAuthHandle(testResourceInfo, parentNid, subArticleIdOrName, subArticleType, subFilePath);
     }
 
     /**
      * 测试资源或者子依赖授权,根据节点ID和源实体ID查找测试资源.
      */
-    @get('/works/:workIdOrName/(result|info|fileStream)')
+    @get('/articles/:articleIdOrName/(result|info|fileStream)')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async exhibitAuthByNodeAndWork() {
+    async exhibitAuthByNodeAndArticle() {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
-        const workIdOrName = ctx.checkParams('workIdOrName').exist().decodeURIComponent().value;
+        const articleIdOrName = ctx.checkParams('articleIdOrName').exist().decodeURIComponent().value;
         const parentNid = ctx.checkQuery('parentNid').optional().value;
-        const subWorkIdOrName = ctx.checkQuery('subWorkIdOrName').optional().decodeURIComponent().value;
-        const subWorkType = ctx.checkQuery('subWorkType').optional().in([1, 2, 3, 4, 5]).value;
+        const subArticleIdOrName = ctx.checkQuery('subArticleIdOrName').optional().decodeURIComponent().value;
+        const subArticleType = ctx.checkQuery('subArticleType').optional().in([1, 2, 3, 4, 5]).value;
         const subFilePath = ctx.checkQuery('subFilePath').optional().decodeURIComponent().value;
 
         if (ctx.errors.length) {
@@ -75,19 +75,19 @@ export class TestResourceSubjectAuthController {
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
         const condition: any = {nodeId};
-        if (CommonRegex.mongoObjectId.test(workIdOrName)) {
-            condition['originInfo.id'] = workIdOrName;
-        } else if (workIdOrName.includes('/')) {
-            condition['originInfo.name'] = workIdOrName;
+        if (CommonRegex.mongoObjectId.test(articleIdOrName)) {
+            condition['originInfo.id'] = articleIdOrName;
+        } else if (articleIdOrName.includes('/')) {
+            condition['originInfo.name'] = articleIdOrName;
         } else {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数workIdOrName校验失败').setData({
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数articleIdOrName校验失败').setData({
                 errors: ctx.errors
             });
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
 
         const testResourceInfo = await this.testNodeService.findOneTestResource(condition);
-        await this._testResourceAuthHandle(testResourceInfo, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+        await this._testResourceAuthHandle(testResourceInfo, parentNid, subArticleIdOrName, subArticleType, subFilePath);
     }
 
     /**
@@ -147,11 +147,11 @@ export class TestResourceSubjectAuthController {
      * 测试展品授权处理
      * @param testResource
      * @param parentNid
-     * @param subWorkIdOrName
-     * @param subWorkType
+     * @param subArticleIdOrName
+     * @param subArticleType
      * @param subFilePath
      */
-    async _testResourceAuthHandle(testResource: TestResourceInfo, parentNid: string, subWorkIdOrName: string, subWorkType: WorkTypeEnum, subFilePath: string) {
+    async _testResourceAuthHandle(testResource: TestResourceInfo, parentNid: string, subArticleIdOrName: string, subArticleType: ArticleTypeEnum, subFilePath: string) {
         if (!testResource) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('展品不存在,请检查参数');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
@@ -173,6 +173,6 @@ export class TestResourceSubjectAuthController {
         const testResourceAuthResult = await this.testResourceAuthService.testResourceAuth(testResource, testResourceTreeInfo.authTree);
 
         const exhibitInfo = this.testResourceAdapter.testResourceWrapToExhibitInfo(testResource, testResourceTreeInfo);
-        await this.exhibitAuthResponseHandler.handle(exhibitInfo, testResourceAuthResult, parentNid, subWorkIdOrName, subWorkType, subFilePath);
+        await this.exhibitAuthResponseHandler.handle(exhibitInfo, testResourceAuthResult, parentNid, subArticleIdOrName, subArticleType, subFilePath);
     }
 }
