@@ -322,9 +322,6 @@ export class PresentableController {
                 errors: rewritePropertyValidateResult.errors
             });
         }
-        if (rewriteProperty?.some(x => x.type !== 'editableText' && x.value.length < 1)) {
-            throw new ArgumentError('自定义属性格式校验失败,请确保defaultValue有效');
-        }
 
         await this.presentableVersionService.updatePresentableRewriteProperty(presentableInfo, rewriteProperty).then(ctx.success);
     }
