@@ -4,32 +4,32 @@
   "description": "飞致网络节点服务!",
   "private": true,
   "dependencies": {
-    "@freelog/nmr_translator": "^5.0.14",
-    "async": "^3.2.1",
-    "egg-freelog-base": "^3.1.23",
-    "egg-scripts": "^2.14.0",
+    "@freelog/nmr_translator": "^5.0.15",
+    "async": "^3.2.2",
+    "egg-freelog-base": "^3.1.32",
+    "egg-scripts": "^2.15.2",
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.4.0",
     "lodash": "^4.17.21",
     "midway": "^1.20.3",
-    "mongoose": "^5.13.8",
+    "mongoose": "^5.13.13",
     "patrun": "^4.0.0",
     "semver": "^7.3.5",
     "uuid": "^8.3.2",
-    "validator": "^13.6.0"
+    "validator": "^13.7.0"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
     "@types/node": "15.6.1",
     "cross-env": "^6.0.0",
-    "egg-ci": "^1.18.0",
+    "egg-ci": "^1.19.0",
     "midway-bin": "^1.20.3",
     "midway-mock": "^1.20.3",
     "ts-node": "^9.1.1",
     "tslib": "^2.3.1",
     "tslint": "^6.1.3",
     "tslint-midway-contrib": "^1.20.1",
-    "typescript": "^4.3.5"
+    "typescript": "^4.5.2"
   },
   "engines": {
     "node": ">=10.16.0"

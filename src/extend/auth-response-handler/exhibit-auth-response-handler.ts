@@ -74,13 +74,13 @@ export class ExhibitAuthResponseHandler {
             id: x.articleId, name: x.articleName, type: x.articleType, resourceType: x.resourceType
         }));
 
+        this.ctx.set('freelog-exhibit-id', exhibitInfo?.exhibitId);
+        this.ctx.set('freelog-exhibit-name', encodeURIComponent(exhibitInfo?.exhibitName ?? ''));
+        this.ctx.set('freelog-exhibit-property', encodeURIComponent(JSON.stringify(exhibitInfo.versionInfo?.exhibitProperty ?? {})));
         this.ctx.set('freelog-article-nid', realResponseArticleBaseInfo.nid);
-        this.ctx.set('freelog-article-id', exhibitInfo?.exhibitId);
-        this.ctx.set('freelog-article-name', encodeURIComponent(exhibitInfo?.exhibitName ?? ''));
-        this.ctx.set('freelog-article-property', encodeURIComponent(JSON.stringify(exhibitInfo.versionInfo?.exhibitProperty ?? {})));
         this.ctx.set('freelog-article-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
-        this.ctx.set('freelog-resource-type', realResponseArticleBaseInfo.resourceType);
-        this.ctx.set('Access-Control-Expose-Headers', 'freelog-article-nid,freelog-article-id,freelog-article-name,freelog-article-property,freelog-resource-type,freelog-article-sub-dependencies');
+        this.ctx.set('freelog-article-resource-type', realResponseArticleBaseInfo.resourceType);
+        this.ctx.set('Access-Control-Expose-Headers', 'freelog-exhibit-id,freelog-exhibit-name,freelog-exhibit-property,freelog-article-nid,freelog-article-sub-dependencies,freelog-article-resource-type');
     }
 
     /**
