@@ -1,7 +1,7 @@
 import {controller, inject, get, provide} from 'midway';
-import {first, isArray, isString, isUndefined} from 'lodash';
+import {first, isArray, isEmpty, isString, isUndefined} from 'lodash';
 import {
-    ExhibitInfo, INodeService, IPresentableService,
+    ExhibitInfo, INodeService, IOutsideApiService, IPresentableService,
     IPresentableVersionService, PresentableVersionInfo
 } from '../../interface';
 import {ArgumentError, FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
@@ -9,6 +9,7 @@ import {PresentableCommonChecker} from '../../extend/presentable-common-checker'
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
 import {ITestNodeService} from '../../test-node-interface';
 import {TestResourceAdapter} from '../../extend/exhibit-adapter/test-resource-adapter';
+import {ArticleTypeEnum} from '../../enum';
 
 @provide()
 @controller('/v2/exhibits/:nodeId')
@@ -30,6 +31,8 @@ export class ExhibitController {
     testNodeService: ITestNodeService;
     @inject()
     nodeService: INodeService;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     /**
      * 批量查询展品
@@ -133,6 +136,17 @@ export class ExhibitController {
             exhibitPageResult.dataList.push(this.presentableAdapter.presentableWrapToExhibitInfo(item, presentableVersionPropertyMap.get(item.presentableId)));
         }
         return ctx.success(exhibitPageResult);
+    }
+
+    /**
+     * 获取作品信息
+     */
+    @get('/articles/list')
+    async articles() {
+        const {ctx} = this;
+        // const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
+        // const articleIds = ctx.checkQuery('articleIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
     }
 
     /**
@@ -264,5 +278,47 @@ export class ExhibitController {
         }
         const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
         ctx.success(exhibitInfo);
+    }
+
+    /**
+     * 查询作品的信息
+     */
+    @get('/:exhibitId/articles/list')
+    async exhibitArticleList() {
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
+        const presentableId = ctx.checkParams('exhibitId').isPresentableId().value;
+        const articleNids = ctx.checkQuery('articleNids').toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const presentableInfo = await this.presentableService.findOne({nodeId, _id: presentableId});
+        if (!presentableInfo) {
+            throw new ArgumentError('参数校验失败,未找到展品信息');
+        }
+
+        const presentableVersion = await this.presentableVersionService.findOne({
+            presentableId, version: presentableInfo.version
+        }, 'dependencyTree');
+
+        const articles = presentableVersion.dependencyTree.filter(x => articleNids.includes(x.nid));
+        if (isEmpty(articles)) {
+            return ctx.success(articles);
+        }
+        const resourceVersionPropertyInfos = await this.outsideApiService.getResourceVersionList(articles.map(x => x.versionId), {
+            projection: 'versionId,systemProperty,customPropertyDescriptors'
+        });
+
+        ctx.success(articles.map(article => {
+            const resourceVersionInfo = resourceVersionPropertyInfos.find(m => m.versionId === article.versionId);
+            return {
+                nid: article.nid,
+                articleId: article.resourceId,
+                articleName: article.resourceName,
+                articleType: ArticleTypeEnum.IndividualResource,
+                version: article.version,
+                resourceType: article.resourceType,
+                articleProperty: resourceVersionInfo ? Object.assign(resourceVersionInfo['customProperty'], resourceVersionInfo.systemProperty) : {}
+            };
+        }));
     }
 }

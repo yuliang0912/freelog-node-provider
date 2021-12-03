@@ -1,4 +1,4 @@
-import { INodeService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService } from '../../interface';
 import { FreelogContext } from 'egg-freelog-base';
 import { PresentableCommonChecker } from '../../extend/presentable-common-checker';
 import { PresentableAdapter } from '../../extend/exhibit-adapter/presentable-adapter';
@@ -13,6 +13,7 @@ export declare class ExhibitController {
     testResourceAdapter: TestResourceAdapter;
     testNodeService: ITestNodeService;
     nodeService: INodeService;
+    outsideApiService: IOutsideApiService;
     /**
      * 批量查询展品
      */
@@ -21,6 +22,10 @@ export declare class ExhibitController {
      * 正式节点的展品
      */
     exhibits(): Promise<FreelogContext>;
+    /**
+     * 获取作品信息
+     */
+    articles(): Promise<void>;
     /**
      * 测试节点的展品
      */
@@ -37,4 +42,8 @@ export declare class ExhibitController {
      * 查询单个展品
      */
     exhibitDetail(): Promise<FreelogContext>;
+    /**
+     * 查询作品的信息
+     */
+    exhibitArticleList(): Promise<FreelogContext>;
 }

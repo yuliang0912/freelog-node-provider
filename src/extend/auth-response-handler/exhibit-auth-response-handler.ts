@@ -71,7 +71,7 @@ export class ExhibitAuthResponseHandler {
     async commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree) {
 
         const responseDependencies = realResponseArticleBaseInfo.dependencies.map(x => Object({
-            id: x.articleId, name: x.articleName, type: x.articleType, resourceType: x.resourceType
+            id: x.articleId, nid: x.nid, name: x.articleName, type: x.articleType, resourceType: x.resourceType
         }));
 
         this.ctx.set('freelog-exhibit-id', exhibitInfo?.exhibitId);
