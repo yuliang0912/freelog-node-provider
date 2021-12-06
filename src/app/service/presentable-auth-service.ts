@@ -198,18 +198,19 @@ export class PresentableAuthService implements IPresentableAuthService {
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
-        const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
-        if (!contractAuthResult.isAuth) {
-            contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
-                presentableId: presentableInfo.presentableId,
-                presentableName: presentableInfo.presentableName,
-                policies: presentableInfo.policies, contracts
-            });
+        if (!isEmpty(contracts)) {
+            const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
+            if (!contractAuthResult.isAuth) {
+                contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
+                    presentableId: presentableInfo.presentableId,
+                    presentableName: presentableInfo.presentableName,
+                    policies: presentableInfo.policies, contracts
+                });
+            }
+            return contractAuthResult;
         }
-        return contractAuthResult;
-
         // 先屏蔽自动签约免费策略的功能,方便前端做调试
-        // return this._tryCreateFreeUserContract(presentableInfo, userInfo);
+        return this._tryCreateFreeUserContract(presentableInfo, userInfo);
     }
 
     /**

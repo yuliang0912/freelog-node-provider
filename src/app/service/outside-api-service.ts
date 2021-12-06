@@ -91,6 +91,19 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 批量根据对象Id获取存储对象
+     * @param objectIds
+     * @param options
+     */
+    async getObjectListByObjectIds(objectIds: string[], options?: object): Promise<ObjectStorageInfo[]> {
+        if (isEmpty(objectIds)) {
+            return [];
+        }
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/objects/list?objectIds=${objectIds.toString()}&${optionParams.join('&')}`);
+    }
+
+    /**
      * 获取对象依赖树
      * @param objectIdOrName
      * @param options

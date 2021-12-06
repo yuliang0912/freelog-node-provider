@@ -43,7 +43,11 @@ export declare class ExhibitController {
      */
     exhibitDetail(): Promise<FreelogContext>;
     /**
-     * 查询作品的信息
+     * 查询展品作品的信息
      */
     exhibitArticleList(): Promise<FreelogContext>;
+    /**
+     * 测试展品依赖的作品信息(含有存储对象)
+     */
+    testExhibitArticleList(): Promise<FreelogContext>;
 }

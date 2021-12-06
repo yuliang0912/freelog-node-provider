@@ -40,6 +40,12 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     /**
+     * 批量根据对象Id获取存储对象
+     * @param objectIds
+     * @param options
+     */
+    getObjectListByObjectIds(objectIds: string[], options?: object): Promise<ObjectStorageInfo[]>;
+    /**
      * 获取对象依赖树
      * @param objectIdOrName
      * @param options

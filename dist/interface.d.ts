@@ -314,6 +314,7 @@ export interface IOutsideApiService {
     getResourceListByNames(resourceNames: string[], options?: object): Promise<ResourceInfo[]>;
     getResourceVersionList(versionIds: string[], options?: object): Promise<ResourceVersionInfo[]>;
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
+    getObjectListByObjectIds(objectIds: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getUserInfo(userId: number): Promise<FreelogUserInfo>;
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;

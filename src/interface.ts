@@ -400,6 +400,8 @@ export interface IOutsideApiService {
 
     getObjectInfo(objectIdOrName: string, options?: object): Promise<ObjectStorageInfo>;
 
+    getObjectListByObjectIds(objectIds: string[], options?: object): Promise<ObjectStorageInfo[]>;
+
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
 
     getUserInfo(userId: number): Promise<FreelogUserInfo>;

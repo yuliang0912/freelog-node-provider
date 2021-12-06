@@ -7,7 +7,7 @@ import {
 import {ArgumentError, FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
-import {ITestNodeService} from '../../test-node-interface';
+import {ITestNodeService, TestResourceOriginType} from '../../test-node-interface';
 import {TestResourceAdapter} from '../../extend/exhibit-adapter/test-resource-adapter';
 import {ArticleTypeEnum} from '../../enum';
 
@@ -281,7 +281,7 @@ export class ExhibitController {
     }
 
     /**
-     * 查询作品的信息
+     * 查询展品作品的信息
      */
     @get('/:exhibitId/articles/list')
     async exhibitArticleList() {
@@ -320,5 +320,53 @@ export class ExhibitController {
                 articleProperty: resourceVersionInfo ? Object.assign(resourceVersionInfo['customProperty'], resourceVersionInfo.systemProperty) : {}
             };
         }));
+    }
+
+    /**
+     * 测试展品依赖的作品信息(含有存储对象)
+     */
+    @get('/test/:exhibitId/articles/list')
+    async testExhibitArticleList() {
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
+        const testResourceId = ctx.checkParams('exhibitId').isPresentableId().value;
+        const articleNids = ctx.checkQuery('articleNids').toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({
+            testResourceId, nodeId
+        }, 'dependencyTree');
+        if (!testResourceTreeInfo) {
+            throw new ArgumentError('未找到展品信息');
+        }
+
+        const articles = testResourceTreeInfo.dependencyTree.filter(x => articleNids.includes(x.nid));
+        if (isEmpty(articles)) {
+            return ctx.success(articles);
+        }
+        const resourceVersions = articles.filter(x => x.type === TestResourceOriginType.Resource);
+        const resourceVersionPropertyInfos = await this.outsideApiService.getResourceVersionList(resourceVersions.map(x => x.versionId), {
+            projection: 'versionId,systemProperty,customPropertyDescriptors'
+        });
+        const objectInfos = await this.outsideApiService.getObjectListByObjectIds(articles.filter(x => x.type === TestResourceOriginType.Object).map(x => x.id), {
+            projection: 'objectId,systemProperty,customPropertyDescriptors'
+        });
+
+        const result = [];
+        for (const article of articles) {
+            const property = article.type === TestResourceOriginType.Resource ?
+                resourceVersionPropertyInfos.find(x => x.versionId === article.versionId) :
+                objectInfos.find(x => x.objectId === article.id);
+            result.push({
+                nid: article.nid,
+                articleId: article.id,
+                articleName: article.name,
+                articleType: article.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
+                version: article.version,
+                resourceType: article.resourceType,
+                articleProperty: property ? Object.assign(property['customProperty'], property.systemProperty) : {}
+            });
+        }
+        ctx.success(result);
     }
 }
