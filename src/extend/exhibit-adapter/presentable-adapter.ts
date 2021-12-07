@@ -48,6 +48,9 @@ export class PresentableAdapter {
             updateDate: presentableInfo.updateDate
         };
 
+        if (presentableInfo.contracts) {
+            exhibitInfo.contracts = presentableInfo.contracts;
+        }
         if (presentableVersionInfo) {
             exhibitInfo.versionInfo = PresentableAdapter.presentableVersionInfoWrapToExhibitVersionInfo(presentableVersionInfo);
         }

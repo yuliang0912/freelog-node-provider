@@ -63,6 +63,7 @@ export interface PresentableInfo {
     presentableName: string;
     presentableTitle: string;
     policies?: PolicyInfo[];
+    contracts?: ContractInfo[];
     nodeId: number;
     userId: number;
     version: string;
@@ -563,6 +564,7 @@ export interface ExhibitInfo {
     versionInfo?: ExhibitVersionInfo;
     createDate?: Date;
     updateDate?: Date;
+    contracts?: ContractInfo[];
 }
 
 

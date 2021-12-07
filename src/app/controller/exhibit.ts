@@ -262,6 +262,7 @@ export class ExhibitController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadContract = ctx.checkQuery('isLoadContract').optional().toInt().default(0).in([0, 1]).value;
         ctx.validateParams();
 
         let presentableInfo = await this.presentableService.findOne({nodeId, _id: presentableId});
@@ -275,6 +276,11 @@ export class ExhibitController {
         }
         if (isLoadPolicyInfo) {
             presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
+        }
+        if (isLoadContract) {
+            const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, ctx.userId);
+            presentableInfo = Reflect.has(presentableInfo, 'toObject') ? (<any>presentableInfo).toObject() : presentableInfo;
+            presentableInfo.contracts = contracts;
         }
         const exhibitInfo = this.presentableAdapter.presentableWrapToExhibitInfo(presentableInfo, presentableVersionInfo);
         ctx.success(exhibitInfo);
