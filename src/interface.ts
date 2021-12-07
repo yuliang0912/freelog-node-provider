@@ -72,6 +72,8 @@ export interface PresentableInfo {
     coverImages: string[];
     onlineStatus: PresentableOnlineStatusEnum;
     authStatus: PresentableAuthStatusEnum;
+    createDate?: Date;
+    updateDate?: Date;
 }
 
 export interface PresentableVersionInfo {
@@ -559,6 +561,8 @@ export interface ExhibitInfo {
     // updateDate: Date;
     articleInfo: MountArticleInfo; // article(作品)指广义上的资源(单品资源,组合资源,节点组合资源)+存储对象
     versionInfo?: ExhibitVersionInfo;
+    createDate?: Date;
+    updateDate?: Date;
 }
 
 

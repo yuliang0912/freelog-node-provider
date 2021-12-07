@@ -50,7 +50,9 @@ export class TestResourceAdapter {
                 articleOwnerId: 0,
                 articleOwnerName: testResource.originInfo.type === TestResourceOriginType.Resource ? first(testResource.originInfo.name.split('/')) : ''
             },
-            status: 0
+            status: 0,
+            createDate: testResource.createDate,
+            updateDate: testResource.updateDate
         };
 
         if (testResourceTreeInfo) {

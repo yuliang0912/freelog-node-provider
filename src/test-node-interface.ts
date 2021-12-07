@@ -223,6 +223,8 @@ export interface TestResourceInfo {
     ruleId?: string;
     status?: number;
     rules: ruleOperationInfo[];
+    createDate?: Date;
+    updateDate?: Date;
 }
 
 export interface TestResourceTreeInfo {

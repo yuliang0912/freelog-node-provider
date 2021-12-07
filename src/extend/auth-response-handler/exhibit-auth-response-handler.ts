@@ -124,7 +124,9 @@ export class ExhibitAuthResponseHandler {
         let response;
         switch (realResponseArticleBaseInfo.articleType) {
             case ArticleTypeEnum.IndividualResource:
+                console.log(realResponseArticleBaseInfo.articleId, realResponseArticleBaseInfo.version, subArticleFilePath);
                 response = await this.outsideApiService.getSubResourceFile(realResponseArticleBaseInfo.articleId, realResponseArticleBaseInfo.version, subArticleFilePath);
+                console.log(response.res.data.toString());
                 break;
             case ArticleTypeEnum.StorageObject:
                 response = await this.outsideApiService.getSubObjectFile(realResponseArticleBaseInfo.articleId, subArticleFilePath);

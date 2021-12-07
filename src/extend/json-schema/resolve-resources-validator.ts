@@ -7,39 +7,39 @@ import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 export class resolveResourcesValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
     validate(resolveResources: object[]): ValidatorResult {
-        return super.validate(resolveResources, this.schemas['/resolveResourcesSchema'])
+        return super.validate(resolveResources, this.schemas['/resolveResourcesSchema']);
     }
 
     @init()
     registerValidators() {
         super.addSchema({
-            id: "/resolveResourcesSchema",
-            type: "array",
+            id: '/resolveResourcesSchema',
+            type: 'array',
             uniqueItems: true,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    resourceId: {type: "string", required: true, format: 'mongoObjectId'},
+                    resourceId: {type: 'string', required: true, format: 'mongoObjectId'},
                     contracts: {
-                        type: "array",
+                        type: 'array',
                         uniqueItems: true,
                         required: true,
-                        maxItems: 10,
+                        maxItems: 20,
                         minItems: 1,
                         items: {
-                            type: "object",
+                            type: 'object',
                             required: true,
                             additionalProperties: false,
                             properties: {
-                                policyId: {type: "string", required: true, format: 'md5'}
+                                policyId: {type: 'string', required: true, format: 'md5'}
                             }
                         }
                     }
                 }
             }
-        })
+        });
     }
 }
 

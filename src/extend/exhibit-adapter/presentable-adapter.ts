@@ -43,7 +43,9 @@ export class PresentableAdapter {
                 articleOwnerId: 0,
                 articleOwnerName: first(presentableInfo.resourceInfo.resourceName.split('/'))
             },
-            status: 0
+            status: 0,
+            createDate: presentableInfo.createDate,
+            updateDate: presentableInfo.updateDate
         };
 
         if (presentableVersionInfo) {

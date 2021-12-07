@@ -58,6 +58,8 @@ export interface PresentableInfo {
     coverImages: string[];
     onlineStatus: PresentableOnlineStatusEnum;
     authStatus: PresentableAuthStatusEnum;
+    createDate?: Date;
+    updateDate?: Date;
 }
 export interface PresentableVersionInfo {
     presentableId: string;
@@ -416,6 +418,8 @@ export interface ExhibitInfo {
     policies: BasePolicyInfo[];
     articleInfo: MountArticleInfo;
     versionInfo?: ExhibitVersionInfo;
+    createDate?: Date;
+    updateDate?: Date;
 }
 /**
  * 展品挂载的作品信息

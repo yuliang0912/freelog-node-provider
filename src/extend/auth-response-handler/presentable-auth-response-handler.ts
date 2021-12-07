@@ -136,6 +136,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
      * @param subResourceFile
      */
     async subResourceFileResponseHandle(resourceId: string, version: string, subResourceFile: string) {
+        console.log(resourceId, version, subResourceFile);
         const response = await this.outsideApiService.getSubResourceFile(resourceId, version, subResourceFile);
         if (!response.res.statusCode.toString().startsWith('2')) {
             throw new ApplicationError('文件读取失败');

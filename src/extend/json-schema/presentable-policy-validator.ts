@@ -6,12 +6,10 @@ import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 @provide()
 export class PresentablePolicyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
-
     /**
      * 策略格式校验
-     * @param {object[]} operations 策略信息
-     * @param {boolean} isUpdateMode 是否更新模式
-     * @returns {ValidatorResult}
+     * @param operations
+     * @param args
      */
     validate(operations: object[], ...args): ValidatorResult {
         const schemaId = args[0] === 'addPolicy' ? '/addPolicySchema' : '/updatePolicySchema';
@@ -33,7 +31,6 @@ export class PresentablePolicyValidator extends CommonJsonSchema implements IJso
             input = input.trim();
             return input.length >= 2 && input.length <= 20;
         });
-
 
         /**
          * 新增策略格式
