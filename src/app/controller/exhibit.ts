@@ -272,7 +272,7 @@ export class ExhibitController {
 
         let presentableVersionInfo = null;
         if (isLoadVersionProperty) {
-            presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId versionProperty');
+            presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId versionProperty dependencyTree');
         }
         if (isLoadPolicyInfo) {
             presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
