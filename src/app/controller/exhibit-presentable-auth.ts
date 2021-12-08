@@ -112,7 +112,7 @@ export class PresentableSubjectAuthController {
         const exhibitIds = ctx.checkQuery('exhibitIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
-        const presentables = await this.presentableService.find({nodeId, _id: {$in: exhibitIds}});
+        let presentables = await this.presentableService.find({nodeId, _id: {$in: exhibitIds}});
         const invalidPresentableIds = differenceWith(exhibitIds, presentables, (x: string, y) => x === y.presentableId);
 
         if (!isEmpty(invalidPresentableIds)) {
@@ -124,6 +124,10 @@ export class PresentableSubjectAuthController {
         const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
             return new Map(list.map(x => [x.presentableId, x.authTree]));
         });
+
+        if (authType === 4) {
+            presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
+        }
 
         const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
             authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
