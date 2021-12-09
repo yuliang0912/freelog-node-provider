@@ -201,7 +201,7 @@ export class ExhibitController {
         ctx.validateParams();
 
         const condition: any = {nodeId, userId: ctx.userId};
-        if (isString(articleResourceTypes)) {
+        if (articleResourceTypes?.length) {
             condition.resourceType = {$in: articleResourceTypes};
         } else if (isString(omitArticleResourceType)) {
             condition.resourceType = {$ne: omitArticleResourceType};
