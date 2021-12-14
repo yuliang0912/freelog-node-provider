@@ -40,7 +40,7 @@ export class PresentableRewritePropertyValidator extends CommonJsonSchema implem
                     },
                     value: {
                         // 考虑到UI文本框输入,目前限定为字符串.后期可能修改为any
-                        type: 'string', required: true, minLength: 0, maxLength: 30
+                        type: 'string', required: true, minLength: 0, maxLength: 140
                     },
                     remark: {type: 'string', required: true, minLength: 0, maxLength: 50},
                 }

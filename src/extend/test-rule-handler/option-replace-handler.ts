@@ -90,7 +90,6 @@ export class OptionReplaceHandler {
         const replaceRecords = [];
         let latestTestResourceDependencyTree = targetInfo;
         for (const replaceObjectInfo of testRuleInfo.ruleInfo.replaces) {
-
             const {replaced, replacer, scopes} = replaceObjectInfo;
             if (replaceObjectInfo.efficientCount === undefined) {
                 replaceObjectInfo.efficientCount = 0;
