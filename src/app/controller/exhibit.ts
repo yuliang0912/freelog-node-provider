@@ -7,7 +7,7 @@ import {
 import {ArgumentError, FreelogContext, IdentityTypeEnum, PageResult, visitorIdentityValidator} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
-import {ITestNodeService, TestResourceOriginType} from '../../test-node-interface';
+import {ITestNodeService, TestResourceOriginType, TestResourceTreeInfo} from '../../test-node-interface';
 import {TestResourceAdapter} from '../../extend/exhibit-adapter/test-resource-adapter';
 import {ArticleTypeEnum} from '../../enum';
 
@@ -67,7 +67,7 @@ export class ExhibitController {
         }
         if (isLoadVersionProperty) {
             const presentableVersionIds = presentableList.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
-            presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId versionProperty').then(list => {
+            presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId versionProperty dependencyTree').then(list => {
                 return new Map(list.map(x => [x.presentableId, x]));
             });
         }
@@ -121,7 +121,7 @@ export class ExhibitController {
         }
         if (isLoadVersionProperty) {
             const presentableVersionIds = pageResult.dataList.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
-            presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId versionProperty').then(list => {
+            presentableVersionPropertyMap = await this.presentableVersionService.find({presentableVersionId: {$in: presentableVersionIds}}, 'presentableId versionProperty dependencyTree').then(list => {
                 return new Map(list.map(x => [x.presentableId, x]));
             });
         }
@@ -136,17 +136,6 @@ export class ExhibitController {
             exhibitPageResult.dataList.push(this.presentableAdapter.presentableWrapToExhibitInfo(item, presentableVersionPropertyMap.get(item.presentableId)));
         }
         return ctx.success(exhibitPageResult);
-    }
-
-    /**
-     * 获取作品信息
-     */
-    @get('/articles/list')
-    async articles() {
-        const {ctx} = this;
-        // const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        // const articleIds = ctx.checkQuery('articleIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
-        ctx.validateParams();
     }
 
     /**
@@ -175,8 +164,13 @@ export class ExhibitController {
             condition._id = {$in: testResourceIds};
         }
 
+        const testResourceTreeMap = new Map<string, TestResourceTreeInfo>();
         const testResources = await this.testNodeService.findTestResources(condition, projection.join(' '));
-        const exhibitList = testResources.map(item => this.testResourceAdapter.testResourceWrapToExhibitInfo(item, isLoadVersionProperty ? ({} as any) : null));
+        if (testResources.length && isLoadVersionProperty) {
+            const list = await this.testNodeService.findTestResourceTreeInfos({testResourceId: {$in: testResources.map(x => x.testResourceId)}}, 'testResourceId dependencyTree');
+            list.forEach(x => testResourceTreeMap.set(x.testResourceId, x));
+        }
+        const exhibitList = testResources.map(item => this.testResourceAdapter.testResourceWrapToExhibitInfo(item, testResourceTreeMap.get(item.testResourceId)));
         ctx.success(exhibitList);
     }
 
@@ -224,8 +218,13 @@ export class ExhibitController {
             totalItem: pageResult.totalItem,
             dataList: []
         };
+        const testResourceTreeMap = new Map<string, TestResourceTreeInfo>();
+        if (pageResult.dataList.length && isLoadVersionProperty) {
+            const list = await this.testNodeService.findTestResourceTreeInfos({testResourceId: {$in: pageResult.dataList.map(x => x.testResourceId)}}, 'testResourceId dependencyTree');
+            list.forEach(x => testResourceTreeMap.set(x.testResourceId, x));
+        }
         for (const item of pageResult.dataList) {
-            exhibitPageResult.dataList.push(this.testResourceAdapter.testResourceWrapToExhibitInfo(item, isLoadVersionProperty ? ({} as any) : null));
+            exhibitPageResult.dataList.push(this.testResourceAdapter.testResourceWrapToExhibitInfo(item, testResourceTreeMap.get(item.testResourceId)));
         }
         return ctx.success(exhibitPageResult);
     }
@@ -247,7 +246,12 @@ export class ExhibitController {
             return null;
         }
 
-        const exhibitInfo = this.testResourceAdapter.testResourceWrapToExhibitInfo(testResource, isLoadVersionProperty ? ({} as any) : null);
+        let testResourceTreeInfo = null;
+        if (isLoadVersionProperty) {
+            testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId: testResource.testResourceId}, 'testResourceId dependencyTree');
+        }
+
+        const exhibitInfo = this.testResourceAdapter.testResourceWrapToExhibitInfo(testResource, testResourceTreeInfo);
         ctx.success(exhibitInfo);
     }
 
