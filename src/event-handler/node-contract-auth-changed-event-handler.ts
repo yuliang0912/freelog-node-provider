@@ -26,6 +26,7 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
      */
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const message: IContractAuthStatusChangedEventMessage = JSON.parse(payload.message.value.toString());
+        console.log(payload.message.value.toString());
         if (message.contractStatus !== ContractStatusEnum.Terminated) {
             return;
         }
