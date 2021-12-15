@@ -23,10 +23,6 @@ export declare class ExhibitController {
      */
     exhibits(): Promise<FreelogContext>;
     /**
-     * 获取作品信息
-     */
-    articles(): Promise<void>;
-    /**
      * 测试节点的展品
      */
     testExhibitList(): Promise<void>;

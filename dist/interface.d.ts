@@ -2,6 +2,7 @@ import { SubjectAuthResult } from './auth-interface';
 import { ObjectDependencyTreeInfo } from './test-node-interface';
 import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum, ArticleTypeEnum } from './enum';
 import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from 'egg-freelog-base';
+import { EachMessagePayload } from 'kafkajs';
 export interface findOptions<T> {
     sort?: {
         [P in keyof T]?: 1 | -1 | boolean;
@@ -490,4 +491,38 @@ export interface ExhibitDependencyTree {
     deep: number;
     parentNid: string;
     dependencies: ExhibitDependencyTree[];
+}
+export declare enum ContractAuthStatusEnum {
+    /**
+     * 只获得正式授权
+     * @type {number}
+     */
+    Authorized = 1,
+    /**
+     * 只获得测试授权
+     * @type {number}
+     */
+    TestNodeAuthorized = 2,
+    /**
+     * 未获得任何授权
+     */
+    Unauthorized = 128
+}
+export interface IKafkaSubscribeMessageHandle {
+    subscribeTopicName: string;
+    consumerGroupId: string;
+    messageHandle(payload: EachMessagePayload): Promise<void>;
+}
+export interface IContractAuthStatusChangedEventMessage {
+    contractId: string;
+    subjectId: string;
+    subjectName: string;
+    subjectType: SubjectTypeEnum;
+    licenseeId: string | number;
+    licenseeOwnerId: number;
+    licensorId: string | number;
+    licensorOwnerId: number;
+    beforeAuthStatus: ContractAuthStatusEnum;
+    afterAuthStatus: ContractAuthStatusEnum;
+    contractStatus: ContractStatusEnum;
 }
