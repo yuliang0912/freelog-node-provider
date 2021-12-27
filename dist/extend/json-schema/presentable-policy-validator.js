@@ -49,7 +49,7 @@ let PresentablePolicyValidator = class PresentablePolicyValidator extends egg_fr
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    policyName: { required: true, minLength: 1, maxLength: 20, type: 'string', format: 'policyName' },
+                    policyName: { required: true, minLength: 2, maxLength: 20, type: 'string', format: 'policyName' },
                     policyText: { required: true, type: 'string' },
                     status: { required: false, type: 'integer', enum: [0, 1], minimum: 0, maximum: 1 }
                 }

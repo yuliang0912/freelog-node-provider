@@ -1,4 +1,3 @@
-/// <reference types="lodash" />
 import { BaseTestRuleInfo, FlattenTestResourceAuthTree, FlattenTestResourceDependencyTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestResourcePropertyInfo, TestResourceTreeInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
 import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo, PresentableInfo, PresentableVersionInfo, ResourceInfo } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
@@ -27,19 +26,23 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * @param nodeId
      * @param userId
      */
-    matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userId: number): Promise<TestRuleMatchResult[]>;
+    matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userId: number): Promise<{
+        themeTestRuleMatchInfo: TestRuleMatchInfo;
+        testRuleMatchInfos: TestRuleMatchResult[];
+    }>;
     /**
      * 导入展品到测试资源库(排除掉已经操作过的),目前不导入依赖树授权树信息
      * @param nodeId
      * @param userId
      * @param excludedPresentableIds
+     * @param themeTestRuleMatchInfo
      */
-    saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[]): Promise<void>;
+    saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[], themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void>;
     /**
      * 设置主题
-     * @param nodeTestRuleInfo
+     * @param themeTestRuleMatchInfo
      */
-    setThemeTestResource(nodeTestRuleInfo: NodeTestRuleInfo): Promise<TestResourceInfo>;
+    setThemeTestResource(themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void>;
     /**
      * 规则匹配结果转换为测试资源实体
      * @param testRuleMatchInfo
@@ -48,19 +51,15 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo;
     /**
-     * 获取测试资源的meta属性
-     * @param testRuleMatchInfo
-     */
-    getTestResourceProperty(testRuleMatchInfo: TestRuleMatchInfo): import("lodash").Omit<any, string>;
-    /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo
      * @param presentableVersionInfo
      * @param resourceInfo
      * @param nodeId
      * @param userId
+     * @param themeTestRuleMatchInfo
      */
-    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number): TestResourceInfo;
+    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo;
     /**
      * 平铺依赖树
      * @param testResourceId

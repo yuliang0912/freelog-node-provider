@@ -14,6 +14,8 @@ export class KafkaClient {
     kafka: Kafka;
     @config('kafka')
     kafkaConfig;
+    @config('env')
+    env: string;
     consumers: Consumer[] = [];
 
     consumerTopicAsyncHandleFunc = new Map<string, (payload: EachMessagePayload) => Promise<void>>();

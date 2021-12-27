@@ -27,17 +27,24 @@ export default () => {
     config.gatewayUrl = 'http://api.testfreelog.com';
 
     config.localIdentity = {
-        userId: 50022,
+        userId: 50017,
         username: 'yuliang',
         email: 'support@freelog.com'
     };
 
     config.kafka = {
-        enable: true,
+        enable: false,
         clientId: 'freelog-node-service',
         logLevel: 1, // logLevel.ERROR,
         brokers: ['192.168.164.165:9090']
     };
+
+    // config.kafka = {
+    //     enable: true,
+    //     clientId: 'freelog-node-service',
+    //     logLevel: 1, // logLevel.ERROR,
+    //     brokers: ['112.74.140.101:9093']
+    // }
 
     return config;
 };

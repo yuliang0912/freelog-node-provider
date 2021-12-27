@@ -6,6 +6,7 @@ import { IKafkaSubscribeMessageHandle } from '../interface';
 export declare class KafkaClient {
     kafka: Kafka;
     kafkaConfig: any;
+    env: string;
     consumers: Consumer[];
     consumerTopicAsyncHandleFunc: Map<string, (payload: EachMessagePayload) => Promise<void>>;
     initial(): Promise<void>;

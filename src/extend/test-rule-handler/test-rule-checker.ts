@@ -1,7 +1,12 @@
 import {isEmpty, isString} from 'lodash';
 import {provide, inject} from 'midway';
 import {IPresentableService} from '../../interface';
-import {TestNodeOperationEnum, TestResourceOriginType, TestRuleMatchInfo} from '../../test-node-interface';
+import {
+    TestNodeOperationEnum,
+    TestResourceOriginType,
+    TestResourcePropertyInfo,
+    TestRuleMatchInfo
+} from '../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
@@ -11,6 +16,36 @@ export class TestRuleChecker {
     ctx: FreelogContext;
     @inject()
     presentableService: IPresentableService;
+
+    /**
+     * 设置实体的系统属性和自定义属性
+     * @param matchRule
+     * @param systemProperty
+     * @param customPropertyDescriptors
+     * @param presentableRewriteProperty
+     */
+    fillEntityPropertyMap(matchRule: TestRuleMatchInfo, systemProperty: object, customPropertyDescriptors: any[], presentableRewriteProperty?: any[]) {
+        matchRule.propertyMap = new Map<string, TestResourcePropertyInfo>();
+        for (const [key, value] of Object.entries(systemProperty)) {
+            matchRule.propertyMap.set(key, {
+                key, value: value as string,
+                remark: '', authority: 1
+            });
+        }
+        for (const {key, defaultValue, remark, type} of customPropertyDescriptors) {
+            matchRule.propertyMap.set(key, {
+                key, value: defaultValue, remark,
+                authority: type === 'readonlyText' ? 1 : 2
+            });
+        }
+        for (const {key, value, remark} of presentableRewriteProperty ?? []) {
+            const property = matchRule.propertyMap.get(key);
+            if (property && property.authority === 1) {
+                continue;
+            }
+            matchRule.propertyMap.set(key, {key, authority: 6, value, remark});
+        }
+    }
 
     /**
      * 批量检测导入规则中的presentableName是否已存在.以及导入的发行是否已经签约到正式节点中

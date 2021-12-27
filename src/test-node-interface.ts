@@ -1,6 +1,6 @@
 import {PresentableInfo} from './interface';
 import {SubjectAuthResult} from './auth-interface';
-import {PageResult} from 'egg-freelog-base';
+import {FreelogContext, PageResult} from 'egg-freelog-base';
 
 export enum TestResourceOriginType {
     Resource = 'resource',
@@ -10,7 +10,19 @@ export enum TestResourceOriginType {
 export enum TestNodeOperationEnum {
     Add = 'add',
     Alter = 'alter',
-    ActivateTheme = 'activate_theme'
+    ActivateTheme = 'activate_theme',
+    Comment = 'comment'
+}
+
+export enum ActionOperationEnum {
+    SetLabels = 'set_labels',
+    Replace = 'replace',
+    Online = 'online',
+    SetTitle = 'set_title',
+    SetCover = 'set_cover',
+    AddAttr = 'add_attr',
+    DeleteAttr = 'delete_attr',
+    Comment = 'comment'
 }
 
 export interface BaseTestResourceOriginInfo {
@@ -29,23 +41,9 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versionRange?: string;
     coverImages?: string[];
     resourceType: string;
-    systemProperty?: object;
-    customPropertyDescriptors?: any[];
+    // systemProperty?: object;
+    // customPropertyDescriptors?: any[];
     // _originInfo: ResourceInfo | ObjectStorageInfo //此处为resource或者object
-}
-
-export interface ReplaceOptionInfo {
-    replaced: CandidateInfo;
-    replacer: CandidateInfo;
-    scopes: CandidateInfo[][];
-    efficientCount: number;
-}
-
-export interface TestResourcePropertyRuleInfo {
-    operation: 'add' | 'delete';
-    key: string;
-    value?: string;
-    description?: string;
 }
 
 export interface TestResourcePropertyInfo {
@@ -57,27 +55,73 @@ export interface TestResourcePropertyInfo {
 }
 
 export interface BaseTestRuleInfo {
+    // 规则文本
     text: string;
+    // 执行的操作
     operation: TestNodeOperationEnum;
+    // 展品名
     exhibitName?: string;
-    themeName?: string;  // 此处理论上不应该存在. 激活的主题名称应该使用presentableName表示即可.需要规则编译器端调整
-    labels: string[] | null; // null代表不操作此项,沿用展品的标签属性
-    replaces?: ReplaceOptionInfo[];
-    online: boolean | null; // null代表不操作此项,沿用展品的上下线状态
-    cover?: string;
-    title?: string;
-    attrs?: TestResourcePropertyRuleInfo[];
+    // 标的物
     candidate?: CandidateInfo;
+    // 执行的指令集
+    actions: Action<ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment>[];
+}
+
+export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
+    operation: ActionOperationEnum;
+    content: T
+}
+
+export interface ContentSetLabel extends String {
+}
+
+export interface ContentSetOnline extends Boolean {
+}
+
+export interface ContentSetTitle extends String {
+}
+
+export interface ContentSetCover extends String {
+}
+
+export interface ContentSetAttr {
+    key: string;
+    value: string;
+    description: string;
+}
+
+export interface ContentDeleteAttr {
+    key: string;
+}
+
+export interface ContentComment extends String {
+}
+
+export interface ScopePathChain {
+    name: string;
+    type: string;
+    version?: string;
+}
+
+export interface ContentReplace {
+    // 被替换者
+    replaced: CandidateInfo;
+    // 替代者
+    replacer: CandidateInfo;
+    // 作用域集合
+    scopes: CandidateInfo[][];
 }
 
 export interface TestRuleEfficientInfo {
-    type: 'alter' | 'add' | 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activateTheme',
+    type: ActionOperationEnum | TestNodeOperationEnum; // 'alter' | 'add' | 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activateTheme',
     count: number;
 }
 
 export interface TestRuleMatchInfo {
     id: string;
     isValid: boolean;
+
+    matchWarnings: string[];
     matchErrors: string[];
     ruleInfo: BaseTestRuleInfo;
 
@@ -85,20 +129,22 @@ export interface TestRuleMatchInfo {
     presentableInfo?: PresentableInfo;
     presentableRewriteProperty?: any[];
 
+
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
+
+    propertyMap?: Map<string, TestResourcePropertyInfo>;
 
     tagInfo?: { tags: string[], source: string };
     onlineStatusInfo?: { status: number, source: string };
     titleInfo?: { title: string, source: string };
     coverInfo?: { coverImages: string[], source: string };
-    attrInfo?: { attrs: TestResourcePropertyInfo[] | null, source: string };
+    attrInfo?: { source: string };
     efficientInfos: TestRuleEfficientInfo[];
     themeInfo: { isActivatedTheme: number, ruleId: string };
     replaceRecords?: any[];
     rootResourceReplacer?: TestResourceOriginInfo;
 }
-
 
 export interface BaseReplacedInfo {
     id: string;
@@ -137,7 +183,6 @@ export interface TestResourceDependencyTree {
     version: string;
     versionId: string;
     resourceType: string;
-    fileSha1: string;
     dependencies: TestResourceDependencyTree[];
     replaceRecords?: BaseReplacedInfo[];
     versions?: string[];
@@ -150,8 +195,7 @@ export interface FlattenTestResourceDependencyTree {
     name: string;
     type: TestResourceOriginType;
     version: string;
-    versionId: string;
-    fileSha1: string;
+    versionId?: string;
     resourceType: string;
     deep: number;
     parentNid: string;
@@ -166,7 +210,6 @@ export interface ObjectDependencyTreeInfo {
     versionId?: string;
     versionRange?: string;
     versions?: string[];
-    fileSha1: string;
     type: 'object' | 'resource';
     resourceType: string;
     dependencies: ObjectDependencyTreeInfo[];
@@ -299,4 +342,13 @@ export interface ITestResourceAuthService {
     testResourceNodeSideAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
 
     testResourceUpstreamAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
+}
+
+// ContentSetLabel[] | ContentReplace | ContentOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment
+export interface IActionHandler<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
+    handle(ctx: FreelogContext, testRuleInfo: TestRuleMatchInfo, action: Action<T>): Promise<boolean>;
+}
+
+export interface IOperationHandler {
+    handle(testRuleList: TestRuleMatchInfo[], ...args): Promise<boolean>;
 }

@@ -1,53 +1,36 @@
-import {isEmpty} from 'lodash';
 import {inject, provide} from 'midway';
 import {
-    BaseTestRuleInfo,
-    TestNodeOperationEnum,
-    TestResourceInfo,
-    TestResourceOriginType,
-    TestRuleMatchInfo
+    BaseTestRuleInfo, IOperationHandler,
+    TestResourceOriginType, TestRuleMatchInfo
 } from '../../test-node-interface';
-import {PresentableCommonChecker} from '../presentable-common-checker';
 import {compile} from '@freelog/nmr_translator';
-import {IOutsideApiService} from '../../interface';
+import {ImportResourceEntityHandler} from './import/import-resource-entity-handler';
+import {ImportObjectEntityHandler} from './import/import-object-entity-handler';
+import {OperationActivateThemeHandler} from './operation-handler/operation-activate-theme-handler';
 
 @provide()
 export class TestRuleHandler {
 
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[] = [];
-    activateThemeRule: BaseTestRuleInfo;
 
     @inject()
     ctx;
     @inject()
     testRuleChecker;
     @inject()
-    importObjectEntityHandler;
+    importObjectEntityHandler: ImportObjectEntityHandler;
     @inject()
-    importResourceEntityHandler;
+    importResourceEntityHandler: ImportResourceEntityHandler;
+
     @inject()
-    importPresentableEntityHandler;
+    operationAddHandler: IOperationHandler;
     @inject()
-    presentableCommonChecker: PresentableCommonChecker;
+    operationAlterHandler: IOperationHandler;
     @inject()
-    optionSetTagsHandler;
-    @inject()
-    optionReplaceHandler;
-    @inject()
-    optionSetOnlineStatusHandler;
-    @inject()
-    optionSetAttrHandler;
-    @inject()
-    optionSetTitleHandler;
-    @inject()
-    optionSetCoverHandler;
-    @inject()
-    activateThemeHandler;
+    operationActivateThemeHandler: OperationActivateThemeHandler;
     @inject()
     testNodeGenerator;
-    @inject()
-    outsideApiService: IOutsideApiService;
 
     async main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]> {
 
@@ -55,10 +38,11 @@ export class TestRuleHandler {
         // 初始化,转换数据格式.并且校验新增的展品名称是否与现有的展品名称冲突,新增的资源是否与现有展品对应的资源冲突.
         await this.initialTestRules(testRules).presentableNameAndResourceNameExistingCheck();
 
-        await this.importEntityData();
+        await this.operationAddHandler.handle(this.testRuleMatchInfos, nodeId);
+        await this.operationAlterHandler.handle(this.testRuleMatchInfos, nodeId);
         await this.generateDependencyTree();
-        await this.ruleOptionsHandle();
-
+        await this.operationActivateThemeHandler.handle(this.testRuleMatchInfos, nodeId);
+        // console.log(JSON.stringify(this.testRuleMatchInfos));
         return this.testRuleMatchInfos;
     }
 
@@ -67,12 +51,13 @@ export class TestRuleHandler {
      * @param nodeId
      * @param activeThemeRuleInfo
      */
-    matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
-        if (!activeThemeRuleInfo) {
-            return null;
-        }
-        return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo);
-    }
+    // matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
+    //     // 代码已重新实现,此处已无用
+    //     //if (!activeThemeRuleInfo) {
+    //     //  return null;
+    //     //}
+    //     // return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo);
+    // }
 
     /**
      * 初始化规则,拓展规则的基础属性
@@ -118,41 +103,13 @@ export class TestRuleHandler {
     }
 
     /**
-     * 导入实体数据
-     */
-    async importEntityData(): Promise<void> {
-
-        const {alterPresentableRules, addResourceRules, addObjectRules} = this.testRuleMatchInfos.reduce((acc, current) => {
-            if (current.isValid && current.ruleInfo.operation === TestNodeOperationEnum.Alter) {
-                acc.alterPresentableRules.push(current);
-            } else if (current.isValid && current.ruleInfo.operation === TestNodeOperationEnum.Add && current.ruleInfo.candidate.type === TestResourceOriginType.Resource) {
-                acc.addResourceRules.push(current);
-            } else if (current.isValid && current.ruleInfo.operation === TestNodeOperationEnum.Add && current.ruleInfo.candidate.type === TestResourceOriginType.Object) {
-                acc.addObjectRules.push(current);
-            }
-            return acc;
-        }, {alterPresentableRules: [], addResourceRules: [], addObjectRules: []});
-
-        const tasks = [];
-        if (!isEmpty(alterPresentableRules)) {
-            tasks.push(this.importPresentableEntityHandler.importPresentableEntityDataFromRules(this.nodeId, alterPresentableRules));
-        }
-        if (!isEmpty(addResourceRules)) {
-            tasks.push(this.importResourceEntityHandler.importResourceEntityDataFromRules(addResourceRules));
-        }
-        if (!isEmpty(addObjectRules)) {
-            tasks.push(this.importObjectEntityHandler.importObjectEntityDataFromRules(this.ctx.userId, addObjectRules));
-        }
-        await Promise.all(tasks);
-    }
-
-    /**
      * 生成依赖树
      */
     async generateDependencyTree(): Promise<void> {
         const tasks = [];
         for (const testRuleInfo of this.testRuleMatchInfos) {
-            if (!testRuleInfo.isValid || !['alter', 'add'].includes(testRuleInfo.ruleInfo.operation)) {
+            // 如果执行替换规则,已经生成过依赖树,此处会自动忽略
+            if (!testRuleInfo.isValid || !['alter', 'add'].includes(testRuleInfo.ruleInfo.operation) || testRuleInfo.entityDependencyTree) {
                 continue;
             }
             let generateDependencyTreeTask = null;
@@ -169,35 +126,5 @@ export class TestRuleHandler {
             }
         }
         await Promise.all(tasks);
-    }
-
-    /**
-     * 选项规则处理
-     */
-    async ruleOptionsHandle(): Promise<void> {
-
-        const tasks = this.testRuleMatchInfos.map(testRuleInfo => this.optionReplaceHandler.handle(testRuleInfo));
-
-        await Promise.all(tasks);
-
-        const rootResourceReplacerRules = this.testRuleMatchInfos.filter(x => x.isValid && x.rootResourceReplacer?.type === TestResourceOriginType.Resource);
-        const resourceVersionIds = rootResourceReplacerRules.map(x => this.presentableCommonChecker.generateResourceVersionId(x.rootResourceReplacer.id, x.rootResourceReplacer.version));
-        const resourceProperties = await this.outsideApiService.getResourceVersionList(resourceVersionIds, {
-            projection: 'resourceId,systemProperty,customPropertyDescriptors'
-        });
-
-        for (const ruleInfo of rootResourceReplacerRules) {
-            const resourceProperty = resourceProperties.find(x => x.resourceId === ruleInfo.rootResourceReplacer.id);
-            ruleInfo.rootResourceReplacer.systemProperty = resourceProperty.systemProperty;
-            ruleInfo.rootResourceReplacer.customPropertyDescriptors = resourceProperty.customPropertyDescriptors;
-        }
-
-        for (const testRuleInfo of this.testRuleMatchInfos) {
-            this.optionSetTagsHandler.handle(testRuleInfo);
-            this.optionSetTitleHandler.handle(testRuleInfo);
-            this.optionSetCoverHandler.handle(testRuleInfo);
-            this.optionSetAttrHandler.handle(testRuleInfo);
-            this.optionSetOnlineStatusHandler.handle(testRuleInfo);
-        }
     }
 }

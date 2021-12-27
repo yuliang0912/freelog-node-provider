@@ -1,32 +1,24 @@
-import { BaseTestRuleInfo, TestResourceInfo, TestRuleMatchInfo } from '../../test-node-interface';
-import { PresentableCommonChecker } from '../presentable-common-checker';
-import { IOutsideApiService } from '../../interface';
+import { BaseTestRuleInfo, IOperationHandler, TestRuleMatchInfo } from '../../test-node-interface';
+import { ImportResourceEntityHandler } from './import/import-resource-entity-handler';
+import { ImportObjectEntityHandler } from './import/import-object-entity-handler';
+import { OperationActivateThemeHandler } from './operation-handler/operation-activate-theme-handler';
 export declare class TestRuleHandler {
     nodeId: number;
     testRuleMatchInfos: TestRuleMatchInfo[];
-    activateThemeRule: BaseTestRuleInfo;
     ctx: any;
     testRuleChecker: any;
-    importObjectEntityHandler: any;
-    importResourceEntityHandler: any;
-    importPresentableEntityHandler: any;
-    presentableCommonChecker: PresentableCommonChecker;
-    optionSetTagsHandler: any;
-    optionReplaceHandler: any;
-    optionSetOnlineStatusHandler: any;
-    optionSetAttrHandler: any;
-    optionSetTitleHandler: any;
-    optionSetCoverHandler: any;
-    activateThemeHandler: any;
+    importObjectEntityHandler: ImportObjectEntityHandler;
+    importResourceEntityHandler: ImportResourceEntityHandler;
+    operationAddHandler: IOperationHandler;
+    operationAlterHandler: IOperationHandler;
+    operationActivateThemeHandler: OperationActivateThemeHandler;
     testNodeGenerator: any;
-    outsideApiService: IOutsideApiService;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
     /**
      * 匹配激活主题规则
      * @param nodeId
      * @param activeThemeRuleInfo
      */
-    matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo>;
     /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules
@@ -45,15 +37,7 @@ export declare class TestRuleHandler {
      */
     presentableNameAndResourceNameExistingCheck(): Promise<this>;
     /**
-     * 导入实体数据
-     */
-    importEntityData(): Promise<void>;
-    /**
      * 生成依赖树
      */
     generateDependencyTree(): Promise<void>;
-    /**
-     * 选项规则处理
-     */
-    ruleOptionsHandle(): Promise<void>;
 }

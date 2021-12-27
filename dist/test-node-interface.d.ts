@@ -1,6 +1,6 @@
 import { PresentableInfo } from './interface';
 import { SubjectAuthResult } from './auth-interface';
-import { PageResult } from 'egg-freelog-base';
+import { FreelogContext, PageResult } from 'egg-freelog-base';
 export declare enum TestResourceOriginType {
     Resource = "resource",
     Object = "object"
@@ -8,7 +8,18 @@ export declare enum TestResourceOriginType {
 export declare enum TestNodeOperationEnum {
     Add = "add",
     Alter = "alter",
-    ActivateTheme = "activate_theme"
+    ActivateTheme = "activate_theme",
+    Comment = "comment"
+}
+export declare enum ActionOperationEnum {
+    SetLabels = "set_labels",
+    Replace = "replace",
+    Online = "online",
+    SetTitle = "set_title",
+    SetCover = "set_cover",
+    AddAttr = "add_attr",
+    DeleteAttr = "delete_attr",
+    Comment = "comment"
 }
 export interface BaseTestResourceOriginInfo {
     name: string;
@@ -24,20 +35,6 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versionRange?: string;
     coverImages?: string[];
     resourceType: string;
-    systemProperty?: object;
-    customPropertyDescriptors?: any[];
-}
-export interface ReplaceOptionInfo {
-    replaced: CandidateInfo;
-    replacer: CandidateInfo;
-    scopes: CandidateInfo[][];
-    efficientCount: number;
-}
-export interface TestResourcePropertyRuleInfo {
-    operation: 'add' | 'delete';
-    key: string;
-    value?: string;
-    description?: string;
 }
 export interface TestResourcePropertyInfo {
     key: string;
@@ -50,28 +47,56 @@ export interface BaseTestRuleInfo {
     text: string;
     operation: TestNodeOperationEnum;
     exhibitName?: string;
-    themeName?: string;
-    labels: string[] | null;
-    replaces?: ReplaceOptionInfo[];
-    online: boolean | null;
-    cover?: string;
-    title?: string;
-    attrs?: TestResourcePropertyRuleInfo[];
     candidate?: CandidateInfo;
+    actions: Action<ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment>[];
+}
+export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
+    operation: ActionOperationEnum;
+    content: T;
+}
+export interface ContentSetLabel extends String {
+}
+export interface ContentSetOnline extends Boolean {
+}
+export interface ContentSetTitle extends String {
+}
+export interface ContentSetCover extends String {
+}
+export interface ContentSetAttr {
+    key: string;
+    value: string;
+    description: string;
+}
+export interface ContentDeleteAttr {
+    key: string;
+}
+export interface ContentComment extends String {
+}
+export interface ScopePathChain {
+    name: string;
+    type: string;
+    version?: string;
+}
+export interface ContentReplace {
+    replaced: CandidateInfo;
+    replacer: CandidateInfo;
+    scopes: CandidateInfo[][];
 }
 export interface TestRuleEfficientInfo {
-    type: 'alter' | 'add' | 'setTags' | 'setOnlineStatus' | 'replace' | 'setAttr' | 'setCover' | 'setTitle' | 'activateTheme';
+    type: ActionOperationEnum | TestNodeOperationEnum;
     count: number;
 }
 export interface TestRuleMatchInfo {
     id: string;
     isValid: boolean;
+    matchWarnings: string[];
     matchErrors: string[];
     ruleInfo: BaseTestRuleInfo;
     presentableInfo?: PresentableInfo;
     presentableRewriteProperty?: any[];
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
+    propertyMap?: Map<string, TestResourcePropertyInfo>;
     tagInfo?: {
         tags: string[];
         source: string;
@@ -89,7 +114,6 @@ export interface TestRuleMatchInfo {
         source: string;
     };
     attrInfo?: {
-        attrs: TestResourcePropertyInfo[] | null;
         source: string;
     };
     efficientInfos: TestRuleEfficientInfo[];
@@ -134,7 +158,6 @@ export interface TestResourceDependencyTree {
     version: string;
     versionId: string;
     resourceType: string;
-    fileSha1: string;
     dependencies: TestResourceDependencyTree[];
     replaceRecords?: BaseReplacedInfo[];
     versions?: string[];
@@ -146,8 +169,7 @@ export interface FlattenTestResourceDependencyTree {
     name: string;
     type: TestResourceOriginType;
     version: string;
-    versionId: string;
-    fileSha1: string;
+    versionId?: string;
     resourceType: string;
     deep: number;
     parentNid: string;
@@ -160,7 +182,6 @@ export interface ObjectDependencyTreeInfo {
     versionId?: string;
     versionRange?: string;
     versions?: string[];
-    fileSha1: string;
     type: 'object' | 'resource';
     resourceType: string;
     dependencies: ObjectDependencyTreeInfo[];
@@ -282,4 +303,10 @@ export interface ITestResourceAuthService {
     testResourceAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
     testResourceNodeSideAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
     testResourceUpstreamAuth(testResourceInfo: TestResourceInfo, testResourceAuthTree: FlattenTestResourceAuthTree[]): Promise<SubjectAuthResult>;
+}
+export interface IActionHandler<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
+    handle(ctx: FreelogContext, testRuleInfo: TestRuleMatchInfo, action: Action<T>): Promise<boolean>;
+}
+export interface IOperationHandler {
+    handle(testRuleList: TestRuleMatchInfo[], ...args: any[]): Promise<boolean>;
 }

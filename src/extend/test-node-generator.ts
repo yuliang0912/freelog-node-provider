@@ -113,7 +113,6 @@ export class TestNodeGenerator {
                     resourceType: item.resourceType,
                     version: item.version,
                     versionId: item.versionId,
-                    fileSha1: item.fileSha1,
                     // replaced: item.replaced,
                     dependencies: recursionBuildDependencyTree(dependencyTree.filter(x => x.parentNid === item.nid), currDeep)
                 };
