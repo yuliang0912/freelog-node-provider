@@ -97,8 +97,6 @@ export class ImportObjectEntityHandler {
             version: null,
             versions: [],
             coverImages: []
-            // systemProperty: objectInfo.systemProperty,
-            // customPropertyDescriptors: objectInfo.customPropertyDescriptors
         };
 
         this.testRuleChecker.fillEntityPropertyMap(matchRule, objectInfo.systemProperty, objectInfo.customPropertyDescriptors);

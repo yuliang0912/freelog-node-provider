@@ -56,7 +56,7 @@ export class PresentableController {
         ctx.validateParams();
 
         const condition: any = {nodeId};
-        if (resourceTypes?.length) { //resourceType 与 omitResourceType互斥
+        if (resourceTypes?.length) { // resourceType 与 omitResourceType 互斥
             condition['resourceInfo.resourceType'] = {$in: resourceTypes};
         } else if (isString(omitResourceType)) {
             condition['resourceInfo.resourceType'] = {$ne: omitResourceType};

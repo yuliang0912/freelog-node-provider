@@ -336,7 +336,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo {
 
         const presentableIsActiveTheme = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && presentableInfo.onlineStatus === 1;
-        const isMatched = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && themeTestRuleMatchInfo.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name === presentableInfo.resourceInfo.resourceId;
+        const isMatched = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name === presentableInfo.resourceInfo.resourceId;
 
         const testResourceOriginInfo = {
             id: presentableInfo.resourceInfo.resourceId,

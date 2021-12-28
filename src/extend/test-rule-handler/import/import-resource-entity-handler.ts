@@ -134,21 +134,4 @@ export class ImportResourceEntityHandler {
             coverImages: resourceInfo.coverImages,
         };
     }
-
-    // /**
-    //  * 填充资源对应版本的属性信息
-    //  * @param matchRule
-    //  * @param resourceProperty
-    //  */
-    // _fillRuleEntityProperty(matchRule: TestRuleMatchInfo, resourceProperty: any): void {
-    //
-    //     if (!matchRule.isValid || !resourceProperty) {
-    //         return;
-    //     }
-    //
-    //     this.testRuleChecker.fillEntityPropertyMap(matchRule, resourceProperty.systemProperty, resourceProperty.customPropertyDescriptors);
-    //
-    //     // matchRule.testResourceOriginInfo.systemProperty = resourceProperty.systemProperty;
-    //     // matchRule.testResourceOriginInfo.customPropertyDescriptors = resourceProperty.customPropertyDescriptors;
-    // }
 }

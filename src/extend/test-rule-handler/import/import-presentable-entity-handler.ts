@@ -102,14 +102,11 @@ export class ImportPresentableEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages ?? [],
-            // systemProperty: presentableVersionInfo.resourceSystemProperty,
-            // customPropertyDescriptors: presentableVersionInfo.resourceCustomPropertyDescriptors
+            coverImages: resourceInfo.coverImages ?? []
         };
 
         this.testRuleChecker.fillEntityPropertyMap(matchRule, presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableVersionInfo.presentableRewriteProperty);
 
-        // matchRule.presentableRewriteProperty = presentableVersionInfo.presentableRewriteProperty;
         matchRule.presentableInfo = presentableInfo;
 
         // 依赖树
