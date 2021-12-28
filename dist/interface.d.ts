@@ -22,6 +22,7 @@ export interface BaseContractInfo {
 export interface BaseResourceInfo {
     resourceId: string;
     resourceName: string;
+    resourceOwnerId?: number;
     resourceType?: string;
     versionRange?: string;
 }

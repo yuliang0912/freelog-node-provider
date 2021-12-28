@@ -69,7 +69,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
         for (let i = 0, j = dependencies.length; i < j; i++) {
             const currDependencyInfo = dependencies[i];
             const currPathChain = parents.concat([pick(currDependencyInfo, ['name', 'type', 'version'])]);
-            if (!this.checkRuleScopeIsMatched(action.content.scopes, currPathChain) || !this.entityIsMatched(action.content.replaced, currDependencyInfo)) {
+            if (!this.checkRuleScopeIsMatched(action.content.scopes, currPathChain)) {
                 continue;
             }
             const replacerInfo = await this.matchReplacer(ctx, testRuleInfo, action, currDependencyInfo);
@@ -118,6 +118,10 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
      * @param targetInfo
      */
     private async matchReplacer(ctx: FreelogContext, testRuleInfo: TestRuleMatchInfo, action: Action<ContentReplace>, targetInfo: TestResourceDependencyTree): Promise<TestResourceOriginInfo> {
+
+        if (!this.entityIsMatched(action.content.replaced, targetInfo)) {
+            return;
+        }
 
         const {replacer} = action.content;
         const replacerIsObject = replacer.type === TestResourceOriginType.Object;

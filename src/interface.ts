@@ -32,6 +32,7 @@ export interface BaseContractInfo {
 export interface BaseResourceInfo {
     resourceId: string;
     resourceName: string;
+    resourceOwnerId?: number;
     resourceType?: string;
     versionRange?: string;
 }
@@ -87,7 +88,7 @@ export interface PresentableVersionInfo {
     resourceCustomPropertyDescriptors?: any[];
     presentableRewriteProperty?: any[];
     versionProperty: object;
-    authTree: FlattenPresentableAuthTree[]
+    authTree: FlattenPresentableAuthTree[];
     dependencyTree: FlattenPresentableDependencyTree[];
 }
 

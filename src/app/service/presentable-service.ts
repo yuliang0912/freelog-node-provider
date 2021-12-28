@@ -67,7 +67,7 @@ export class PresentableService implements IPresentableService {
             authStatus: PresentableAuthStatusEnum.Unknown,
             onlineStatus: PresentableOnlineStatusEnum.Offline
         };
-
+        model.resourceInfo['resourceOwnerId'] = options.resourceInfo.userId;
         await this._validateResolveResources(resourceInfo, resolveResources);
 
         if (isArray(policies) && !isEmpty(policies)) {

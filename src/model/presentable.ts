@@ -16,24 +16,25 @@ export class PresentableModel extends MongooseModelBase {
             policyId: {type: String, required: true},
             policyName: {type: String, required: true},
             status: {type: Number, required: true}, // 0:不启用  1:启用
-        }, {_id: false})
+        }, {_id: false});
 
         const BaseResourceInfo = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
-            resourceType: {type: String, required: true}
-        }, {_id: false})
+            resourceType: {type: String, required: true},
+            resourceOwnerId: {type: Number, required: false, default: 0}
+        }, {_id: false});
 
         const BaseContractInfo = new this.mongoose.Schema({
             policyId: {type: String, required: true},
             contractId: {type: String, required: true},
-        }, {_id: false})
+        }, {_id: false});
 
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
             contracts: {type: [BaseContractInfo], required: true},
-        }, {_id: false})
+        }, {_id: false});
 
         const PresentableSchema = new this.mongoose.Schema({
             presentableName: {type: String, required: true}, // 名称节点内唯一
@@ -55,7 +56,7 @@ export class PresentableModel extends MongooseModelBase {
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
             toJSON: PresentableModel.toObjectOptions,
             toObject: PresentableModel.toObjectOptions
-        })
+        });
 
         PresentableSchema.virtual('presentableId').get(function (this: any) {
             return this.id;
@@ -64,7 +65,7 @@ export class PresentableModel extends MongooseModelBase {
         PresentableSchema.index({nodeId: 1, presentableName: 1}, {unique: true});
         PresentableSchema.index({nodeId: 1, 'resourceInfo.resourceId': 1}, {unique: true});
 
-        return this.mongoose.model('presentables', PresentableSchema)
+        return this.mongoose.model('presentables', PresentableSchema);
     }
 
     static get toObjectOptions() {
