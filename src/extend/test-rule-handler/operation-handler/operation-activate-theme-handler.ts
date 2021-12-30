@@ -38,7 +38,6 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             }
             const targetResourceType = targetRuleMatchInfo.rootResourceReplacer ? targetRuleMatchInfo.rootResourceReplacer.resourceType : targetRuleMatchInfo.testResourceOriginInfo.resourceType;
             if (targetResourceType === ResourceTypeEnum.THEME) {
-                activeThemeRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
                 activeThemeRuleInfo.ruleInfo.candidate = {
                     name: targetRuleMatchInfo.testResourceOriginInfo.id,
                     type: targetRuleMatchInfo.testResourceOriginInfo.type

@@ -40,7 +40,7 @@ export class PresentableAdapter {
                 articleName: presentableInfo.resourceInfo.resourceName,
                 resourceType: presentableInfo.resourceInfo.resourceType,
                 articleType: 1,
-                articleOwnerId: 0,
+                articleOwnerId: presentableInfo.resourceInfo.resourceOwnerId ?? 0,
                 articleOwnerName: first(presentableInfo.resourceInfo.resourceName.split('/'))
             },
             status: 0,

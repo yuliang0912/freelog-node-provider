@@ -269,7 +269,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, coverInfo, attrInfo, rootResourceReplacer, efficientInfos, replaceRecords} = testRuleMatchInfo;
+        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, themeInfo, coverInfo, attrInfo, rootResourceReplacer, efficientInfos, replaceRecords} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
@@ -299,8 +299,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: attrInfo?.source ?? 'default'
                 },
                 themeInfo: {
-                    isActivatedTheme: 0,
-                    ruleId: 'default'
+                    isActivatedTheme: themeInfo?.isActivatedTheme ?? 0,
+                    ruleId: themeInfo?.ruleId ?? 'default'
                 },
                 replaceInfo: {
                     rootResourceReplacer: rootResourceReplacer,
