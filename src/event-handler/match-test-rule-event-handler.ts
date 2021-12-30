@@ -338,7 +338,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         // 是否存在有效的激活主题规则
         const hasValidThemeRule = themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name;
         const presentableIsActiveTheme = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && presentableInfo.onlineStatus === 1;
-        const isMatched = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name === presentableInfo.resourceInfo.resourceId;
+        const isMatched = themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name === presentableInfo.resourceInfo.resourceId;
 
         const testResourceOriginInfo = {
             id: presentableInfo.resourceInfo.resourceId,
@@ -378,7 +378,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 },
                 themeInfo: {
-                    isActivatedTheme: hasValidThemeRule ? 0 : presentableIsActiveTheme ? 1 : 0,
+                    isActivatedTheme: isMatched ? 1 : hasValidThemeRule ? 0 : presentableIsActiveTheme ? 1 : 0,
                     ruleId: isMatched ? themeTestRuleMatchInfo.id : 'default'
                 },
                 replaceInfo: {
