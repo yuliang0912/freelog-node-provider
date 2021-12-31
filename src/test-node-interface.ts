@@ -41,6 +41,7 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versionRange?: string;
     coverImages?: string[];
     resourceType: string;
+    ownerUserId?: number;
     // systemProperty?: object;
     // customPropertyDescriptors?: any[];
     // _originInfo: ResourceInfo | ObjectStorageInfo //此处为resource或者object

@@ -35,6 +35,7 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versionRange?: string;
     coverImages?: string[];
     resourceType: string;
+    ownerUserId?: number;
 }
 export interface TestResourcePropertyInfo {
     key: string;

@@ -35,6 +35,22 @@ export class PresentableController {
     @inject()
     presentableVersionService: IPresentableVersionService;
 
+    // @get('/test')
+    // async test() {
+    //     const presentableList = await this.presentableService.find({});
+    //     for (const presentable of presentableList) {
+    //         const resourceInfo = await this.outsideApiService.getResourceInfo(presentable.resourceInfo.resourceId);
+    //         await (presentable as any).updateOne({
+    //             resourceInfo: {
+    //                 resourceId: resourceInfo.resourceId,
+    //                 resourceName: resourceInfo.resourceName,
+    //                 resourceType: resourceInfo.resourceType,
+    //                 resourceOwnerId: resourceInfo.userId
+    //             }
+    //         });
+    //     }
+    // }
+
     @get('/')
     // @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async index() {

@@ -91,6 +91,7 @@ export class ImportObjectEntityHandler {
 
         matchRule.testResourceOriginInfo = {
             id: objectInfo.objectId,
+            ownerUserId: objectInfo.userId,
             name: matchRule.ruleInfo.candidate.name,
             type: TestResourceOriginType.Object,
             resourceType: objectInfo.resourceType ?? '',

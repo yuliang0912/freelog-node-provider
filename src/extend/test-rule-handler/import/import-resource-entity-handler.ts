@@ -30,7 +30,7 @@ export class ImportResourceEntityHandler {
 
         const resourceNames = addResourceRules.map(x => x.ruleInfo.candidate.name);
         const resources = await this.outsideApiService.getResourceListByNames(resourceNames, {
-            projection: 'resourceId,resourceName,resourceType,latestVersion,resourceVersions,coverImages'
+            projection: 'resourceId,resourceName,resourceType,latestVersion,resourceVersions,coverImages,userId'
         });
 
         const resourceVersionIds = [];
@@ -125,6 +125,7 @@ export class ImportResourceEntityHandler {
 
         matchRule.testResourceOriginInfo = {
             id: resourceInfo.resourceId,
+            ownerUserId: resourceInfo.userId,
             versionRange: matchRule.ruleInfo.candidate.versionRange,
             name: resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,

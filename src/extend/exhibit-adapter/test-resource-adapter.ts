@@ -47,7 +47,7 @@ export class TestResourceAdapter {
                 articleName: testResource.originInfo.name,
                 resourceType: testResource.originInfo.resourceType,
                 articleType: testResource.originInfo.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
-                articleOwnerId: 0,
+                articleOwnerId: testResource.originInfo.ownerUserId ?? 0,
                 articleOwnerName: testResource.originInfo.type === TestResourceOriginType.Resource ? first(testResource.originInfo.name.split('/')) : ''
             },
             status: 0,

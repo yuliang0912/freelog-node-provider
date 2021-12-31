@@ -342,6 +342,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
         const testResourceOriginInfo = {
             id: presentableInfo.resourceInfo.resourceId,
+            ownerUserId: presentableInfo.resourceInfo.resourceOwnerId,
             name: presentableInfo.resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,
             resourceType: presentableInfo.resourceInfo.resourceType,

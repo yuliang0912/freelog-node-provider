@@ -37,7 +37,7 @@ export class ImportPresentableEntityHandler {
         });
 
         const resources = await this.outsideApiService.getResourceListByIds(presentables.map(x => x.resourceInfo.resourceId), {
-            projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages'
+            projection: 'resourceId,resourceName,resourceType,resourceVersions,coverImages,userId'
         });
 
         const presentableVersionIds = presentables.map(x => this.presentableCommonChecker.generatePresentableVersionId(x.presentableId, x.version));
@@ -97,6 +97,7 @@ export class ImportPresentableEntityHandler {
 
         matchRule.testResourceOriginInfo = {
             id: resourceInfo.resourceId,
+            ownerUserId: resourceInfo.userId,
             name: resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,
             resourceType: resourceInfo.resourceType ?? '',
