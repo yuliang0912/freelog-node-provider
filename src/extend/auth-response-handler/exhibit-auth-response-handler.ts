@@ -181,7 +181,7 @@ export class ExhibitAuthResponseHandler {
             exhibitName: exhibitInfo?.exhibitName,
             authCode: authResult.authCode,
             isAuth: authResult.isAuth,
-            errorMsg: authResult.errorMsg,
+            errorMsg: authResult.errorMsg ? authResult.errorMsg : this.ctx.gettext(`auth_chain_${authResult.authCode}_msg`),
             referee: authResult.referee,
             defaulterIdentityType: authResult.defaulterIdentityType,
             data: authResult.data

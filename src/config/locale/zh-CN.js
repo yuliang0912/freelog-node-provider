@@ -50,7 +50,30 @@ module.exports = {
     "reflect_rule_pre_excute_error_value_not_match": "选项%s的值不匹配",
     "reflect_rule_pre_excute_error_exhibit_not_theme": "展品%s不是主题资源，无法激活",
     "reflect_rule_pre_excute_error_version_invalid": "资源%s版本范围%s设置无效，版本不存在",
-    "reflect_rule_pre_excute_error_show_hide_unavailable_for_theme": "上线/下线指令对主题展品不生效: %s"
+    "reflect_rule_pre_excute_error_show_hide_unavailable_for_theme": "上线/下线指令对主题展品不生效: %s",
+
+    "auth_chain_200_msg": "授权通过",
+    "auth_chain_201_msg": "授权通过",
+    "auth_chain_202_msg": "授权通过",
+    "auth_chain_203_msg": "授权通过",
+    "auth_chain_301_msg": "合同未获得授权",
+    "auth_chain_302_msg": "策略授权未通过",
+    "auth_chain_303_msg": "标的物未签约,请签约后再试",
+    "auth_chain_304_msg": "标的物合约已终止,请重签",
+    "auth_chain_305_msg": "标的物合约无效",
+    "auth_chain_306_msg": "标的物合约异常",
+    "auth_chain_307_msg": "标的物未完成签约,可能因为数据异常导致",
+    "auth_chain_401_msg": "标的物不存在",
+    "auth_chain_402_msg": "未获得授权",
+    "auth_chain_403_msg": "标的物状态异常,无法继续使用",
+    "auth_chain_501_msg": "签约的前置条款校验不通过,无法签约",
+    "auth_chain_502_msg": "未认证的用户,请登录",
+    "auth_chain_503_msg": "用户没有访问权限",
+    "auth_chain_504_msg": "甲方主体异常",
+    "auth_chain_505_msg": "乙方主体异常",
+    "auth_chain_900_msg": "授权接口异常",
+    "auth_chain_901_msg": "授权请求参数错误",
+    "auth_chain_902_msg": "授权数据校验失败错误",
 }
 
 
