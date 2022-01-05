@@ -1,6 +1,5 @@
 import { ITestNodeService, ITestResourceAuthService, TestResourceInfo } from '../../test-node-interface';
 import { FreelogContext } from 'egg-freelog-base';
-import { SubjectAuthResult } from '../../auth-interface';
 import { TestResourceAdapter } from '../../extend/exhibit-adapter/test-resource-adapter';
 import { ExhibitAuthResponseHandler } from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import { ArticleTypeEnum } from '../../enum';
@@ -21,7 +20,7 @@ export declare class TestResourceSubjectAuthController {
     /**
      * 测试资源批量授权
      */
-    testResourceBatchAuth(): Promise<FreelogContext | SubjectAuthResult>;
+    testResourceBatchAuth(): Promise<FreelogContext>;
     /**
      * 测试展品授权处理
      * @param testResource

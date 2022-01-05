@@ -112,7 +112,8 @@ export class TestResourceSubjectAuthController {
             return ctx.success(subjectAuthResult);
         }
         if (first(testResources).userId !== this.ctx.userId) {
-            return new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setErrorMsg(this.ctx.gettext('user-authorization-failed'));
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setErrorMsg(this.ctx.gettext('user-authorization-failed'));
+            return ctx.success(subjectAuthResult);
         }
 
         const testResourceAuthTreeMap = await this.testNodeService.findTestResourceTreeInfos({
@@ -141,7 +142,6 @@ export class TestResourceSubjectAuthController {
         }
 
         await Promise.all(tasks);
-        console.log(returnResults);
         ctx.success(returnResults);
     }
 
