@@ -140,7 +140,9 @@ export class TestResourceSubjectAuthController {
             tasks.push(task);
         }
 
-        await Promise.all(tasks).then(() => ctx.success(returnResults));
+        await Promise.all(tasks);
+        console.log(returnResults);
+        ctx.success(returnResults);
     }
 
     /**
