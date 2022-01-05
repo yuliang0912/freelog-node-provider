@@ -27,20 +27,19 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const message: IContractAuthStatusChangedEventMessage = JSON.parse(payload.message.value.toString());
         // console.log(payload.message.offset, payload.message.key.toString());
-        if (message.contractStatus !== ContractStatusEnum.Terminated) {
-            return;
+        if (message.contractStatus === ContractStatusEnum.Terminated) {
+            const presentableInfos = await this.presentableProvider.find({
+                nodeId: parseInt(message.licenseeId.toString()), 'resolveResources.resourceId': message.subjectId
+            }, 'presentableId resolveResources');
+            const tasks = [];
+            for (const presentableInfo of presentableInfos) {
+                const resolveResource = presentableInfo.resolveResources.find(x => x.resourceId === message.subjectId);
+                resolveResource.contracts = resolveResource.contracts.filter(x => x.contractId !== message.contractId);
+                tasks.push(this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {
+                    resolveResources: presentableInfo.resolveResources
+                }));
+            }
+            await Promise.all(tasks);
         }
-        const presentableInfos = await this.presentableProvider.find({
-            nodeId: parseInt(message.licenseeId.toString()), 'resolveResources.resourceId': message.subjectId
-        }, 'presentableId resolveResources');
-        const tasks = [];
-        for (const presentableInfo of presentableInfos) {
-            const resolveResource = presentableInfo.resolveResources.find(x => x.resourceId === message.subjectId);
-            resolveResource.contracts = resolveResource.contracts.filter(x => x.contractId !== message.contractId);
-            tasks.push(this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {
-                resolveResources: presentableInfo.resolveResources
-            }));
-        }
-        await Promise.all(tasks);
     }
 }

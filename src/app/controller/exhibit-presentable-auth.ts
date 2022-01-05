@@ -102,7 +102,6 @@ export class PresentableSubjectAuthController {
      * 批量展品节点侧以及上游链路授权(不包含C端用户)
      */
     @get('/batchAuth/results')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async exhibitBatchAuth() {
 
         const {ctx} = this;

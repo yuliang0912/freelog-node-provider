@@ -131,7 +131,6 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             testRuleInfo.matchErrors.push(msg);
             return;
         }
-
         const resourceVersionInfo = replacerIsResource ? this.importResourceEntityHandler.matchResourceVersion(replacerInfo as ResourceInfo, replacer.versionRange) : null;
         if (replacerIsResource && !resourceVersionInfo) {
             testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange));
