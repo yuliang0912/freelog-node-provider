@@ -209,7 +209,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         if (!isEmpty(excludedPresentableIds)) {
             condition['_id'] = {$nin: excludedPresentableIds};
         }
-        const projection = ['presentableId', 'tag', 'onlineStatus', 'coverImages', 'presentableName', 'presentableTitle', 'resourceInfo', 'version', 'resolveResources'];
+        const projection = ['presentableId', 'tags', 'onlineStatus', 'coverImages', 'presentableName', 'presentableTitle', 'resourceInfo', 'version', 'resolveResources'];
         while (true) {
             const presentables = await this.presentableService.find(condition, projection.join(' '), {
                 skip, limit, sort: {createDate: -1}
