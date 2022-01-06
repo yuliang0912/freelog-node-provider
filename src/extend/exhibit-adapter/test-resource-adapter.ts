@@ -36,7 +36,7 @@ export class TestResourceAdapter {
             exhibitTitle: testResource.testResourceName,
             exhibitSubjectType: SubjectTypeEnum.Presentable,
             tags: testResource.stateInfo.tagInfo.tags,
-            coverImages: testResource.originInfo.coverImages,
+            coverImages: testResource.stateInfo.coverInfo.coverImages ?? [],
             version: testResource.originInfo.version,
             policies: [],
             onlineStatus: testResource.stateInfo.onlineStatusInfo?.onlineStatus ?? 1,
