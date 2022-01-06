@@ -201,7 +201,7 @@ export class ExhibitController {
             condition.resourceType = {$ne: omitArticleResourceType};
         }
         if (isArray(tags)) {
-            condition['stateInfo.tagsInfo.tags'] = {$in: tags};
+            condition['stateInfo.tagInfo.tags'] = {$in: tags};
         }
         if (onlineStatus === 1 || onlineStatus === 0) {
             condition['stateInfo.onlineStatusInfo.onlineStatus'] = onlineStatus;
