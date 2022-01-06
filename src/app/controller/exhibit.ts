@@ -161,7 +161,7 @@ export class ExhibitController {
             condition['originInfo.id'] = {$in: articleIds};
         }
         if (isArray(testResourceIds)) {
-            condition._id = {$in: testResourceIds};
+            condition.testResourceId = {$in: testResourceIds};
         }
 
         const testResourceTreeMap = new Map<string, TestResourceTreeInfo>();

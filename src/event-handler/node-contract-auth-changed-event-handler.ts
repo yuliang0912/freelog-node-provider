@@ -27,10 +27,10 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const message: IContractAuthStatusChangedEventMessage = JSON.parse(payload.message.value.toString());
         // console.log(payload.message.offset, payload.message.key.toString());
+        const presentableInfos = await this.presentableProvider.find({
+            nodeId: parseInt(message.licenseeId.toString()), 'resolveResources.resourceId': message.subjectId
+        }, 'presentableId resolveResources');
         if (message.contractStatus === ContractStatusEnum.Terminated) {
-            const presentableInfos = await this.presentableProvider.find({
-                nodeId: parseInt(message.licenseeId.toString()), 'resolveResources.resourceId': message.subjectId
-            }, 'presentableId resolveResources');
             const tasks = [];
             for (const presentableInfo of presentableInfos) {
                 const resolveResource = presentableInfo.resolveResources.find(x => x.resourceId === message.subjectId);
@@ -40,6 +40,21 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
                 }));
             }
             await Promise.all(tasks);
+            return;
         }
+        const tasks = [];
+        for (const presentableInfo of presentableInfos) {
+            const resolveResource = presentableInfo.resolveResources.find(x => x.resourceId === message.subjectId);
+            const contractInfo = resolveResource.contracts.find(x => x.contractId === message.contractId);
+            if (!contractInfo) {
+                continue;
+            }
+            contractInfo.authStatus = message.afterAuthStatus;
+            tasks.push(this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {
+                resolveResources: presentableInfo.resolveResources
+            }));
+        }
+        await Promise.all(tasks);
+        return;
     }
 }

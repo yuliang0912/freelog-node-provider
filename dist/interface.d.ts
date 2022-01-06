@@ -18,6 +18,7 @@ export interface SubjectInfo {
 export interface BaseContractInfo {
     policyId: string;
     contractId?: string;
+    authStatus?: ContractAuthStatusEnum;
 }
 export interface BaseResourceInfo {
     resourceId: string;
