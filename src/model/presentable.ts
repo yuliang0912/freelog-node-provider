@@ -28,6 +28,7 @@ export class PresentableModel extends MongooseModelBase {
         const BaseContractInfo = new this.mongoose.Schema({
             policyId: {type: String, required: true},
             contractId: {type: String, required: true},
+            authStatus: {type: Number, required: false},
         }, {_id: false});
 
         const ResolveResourceSchema = new this.mongoose.Schema({
