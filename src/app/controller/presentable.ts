@@ -85,7 +85,7 @@ export class PresentableController {
         }
         if (isString(keywords)) {
             const searchExp = {$regex: keywords, $options: 'i'};
-            condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}, {'resourceInfo.resourceName': searchExp}];
+            condition.$or = [{presentableName: searchExp}, {presentableTitle: searchExp}];
         }
 
         const pageResult = await this.presentableService.findIntervalList(condition, skip, limit, projection, sort);
