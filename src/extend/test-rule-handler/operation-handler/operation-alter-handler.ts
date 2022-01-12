@@ -35,7 +35,7 @@ export class OperationAlterHandler implements IOperationHandler {
                 continue;
             }
             testRuleMatchInfo.efficientInfos.push({type: TestNodeOperationEnum.Alter, count: 1});
-            for (const action of testRuleMatchInfo.ruleInfo.actions) {
+            for (const action of testRuleMatchInfo.ruleInfo.actions ?? []) {
                 await this.actionHandler.handle(this.ctx, testRuleMatchInfo, action);
             }
         }

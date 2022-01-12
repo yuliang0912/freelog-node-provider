@@ -57,7 +57,7 @@ export class OperationAddHandler implements IOperationHandler {
                 continue;
             }
             testRuleMatchInfo.efficientInfos.push({type: TestNodeOperationEnum.Add, count: 1});
-            for (const action of testRuleMatchInfo.ruleInfo.actions) {
+            for (const action of testRuleMatchInfo.ruleInfo.actions ?? []) {
                 await this.actionHandler.handle(this.ctx, testRuleMatchInfo, action);
             }
         }
