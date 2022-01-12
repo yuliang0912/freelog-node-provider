@@ -4,6 +4,7 @@ import {
 import {inject, provide} from 'midway';
 import {FreelogContext, IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
 import {PresentableInfo} from '../../../interface';
+import {isString} from 'lodash';
 
 @provide()
 export class OperationActivateThemeHandler implements IOperationHandler {
@@ -26,7 +27,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
     async handle(testRuleList: TestRuleMatchInfo[], nodeId: number): Promise<boolean> {
 
         const activeThemeRuleInfo = testRuleList.find(x => x.isValid && x.ruleInfo.operation === TestNodeOperationEnum.ActivateTheme);
-        if (!activeThemeRuleInfo) {
+        if (!activeThemeRuleInfo || !isString(activeThemeRuleInfo.ruleInfo.exhibitName)) {
             return true;
         }
 
