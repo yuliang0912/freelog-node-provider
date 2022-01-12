@@ -89,6 +89,8 @@ export class ExhibitController {
         const articleResourceTypes = ctx.checkQuery('articleResourceTypes').optional().toSplitArray().value;
         const omitArticleResourceType = ctx.checkQuery('omitArticleResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
+        // 1: 或 2:与
+        const tagQueryType = ctx.checkQuery('tagQueryType').optional().toInt().default(1).in([1, 2]).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
@@ -104,7 +106,7 @@ export class ExhibitController {
             condition['resourceInfo.resourceType'] = {$ne: omitArticleResourceType};
         }
         if (tags) {
-            condition.tags = {$in: tags};
+            condition.tags = {[tagQueryType === 1 ? '$in' : '$all']: tags};
         }
         if (onlineStatus === 0 || onlineStatus === 1) {
             condition.onlineStatus = onlineStatus;
@@ -188,6 +190,7 @@ export class ExhibitController {
         const articleResourceTypes = ctx.checkQuery('articleResourceTypes').optional().toSplitArray().value;
         const omitArticleResourceType = ctx.checkQuery('omitArticleResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
+        const tagQueryType = ctx.checkQuery('tagQueryType').optional().toInt().default(1).in([1, 2]).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
         const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
@@ -201,7 +204,7 @@ export class ExhibitController {
             condition.resourceType = {$ne: omitArticleResourceType};
         }
         if (isArray(tags)) {
-            condition['stateInfo.tagInfo.tags'] = {$in: tags};
+            condition['stateInfo.tagInfo.tags'] = {[tagQueryType === 1 ? '$in' : '$all']: tags};
         }
         if (onlineStatus === 1 || onlineStatus === 0) {
             condition['stateInfo.onlineStatusInfo.onlineStatus'] = onlineStatus;
