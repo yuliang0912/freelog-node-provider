@@ -72,19 +72,26 @@ export class TestNodeController {
     }
 
     // 规则改动之后数据结构有变动,会强制重新匹配一次
-    @get('/rematch')
-    async rematch() {
-        const {ctx} = this;
-        const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
-        const isMandatoryMatch = ctx.checkBody('isMandatoryMatch').optional().toInt().in([0, 1]).default(0).value;
-        ctx.validateParams();
-
-        const nodeInfo = await this.nodeService.findById(nodeId);
-        this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
-
-        await this.testNodeService.tryMatchNodeTestRule(nodeId, isMandatoryMatch).then();
-
-        ctx.success(true);
+    @get('/test')
+    async test() {
+        // const nodeTestRuleProvider = this.testNodeService['nodeTestRuleProvider'];
+        // const nodeTestRule = await nodeTestRuleProvider.find({}, 'nodeId ruleText');
+        // for (const item of nodeTestRule) {
+        //     await this.testNodeService.matchAndSaveNodeTestRule(item.nodeId, item.ruleText ?? '');
+        // }
+        //
+        // const nodes = await this.nodeService.find({});
+        // const nodeTestResourceProvider = this.testNodeService['nodeTestResourceProvider'];
+        // const testResources = await nodeTestResourceProvider.find({});
+        // console.log(testResources.length);
+        // for (const item1 of testResources) {
+        //     const nodeInfo = nodes.find(x => x.nodeId === item1.nodeId);
+        //     if (!nodeInfo) {
+        //         continue;
+        //     }
+        //     await nodeTestResourceProvider.updateOne({testResourceId: item1.testResourceId}, {userId: nodeInfo.ownerUserId});
+        // }
+        // this.ctx.success(nodeTestRule.length);
     }
 
     // 节点测试规则预执行
