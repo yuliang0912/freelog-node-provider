@@ -72,15 +72,20 @@ export class TestNodeController {
     }
 
     // 规则改动之后数据结构有变动,会强制重新匹配一次
-    // @get('/rematch')
-    // async rematch() {
-    //     const nodeTestRuleProvider = this.testNodeService['nodeTestRuleProvider'];
-    //     const nodeTestRule = await nodeTestRuleProvider.find({}, 'nodeId ruleText');
-    //     for (const item of nodeTestRule) {
-    //         await this.testNodeService.matchAndSaveNodeTestRule(item.nodeId, item.ruleText ?? '');
-    //     }
-    //     this.ctx.success(nodeTestRule.length);
-    // }
+    @get('/rematch')
+    async rematch() {
+        const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').toInt().gt(0).value;
+        const isMandatoryMatch = ctx.checkBody('isMandatoryMatch').optional().toInt().in([0, 1]).default(0).value;
+        ctx.validateParams();
+
+        const nodeInfo = await this.nodeService.findById(nodeId);
+        this.nodeCommonChecker.nullObjectAndUserAuthorizationCheck(nodeInfo);
+
+        await this.testNodeService.tryMatchNodeTestRule(nodeId, isMandatoryMatch).then();
+
+        ctx.success(true);
+    }
 
     // 节点测试规则预执行
     @post('/:nodeId/rules/preExecution')

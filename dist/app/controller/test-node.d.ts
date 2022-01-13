@@ -11,6 +11,7 @@ export declare class TestNodeController {
     showTestRuleInfo(): Promise<void>;
     createTestRule(): Promise<void>;
     updateTestRule(): Promise<void>;
+    rematch(): Promise<void>;
     testRulePreExecution(): Promise<void>;
     rematchTestRule(): Promise<void>;
     testResources(): Promise<void>;
