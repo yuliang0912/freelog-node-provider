@@ -112,7 +112,9 @@ export class TestResourceSubjectAuthController {
             return ctx.success(subjectAuthResult);
         }
         if (first(testResources).userId !== this.ctx.userId) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setErrorMsg(this.ctx.gettext('user-authorization-failed'));
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setErrorMsg(this.ctx.gettext('user-authorization-failed')).setData({
+                testResource: first(testResources), userId: this.ctx.userId
+            });
             return ctx.success(subjectAuthResult);
         }
 
