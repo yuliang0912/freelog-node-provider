@@ -73,7 +73,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
                 ruleId: {type: String, required: false},
             },
             replaceInfo: {
-                rootResourceReplacer: {type: this.mongoose.Schema.Types.Mixed, default: null, required: false},
+                // rootResourceReplacer: {type: this.mongoose.Schema.Types.Mixed, default: null, required: false},
                 replaceRecords: {type: this.mongoose.Schema.Types.Mixed, required: false},
                 ruleId: {type: String, required: false},
             }

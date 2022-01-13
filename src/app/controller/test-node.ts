@@ -74,13 +74,16 @@ export class TestNodeController {
     // 规则改动之后数据结构有变动,会强制重新匹配一次
     @get('/test')
     async test() {
-        // const nodeTestRuleProvider = this.testNodeService['nodeTestRuleProvider'];
+        //const nodeTestRuleProvider = this.testNodeService['nodeTestRuleProvider'];
         // const nodeTestRule = await nodeTestRuleProvider.find({}, 'nodeId ruleText');
         // for (const item of nodeTestRule) {
         //     await this.testNodeService.matchAndSaveNodeTestRule(item.nodeId, item.ruleText ?? '');
         // }
         //
         // const nodes = await this.nodeService.find({});
+        // for (const nodeInfo of nodes) {
+        //     await nodeTestRuleProvider.updateOne({nodeId: nodeInfo.nodeId}, {userId: nodeInfo.ownerUserId});
+        // }
         // const nodeTestResourceProvider = this.testNodeService['nodeTestResourceProvider'];
         // const testResources = await nodeTestResourceProvider.find({});
         // console.log(testResources.length);

@@ -123,7 +123,6 @@ export interface TestRuleMatchInfo {
         ruleId: string;
     };
     replaceRecords?: any[];
-    rootResourceReplacer?: TestResourceOriginInfo;
 }
 export interface BaseReplacedInfo {
     id: string;

@@ -144,7 +144,7 @@ export interface TestRuleMatchInfo {
     efficientInfos: TestRuleEfficientInfo[];
     themeInfo: { isActivatedTheme: number, ruleId: string };
     replaceRecords?: any[];
-    rootResourceReplacer?: TestResourceOriginInfo;
+    // rootResourceReplacer?: TestResourceOriginInfo;
 }
 
 export interface BaseReplacedInfo {

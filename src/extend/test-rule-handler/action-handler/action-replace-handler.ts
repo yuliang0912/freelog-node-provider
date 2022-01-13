@@ -93,11 +93,10 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             }
             // 主资源被替换,需要把新的替换者信息保存起来
             if (currPathChain.length === 1 && (replacerInfo.id !== testRuleInfo.testResourceOriginInfo.id || replacerInfo.version !== testRuleInfo.testResourceOriginInfo.version)) {
-                const rootResourceReplacer: TestResourceOriginInfo = pick(replacerInfo, ['id', 'name', 'type', 'versions', 'versionRange', 'resourceType', 'version']);
                 if (replacerInfo.type === TestResourceOriginType.Object) {
                     this.testRuleChecker.fillEntityPropertyMap(testRuleInfo, replacerInfo['systemProperty'], replacerInfo['customPropertyDescriptors']);
                 }
-                testRuleInfo.rootResourceReplacer = rootResourceReplacer;
+                testRuleInfo.testResourceOriginInfo = replacerInfo;
             }
             dependencies.splice(i, 1, replacerDependencyTree);
 
@@ -150,6 +149,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
                 versions: [],
                 coverImages: [],
                 resourceType: objectInfo.resourceType,
+                ownerUserId: replacerInfo.userId,
                 systemProperty: objectInfo.systemProperty,
                 customPropertyDescriptors: objectInfo.customPropertyDescriptors
             } as TestResourceOriginInfo;
@@ -165,6 +165,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             versionRange: replacer.versionRange,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages,
+            ownerUserId: replacerInfo.userId,
             systemProperty: resourceVersionInfo.systemProperty,
             customPropertyDescriptors: resourceVersionInfo.customPropertyDescriptors
         } as TestResourceOriginInfo;
@@ -246,7 +247,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
     private async getReplacerInfo(ctx: FreelogContext, replacer: CandidateInfo): Promise<ResourceInfo | ObjectStorageInfo> {
         return replacer.type === TestResourceOriginType.Object
             ? this.outsideApiService.getObjectInfo(replacer.name)
-            : this.outsideApiService.getResourceInfo(replacer.name, {projection: 'resourceId,resourceName,resourceType,resourceVersions,latestVersion'});
+            : this.outsideApiService.getResourceInfo(replacer.name, {projection: 'resourceId,userId,coverImages,resourceName,resourceType,resourceVersions,latestVersion'});
     }
 
     /**
