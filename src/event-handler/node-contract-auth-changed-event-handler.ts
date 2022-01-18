@@ -26,7 +26,7 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
      */
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const message: IContractAuthStatusChangedEventMessage = JSON.parse(payload.message.value.toString());
-        // console.log(payload.message.offset, payload.message.key.toString());
+        console.log(payload.message.offset, message.subjectId, payload.message.key.toString());
         const presentableInfos = await this.presentableProvider.find({
             nodeId: parseInt(message.licenseeId.toString()), 'resolveResources.resourceId': message.subjectId
         }, 'presentableId resolveResources');

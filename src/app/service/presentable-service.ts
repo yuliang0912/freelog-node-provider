@@ -59,7 +59,8 @@ export class PresentableService implements IPresentableService {
         const {resourceInfo, resolveResources, nodeInfo, policies, presentableName, presentableTitle, version, versionId, tags, coverImages} = options;
 
         const model = {
-            presentableName, presentableTitle, version, tags, coverImages, resolveResources,
+            presentableName, presentableTitle, version, tags, resolveResources,
+            coverImages: coverImages.length ? coverImages : ['http://static.testfreelog.com/static/default_cover.png'],
             policies: [],
             nodeId: nodeInfo.nodeId,
             userId: nodeInfo.ownerUserId,

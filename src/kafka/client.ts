@@ -43,7 +43,7 @@ export class KafkaClient {
                 throw new ApplicationError('kafka消费者连接失败');
             });
             for (const topicInfo of topicGroups) {
-                await consumer.subscribe({topic: topicInfo.subscribeTopicName});
+                await consumer.subscribe({topic: topicInfo.subscribeTopicName, fromBeginning: true});
                 this.consumerTopicAsyncHandleFunc.set(buildTopicGroupKey(topicInfo.subscribeTopicName, topicInfo.consumerGroupId), topicInfo.messageHandle);
             }
             await consumer.run({
