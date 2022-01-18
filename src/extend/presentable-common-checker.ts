@@ -18,16 +18,16 @@ export class PresentableCommonChecker {
         }, '_id');
 
         if (existingPresentable) {
-            throw new ApplicationError(this.ctx.gettext('presentable-release-repetition-create-error'))
+            throw new ApplicationError(this.ctx.gettext('presentable-release-repetition-create-error'));
         }
     }
 
     async checkPresentableNameIsUnique(nodeId: number, presentableName: string) {
         const presentable = await this.presentableService.findOne({
-            nodeId, presentableName: new RegExp(`^${presentableName.trim()}`, 'i')
+            nodeId, presentableName: new RegExp(`^${presentableName.trim()}$`, 'i')
         }, '_id');
         if (presentable) {
-            throw new ApplicationError(this.ctx.gettext('presentable-name-has-already-existed', presentableName))
+            throw new ApplicationError(this.ctx.gettext('presentable-name-has-already-existed', presentableName));
         }
     }
 
