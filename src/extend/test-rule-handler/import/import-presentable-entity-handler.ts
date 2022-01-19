@@ -103,7 +103,7 @@ export class ImportPresentableEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages ?? []
+            coverImages: presentableInfo.coverImages ?? []
         };
 
         this.testRuleChecker.fillEntityPropertyMap(matchRule, presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableVersionInfo.presentableRewriteProperty);

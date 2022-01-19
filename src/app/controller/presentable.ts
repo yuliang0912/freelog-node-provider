@@ -39,14 +39,11 @@ export class PresentableController {
     // async test() {
     //     const presentableList = await this.presentableService.find({});
     //     for (const presentable of presentableList) {
-    //         const resourceInfo = await this.outsideApiService.getResourceInfo(presentable.resourceInfo.resourceId);
-    //         await (presentable as any).updateOne({
-    //             resourceInfo: {
-    //                 resourceId: resourceInfo.resourceId,
-    //                 resourceName: resourceInfo.resourceName,
-    //                 resourceType: resourceInfo.resourceType,
-    //                 resourceOwnerId: resourceInfo.userId
-    //             }
+    //         if (presentable.coverImages.length) {
+    //             continue;
+    //         }
+    //         await this.presentableService.updatePresentable(presentable, {
+    //             coverImages: ['http://static.testfreelog.com/static/default_cover.png']
     //         });
     //     }
     // }

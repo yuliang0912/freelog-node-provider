@@ -95,6 +95,8 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             if (currPathChain.length === 1 && (replacerInfo.id !== testRuleInfo.testResourceOriginInfo.id || replacerInfo.version !== testRuleInfo.testResourceOriginInfo.version)) {
                 if (replacerInfo.type === TestResourceOriginType.Object) {
                     this.testRuleChecker.fillEntityPropertyMap(testRuleInfo, replacerInfo['systemProperty'], replacerInfo['customPropertyDescriptors']);
+                } else {
+                    replacerInfo.versionRange = testRuleInfo.testResourceOriginInfo.versionRange;
                 }
                 testRuleInfo.testResourceOriginInfo = replacerInfo;
             }
