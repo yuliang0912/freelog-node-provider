@@ -74,7 +74,6 @@ export class TestNodeGenerator {
                     type: item.type,
                     version: item.version,
                     versionId: item.versionId,
-                    userId: item.userId,
                     children: recursionBuildAuthTree(flattenAuthTree.filter(x => x.parentNid === item.nid), currDeep + 1)
                 };
             });
@@ -131,9 +130,9 @@ export class TestNodeGenerator {
      */
     generateTestResourceAuthTree(dependencyTree: FlattenTestResourceDependencyTree[], resourceMap: Map<string, ResourceInfo>) {
         for (const dependencyInfo of dependencyTree) {
-            if (dependencyInfo.type === TestResourceOriginType.Resource) {
-                dependencyInfo.userId = resourceMap.get(dependencyInfo.id)?.userId ?? 0;
-            }
+            // if (dependencyInfo.type === TestResourceOriginType.Resource) {
+            //     dependencyInfo.userId = resourceMap.get(dependencyInfo.id)?.userId ?? 0;
+            // }
             const parent = dependencyTree.find(x => x.nid == dependencyInfo.parentNid);
             dependencyInfo['resolver'] = this._findResolver(dependencyTree, parent, dependencyInfo, resourceMap);
         }
@@ -234,10 +233,9 @@ export class TestNodeGenerator {
             if (dependencyInfo['resolver']?.nid !== parent?.nid) {
                 continue;
             }
-            const {nid, id, name, userId, type, version, versionId} = dependencyInfo;
+            const {nid, id, name, type, version, versionId} = dependencyInfo;
             results.push({
-                id, nid, name, userId, type, version, versionId,
-                deep, parentNid: parent?.nid ?? ''
+                id, nid, name, type, version, versionId, deep, parentNid: parent?.nid ?? ''
             });
             this._buildAuthTree(dependencyTree, results, dependencyInfo, deep + 1);
         }

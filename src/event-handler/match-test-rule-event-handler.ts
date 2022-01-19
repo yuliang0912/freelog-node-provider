@@ -26,7 +26,7 @@ import {
 } from '../interface';
 import {chain, chunk, isEmpty} from 'lodash';
 import {NodeTestRuleMatchStatus} from '../enum';
-import {IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogUserInfo, IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
 import {TestRuleHandler} from '../extend/test-rule-handler';
 
@@ -57,9 +57,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 开始规则测试匹配事件
      * @param nodeId
+     * @param userInfo
      * @param isMandatoryMatch 是否强制匹配
      */
-    async handle(nodeId: number, isMandatoryMatch: boolean = false) {
+    async handle(nodeId: number, userInfo: FreelogUserInfo, isMandatoryMatch: boolean = false) {
 
         const operatedPresentableIds = [];
         const allTestRuleMatchResults: TestRuleMatchResult[] = [];
@@ -86,7 +87,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             let themeTestRuleMatchInfo: TestRuleMatchInfo = null;
             for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 200)) {
-                await this.matchAndSaveTestResourceInfos(testRules, nodeId, nodeTestRuleInfo.userId).then(testRuleMatchResult => {
+                await this.matchAndSaveTestResourceInfos(testRules, nodeId, userInfo).then(testRuleMatchResult => {
                     if (testRuleMatchResult.themeTestRuleMatchInfo) {
                         themeTestRuleMatchInfo = testRuleMatchResult.themeTestRuleMatchInfo;
                     }
@@ -140,9 +141,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * 匹配测试资源
      * @param ruleInfos
      * @param nodeId
-     * @param userId
+     * @param userInfo
      */
-    async matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userId: number): Promise<{ themeTestRuleMatchInfo: TestRuleMatchInfo, testRuleMatchInfos: TestRuleMatchResult[] }> {
+    async matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userInfo: FreelogUserInfo,): Promise<{ themeTestRuleMatchInfo: TestRuleMatchInfo, testRuleMatchInfos: TestRuleMatchResult[] }> {
 
         if (isEmpty(ruleInfos)) {
             return;
@@ -150,23 +151,23 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
         const testRuleMatchInfos = await this.testRuleHandler.main(nodeId, ruleInfos);
         const matchedNodeTestResources = chain(testRuleMatchInfos).filter(x => x.isValid && [TestNodeOperationEnum.Alter, TestNodeOperationEnum.Add].includes(x.ruleInfo.operation))
-            .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userId)).uniqBy(data => data.testResourceId).value();
+            .map(testRuleMatchInfo => this.testRuleMatchInfoMapToTestResource(testRuleMatchInfo, nodeId, userInfo)).uniqBy(data => data.testResourceId).value();
 
         const resourceMap = new Map<string, ResourceInfo>();
         const existingTestResourceMap = new Map<string, TestResourceInfo>();
-        const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
-        for (const resourceIds of chunk(allResourceIds, 200)) {
-            await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
-                list.forEach(resource => resourceMap.set(resource.resourceId, resource));
-            });
-        }
+        // const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
+        // for (const resourceIds of chunk(allResourceIds, 200)) {
+        //     await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
+        //         list.forEach(resource => resourceMap.set(resource.resourceId, resource));
+        //     });
+        // }
 
         const testResourceTreeInfos = [];
         for (let testResource of matchedNodeTestResources) {
             const testRuleMatchInfo = testRuleMatchInfos.find(x => x.id === testResource.ruleId);
             const resolveResources = existingTestResourceMap.get(testResource.testResourceId)?.resolveResources;
             testResource.authTree = this.testNodeGenerator.generateTestResourceAuthTree(testResource.dependencyTree, resourceMap);
-            testResource.resolveResources = this.getTestResourceResolveResources(testResource.authTree, userId, resolveResources, testRuleMatchInfo.presentableInfo);
+            testResource.resolveResources = this.getTestResourceResolveResources(testResource.authTree, userInfo, resolveResources, testRuleMatchInfo.presentableInfo);
             testResource.resolveResourceSignStatus = (testResource.resolveResources.length && testResource.resolveResources.some(x => !x.contracts.length)) ? 2 : 1;
             testResourceTreeInfos.push({
                 nodeId,
@@ -265,13 +266,13 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * 规则匹配结果转换为测试资源实体
      * @param testRuleMatchInfo
      * @param nodeId
-     * @param userId
+     * @param userInfo
      */
-    testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo {
+    testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userInfo: FreelogUserInfo): TestResourceInfo {
 
         const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, themeInfo, coverInfo, attrInfo, efficientInfos, replaceRecords} = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
-            nodeId, ruleId: id, userId,
+            nodeId, ruleId: id, userId: userInfo.userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
             resourceType: testResourceOriginInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
@@ -313,7 +314,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
-        testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.userId !== userId && x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => {
+        testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(x => {
             return {
                 resourceId: x.id,
                 resourceName: x.name,
@@ -467,14 +468,14 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 平铺的授权树
      * @param authTree
-     * @param userId
+     * @param userInfo
      * @param existingResolveResources
      * @param presentableInfo
      */
-    getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userId: number, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo) {
+    getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userInfo: FreelogUserInfo, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo) {
         // 自己的资源无需授权,自己的object也无需授权(只能测试自己的object).
         const resolveResourceMap = new Map((existingResolveResources ?? presentableInfo?.resolveResources ?? []).map(x => [x.resourceId, x.contracts]));
-        return authTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && x.userId !== userId).map(m => Object({
+        return authTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(m => Object({
             resourceId: m.id,
             resourceName: m.name,
             contracts: resolveResourceMap.get(m.id) ?? []

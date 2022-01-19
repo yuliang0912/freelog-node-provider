@@ -133,7 +133,8 @@ export class TestNodeService implements ITestNodeService {
         const nodeTestRule = await this.nodeTestRuleProvider.findOneAndUpdate({nodeId}, nodeTestRuleInfo, {new: true}).then(data => {
             return data ?? this.nodeTestRuleProvider.create(nodeTestRuleInfo);
         });
-        this.matchTestRuleEventHandler.handle(nodeId, true).then();
+
+        this.matchTestRuleEventHandler.handle(nodeId, this.ctx.identityInfo.userInfo, true).then();
 
         return new Promise<NodeTestRuleInfo>((resolve) => {
             setTimeout(function () {
@@ -153,7 +154,7 @@ export class TestNodeService implements ITestNodeService {
         if (!nodeTestRuleInfo) {
             return this.matchAndSaveNodeTestRule(nodeId, '');
         }
-        this.matchTestRuleEventHandler.handle(nodeId, isMandatoryMatch).then();
+        this.matchTestRuleEventHandler.handle(nodeId, this.ctx.identityInfo.userInfo, isMandatoryMatch).then();
         return new Promise<NodeTestRuleInfo>((resolve) => {
             setTimeout(function () {
                 resolve(nodeTestRuleInfo);

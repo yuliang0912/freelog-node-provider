@@ -1,6 +1,6 @@
 import {PresentableInfo} from './interface';
 import {SubjectAuthResult} from './auth-interface';
-import {FreelogContext, PageResult} from 'egg-freelog-base';
+import {FreelogContext, FreelogUserInfo, PageResult} from 'egg-freelog-base';
 
 export enum TestResourceOriginType {
     Resource = 'resource',
@@ -173,7 +173,7 @@ export interface FlattenTestResourceAuthTree {
     versionId: string;
     deep: number;
     parentNid: string;
-    userId: number;
+    // userId: number;
 }
 
 export interface TestResourceDependencyTree {
@@ -200,7 +200,7 @@ export interface FlattenTestResourceDependencyTree {
     resourceType: string;
     deep: number;
     parentNid: string;
-    userId?: number;
+    // userId?: number;
     // replaced?: BaseReplacedInfo;
 }
 
@@ -304,7 +304,7 @@ export interface TestRuleMatchResult {
 }
 
 export interface IMatchTestRuleEventHandler {
-    handle(nodeId: number, isMandatoryMatch: boolean): Promise<void>;
+    handle(nodeId: number, userInfo: FreelogUserInfo, isMandatoryMatch: boolean): Promise<void>;
 }
 
 export interface ITestNodeService {

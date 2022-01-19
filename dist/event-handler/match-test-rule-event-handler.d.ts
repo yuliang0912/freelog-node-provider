@@ -1,6 +1,6 @@
 import { BaseTestRuleInfo, FlattenTestResourceAuthTree, FlattenTestResourceDependencyTree, IMatchTestRuleEventHandler, NodeTestRuleInfo, ResolveResourceInfo, TestResourceDependencyTree, TestResourceInfo, TestResourcePropertyInfo, TestResourceTreeInfo, TestRuleMatchInfo, TestRuleMatchResult } from '../test-node-interface';
 import { FlattenPresentableAuthTree, FlattenPresentableDependencyTree, IOutsideApiService, IPresentableService, IPresentableVersionService, NodeInfo, PresentableInfo, PresentableVersionInfo, ResourceInfo } from '../interface';
-import { IMongodbOperation } from 'egg-freelog-base';
+import { FreelogUserInfo, IMongodbOperation } from 'egg-freelog-base';
 import { PresentableCommonChecker } from '../extend/presentable-common-checker';
 import { TestRuleHandler } from '../extend/test-rule-handler';
 export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
@@ -17,16 +17,17 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
     /**
      * 开始规则测试匹配事件
      * @param nodeId
+     * @param userInfo
      * @param isMandatoryMatch 是否强制匹配
      */
-    handle(nodeId: number, isMandatoryMatch?: boolean): Promise<void>;
+    handle(nodeId: number, userInfo: FreelogUserInfo, isMandatoryMatch?: boolean): Promise<void>;
     /**
      * 匹配测试资源
      * @param ruleInfos
      * @param nodeId
-     * @param userId
+     * @param userInfo
      */
-    matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userId: number): Promise<{
+    matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userInfo: FreelogUserInfo): Promise<{
         themeTestRuleMatchInfo: TestRuleMatchInfo;
         testRuleMatchInfos: TestRuleMatchResult[];
     }>;
@@ -47,9 +48,9 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * 规则匹配结果转换为测试资源实体
      * @param testRuleMatchInfo
      * @param nodeId
-     * @param userId
+     * @param userInfo
      */
-    testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userId: number): TestResourceInfo;
+    testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userInfo: FreelogUserInfo): TestResourceInfo;
     /**
      * 展品信息转换为测试资源实体
      * @param presentableInfo
@@ -85,11 +86,11 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
     /**
      * 平铺的授权树
      * @param authTree
-     * @param userId
+     * @param userInfo
      * @param existingResolveResources
      * @param presentableInfo
      */
-    getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userId: number, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo): any[];
+    getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userInfo: FreelogUserInfo, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo): any[];
     /**
      * 展品版本信息
      * @param presentableVersionInfo
