@@ -155,12 +155,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
         const resourceMap = new Map<string, ResourceInfo>();
         const existingTestResourceMap = new Map<string, TestResourceInfo>();
-        // const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
-        // for (const resourceIds of chunk(allResourceIds, 200)) {
-        //     await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
-        //         list.forEach(resource => resourceMap.set(resource.resourceId, resource));
-        //     });
-        // }
+        const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
+        for (const resourceIds of chunk(allResourceIds, 200)) {
+            await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
+                list.forEach(resource => resourceMap.set(resource.resourceId, resource));
+            });
+        }
 
         const testResourceTreeInfos = [];
         for (let testResource of matchedNodeTestResources) {
