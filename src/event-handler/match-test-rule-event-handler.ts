@@ -105,7 +105,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     operatedPresentableIds.push(matchResult.associatedPresentableId);
                 }
             }
-            await this.saveUnOperantPresentableToTestResources(nodeId, nodeTestRuleInfo.userId, operatedPresentableIds, themeTestRuleMatchInfo);
+            await this.saveUnOperantPresentableToTestResources(nodeId, userInfo, operatedPresentableIds, themeTestRuleMatchInfo);
 
             let themeTestResourceId = themeTestRuleMatchInfo?.ruleInfo?.candidate ? this.testNodeGenerator.generateTestResourceId(nodeId, {
                 id: themeTestRuleMatchInfo.ruleInfo.candidate.name, type: themeTestRuleMatchInfo.ruleInfo.candidate.type
@@ -199,11 +199,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     /**
      * 导入展品到测试资源库(排除掉已经操作过的),目前不导入依赖树授权树信息
      * @param nodeId
-     * @param userId
+     * @param userInfo
      * @param excludedPresentableIds
      * @param themeTestRuleMatchInfo
      */
-    async saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[], themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void> {
+    async saveUnOperantPresentableToTestResources(nodeId: number, userInfo: FreelogUserInfo, excludedPresentableIds: string[], themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void> {
         let skip = 0;
         const limit = 50;
         const condition = {nodeId, createDate: {$lt: new Date()}};
@@ -227,7 +227,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             });
 
             const testResourceTreeInfos = [];
-            const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, presentableVersionMap.get(x.presentableId), resourceMap.get(x.resourceInfo.resourceId), nodeId, userId, themeTestRuleMatchInfo));
+            const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, presentableVersionMap.get(x.presentableId), resourceMap.get(x.resourceInfo.resourceId), nodeId, userInfo, themeTestRuleMatchInfo));
             for (const testResource of testResources) {
                 testResourceTreeInfos.push({
                     nodeId,
@@ -330,10 +330,10 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param presentableVersionInfo
      * @param resourceInfo
      * @param nodeId
-     * @param userId
+     * @param userInfo
      * @param themeTestRuleMatchInfo
      */
-    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo {
+    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userInfo: FreelogUserInfo, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo {
 
         // 是否存在有效的激活主题规则
         const hasValidThemeRule = themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name;
@@ -351,7 +351,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             coverImages: resourceInfo?.coverImages ?? []
         };
         return {
-            nodeId, userId,
+            nodeId, userId: userInfo.userId,
             associatedPresentableId: presentableInfo.presentableId,
             resourceType: presentableInfo.resourceInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
@@ -387,7 +387,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 }
             },
-            resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
+            resolveResources: presentableInfo.resolveResources.filter(x => !x.resourceName.startsWith(`${userInfo.username}/`)) as ResolveResourceInfo[],
             resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
             rules: isMatched ? [{ruleId: themeTestRuleMatchInfo.id, operations: ['activate_theme']}] : []
         };

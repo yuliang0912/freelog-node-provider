@@ -34,11 +34,11 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
     /**
      * 导入展品到测试资源库(排除掉已经操作过的),目前不导入依赖树授权树信息
      * @param nodeId
-     * @param userId
+     * @param userInfo
      * @param excludedPresentableIds
      * @param themeTestRuleMatchInfo
      */
-    saveUnOperantPresentableToTestResources(nodeId: number, userId: number, excludedPresentableIds: string[], themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void>;
+    saveUnOperantPresentableToTestResources(nodeId: number, userInfo: FreelogUserInfo, excludedPresentableIds: string[], themeTestRuleMatchInfo: TestRuleMatchInfo): Promise<void>;
     /**
      * 设置主题
      * @param themeTestRuleMatchInfo
@@ -57,10 +57,10 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * @param presentableVersionInfo
      * @param resourceInfo
      * @param nodeId
-     * @param userId
+     * @param userInfo
      * @param themeTestRuleMatchInfo
      */
-    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userId: number, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo;
+    presentableInfoMapToTestResource(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, resourceInfo: ResourceInfo, nodeId: number, userInfo: FreelogUserInfo, themeTestRuleMatchInfo: TestRuleMatchInfo): TestResourceInfo;
     /**
      * 平铺依赖树
      * @param testResourceId
