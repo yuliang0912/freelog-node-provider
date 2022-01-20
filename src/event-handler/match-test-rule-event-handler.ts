@@ -288,7 +288,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: tagInfo?.source ?? 'default'
                 },
                 titleInfo: {
-                    title: titleInfo?.title ?? testResourceOriginInfo.name,
+                    title: titleInfo?.title ?? testRuleMatchInfo.presentableInfo?.presentableTitle ?? testResourceOriginInfo.name,
                     ruleId: titleInfo?.source ?? 'default'
                 },
                 coverInfo: {
