@@ -167,7 +167,7 @@ export class TestNodeController {
         }
         if (isString(keywords)) {
             const searchExp = {$regex: keywords, $options: 'i'};
-            condition.$or = [{testResourceName: searchExp}, {'titleInfo.title': searchExp}, {'originInfo.name': searchExp}];
+            condition.$or = [{testResourceName: searchExp}, {'stateInfo.titleInfo.title': searchExp}, {'originInfo.name': searchExp}];
         }
 
         await this.testNodeService.findIntervalResourceList(condition, skip, limit, projection, sort).then(ctx.success);
