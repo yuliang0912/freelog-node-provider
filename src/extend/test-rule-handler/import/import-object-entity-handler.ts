@@ -97,7 +97,7 @@ export class ImportObjectEntityHandler {
             resourceType: objectInfo.resourceType ?? '',
             version: null,
             versions: [],
-            coverImages: []
+            coverImages: ['http://static.testfreelog.com/static/default_cover.png']
         };
 
         this.testRuleChecker.fillEntityPropertyMap(matchRule, objectInfo.systemProperty, objectInfo.customPropertyDescriptors);
