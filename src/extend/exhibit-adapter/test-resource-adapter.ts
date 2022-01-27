@@ -33,7 +33,7 @@ export class TestResourceAdapter {
         const exhibitInfo: ExhibitInfo = {
             exhibitId: testResource.testResourceId,
             exhibitName: testResource.testResourceName,
-            exhibitTitle: testResource.testResourceName,
+            exhibitTitle: testResource.stateInfo.titleInfo.title,
             exhibitSubjectType: SubjectTypeEnum.Presentable,
             tags: testResource.stateInfo.tagInfo.tags,
             coverImages: testResource.stateInfo.coverInfo.coverImages ?? [],
