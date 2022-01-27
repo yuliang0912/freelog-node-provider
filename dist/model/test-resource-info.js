@@ -49,7 +49,7 @@ let NodeTestResourceInfo = NodeTestResourceInfo_1 = class NodeTestResourceInfo e
             key: { type: String, required: true },
             value: { type: this.mongoose.Schema.Types.Mixed, required: true },
             authority: { type: Number, required: true, default: 1 },
-            isRuleAdd: { type: Boolean, required: false },
+            isRuleSet: { type: Boolean, required: false },
             remark: { type: String, required: false, default: '' },
         }, { _id: false });
         const StateInfoSchema = new this.mongoose.Schema({

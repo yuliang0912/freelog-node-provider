@@ -103,8 +103,8 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             dependencies.splice(i, 1, replacerDependencyTree);
 
             testRuleInfo.replaceRecords.push({
-                replaced: pick(currDependencyInfo, ['id', 'name', 'type', 'version']),
-                replacer: pick(replacerDependencyTree, ['id', 'name', 'type', 'version'])
+                replaced: pick(currDependencyInfo, ['id', 'name', 'type', 'version', 'versionRange']),
+                replacer: pick(replacerDependencyTree, ['id', 'name', 'type', 'version', 'versionRange'])
             });
         }
     }

@@ -51,7 +51,7 @@ export interface TestResourcePropertyInfo {
     key: string;
     value: string;
     remark: string;
-    isRuleAdd?: boolean;
+    isRuleSet?: boolean;
     authority: 1 | 2 | 4 | 6; // 1:只读 2:可编辑 4:可删除 6:可删除可编辑
 }
 

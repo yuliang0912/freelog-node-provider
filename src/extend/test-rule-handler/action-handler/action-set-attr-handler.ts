@@ -31,7 +31,7 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
         testRuleInfo.propertyMap.set(action.content.key, {
             key: action.content.key,
             value: action.content.value,
-            isRuleAdd: propertyInfo ? propertyInfo.isRuleAdd : true,
+            isRuleSet: true,
             authority: 6,
             remark: action.content.description
         });
