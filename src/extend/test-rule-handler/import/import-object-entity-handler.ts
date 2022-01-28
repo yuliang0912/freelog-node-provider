@@ -94,7 +94,7 @@ export class ImportObjectEntityHandler {
             ownerUserId: objectInfo.userId,
             name: matchRule.ruleInfo.candidate.name,
             type: TestResourceOriginType.Object,
-            resourceType: objectInfo.resourceType ?? '',
+            resourceType: objectInfo.resourceType,
             version: null,
             versions: [],
             coverImages: ['http://static.testfreelog.com/static/default_cover.png']

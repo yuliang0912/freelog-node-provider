@@ -141,6 +141,10 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_access_limited', replacer.name));
             return;
         }
+        if (replacerIsObject && !replacerInfo.resourceType) {
+            testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', replacer.name));
+            return;
+        }
         if (replacerIsObject) {
             const objectInfo = replacerInfo as ObjectStorageInfo;
             return {

@@ -156,6 +156,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const resourceMap = new Map<string, ResourceInfo>();
         const existingTestResourceMap = new Map<string, TestResourceInfo>();
         const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
+        const allTestResourceIds = matchedNodeTestResources.map(x => x.testResourceId);
+        const existingTestResources = await this.nodeTestResourceProvider.find({testResourceId: {$in: allTestResourceIds}}, 'testResourceId resolveResources');
+        for (const existingTestResourceInfo of existingTestResources) {
+            existingTestResourceMap.set(existingTestResourceInfo.testResourceId, existingTestResourceInfo);
+        }
+
         for (const resourceIds of chunk(allResourceIds, 200)) {
             await this.outsideApiService.getResourceListByIds(resourceIds, {projection: 'resourceId,baseUpcastResources,userId'}).then(list => {
                 list.forEach(resource => resourceMap.set(resource.resourceId, resource));
@@ -314,13 +320,14 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
-        testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(x => {
-            return {
-                resourceId: x.id,
-                resourceName: x.name,
-                contracts: []
-            };
-        });
+        // 有单独的处理函数专用处理解决的资源.因为需要保留上一次的.还需要考虑自己的.
+        // testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(x => {
+        //     return {
+        //         resourceId: x.id,
+        //         resourceName: x.name,
+        //         contracts: []
+        //     };
+        // });
         return testResourceInfo;
     }
 
@@ -387,7 +394,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 }
             },
-            resolveResources: presentableInfo.resolveResources.filter(x => !x.resourceName.startsWith(`${userInfo.username}/`)) as ResolveResourceInfo[],
+            resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
             resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
             rules: isMatched ? [{ruleId: themeTestRuleMatchInfo.id, operations: ['activate_theme']}] : []
         };
@@ -473,11 +480,11 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param presentableInfo
      */
     getTestResourceResolveResources(authTree: FlattenTestResourceAuthTree[], userInfo: FreelogUserInfo, existingResolveResources?: ResolveResourceInfo[], presentableInfo?: PresentableInfo) {
-        // 自己的资源无需授权,自己的object也无需授权(只能测试自己的object).
         const resolveResourceMap = new Map((existingResolveResources ?? presentableInfo?.resolveResources ?? []).map(x => [x.resourceId, x.contracts]));
-        return authTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(m => Object({
+        return authTree.filter(x => x.deep === 1).map(m => Object({
             resourceId: m.id,
             resourceName: m.name,
+            type: m.type,
             contracts: resolveResourceMap.get(m.id) ?? []
         }));
     }
