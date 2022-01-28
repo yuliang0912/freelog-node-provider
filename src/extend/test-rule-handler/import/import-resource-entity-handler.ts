@@ -132,7 +132,11 @@ export class ImportResourceEntityHandler {
             resourceType: resourceInfo.resourceType ?? '',
             version: resourceVersion.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
-            coverImages: resourceInfo.coverImages,
+            coverImages: resourceInfo.coverImages ?? [],
         };
+
+        if (!matchRule.testResourceOriginInfo.coverImages.length) {
+            matchRule.testResourceOriginInfo.coverImages = ['http://static.testfreelog.com/static/default_cover.png'];
+        }
     }
 }

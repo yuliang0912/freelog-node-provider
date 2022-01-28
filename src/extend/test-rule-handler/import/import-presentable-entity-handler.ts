@@ -106,6 +106,10 @@ export class ImportPresentableEntityHandler {
             coverImages: presentableInfo.coverImages ?? []
         };
 
+        if (!matchRule.testResourceOriginInfo.coverImages.length) {
+            matchRule.testResourceOriginInfo.coverImages = ['http://static.testfreelog.com/static/default_cover.png'];
+        }
+
         this.testRuleChecker.fillEntityPropertyMap(matchRule, presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableVersionInfo.presentableRewriteProperty);
 
         matchRule.presentableInfo = presentableInfo;
