@@ -40,7 +40,7 @@ export class TestRuleChecker {
         }
         for (const {key, value, remark} of presentableRewriteProperty ?? []) {
             const property = matchRule.propertyMap.get(key);
-            if (property && property.authority === 1) {
+            if (property && [1, 2].includes(property.authority)) {
                 continue;
             }
             matchRule.propertyMap.set(key, {key, authority: 6, value, remark});

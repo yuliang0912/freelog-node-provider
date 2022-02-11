@@ -32,6 +32,7 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
             key: action.content.key,
             value: action.content.value,
             isRuleSet: true,
+            isRuleAdd: propertyInfo ? propertyInfo.isRuleAdd : true,
             authority: 6,
             remark: action.content.description
         });
