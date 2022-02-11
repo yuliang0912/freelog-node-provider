@@ -42,6 +42,7 @@ export interface TestResourcePropertyInfo {
     value: string;
     remark: string;
     isRuleSet?: boolean;
+    isRuleAdd?: boolean;
     authority: 1 | 2 | 4 | 6;
 }
 export interface BaseTestRuleInfo {
