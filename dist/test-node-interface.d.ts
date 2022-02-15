@@ -196,6 +196,7 @@ export interface ResolveResourceInfo {
     resourceId: string;
     resourceName?: string;
     contracts: BaseContractInfo[];
+    isSelf?: boolean;
 }
 export interface StateInfo {
     onlineStatusInfo?: {

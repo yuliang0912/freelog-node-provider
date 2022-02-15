@@ -43,7 +43,7 @@ export class TestResourceAuthService implements ITestResourceAuthService {
         // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中(测试资源resolveResource)
         const testResourceResolveResourceIdSet = new Set(testResourceAuthTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource).map(x => x.id));
         // 过滤排除掉节点解决签约但又未实际使用到的资源,此部分资源不影响授权结果.(按照实用主义原则优化处理)
-        const toBeAuthorizedResources = testResourceInfo.resolveResources.filter(x => testResourceResolveResourceIdSet.has(x.resourceId));
+        const toBeAuthorizedResources = testResourceInfo.resolveResources.filter(x => !x.isSelf && testResourceResolveResourceIdSet.has(x.resourceId));
         const allNodeContractIds = chain(toBeAuthorizedResources).map(x => x.contracts).flattenDeep().map(x => x.contractId).value();
 
         const contractMap = await this.outsideApiService.getContractByContractIds(allNodeContractIds, {

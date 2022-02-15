@@ -71,7 +71,7 @@ export interface BaseTestRuleInfo {
 
 export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
     operation: ActionOperationEnum;
-    content: T
+    content: T;
 }
 
 export interface ContentSetLabel extends String {
@@ -229,6 +229,7 @@ export interface ResolveResourceInfo {
     resourceId: string;
     resourceName?: string;
     contracts: BaseContractInfo[];
+    isSelf?: boolean;
 }
 
 export interface StateInfo {

@@ -8,8 +8,10 @@ import {
     ResolveResourceInfo,
     TestNodeOperationEnum,
     TestResourceDependencyTree,
-    TestResourceInfo, TestResourceOriginInfo,
-    TestResourceOriginType, TestResourcePropertyInfo,
+    TestResourceInfo,
+    TestResourceOriginInfo,
+    TestResourceOriginType,
+    TestResourcePropertyInfo,
     TestResourceTreeInfo,
     TestRuleMatchInfo,
     TestRuleMatchResult
@@ -19,7 +21,8 @@ import {
     FlattenPresentableDependencyTree,
     IOutsideApiService,
     IPresentableService,
-    IPresentableVersionService, NodeInfo,
+    IPresentableVersionService,
+    NodeInfo,
     PresentableInfo,
     PresentableVersionInfo,
     ResourceInfo
@@ -235,14 +238,16 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             const testResourceTreeInfos = [];
             const testResources = presentables.map(x => this.presentableInfoMapToTestResource(x, presentableVersionMap.get(x.presentableId), resourceMap.get(x.resourceInfo.resourceId), nodeId, userInfo, themeTestRuleMatchInfo));
             for (const testResource of testResources) {
-                testResourceTreeInfos.push({
+                const testResourceTreeInfo = {
                     nodeId,
                     testResourceId: testResource.testResourceId,
                     testResourceName: testResource.testResourceName,
                     resourceType: testResource.resourceType,
                     authTree: this.convertPresentableAuthTreeToTestResourceAuthTree(presentableVersionMap.get(testResource.associatedPresentableId).authTree, resourceMap),
                     dependencyTree: this.convertPresentableDependencyTreeToTestResourceDependencyTree(testResource.testResourceId, presentableVersionMap.get(testResource.associatedPresentableId).dependencyTree)
-                });
+                };
+                testResource.resolveResources = this.getTestResourceResolveResources(testResourceTreeInfo.authTree, userInfo, null, presentables.find(x => x.presentableId === testResource.associatedPresentableId));
+                testResourceTreeInfos.push(testResourceTreeInfo);
             }
             await this.nodeTestResourceProvider.insertMany(testResources);
             await this.nodeTestResourceTreeProvider.insertMany(testResourceTreeInfos);
@@ -276,7 +281,19 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userInfo: FreelogUserInfo): TestResourceInfo {
 
-        const {id, testResourceOriginInfo, ruleInfo, onlineStatusInfo, tagInfo, titleInfo, themeInfo, coverInfo, attrInfo, efficientInfos, replaceRecords} = testRuleMatchInfo;
+        const {
+            id,
+            testResourceOriginInfo,
+            ruleInfo,
+            onlineStatusInfo,
+            tagInfo,
+            titleInfo,
+            themeInfo,
+            coverInfo,
+            attrInfo,
+            efficientInfos,
+            replaceRecords
+        } = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId: userInfo.userId,
             associatedPresentableId: testRuleMatchInfo.presentableInfo?.presentableId ?? '',
@@ -394,7 +411,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: 'default'
                 }
             },
-            resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
+            // resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
             resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
             rules: isMatched ? [{ruleId: themeTestRuleMatchInfo.id, operations: ['activate_theme']}] : []
         };
@@ -473,7 +490,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     }
 
     /**
-     * 平铺的授权树
+     * 获取测试资源解决的资源
      * @param authTree
      * @param userInfo
      * @param existingResolveResources
@@ -485,6 +502,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resourceId: m.id,
             resourceName: m.name,
             type: m.type,
+            isSelf: m.type === TestResourceOriginType.Object ? true : m.name.startsWith(userInfo.username),
             contracts: resolveResourceMap.get(m.id) ?? []
         }));
     }
@@ -501,7 +519,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         for (const [key, value] of Object.entries(presentableVersionInfo.resourceSystemProperty ?? {})) {
             readonlyPropertyMap.set(key, {key, value, authority: 1, remark: ''});
         }
-        for (const {key, defaultValue, remark, type} of presentableVersionInfo.resourceCustomPropertyDescriptors ?? []) {
+        for (const {
+            key,
+            defaultValue,
+            remark,
+            type
+        } of presentableVersionInfo.resourceCustomPropertyDescriptors ?? []) {
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }

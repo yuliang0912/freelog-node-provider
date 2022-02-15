@@ -42,6 +42,7 @@ export interface ResolveResource {
     resourceId: string;
     resourceName?: string;
     contracts: BaseContractInfo[];
+    isSelf?: boolean;
 }
 
 export interface NodeInfo {
@@ -432,7 +433,7 @@ export interface IOutsideApiService {
 
     getObjectFileStream(objectId: string): Promise<any>;
 
-    getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>
+    getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>;
 
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
 
@@ -583,7 +584,7 @@ export interface MountArticleInfo {
     resourceType: string;
     otherInfo?: {
         [key: string]: any;
-    }
+    };
 }
 
 /**
@@ -611,7 +612,7 @@ export interface ExhibitAuthNodeInfo {
     nid: string; // 树节点ID
     articleId: string;
     articleName: string;
-    articleType: ArticleTypeEnum
+    articleType: ArticleTypeEnum;
     resourceType: string;
     version: string;
     versionId: string;
@@ -623,7 +624,7 @@ export interface ExhibitDependencyNodeInfo {
     nid: string; // 树节点ID
     articleId: string;
     articleName: string;
-    articleType: ArticleTypeEnum
+    articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
     resourceType: string;
@@ -644,7 +645,7 @@ export interface ExhibitDependencyTree {
     versionId: string;
     deep: number;
     parentNid: string;
-    dependencies: ExhibitDependencyTree[]
+    dependencies: ExhibitDependencyTree[];
 }
 
 export enum ContractAuthStatusEnum {

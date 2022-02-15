@@ -21,6 +21,8 @@ export class NodeTestResourceInfo extends MongooseModelBase {
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
+            type: {type: String, required: true},
+            isSelf: {type: Boolean, required: true},
             contracts: [BaseContractInfo],
         }, {_id: false});
 

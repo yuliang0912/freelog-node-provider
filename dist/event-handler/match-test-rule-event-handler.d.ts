@@ -84,7 +84,7 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      */
     convertPresentableAuthTreeToTestResourceAuthTree(flattenAuthTree: FlattenPresentableAuthTree[], resourceMap: Map<string, ResourceInfo>): FlattenTestResourceAuthTree[];
     /**
-     * 平铺的授权树
+     * 获取测试资源解决的资源
      * @param authTree
      * @param userInfo
      * @param existingResolveResources

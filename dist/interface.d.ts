@@ -31,6 +31,7 @@ export interface ResolveResource {
     resourceId: string;
     resourceName?: string;
     contracts: BaseContractInfo[];
+    isSelf?: boolean;
 }
 export interface NodeInfo {
     nodeId: number;
