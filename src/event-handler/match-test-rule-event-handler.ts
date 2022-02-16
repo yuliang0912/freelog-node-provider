@@ -519,19 +519,19 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         for (const [key, value] of Object.entries(presentableVersionInfo.resourceSystemProperty ?? {})) {
             readonlyPropertyMap.set(key, {key, type: 'readonlyText', value, authority: 1, remark: ''});
         }
-        for (const {
-            key,
-            defaultValue,
-            remark,
-            type
-        } of presentableVersionInfo.resourceCustomPropertyDescriptors ?? []) {
+        for (const resourceCustomProperty of presentableVersionInfo.resourceCustomPropertyDescriptors ?? []) {
+            const {key, defaultValue, type, remark} = resourceCustomProperty;
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }
             if (type === 'readonlyText') {
                 readonlyPropertyMap.set(key, {key, value: defaultValue, type, authority: 1, remark});
             } else {
-                editablePropertyMap.set(key, {key, value: defaultValue, type, authority: 2, remark});
+                editablePropertyMap.set(key, {
+                    key, value: defaultValue, type,
+                    candidateItems: resourceCustomProperty.candidateItems,
+                    authority: 2, remark
+                });
             }
         }
         for (const {key, value, remark} of presentableVersionInfo.presentableRewriteProperty ?? []) {
@@ -544,7 +544,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 continue;
             }
             editableProperty.remark = remark;
-            if (editableProperty.type === 'select' && !editableProperty.candidateItems.includes(value)) {
+            if (editableProperty.type === 'select' && !editableProperty.candidateItems?.includes(value)) {
                 continue;
             }
             editableProperty.value = value;
