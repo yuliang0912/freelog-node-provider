@@ -50,6 +50,8 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
 export interface TestResourcePropertyInfo {
     key: string;
     value: string;
+    type?: 'editableText' | 'readonlyText' | 'radio' | 'checkbox' | 'select';
+    candidateItems?: string[];
     remark: string;
     isRuleSet?: boolean;
     isRuleAdd?: boolean;

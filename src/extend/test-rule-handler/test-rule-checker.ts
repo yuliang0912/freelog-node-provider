@@ -32,18 +32,29 @@ export class TestRuleChecker {
                 remark: '', authority: 1
             });
         }
-        for (const {key, defaultValue, remark, type} of customPropertyDescriptors) {
-            matchRule.propertyMap.set(key, {
-                key, value: defaultValue, remark,
-                authority: type === 'readonlyText' ? 1 : 2
+        for (const customPropertyDescriptorInfo of customPropertyDescriptors) {
+            matchRule.propertyMap.set(customPropertyDescriptorInfo.key, {
+                key: customPropertyDescriptorInfo.key,
+                value: customPropertyDescriptorInfo.defaultValue,
+                type: customPropertyDescriptorInfo.type,
+                remark: customPropertyDescriptorInfo.remark,
+                candidateItems: customPropertyDescriptorInfo.candidateItems,
+                authority: customPropertyDescriptorInfo.type === 'readonlyText' ? 1 : 2
             });
         }
         for (const {key, value, remark} of presentableRewriteProperty ?? []) {
-            const property = matchRule.propertyMap.get(key);
-            if (property && [1, 2].includes(property.authority)) {
+            // 如果系统属性以及资源自定义的属性都不存在改key值,则代表是通过展品拓展的
+            if (!matchRule.propertyMap.has(key)) {
+                matchRule.propertyMap.set(key, {key, authority: 6, value, remark});
                 continue;
             }
-            matchRule.propertyMap.set(key, {key, authority: 6, value, remark});
+            // 如果已经存在,则允许修改remark.但是value值需要视情况而定(下拉框选项,设定的值必须在规定范围内才生效).
+            const property = matchRule.propertyMap.get(key);
+            property.remark = remark;
+            if (property.authority === 1 || (property.type === 'select' && !property.candidateItems.includes(value))) {
+                continue;
+            }
+            property.value = value;
         }
     }
 
