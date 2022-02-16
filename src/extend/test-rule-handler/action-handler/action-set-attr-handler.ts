@@ -23,26 +23,32 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
         }
 
         const propertyInfo = testRuleInfo.propertyMap.get(action.content.key);
+        if (!propertyInfo) {
+            testRuleInfo.propertyMap.set(action.content.key, {
+                key: action.content.key,
+                value: action.content.value,
+                type: 'editableText',
+                isRuleSet: true,
+                isRuleAdd: true,
+                authority: 6,
+                remark: action.content.description
+            });
+            testRuleInfo.attrInfo = {source: testRuleInfo.id};
+            return true;
+        }
+
         // 不具备编辑权限(主要是系统属性以及自定义的只读属性).
-        if (propertyInfo && (propertyInfo.authority & 2) !== 2) {
+        if ((propertyInfo.authority & 2) !== 2) {
             testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_value_access_limited', action.content.key));
             return false;
         }
         // 是下拉框,但是设定的值不在规定范围内.
-        if (propertyInfo?.type === 'select' && !propertyInfo.candidateItems?.includes(action.content.value)) {
+        if (propertyInfo.type === 'select' && !propertyInfo.candidateItems?.includes(action.content.value)) {
             testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_value_not_match', action.content.key));
             return false;
         }
-
-        testRuleInfo.propertyMap.set(action.content.key, {
-            key: action.content.key,
-            value: action.content.value,
-            isRuleSet: true,
-            isRuleAdd: propertyInfo ? propertyInfo.isRuleAdd : true,
-            authority: 6,
-            remark: action.content.description
-        });
-
+        propertyInfo.value = action.content.value;
+        propertyInfo.remark = action.content.description;
         testRuleInfo.attrInfo = {source: testRuleInfo.id};
 
         return true;

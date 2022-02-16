@@ -517,7 +517,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
         // 以下4个for循环需要严格遵守顺序.属性的优先级分别为1.系统属性 2:资源定义的不可编辑的属性 3:测试规则规定的属性 4:展品重写的属性 5:资源自定义的可编辑属性.
         for (const [key, value] of Object.entries(presentableVersionInfo.resourceSystemProperty ?? {})) {
-            readonlyPropertyMap.set(key, {key, value, authority: 1, remark: ''});
+            readonlyPropertyMap.set(key, {key, type: 'readonlyText', value, authority: 1, remark: ''});
         }
         for (const {
             key,
@@ -529,16 +529,25 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                 continue;
             }
             if (type === 'readonlyText') {
-                readonlyPropertyMap.set(key, {key, value: defaultValue, authority: 1, remark});
+                readonlyPropertyMap.set(key, {key, value: defaultValue, type, authority: 1, remark});
             } else {
-                editablePropertyMap.set(key, {key, value: defaultValue, authority: 2, remark});
+                editablePropertyMap.set(key, {key, value: defaultValue, type, authority: 2, remark});
             }
         }
         for (const {key, value, remark} of presentableVersionInfo.presentableRewriteProperty ?? []) {
             if (readonlyPropertyMap.has(key)) {
                 continue;
             }
-            editablePropertyMap.set(key, {key, authority: 6, value, remark});
+            const editableProperty = editablePropertyMap.get(key);
+            if (!editableProperty) {
+                editablePropertyMap.set(key, {key, type: 'editableText', authority: 6, value, remark});
+                continue;
+            }
+            editableProperty.remark = remark;
+            if (editableProperty.type === 'select' && !editableProperty.candidateItems.includes(value)) {
+                continue;
+            }
+            editableProperty.value = value;
         }
         return [...readonlyPropertyMap.values(), ...editablePropertyMap.values()];
     }

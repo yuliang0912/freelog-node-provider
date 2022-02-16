@@ -29,6 +29,7 @@ export class TestRuleChecker {
         for (const [key, value] of Object.entries(systemProperty)) {
             matchRule.propertyMap.set(key, {
                 key, value: value as string,
+                type: 'readonlyText',
                 remark: '', authority: 1
             });
         }
@@ -45,7 +46,7 @@ export class TestRuleChecker {
         for (const {key, value, remark} of presentableRewriteProperty ?? []) {
             // 如果系统属性以及资源自定义的属性都不存在改key值,则代表是通过展品拓展的
             if (!matchRule.propertyMap.has(key)) {
-                matchRule.propertyMap.set(key, {key, authority: 6, value, remark});
+                matchRule.propertyMap.set(key, {key, type: 'editableText', authority: 6, value, remark});
                 continue;
             }
             // 如果已经存在,则允许修改remark.但是value值需要视情况而定(下拉框选项,设定的值必须在规定范围内才生效).

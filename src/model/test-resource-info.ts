@@ -45,6 +45,8 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             key: {type: String, required: true},
             value: {type: this.mongoose.Schema.Types.Mixed, required: true},
             authority: {type: Number, required: true, default: 1},
+            type: {type: String, required: true, enum: ['editableText', 'readonlyText', 'radio', 'checkbox', 'select']}, // 类型目前分为: 可编辑文本框,不可编辑文本框,单选框,多选框,下拉选择框
+            candidateItems: {type: [String], required: false}, // 选项列表
             isRuleSet: {type: Boolean, required: false},
             isRuleAdd: {type: Boolean, required: false},
             remark: {type: String, required: false, default: ''},
