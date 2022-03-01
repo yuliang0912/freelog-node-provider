@@ -1,6 +1,12 @@
 import {isBoolean} from 'lodash';
 import {provide, scope} from 'midway';
-import {Action, ContentSetOnline, IActionHandler, TestRuleMatchInfo} from '../../../test-node-interface';
+import {
+    Action,
+    ActionOperationEnum,
+    ContentSetOnline,
+    IActionHandler,
+    TestRuleMatchInfo
+} from '../../../test-node-interface';
 import {FreelogContext, ResourceTypeEnum} from 'egg-freelog-base';
 import {ScopeEnum} from 'injection';
 
@@ -26,6 +32,12 @@ export class ActionSetOnlineStatusHandler implements IActionHandler<ContentSetOn
         }
 
         testRuleInfo.onlineStatusInfo = {status: action.content ? 1 : 0, source: testRuleInfo.id};
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.Online, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                onlineStatus: action.content
+            }
+        });
         return true;
     }
 }

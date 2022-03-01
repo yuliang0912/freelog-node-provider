@@ -147,6 +147,9 @@ export interface TestRuleMatchInfo {
     efficientInfos: TestRuleEfficientInfo[];
     themeInfo: { isActivatedTheme: number, ruleId: string };
     replaceRecords?: any[];
+
+    operationAndActionRecords: any[];
+
     // rootResourceReplacer?: TestResourceOriginInfo;
 }
 
@@ -267,6 +270,7 @@ export interface TestResourceInfo {
     resolveResources?: ResolveResourceInfo[];
     resolveResourceSignStatus: number;
     dependencyTree?: FlattenTestResourceDependencyTree[];
+    operationAndActionRecords?: any[];
     authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;

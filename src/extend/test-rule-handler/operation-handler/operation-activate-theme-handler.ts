@@ -69,6 +69,11 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             type: TestResourceOriginType.Resource
         };
         activeThemeRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
+        activeThemeRuleInfo.operationAndActionRecords.push({
+            type: TestNodeOperationEnum.ActivateTheme, data: {
+                exhibitName: activeThemeRuleInfo.ruleInfo.exhibitName
+            }
+        });
         return true;
     }
 }

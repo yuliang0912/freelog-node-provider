@@ -1,6 +1,6 @@
 import {provide, scope} from 'midway';
 import {
-    Action, ContentDeleteAttr, IActionHandler, TestRuleMatchInfo
+    Action, ActionOperationEnum, ContentDeleteAttr, IActionHandler, TestRuleMatchInfo
 } from '../../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 import {isString} from 'lodash';
@@ -38,6 +38,12 @@ export class ActionDeleteAttrHandler implements IActionHandler<ContentDeleteAttr
 
         testRuleInfo.propertyMap.delete(action.content.key);
         testRuleInfo.attrInfo = {source: testRuleInfo.id};
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.DeleteAttr, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                attrKey: action.content.key
+            }
+        });
         return true;
     }
 }

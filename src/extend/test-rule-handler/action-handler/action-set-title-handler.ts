@@ -1,5 +1,11 @@
 import {provide, scope} from 'midway';
-import {TestRuleMatchInfo, Action, IActionHandler, ContentSetTitle} from '../../../test-node-interface';
+import {
+    TestRuleMatchInfo,
+    Action,
+    IActionHandler,
+    ContentSetTitle,
+    ActionOperationEnum
+} from '../../../test-node-interface';
 import {isString} from 'lodash';
 import {FreelogContext} from 'egg-freelog-base';
 import {ScopeEnum} from 'injection';
@@ -21,6 +27,12 @@ export class ActionSetTitleHandler implements IActionHandler<ContentSetTitle> {
         }
 
         testRuleInfo.titleInfo = {title: action.content, source: testRuleInfo.id};
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.SetTitle, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                title: action.content
+            }
+        });
         return true;
     }
 }

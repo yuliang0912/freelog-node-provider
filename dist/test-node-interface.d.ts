@@ -126,6 +126,7 @@ export interface TestRuleMatchInfo {
         ruleId: string;
     };
     replaceRecords?: any[];
+    operationAndActionRecords: any[];
 }
 export interface BaseReplacedInfo {
     id: string;
@@ -247,6 +248,7 @@ export interface TestResourceInfo {
     resolveResources?: ResolveResourceInfo[];
     resolveResourceSignStatus: number;
     dependencyTree?: FlattenTestResourceDependencyTree[];
+    operationAndActionRecords?: any[];
     authTree?: FlattenTestResourceAuthTree[];
     ruleId?: string;
     status?: number;

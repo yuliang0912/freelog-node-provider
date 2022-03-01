@@ -47,19 +47,6 @@ export class TestRuleHandler {
     }
 
     /**
-     * 匹配激活主题规则
-     * @param nodeId
-     * @param activeThemeRuleInfo
-     */
-    // matchThemeRule(nodeId: number, activeThemeRuleInfo: TestRuleMatchInfo): Promise<TestResourceInfo> {
-    //     // 代码已重新实现,此处已无用
-    //     //if (!activeThemeRuleInfo) {
-    //     //  return null;
-    //     //}
-    //     // return this.activateThemeHandler.handle(nodeId, activeThemeRuleInfo);
-    // }
-
-    /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules
      */
@@ -70,6 +57,7 @@ export class TestRuleHandler {
             isValid: true,
             matchErrors: [],
             effectiveMatchCount: 0,
+            operationAndActionRecords: [],
             efficientInfos: [],
             ruleInfo
         }));

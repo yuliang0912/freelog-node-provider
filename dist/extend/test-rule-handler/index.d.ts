@@ -15,11 +15,6 @@ export declare class TestRuleHandler {
     testNodeGenerator: any;
     main(nodeId: number, testRules: BaseTestRuleInfo[]): Promise<TestRuleMatchInfo[]>;
     /**
-     * 匹配激活主题规则
-     * @param nodeId
-     * @param activeThemeRuleInfo
-     */
-    /**
      * 初始化规则,拓展规则的基础属性
      * @param testRules
      */

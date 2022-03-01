@@ -34,6 +34,11 @@ export class OperationAlterHandler implements IOperationHandler {
             if (!testRuleMatchInfo.isValid || testRuleMatchInfo.ruleInfo.operation !== TestNodeOperationEnum.Alter) {
                 continue;
             }
+            testRuleMatchInfo.operationAndActionRecords.push({
+                type: TestNodeOperationEnum.Alter, data: {
+                    exhibitName: testRuleMatchInfo.ruleInfo.exhibitName
+                }
+            });
             testRuleMatchInfo.efficientInfos.push({type: TestNodeOperationEnum.Alter, count: 1});
             for (const action of testRuleMatchInfo.ruleInfo.actions ?? []) {
                 await this.actionHandler.handle(this.ctx, testRuleMatchInfo, action);

@@ -6,7 +6,7 @@ import {
     Action, ScopePathChain,
     CandidateInfo, ContentReplace, IActionHandler,
     TestResourceDependencyTree, TestResourceOriginInfo,
-    TestResourceOriginType, TestRuleMatchInfo
+    TestResourceOriginType, TestRuleMatchInfo, ActionOperationEnum
 } from '../../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 import {ImportObjectEntityHandler} from '../import/import-object-entity-handler';
@@ -47,6 +47,16 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
 
         testRuleInfo.replaceRecords = testRuleInfo.replaceRecords ?? [];
         await this.recursionReplace(ctx, testRuleInfo, action, testRuleInfo.entityDependencyTree, testRuleInfo.entityDependencyTree, []);
+
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.Replace, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                replaced: action.content.replaced,
+                replacer: action.content.replacer,
+                scopes: action.content.scopes
+                // replaceCount: testRuleInfo.replaceRecords.find(x => x.replaced).length
+            }
+        });
 
         return true;
     }

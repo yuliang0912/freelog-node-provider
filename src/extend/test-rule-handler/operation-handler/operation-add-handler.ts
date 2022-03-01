@@ -56,6 +56,12 @@ export class OperationAddHandler implements IOperationHandler {
             if (!testRuleMatchInfo.isValid || testRuleMatchInfo.ruleInfo.operation !== TestNodeOperationEnum.Add) {
                 continue;
             }
+            testRuleMatchInfo.operationAndActionRecords.push({
+                type: TestNodeOperationEnum.Add, data: {
+                    exhibitName: testRuleMatchInfo.ruleInfo.exhibitName,
+                    candidate: testRuleMatchInfo.ruleInfo.candidate
+                }
+            });
             testRuleMatchInfo.efficientInfos.push({type: TestNodeOperationEnum.Add, count: 1});
             for (const action of testRuleMatchInfo.ruleInfo.actions ?? []) {
                 await this.actionHandler.handle(this.ctx, testRuleMatchInfo, action);

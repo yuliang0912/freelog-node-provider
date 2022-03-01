@@ -94,6 +94,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             intro: {type: String, required: false, default: ''}, //测试资源简介
             originInfo: {type: OriginInfoSchema, required: true},
             stateInfo: {type: StateInfoSchema, required: true},
+            operationAndActionRecords: {type: [], required: false, default: []},
             resolveResources: {type: [ResolveResourceSchema], default: [], required: false},
             resolveResourceSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
             rules: {type: [RuleInfoSchema], required: true},

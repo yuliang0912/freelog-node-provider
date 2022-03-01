@@ -292,7 +292,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             coverInfo,
             attrInfo,
             efficientInfos,
-            replaceRecords
+            replaceRecords,
+            operationAndActionRecords
         } = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId: userInfo.userId,
@@ -300,7 +301,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resourceType: testResourceOriginInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),
             testResourceName: ruleInfo.exhibitName,
-            originInfo: testResourceOriginInfo,
+            originInfo: testResourceOriginInfo, operationAndActionRecords,
             stateInfo: {
                 onlineStatusInfo: {
                     onlineStatus: onlineStatusInfo?.status ?? 0,

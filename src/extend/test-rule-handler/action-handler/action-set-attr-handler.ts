@@ -1,6 +1,6 @@
 import {provide, scope} from 'midway';
 import {
-    Action, ContentSetAttr, IActionHandler, TestRuleMatchInfo
+    Action, ActionOperationEnum, ContentSetAttr, IActionHandler, TestRuleMatchInfo
 } from '../../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 import {isObject} from 'lodash';
@@ -50,7 +50,12 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
         propertyInfo.value = action.content.value;
         propertyInfo.remark = action.content.description;
         testRuleInfo.attrInfo = {source: testRuleInfo.id};
-
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.AddAttr, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                attrKey: action.content.key
+            }
+        });
         return true;
     }
 }

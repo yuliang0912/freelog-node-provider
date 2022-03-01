@@ -1,6 +1,12 @@
 import {isString} from 'lodash';
 import {provide, scope} from 'midway';
-import {Action, ContentSetCover, IActionHandler, TestRuleMatchInfo} from '../../../test-node-interface';
+import {
+    Action,
+    ActionOperationEnum,
+    ContentSetCover,
+    IActionHandler,
+    TestRuleMatchInfo
+} from '../../../test-node-interface';
 import {ScopeEnum} from 'injection';
 import {FreelogContext} from 'egg-freelog-base';
 
@@ -20,6 +26,11 @@ export class ActionSetCoverHandler implements IActionHandler<ContentSetCover> {
         }
 
         testRuleInfo.coverInfo = {coverImages: [action.content], source: testRuleInfo.id};
+        testRuleInfo.operationAndActionRecords.push({
+            type: ActionOperationEnum.SetCover, data: {
+                exhibitName: testRuleInfo.ruleInfo.exhibitName
+            }
+        });
         return true;
     }
 }
