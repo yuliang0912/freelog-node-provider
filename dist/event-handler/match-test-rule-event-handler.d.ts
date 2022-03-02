@@ -96,4 +96,5 @@ export declare class MatchTestRuleEventHandler implements IMatchTestRuleEventHan
      * @param presentableVersionInfo
      */
     getPresentablePropertyInfo(presentableVersionInfo: PresentableVersionInfo): TestResourcePropertyInfo[];
+    private clearNodeTestResources;
 }

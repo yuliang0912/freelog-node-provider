@@ -77,26 +77,22 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             return;
         }
         try {
-            const tasks = [];
             if (nodeTestRuleInfo.status !== NodeTestRuleMatchStatus.Pending) {
-                tasks.push(this.nodeTestRuleProvider.updateOne({nodeId}, {
+                await this.nodeTestRuleProvider.updateOne({nodeId}, {
                     status: NodeTestRuleMatchStatus.Pending, matchErrorMsg: ''
-                }));
+                });
             }
-            tasks.push(this.nodeTestResourceProvider.deleteMany({nodeId}));
-            tasks.push(this.nodeTestResourceTreeProvider.deleteMany({nodeId}));
-            await Promise.all(tasks);
 
             // 按批次(每50条)匹配规则对应的测试资源,处理完尽早释放掉占用的内存
             let themeTestRuleMatchInfo: TestRuleMatchInfo = null;
-            for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 200)) {
-                await this.matchAndSaveTestResourceInfos(testRules, nodeId, userInfo).then(testRuleMatchResult => {
-                    if (testRuleMatchResult.themeTestRuleMatchInfo) {
-                        themeTestRuleMatchInfo = testRuleMatchResult.themeTestRuleMatchInfo;
-                    }
-                    allTestRuleMatchResults.push(...testRuleMatchResult.testRuleMatchInfos);
-                });
-            }
+            //for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 200)) {
+            // }
+            await this.matchAndSaveTestResourceInfos(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), nodeId, userInfo).then(testRuleMatchResult => {
+                if (testRuleMatchResult.themeTestRuleMatchInfo) {
+                    themeTestRuleMatchInfo = testRuleMatchResult.themeTestRuleMatchInfo;
+                }
+                allTestRuleMatchResults.push(...testRuleMatchResult.testRuleMatchInfos);
+            });
 
             for (const matchResult of allTestRuleMatchResults) {
                 const testRuleInfo = nodeTestRuleInfo.testRules.find(x => x.id === matchResult.ruleId) ?? {};
@@ -149,6 +145,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
     async matchAndSaveTestResourceInfos(ruleInfos: BaseTestRuleInfo[], nodeId: number, userInfo: FreelogUserInfo,): Promise<{ themeTestRuleMatchInfo: TestRuleMatchInfo, testRuleMatchInfos: TestRuleMatchResult[] }> {
 
         if (isEmpty(ruleInfos)) {
+            await this.clearNodeTestResources(nodeId);
             return;
         }
 
@@ -161,6 +158,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
         const allResourceIds = chain(matchedNodeTestResources).map(x => x.dependencyTree).flatten().filter(x => x.type === TestResourceOriginType.Resource).map(x => x.id).value();
         const allTestResourceIds = matchedNodeTestResources.map(x => x.testResourceId);
         const existingTestResources = await this.nodeTestResourceProvider.find({testResourceId: {$in: allTestResourceIds}}, 'testResourceId resolveResources');
+
         for (const existingTestResourceInfo of existingTestResources) {
             existingTestResourceMap.set(existingTestResourceInfo.testResourceId, existingTestResourceInfo);
         }
@@ -188,6 +186,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             });
         }
 
+        await this.clearNodeTestResources(nodeId);
         await this.nodeTestResourceProvider.insertMany(matchedNodeTestResources);
         await this.nodeTestResourceTreeProvider.insertMany(testResourceTreeInfos);
 
@@ -280,7 +279,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
      * @param userInfo
      */
     testRuleMatchInfoMapToTestResource(testRuleMatchInfo: TestRuleMatchInfo, nodeId: number, userInfo: FreelogUserInfo): TestResourceInfo {
-
         const {
             id,
             testResourceOriginInfo,
@@ -551,5 +549,12 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             editableProperty.value = value;
         }
         return [...readonlyPropertyMap.values(), ...editablePropertyMap.values()];
+    }
+
+    private async clearNodeTestResources(nodeId: number) {
+        const tasks = [];
+        tasks.push(this.nodeTestResourceProvider.deleteMany({nodeId}));
+        tasks.push(this.nodeTestResourceTreeProvider.deleteMany({nodeId}));
+        return await Promise.all(tasks);
     }
 }
