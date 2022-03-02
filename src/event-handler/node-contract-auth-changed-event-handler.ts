@@ -75,7 +75,7 @@ export class NodeContractAuthChangedEventHandler implements IKafkaSubscribeMessa
      * @param message
      */
     async testResourceResolveResourceHandle(message: IContractAuthStatusChangedEventMessage) {
-        if (message.contractStatus === ContractStatusEnum.Terminated) {
+        if (message.contractStatus !== ContractStatusEnum.Terminated) {
             return;
         }
         const testResources = await this.nodeTestResourceProvider.find({

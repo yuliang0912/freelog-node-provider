@@ -69,7 +69,7 @@ let NodeContractAuthChangedEventHandler = class NodeContractAuthChangedEventHand
      * @param message
      */
     async testResourceResolveResourceHandle(message) {
-        if (message.contractStatus === egg_freelog_base_1.ContractStatusEnum.Terminated) {
+        if (message.contractStatus !== egg_freelog_base_1.ContractStatusEnum.Terminated) {
             return;
         }
         const testResources = await this.nodeTestResourceProvider.find({
