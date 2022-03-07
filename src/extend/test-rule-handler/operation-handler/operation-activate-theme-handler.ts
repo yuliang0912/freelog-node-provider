@@ -48,6 +48,11 @@ export class OperationActivateThemeHandler implements IOperationHandler {
                     isActivatedTheme: 1, ruleId: activeThemeRuleInfo.id
                 };
                 targetRuleMatchInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
+                activeThemeRuleInfo.operationAndActionRecords.push({
+                    type: TestNodeOperationEnum.ActivateTheme, data: {
+                        exhibitName: activeThemeRuleInfo.ruleInfo.exhibitName
+                    }
+                });
                 return true;
             }
             activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));

@@ -336,14 +336,6 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
-        // 有单独的处理函数专用处理解决的资源.因为需要保留上一次的.还需要考虑自己的.
-        // testResourceInfo.resolveResources = testResourceInfo.dependencyTree.filter(x => x.deep === 1 && x.type === TestResourceOriginType.Resource && !x.name.startsWith(`${userInfo.username}/`)).map(x => {
-        //     return {
-        //         resourceId: x.id,
-        //         resourceName: x.name,
-        //         contracts: []
-        //     };
-        // });
         return testResourceInfo;
     }
 
