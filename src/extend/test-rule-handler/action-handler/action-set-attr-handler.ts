@@ -34,6 +34,14 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
                 remark: action.content.description
             });
             testRuleInfo.attrInfo = {source: testRuleInfo.id};
+            testRuleInfo.operationAndActionRecords.push({
+                type: ActionOperationEnum.AddAttr, data: {
+                    exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                    attrKey: action.content.key,
+                    attrValue: action.content.value,
+                    attrDescription: action.content.description
+                }
+            });
             return true;
         }
 
@@ -53,7 +61,9 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
         testRuleInfo.operationAndActionRecords.push({
             type: ActionOperationEnum.AddAttr, data: {
                 exhibitName: testRuleInfo.ruleInfo.exhibitName,
-                attrKey: action.content.key
+                attrKey: action.content.key,
+                attrValue: action.content.value,
+                attrDescription: action.content.description
             }
         });
         return true;
