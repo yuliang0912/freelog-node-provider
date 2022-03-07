@@ -28,7 +28,8 @@ export class ActionSetCoverHandler implements IActionHandler<ContentSetCover> {
         testRuleInfo.coverInfo = {coverImages: [action.content], source: testRuleInfo.id};
         testRuleInfo.operationAndActionRecords.push({
             type: ActionOperationEnum.SetCover, data: {
-                exhibitName: testRuleInfo.ruleInfo.exhibitName
+                exhibitName: testRuleInfo.ruleInfo.exhibitName,
+                coverImage: action.content
             }
         });
         return true;
