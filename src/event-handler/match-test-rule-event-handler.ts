@@ -365,8 +365,16 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             versions: resourceInfo ? resourceInfo.resourceVersions.map(x => x.version) : [], // 容错处理
             coverImages: resourceInfo?.coverImages ?? []
         };
+        const operationAndActionRecords = [];
+        if (isMatched) {
+            operationAndActionRecords.push({
+                type: TestNodeOperationEnum.ActivateTheme, data: {
+                    exhibitName: themeTestRuleMatchInfo.ruleInfo.exhibitName
+                }
+            });
+        }
         return {
-            nodeId, userId: userInfo.userId,
+            nodeId, operationAndActionRecords, userId: userInfo.userId,
             associatedPresentableId: presentableInfo.presentableId,
             resourceType: presentableInfo.resourceInfo.resourceType,
             testResourceId: this.testNodeGenerator.generateTestResourceId(nodeId, testResourceOriginInfo),

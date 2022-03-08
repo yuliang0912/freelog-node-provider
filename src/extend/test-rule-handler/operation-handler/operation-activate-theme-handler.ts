@@ -48,7 +48,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
                     isActivatedTheme: 1, ruleId: activeThemeRuleInfo.id
                 };
                 targetRuleMatchInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
-                activeThemeRuleInfo.operationAndActionRecords.push({
+                targetRuleMatchInfo.operationAndActionRecords.push({
                     type: TestNodeOperationEnum.ActivateTheme, data: {
                         exhibitName: activeThemeRuleInfo.ruleInfo.exhibitName
                     }
@@ -74,11 +74,6 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             type: TestResourceOriginType.Resource
         };
         activeThemeRuleInfo.efficientInfos.push(this.activeThemeEfficientCountInfo);
-        activeThemeRuleInfo.operationAndActionRecords.push({
-            type: TestNodeOperationEnum.ActivateTheme, data: {
-                exhibitName: activeThemeRuleInfo.ruleInfo.exhibitName
-            }
-        });
         return true;
     }
 }
