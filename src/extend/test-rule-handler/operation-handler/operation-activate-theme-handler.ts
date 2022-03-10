@@ -55,7 +55,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
                 });
                 return true;
             }
-            activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
+            activeThemeRuleInfo.matchWarnings.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
             return false;
         }
 
@@ -66,7 +66,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_existed`, activeThemeRuleInfo.ruleInfo.exhibitName));
             return false;
         } else if (presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
-            activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
+            activeThemeRuleInfo.matchWarnings.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
             return false;
         }
         activeThemeRuleInfo.ruleInfo.candidate = {

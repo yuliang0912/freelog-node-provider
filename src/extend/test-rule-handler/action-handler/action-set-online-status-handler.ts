@@ -26,8 +26,9 @@ export class ActionSetOnlineStatusHandler implements IActionHandler<ContentSetOn
             return false;
         }
 
+        // 主题不允许上下线操作.只能通过激活操作
         if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME) {
-            testRuleInfo.matchErrors.push(ctx.gettext(`reflect_rule_pre_excute_error_show_hide_unavailable_for_theme`, testRuleInfo.ruleInfo.exhibitName));
+            testRuleInfo.matchWarnings.push(ctx.gettext(`reflect_rule_pre_excute_error_show_hide_unavailable_for_theme`, testRuleInfo.ruleInfo.exhibitName));
             return false;
         }
 

@@ -136,6 +136,7 @@ export interface TestRuleMatchInfo {
 
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
+    // rootTestResourceIsReplaced?: boolean;
 
     propertyMap?: Map<string, TestResourcePropertyInfo>;
 
@@ -307,6 +308,7 @@ export interface TestRuleMatchResult {
     ruleId: string;
     isValid: boolean;
     matchErrors: string[];
+    matchWarnings: string[];
     efficientInfos: TestRuleEfficientInfo[];
     associatedPresentableId?: string;
 }

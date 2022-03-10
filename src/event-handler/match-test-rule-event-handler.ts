@@ -197,6 +197,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     ruleId: x.id,
                     isValid: x.isValid,
                     matchErrors: x.matchErrors,
+                    matchWarnings: x.matchWarnings,
                     efficientInfos: x.efficientInfos,
                     associatedPresentableId: x.presentableInfo?.presentableId
                 };

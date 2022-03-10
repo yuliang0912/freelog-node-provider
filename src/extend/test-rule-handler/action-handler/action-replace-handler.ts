@@ -103,12 +103,13 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             }
             // 主资源被替换,需要把新的替换者信息保存起来
             if (currPathChain.length === 1 && (replacerInfo.id !== testRuleInfo.testResourceOriginInfo.id || replacerInfo.version !== testRuleInfo.testResourceOriginInfo.version)) {
-                if (replacerInfo.type === TestResourceOriginType.Object) {
-                    this.testRuleChecker.fillEntityPropertyMap(testRuleInfo, replacerInfo['systemProperty'], replacerInfo['customPropertyDescriptors']);
-                } else {
+                if (replacerInfo.type === TestResourceOriginType.Resource) {
                     replacerInfo.versionRange = testRuleInfo.testResourceOriginInfo.versionRange;
                 }
+                testRuleInfo.propertyMap.clear();
+                this.testRuleChecker.fillEntityPropertyMap(testRuleInfo, replacerInfo['systemProperty'], replacerInfo['customPropertyDescriptors']);
                 testRuleInfo.testResourceOriginInfo = replacerInfo;
+                // testRuleInfo.rootTestResourceIsReplaced = true;
             }
             dependencies.splice(i, 1, replacerDependencyTree);
 

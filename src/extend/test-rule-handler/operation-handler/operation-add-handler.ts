@@ -1,5 +1,6 @@
 import {isEmpty} from 'lodash';
 import {
+    ActionOperationEnum,
     IActionHandler,
     IOperationHandler,
     TestNodeOperationEnum,
@@ -63,6 +64,9 @@ export class OperationAddHandler implements IOperationHandler {
                 }
             });
             testRuleMatchInfo.efficientInfos.push({type: TestNodeOperationEnum.Add, count: 1});
+            testRuleMatchInfo.ruleInfo.actions.sort(x => {
+                return [ActionOperationEnum.AddAttr, ActionOperationEnum.DeleteAttr].includes(x.operation) ? 1 : -1;
+            });
             for (const action of testRuleMatchInfo.ruleInfo.actions ?? []) {
                 await this.actionHandler.handle(this.ctx, testRuleMatchInfo, action);
             }
