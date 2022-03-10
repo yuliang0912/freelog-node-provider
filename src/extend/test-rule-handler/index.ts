@@ -56,6 +56,7 @@ export class TestRuleHandler {
             id: this.testNodeGenerator.generateTestRuleId(this.nodeId, ruleInfo.text ?? ''),
             isValid: true,
             matchErrors: [],
+            matchWarnings: [],
             effectiveMatchCount: 0,
             operationAndActionRecords: [],
             efficientInfos: [],

@@ -105,11 +105,13 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             if (currPathChain.length === 1 && (replacerInfo.id !== testRuleInfo.testResourceOriginInfo.id || replacerInfo.version !== testRuleInfo.testResourceOriginInfo.version)) {
                 if (replacerInfo.type === TestResourceOriginType.Resource) {
                     replacerInfo.versionRange = testRuleInfo.testResourceOriginInfo.versionRange;
+                    const versionInfo = await this.outsideApiService.getResourceVersionInfo(replacerInfo.versionId, ['systemProperty', 'customPropertyDescriptors']);
+                    replacerInfo['systemProperty'] = versionInfo.systemProperty;
+                    replacerInfo['customPropertyDescriptors'] = versionInfo.customPropertyDescriptors;
                 }
                 testRuleInfo.propertyMap.clear();
                 this.testRuleChecker.fillEntityPropertyMap(testRuleInfo, replacerInfo['systemProperty'], replacerInfo['customPropertyDescriptors']);
                 testRuleInfo.testResourceOriginInfo = replacerInfo;
-                // testRuleInfo.rootTestResourceIsReplaced = true;
             }
             dependencies.splice(i, 1, replacerDependencyTree);
 
@@ -183,8 +185,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages,
             ownerUserId: replacerInfo.userId,
-            systemProperty: resourceVersionInfo.systemProperty,
-            customPropertyDescriptors: resourceVersionInfo.customPropertyDescriptors
+            versionId: resourceVersionInfo.versionId,
         } as TestResourceOriginInfo;
     }
 

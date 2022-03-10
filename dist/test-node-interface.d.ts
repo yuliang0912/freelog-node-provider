@@ -36,6 +36,7 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     coverImages?: string[];
     resourceType: string;
     ownerUserId?: number;
+    versionId?: string;
 }
 export interface TestResourcePropertyInfo {
     key: string;
@@ -282,6 +283,7 @@ export interface TestRuleMatchResult {
     ruleId: string;
     isValid: boolean;
     matchErrors: string[];
+    matchWarnings: string[];
     efficientInfos: TestRuleEfficientInfo[];
     associatedPresentableId?: string;
 }
