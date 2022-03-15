@@ -121,7 +121,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
             await this.nodeTestRuleProvider.updateOne({nodeId}, {
                 status: NodeTestRuleMatchStatus.Completed,
-                testRules: nodeTestRuleInfo.testRules,
+                testRules: allTestRuleMatchResults,
                 themeId: themeTestResourceId,
                 matchResultDate: new Date()
             });
@@ -199,6 +199,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
                     matchErrors: x.matchErrors,
                     matchWarnings: x.matchWarnings,
                     efficientInfos: x.efficientInfos,
+                    ruleInfo: x.ruleInfo,
                     associatedPresentableId: x.presentableInfo?.presentableId
                 };
             })
