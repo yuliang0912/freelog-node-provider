@@ -14,7 +14,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
 
         const BaseContractInfo = new this.mongoose.Schema({
             policyId: {type: String, required: true},  //不确定是否需要在新建方案时就确定策略.因为此时不签约.担心后续签约时,策略不存在.然后需要重新新建方案.
-            contractId: {type: String, default: '', required: false}, //方案解决所使用的合同ID
+            contractId: {type: String, default: '', required: false}, // 方案解决所使用的合同ID
         }, {_id: false});
 
         //声明处理的依赖
@@ -55,7 +55,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
         const StateInfoSchema = new this.mongoose.Schema({
             onlineStatusInfo: {
                 onlineStatus: {type: Number, required: true},
-                ruleId: {type: String, default: '', required: false},//没有规则,代表默认原始的上线状态
+                ruleId: {type: String, default: '', required: false},// 没有规则,代表默认原始的上线状态
             },
             tagInfo: {
                 tags: {type: [String], required: true},

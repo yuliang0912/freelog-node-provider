@@ -17,7 +17,7 @@ export class TestRuleInfo extends MongooseModelBase {
             ruleInfo: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true},
             matchErrors: {type: [String], required: true, default: []},
             efficientInfos: {type: [], required: true, default: []}
-        }, {_id: false, minimize: false})
+        }, {_id: false, minimize: false});
 
         const NodeTestRuleSchema = new this.mongoose.Schema({
             nodeId: {type: Number, required: true}, //节点ID
@@ -30,13 +30,14 @@ export class TestRuleInfo extends MongooseModelBase {
             status: {type: Number, default: 0}, // 1:规则处理中 2:规则匹配失败 3:规则匹配完成
             matchResultDate: {type: Date, required: false, default: null}, // 匹配结果时间
             matchErrorMsg: {type: String, default: '', required: false},
+            matchWarnings: {type: String, default: '', required: false},
         }, {
             minimize: false,
             versionKey: false,
             toJSON: TestRuleInfo.toObjectOptions,
             toObject: TestRuleInfo.toObjectOptions,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
-        })
+        });
 
         NodeTestRuleSchema.index({nodeId: 1}, {unique: true});
 
