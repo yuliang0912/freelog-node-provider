@@ -88,6 +88,9 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             //for (const testRules of chunk(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), 200)) {
             // }
             await this.matchAndSaveTestResourceInfos(nodeTestRuleInfo.testRules.map(x => x.ruleInfo), nodeId, userInfo).then(testRuleMatchResult => {
+                if (!testRuleMatchResult) {
+                    return;
+                }
                 if (testRuleMatchResult.themeTestRuleMatchInfo) {
                     themeTestRuleMatchInfo = testRuleMatchResult.themeTestRuleMatchInfo;
                 }
