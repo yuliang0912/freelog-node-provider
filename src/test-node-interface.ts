@@ -64,6 +64,8 @@ export interface BaseTestRuleInfo {
     text: string;
     // 执行的操作
     operation: TestNodeOperationEnum;
+    // 警告信息
+    warningMsg: string;
     // 展品名
     exhibitName?: string;
     // 标的物
@@ -74,6 +76,7 @@ export interface BaseTestRuleInfo {
 
 export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
     operation: ActionOperationEnum;
+    warningMsg: string;
     content: T;
 }
 
@@ -134,7 +137,6 @@ export interface TestRuleMatchInfo {
     presentableInfo?: PresentableInfo;
     presentableRewriteProperty?: any[];
 
-
     testResourceOriginInfo?: TestResourceOriginInfo;
     entityDependencyTree?: TestResourceDependencyTree[];
     // rootTestResourceIsReplaced?: boolean;
@@ -147,10 +149,10 @@ export interface TestRuleMatchInfo {
     coverInfo?: { coverImages: string[], source: string };
     attrInfo?: { source: string };
     efficientInfos: TestRuleEfficientInfo[];
-    themeInfo: { isActivatedTheme: number, ruleId: string };
+    themeInfo?: { isActivatedTheme: number, ruleId: string };
     replaceRecords?: any[];
 
-    operationAndActionRecords: any[];
+    operationAndActionRecords?: any[];
 
     // rootResourceReplacer?: TestResourceOriginInfo;
 }
@@ -274,6 +276,7 @@ export interface TestResourceInfo {
     dependencyTree?: FlattenTestResourceDependencyTree[];
     operationAndActionRecords?: any[];
     authTree?: FlattenTestResourceAuthTree[];
+    matchWarnings: string[];
     ruleId?: string;
     status?: number;
     rules: ruleOperationInfo[];

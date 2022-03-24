@@ -98,6 +98,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             resolveResources: {type: [ResolveResourceSchema], default: [], required: false},
             resolveResourceSignStatus: {type: Number, default: 0, required: true}, // 1:已全部签约  2:未全部签约
             rules: {type: [RuleInfoSchema], required: true},
+            matchWarnings: {type: [String], default: [], required: false},
             status: {type: Number, default: 0, required: true}
         }, {
             versionKey: false,

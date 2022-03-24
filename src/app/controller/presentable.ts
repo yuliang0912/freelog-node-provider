@@ -35,21 +35,7 @@ export class PresentableController {
     @inject()
     presentableVersionService: IPresentableVersionService;
 
-    // @get('/test')
-    // async test() {
-    //     const presentableList = await this.presentableService.find({});
-    //     for (const presentable of presentableList) {
-    //         if (presentable.coverImages.length) {
-    //             continue;
-    //         }
-    //         await this.presentableService.updatePresentable(presentable, {
-    //             coverImages: ['http://static.testfreelog.com/static/default_cover.png']
-    //         });
-    //     }
-    // }
-
     @get('/')
-    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async index() {
 
         const {ctx} = this;
@@ -142,12 +128,7 @@ export class PresentableController {
         ctx.success(pageResult);
     }
 
-    /**
-     * 获取presentable列表
-     * @returns {Promise<void>}
-     */
     @get('/list')
-    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async list() {
 
         const {ctx} = this;
@@ -507,11 +488,7 @@ export class PresentableController {
         await this.presentableService.contractAppliedPresentable(nodeId, contractIds).then(ctx.success);
     }
 
-    /**
-     * 策略格式校验
-     * @param policies
-     * @param mode
-     */
+    // 策略格式校验
     _policySchemaValidate(policies, mode: 'addPolicy' | 'updatePolicy') {
         const policyValidateResult = this.presentablePolicyValidator.validate(policies || [], mode);
         if (!isEmpty(policyValidateResult.errors)) {
@@ -521,10 +498,7 @@ export class PresentableController {
         }
     }
 
-    /**
-     * 解决上抛资源格式校验
-     * @param resolveResources
-     */
+    // 解决上抛资源格式校验
     _resolveResourcesSchemaValidate(resolveResources) {
         const resolveResourcesValidateResult = this.resolveResourcesValidator.validate(resolveResources || []);
         if (!isEmpty(resolveResourcesValidateResult.errors)) {

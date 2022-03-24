@@ -51,12 +51,14 @@ export interface TestResourcePropertyInfo {
 export interface BaseTestRuleInfo {
     text: string;
     operation: TestNodeOperationEnum;
+    warningMsg: string;
     exhibitName?: string;
     candidate?: CandidateInfo;
     actions: Action<ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment>[];
 }
 export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
     operation: ActionOperationEnum;
+    warningMsg: string;
     content: T;
 }
 export interface ContentSetLabel extends String {
@@ -122,12 +124,12 @@ export interface TestRuleMatchInfo {
         source: string;
     };
     efficientInfos: TestRuleEfficientInfo[];
-    themeInfo: {
+    themeInfo?: {
         isActivatedTheme: number;
         ruleId: string;
     };
     replaceRecords?: any[];
-    operationAndActionRecords: any[];
+    operationAndActionRecords?: any[];
 }
 export interface BaseReplacedInfo {
     id: string;
@@ -251,6 +253,7 @@ export interface TestResourceInfo {
     dependencyTree?: FlattenTestResourceDependencyTree[];
     operationAndActionRecords?: any[];
     authTree?: FlattenTestResourceAuthTree[];
+    matchWarnings: string[];
     ruleId?: string;
     status?: number;
     rules: ruleOperationInfo[];

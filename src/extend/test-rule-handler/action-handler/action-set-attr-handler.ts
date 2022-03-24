@@ -47,12 +47,14 @@ export class ActionSetAttrHandler implements IActionHandler<ContentSetAttr> {
 
         // 不具备编辑权限(主要是系统属性以及自定义的只读属性).
         if ((propertyInfo.authority & 2) !== 2) {
-            testRuleInfo.matchWarnings.push(ctx.gettext('reflect_rule_pre_excute_error_value_access_limited', action.content.key));
+            action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_value_access_limited', action.content.key);
+            testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;
         }
         // 是下拉框,但是设定的值不在规定范围内.
         if (propertyInfo.type === 'select' && !propertyInfo.candidateItems?.includes(action.content.value)) {
-            testRuleInfo.matchWarnings.push(ctx.gettext('reflect_rule_pre_excute_error_value_not_match', action.content.key));
+            action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_value_not_match', action.content.key);
+            testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;
         }
         propertyInfo.value = action.content.value;

@@ -296,7 +296,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             attrInfo,
             efficientInfos,
             replaceRecords,
-            operationAndActionRecords
+            matchWarnings,
+            operationAndActionRecords,
         } = testRuleMatchInfo;
         const testResourceInfo: TestResourceInfo = {
             nodeId, ruleId: id, userId: userInfo.userId,
@@ -338,6 +339,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             rules: [{
                 ruleId: id, operations: efficientInfos.map(x => x.type)
             }],
+            matchWarnings: matchWarnings ?? [],
             resolveResourceSignStatus: 0,
         };
         testResourceInfo.dependencyTree = this.flattenTestResourceDependencyTree(testResourceInfo.testResourceId, testRuleMatchInfo.entityDependencyTree);
@@ -417,7 +419,8 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
             },
             // resolveResources: presentableInfo.resolveResources as ResolveResourceInfo[],
             resolveResourceSignStatus: presentableInfo.resolveResources.some(x => !x.contracts.length) ? 2 : 1,
-            rules: isMatched ? [{ruleId: themeTestRuleMatchInfo.id, operations: ['activate_theme']}] : []
+            rules: isMatched ? [{ruleId: themeTestRuleMatchInfo.id, operations: ['activate_theme']}] : [],
+            matchWarnings: []
         };
     }
 

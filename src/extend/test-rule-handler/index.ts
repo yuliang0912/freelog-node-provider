@@ -60,8 +60,9 @@ export class TestRuleHandler {
             effectiveMatchCount: 0,
             operationAndActionRecords: [],
             efficientInfos: [],
-            ruleInfo
+            ruleInfo: ruleInfo
         }));
+
         this.testRuleMatchInfos.forEach(item => Object.defineProperty(item, 'isValid', {
             get(): boolean {
                 return !item.matchErrors.length;

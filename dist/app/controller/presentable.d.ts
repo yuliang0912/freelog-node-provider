@@ -13,10 +13,6 @@ export declare class PresentableController {
     presentableVersionService: IPresentableVersionService;
     index(): Promise<FreelogContext>;
     indexForAdmin(): Promise<FreelogContext>;
-    /**
-     * 获取presentable列表
-     * @returns {Promise<void>}
-     */
     list(): Promise<void>;
     createPresentable(): Promise<void>;
     updatePresentable(): Promise<void>;
@@ -29,15 +25,6 @@ export declare class PresentableController {
     authTree(): Promise<void>;
     relationTree(): Promise<void>;
     contractAppliedPresentables(): Promise<void>;
-    /**
-     * 策略格式校验
-     * @param policies
-     * @param mode
-     */
     _policySchemaValidate(policies: any, mode: 'addPolicy' | 'updatePolicy'): void;
-    /**
-     * 解决上抛资源格式校验
-     * @param resolveResources
-     */
     _resolveResourcesSchemaValidate(resolveResources: any): void;
 }

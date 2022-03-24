@@ -28,12 +28,14 @@ export class ActionDeleteAttrHandler implements IActionHandler<ContentDeleteAttr
         }
         // 没有操作权限
         if ((propertyInfo.authority & 4) !== 4) {
-            testRuleInfo.matchWarnings.push(ctx.gettext('reflect_rule_pre_excute_error_attribute_access_limited', action.content.key));
+            action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_attribute_access_limited', action.content.key);
+            testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;
         }
         // 删除的属性不存在
         if (!propertyInfo) {
-            testRuleInfo.matchWarnings.push(ctx.gettext('reflect_rule_pre_excute_error_attribute_not_exist', action.content.key));
+            action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_attribute_not_exist', action.content.key);
+            testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;
         }
 
