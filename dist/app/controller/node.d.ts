@@ -6,20 +6,13 @@ export declare class NodeController {
     nodeService: INodeService;
     tagService: ITageService;
     index(): Promise<void>;
-    indexForAdminWithTags(): Promise<void>;
+    indexForAdmin(): Promise<void>;
     createdCount(): Promise<void>;
     list(): Promise<void>;
     create(): Promise<void>;
     detail(): Promise<void>;
     show(): Promise<void>;
-    /**
-     * 为节点设置标签
-     */
-    setNodeTag(): Promise<void>;
-    /**
-     * 取消设置标签
-     */
-    unsetNodeTag(): Promise<void>;
+    batchSetOrRemoveNodeTag(): Promise<FreelogContext>;
     /**
      * 冻结节点
      */

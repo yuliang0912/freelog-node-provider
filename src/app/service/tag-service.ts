@@ -110,4 +110,19 @@ export class TagService implements ITageService {
     async setTagAutoIncrementCounts(tagNames: string[], number: 1 | -1): Promise<boolean> {
         return this.tagInfoProvider.updateMany({tagName: {$in: tagNames}}, {$inc: {totalSetCount: number}}).then(x => Boolean(x.nModified));
     }
+
+    /**
+     * 统计标签数量
+     * @param tags
+     */
+    async tagStatistics(tags: string[]): Promise<Array<{ tag: string, count: number }>> {
+        const condition = [
+            {$match: {tags: {$in: tags}}},
+            {$unwind: {path: '$tags'}},
+            {$match: {tags: {$in: tags}}},
+            {$group: {_id: '$tags', count: {'$sum': 1}}},
+            {$project: {tag: `$_id`, _id: 0, count: '$count'}},
+        ];
+        return this.nodeProvider.aggregate(condition);
+    }
 }

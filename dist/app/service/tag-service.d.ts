@@ -52,4 +52,12 @@ export declare class TagService implements ITageService {
      * @param number
      */
     setTagAutoIncrementCounts(tagNames: string[], number: 1 | -1): Promise<boolean>;
+    /**
+     * 统计标签数量
+     * @param tags
+     */
+    tagStatistics(tags: string[]): Promise<Array<{
+        tag: string;
+        count: number;
+    }>>;
 }

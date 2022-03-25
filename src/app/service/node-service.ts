@@ -6,7 +6,6 @@ import {
     ITageService,
     NodeInfo
 } from '../../interface';
-import {difference, differenceWith} from 'lodash';
 import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 import {NodeStatusEnum} from '../../enum';
 
@@ -166,37 +165,53 @@ export class NodeService implements INodeService {
     }
 
     /**
+     * 批量设置或移除节点标签
+     * @param nodeIds
+     * @param tags
+     * @param setType
+     */
+    async batchSetOrRemoveNodeTags(nodeIds: number[], tags: string[], setType: 1 | 2): Promise<boolean> {
+        const updateModel = {} as any;
+        if (setType === 1) {
+            updateModel.$addToSet = {tags};
+        } else {
+            updateModel.$pull = {tags: {$in: tags}};
+        }
+        return this.nodeProvider.updateMany({nodeId: {$in: nodeIds}}, updateModel).then(t => Boolean(t.ok));
+    }
+
+    /**
      * 设置标签
      * @param nodeInfo
      * @param tagNames
      */
-    async setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean> {
-
-        const effectiveTags = difference(tagNames, nodeInfo.tags);
-
-        const tagList = await this.tagService.find({tagName: {$in: tagNames}});
-        const additionalTags = differenceWith(tagNames, tagList, (x, y) => x.toString() === y.tagName.toString());
-
-        await this.tagService.create(additionalTags);
-        await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
-            $addToSet: {tags: tagNames}
-        });
-
-        return this.tagService.setTagAutoIncrementCounts(effectiveTags, 1);
-    }
+    // async setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean> {
+    //
+    //     const effectiveTags = difference(tagNames, nodeInfo.tags);
+    //
+    //     const tagList = await this.tagService.find({tagName: {$in: tagNames}});
+    //     const additionalTags = differenceWith(tagNames, tagList, (x, y) => x.toString() === y.tagName.toString());
+    //
+    //     await this.tagService.create(additionalTags);
+    //     await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
+    //         $addToSet: {tags: tagNames}
+    //     });
+    //
+    //     return this.tagService.setTagAutoIncrementCounts(effectiveTags, 1);
+    // }
 
     /**
      * 取消设置Tag
      * @param nodeInfo
      * @param tagName
      */
-    async unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean> {
-        if (!nodeInfo.tags?.includes(tagName)) {
-            return true;
-        }
-        await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
-            $pull: {tags: tagName}
-        });
-        return this.tagService.setTagAutoIncrementCounts([tagName], -1);
-    }
+    // async unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean> {
+    //     if (!nodeInfo.tags?.includes(tagName)) {
+    //         return true;
+    //     }
+    //     await this.nodeProvider.updateOne({nodeId: nodeInfo.nodeId}, {
+    //         $pull: {tags: tagName}
+    //     });
+    //     return this.tagService.setTagAutoIncrementCounts([tagName], -1);
+    // }
 }

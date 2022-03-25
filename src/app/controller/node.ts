@@ -5,8 +5,6 @@ import {IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContex
 import {isDate} from 'lodash';
 import {NodeStatusEnum} from '../../enum';
 
-// import {NodeStatusEnum} from '../../enum';
-
 @provide()
 @controller('/v2/nodes')
 export class NodeController {
@@ -42,7 +40,7 @@ export class NodeController {
 
     @get('/search')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async indexForAdminWithTags() {
+    async indexForAdmin() {
 
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
@@ -51,8 +49,8 @@ export class NodeController {
         const status = ctx.checkQuery('status').ignoreParamWhenEmpty().in([0, 1, 2]).toInt().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().trim().value;
-        const startRegisteredDate = ctx.checkQuery('startRegisteredDate').ignoreParamWhenEmpty().toDate().value;
-        const endRegisteredDate = ctx.checkQuery('endRegisteredDate').ignoreParamWhenEmpty().toDate().value;
+        const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
+        const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
         const projection = ctx.checkQuery('projection').ignoreParamWhenEmpty().toSplitArray().default([]).value;
         ctx.validateOfficialAuditAccount().validateParams();
 
@@ -64,12 +62,12 @@ export class NodeController {
             const searchRegExp = new RegExp(keywords, 'i');
             condition.$or = [{nodeName: searchRegExp}, {nodeDomain: searchRegExp}];
         }
-        if (isDate(startRegisteredDate) && isDate(endRegisteredDate)) {
-            condition.createDate = {$gte: startRegisteredDate, $lte: endRegisteredDate};
-        } else if (isDate(startRegisteredDate)) {
-            condition.createDate = {$gte: startRegisteredDate};
-        } else if (isDate(endRegisteredDate)) {
-            condition.createDate = {$lte: endRegisteredDate};
+        if (isDate(startCreateDate) && isDate(endCreateDate)) {
+            condition.createDate = {$gte: startCreateDate, $lte: endCreateDate};
+        } else if (isDate(startCreateDate)) {
+            condition.createDate = {$gte: startCreateDate};
+        } else if (isDate(endCreateDate)) {
+            condition.createDate = {$lte: endCreateDate};
         }
         if (tags) {
             condition.tags = {$in: tags};
@@ -187,40 +185,24 @@ export class NodeController {
         await this.nodeService.findById(nodeId, projection.join(' ')).then(ctx.success);
     }
 
-    /**
-     * 为节点设置标签
-     */
-    @put('/:nodeId/setTag')
+    // 批量设置或移除节点标签
+    @put('/batchSetOrRemoveNodeTag')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async setNodeTag() {
+    async batchSetOrRemoveNodeTag() {
         const {ctx} = this;
-        const nodeId = ctx.checkParams('nodeId').exist().toInt().value;
-        const tagNames = ctx.checkBody('tagNames').exist().isArray().len(1, 100).value;
+        const nodeIds = ctx.checkBody('nodeIds').exist().isArray().value;
+        const tagIds = ctx.checkBody('tagIds').exist().isArray().len(1, 100).value;
+        const setType = ctx.checkBody('setType').exist().toInt().in([1, 2]).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const nodeInfo = await this.nodeService.findOne({nodeId});
-        ctx.entityNullObjectCheck(nodeInfo);
+        const tagList = await this.tagService.find({_id: {$in: tagIds}});
+        if (!tagList.length) {
+            return ctx.success(false);
+        }
 
-        await this.nodeService.setTag(nodeInfo, tagNames.map(x => x.trim())).then(ctx.success);
+        await this.nodeService.batchSetOrRemoveNodeTags(nodeIds, tagList.map(x => x.tagName), setType).then(ctx.success);
     }
-
-    /**
-     * 取消设置标签
-     */
-    @put('/:nodeId/unsetTag')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async unsetNodeTag() {
-        const {ctx} = this;
-        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const tagName = ctx.checkBody('tagName').exist().trim().value;
-        ctx.validateParams().validateOfficialAuditAccount();
-
-        const nodeInfo = await this.nodeService.findOne({nodeId});
-        ctx.entityNullObjectCheck(nodeInfo);
-
-        await this.nodeService.unsetTag(nodeInfo, tagName).then(ctx.success);
-    }
-
+    
     /**
      * 冻结节点
      */

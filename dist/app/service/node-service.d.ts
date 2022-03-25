@@ -31,15 +31,10 @@ export declare class NodeService implements INodeService {
      */
     findNodeFreezeRecords(nodeId: number, ...args: any[]): Promise<any>;
     /**
-     * 设置标签
-     * @param nodeInfo
-     * @param tagNames
+     * 批量设置或移除节点标签
+     * @param nodeIds
+     * @param tags
+     * @param setType
      */
-    setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
-    /**
-     * 取消设置Tag
-     * @param nodeInfo
-     * @param tagName
-     */
-    unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
+    batchSetOrRemoveNodeTags(nodeIds: number[], tags: string[], setType: 1 | 2): Promise<boolean>;
 }

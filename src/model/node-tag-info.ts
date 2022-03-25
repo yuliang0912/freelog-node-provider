@@ -13,9 +13,7 @@ export class TagInfoModel extends MongooseModelBase {
     buildMongooseModel() {
 
         const tagInfoSchema = new this.mongoose.Schema({
-
             tagName: {type: String, required: true},
-            totalSetCount: {type: Number, default: 0, required: false}, // 总设置次数
             createUserId: {type: Number, required: true},
         }, {
             versionKey: false,

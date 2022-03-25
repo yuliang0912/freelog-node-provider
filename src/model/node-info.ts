@@ -32,6 +32,7 @@ export class NodeInfoModel extends MongooseModelBase {
         });
 
         NodeInfoScheme.index({ownerUserId: 1});
+        NodeInfoScheme.index({tags: 1});
         NodeInfoScheme.index({nodeId: 1}, {unique: true});
         NodeInfoScheme.index({nodeName: 1}, {unique: true});
         NodeInfoScheme.index({nodeDomain: 1}, {unique: true});

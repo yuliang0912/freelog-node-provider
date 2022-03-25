@@ -7,4 +7,5 @@ export declare class TagInfoController {
     index(): Promise<void>;
     destroy(): Promise<void>;
     update(): Promise<void>;
+    tagStatistics(): Promise<void>;
 }

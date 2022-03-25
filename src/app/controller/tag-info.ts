@@ -69,4 +69,30 @@ export class TagInfoController {
 
         await this.tagService.updateOne(tagInfo, tagName).then(ctx.success);
     }
+
+    // 统计标签使用数量
+    @get('/statistics')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async tagStatistics() {
+        const {ctx} = this;
+        const tagIds = ctx.checkQuery('tagIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const tagList = await this.tagService.find({_id: {$in: tagIds}});
+        if (!tagList.length) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed'));
+        }
+
+        const tagCountMap = await this.tagService.tagStatistics(tagList.map(x => x.tagName)).then(list => {
+            return new Map(list.map(x => [x.tag, parseInt(x.count.toString())]));
+        });
+
+        ctx.success(tagList.map(x => {
+            return {
+                tagId: x.tagId,
+                tagName: x.tagName,
+                count: tagCountMap.get(x.tagName) ?? 0
+            };
+        }));
+    }
 }

@@ -332,21 +332,23 @@ export interface INodeService {
 
     findUserCreatedNodeCounts(userIds: number[]);
 
+    batchSetOrRemoveNodeTags(nodeIds: number[], tags: string[], setType: 1 | 2): Promise<boolean>;
+
     // searchIntervalListByTags(condition: object, tagNames?: string[], options?: findOptions<NodeInfo>): Promise<PageResult<NodeInfo>>;
 
-    /**
-     * 设置标签
-     * @param nodeInfo
-     * @param tagNames
-     */
-    setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
-
-    /**
-     * 取消设置Tag
-     * @param nodeInfo
-     * @param tagName
-     */
-    unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
+    // /**
+    //  * 设置标签
+    //  * @param nodeInfo
+    //  * @param tagNames
+    //  */
+    // setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
+    //
+    // /**
+    //  * 取消设置Tag
+    //  * @param nodeInfo
+    //  * @param tagName
+    //  */
+    // unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
 
     /**
      * 冻结或解冻节点
@@ -521,6 +523,8 @@ export interface ITageService extends IBaseService<TagInfo> {
      * @param number
      */
     setTagAutoIncrementCounts(tags: string[], number: 1 | -1): Promise<boolean>;
+
+    tagStatistics(tags: string[]): Promise<Array<{ tag: string, count: number }>>;
 }
 
 export interface TagInfo {
@@ -538,7 +542,7 @@ export interface TagInfo {
     /**
      * 总设置数量
      */
-    totalSetCount: number;
+    // totalSetCount: number;
 
     /**
      * 创建人ID

@@ -276,18 +276,7 @@ export interface INodeService {
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
     createNode(options: CreateNodeOptions): Promise<NodeInfo>;
     findUserCreatedNodeCounts(userIds: number[]): any;
-    /**
-     * 设置标签
-     * @param nodeInfo
-     * @param tagNames
-     */
-    setTag(nodeInfo: NodeInfo, tagNames: string[]): Promise<boolean>;
-    /**
-     * 取消设置Tag
-     * @param nodeInfo
-     * @param tagName
-     */
-    unsetTag(nodeInfo: NodeInfo, tagName: string): Promise<boolean>;
+    batchSetOrRemoveNodeTags(nodeIds: number[], tags: string[], setType: 1 | 2): Promise<boolean>;
     /**
      * 冻结或解冻节点
      * @param nodeInfo
@@ -386,6 +375,10 @@ export interface ITageService extends IBaseService<TagInfo> {
      * @param number
      */
     setTagAutoIncrementCounts(tags: string[], number: 1 | -1): Promise<boolean>;
+    tagStatistics(tags: string[]): Promise<Array<{
+        tag: string;
+        count: number;
+    }>>;
 }
 export interface TagInfo {
     /**
@@ -399,7 +392,6 @@ export interface TagInfo {
     /**
      * 总设置数量
      */
-    totalSetCount: number;
     /**
      * 创建人ID
      */
