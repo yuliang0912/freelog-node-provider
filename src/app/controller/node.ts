@@ -191,18 +191,18 @@ export class NodeController {
     async batchSetOrRemoveNodeTag() {
         const {ctx} = this;
         const nodeIds = ctx.checkBody('nodeIds').exist().isArray().value;
-        const tagIds = ctx.checkBody('tagIds').exist().isArray().len(1, 100).value;
+        const tagNames = ctx.checkBody('tagNames').exist().isArray().len(1, 100).value;
         const setType = ctx.checkBody('setType').exist().toInt().in([1, 2]).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const tagList = await this.tagService.find({_id: {$in: tagIds}});
+        const tagList = await this.tagService.find({tagName: {$in: tagNames}});
         if (!tagList.length) {
             return ctx.success(false);
         }
 
         await this.nodeService.batchSetOrRemoveNodeTags(nodeIds, tagList.map(x => x.tagName), setType).then(ctx.success);
     }
-    
+
     /**
      * 冻结节点
      */
