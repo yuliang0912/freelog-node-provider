@@ -88,7 +88,7 @@ export class PresentableController {
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').ignoreParamWhenEmpty().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').ignoreParamWhenEmpty().toInt().default(10).gt(0).lt(101).value;
-        const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().value;
+        const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().type('string').len(1, 100).value;
@@ -118,7 +118,7 @@ export class PresentableController {
         if (!pageResult.dataList) {
             return ctx.success(pageResult);
         }
-        pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList);
+        pageResult.dataList = await this.presentableService.fillPresentablePolicyInfo(pageResult.dataList, true);
         pageResult.dataList.forEach(item => {
             item['nodeName'] = first<NodeInfo>(item.nodes)?.nodeName ?? '';
             item.presentableId = item._id;
