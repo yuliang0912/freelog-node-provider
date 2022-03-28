@@ -48,6 +48,7 @@ export class NodeController {
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const status = ctx.checkQuery('status').ignoreParamWhenEmpty().in([0, 1, 2]).toInt().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
+        const ownerUserId = ctx.checkQuery('ownerUserId').ignoreParamWhenEmpty().toInt().gt(0).value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().trim().value;
         const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
         const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
@@ -60,7 +61,7 @@ export class NodeController {
         }
         if (keywords?.length) {
             const searchRegExp = new RegExp(keywords, 'i');
-            condition.$or = [{nodeName: searchRegExp}, {nodeDomain: searchRegExp}];
+            condition.$or = [{nodeName: searchRegExp}, {nodeDomain: searchRegExp}, {ownerUserName: searchRegExp}];
         }
         if (isDate(startCreateDate) && isDate(endCreateDate)) {
             condition.createDate = {$gte: startCreateDate, $lte: endCreateDate};
@@ -72,8 +73,11 @@ export class NodeController {
         if (tags) {
             condition.tags = {$in: tags};
         }
+        if (ownerUserId) {
+            condition.ownerUserId = ownerUserId;
+        }
 
-        await this.nodeService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
+        await this.nodeService.findIntervalList(condition, skip, limit, projection, sort ?? {createDate: -1}).then(ctx.success);
 
         // const tagMap = await this.tagService.find({status: 0}).then(list => {
         //     return new Map(list.map(x => [x.tagId.toString(), pick(x, ['tagId', 'tag'])]));

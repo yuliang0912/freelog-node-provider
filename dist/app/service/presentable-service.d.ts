@@ -85,6 +85,14 @@ export declare class PresentableService implements IPresentableService {
      */
     fillPresentableResourceVersionInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
     /**
+     * 节点创建的展品数量统计
+     * @param nodeIds
+     */
+    nodePresentableStatistics(nodeIds: number[]): Promise<Array<{
+        nodeId: number;
+        count: number;
+    }>>;
+    /**
      * 校验resolveResources参数
      * @param resourceInfo
      * @param resolveResources

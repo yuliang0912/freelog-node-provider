@@ -20,6 +20,7 @@ export declare class PresentableController {
     updatePresentableVersion(): Promise<void>;
     updatePresentableRewriteProperty(): Promise<void>;
     presentableDetail(): Promise<void>;
+    nodePresentableStatistics(): Promise<void>;
     show(): Promise<void>;
     dependencyTree(): Promise<void>;
     authTree(): Promise<void>;

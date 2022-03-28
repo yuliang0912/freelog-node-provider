@@ -86,6 +86,26 @@ export class TagService implements ITageService {
     }
 
     /**
+     * 批量删除标签
+     * @param tagList
+     */
+    async batchDeleteTag(tagList: TagInfo[]): Promise<boolean> {
+        const tagIds = tagList.map(x => x.tagId);
+        const tagNames = tagList.map(x => x.tagName);
+        const session = await this.tagInfoProvider.model.startSession();
+        await session.withTransaction(async () => {
+            const task1 = this.tagInfoProvider.deleteMany({_id: {$in: tagIds}}, {session});
+            const task2 = this.nodeProvider.updateMany({tags: {$in: tagNames}}, {
+                $pull: {tags: {$in: tagNames}}
+            }, {multi: true, session});
+            await Promise.all([task1, task2]);
+        }).finally(() => {
+            session.endSession();
+        });
+        return true;
+    }
+
+    /**
      * 查询区间列表
      * @param condition
      * @param options

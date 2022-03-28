@@ -41,18 +41,20 @@ export class TagInfoController {
         await this.tagService.find(null).then(ctx.success);
     }
 
-    @del('/:tagId')
+    @del('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async destroy() {
 
         const {ctx} = this;
-        const tagId = this.ctx.checkParams('tagId').exist().isMongoObjectId().value;
+        const tagIds = this.ctx.checkQuery('tagIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const tagInfo = await this.tagService.findOne({_id: tagId});
-        ctx.entityNullObjectCheck(tagInfo);
+        const tagList = await this.tagService.find({_id: {$in: tagIds}});
+        if (!tagList.length) {
+            return ctx.success(false);
+        }
 
-        await this.tagService.deleteTag(tagInfo).then(ctx.success);
+        await this.tagService.batchDeleteTag(tagList).then(ctx.success);
     }
 
     @put('/:tagId')
@@ -61,7 +63,7 @@ export class TagInfoController {
 
         const {ctx} = this;
         const tagId = ctx.checkParams('tagId').exist().isMongoObjectId().value;
-        const tagName = ctx.checkBody('tag').exist().type('string').trim().len(1, 80).value;
+        const tagName = ctx.checkBody('tagName').exist().type('string').trim().len(1, 80).value;
         ctx.validateOfficialAuditAccount();
 
         const tagInfo = await this.tagService.findOne({_id: tagId});

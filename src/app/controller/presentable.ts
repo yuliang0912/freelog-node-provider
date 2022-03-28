@@ -369,6 +369,25 @@ export class PresentableController {
         ctx.success(presentableInfo);
     }
 
+    @get('/admin/presentableStatistics')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async nodePresentableStatistics() {
+        const {ctx} = this;
+        let nodeIds = ctx.checkQuery('nodeIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        ctx.validateParams().validateOfficialAuditAccount();
+
+        nodeIds = nodeIds.map(x => parseInt(x));
+        const nodeMap = await this.presentableService.nodePresentableStatistics(nodeIds).then(list => {
+            return new Map(list.map(x => [x.nodeId, x.count]));
+        });
+
+        ctx.success(nodeIds.map(nodeId => {
+            return {
+                nodeId, count: nodeMap.get(nodeId) ?? 0
+            };
+        }));
+    }
+
     @get('/:presentableId')
     async show() {
 

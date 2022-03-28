@@ -302,6 +302,10 @@ export interface IPresentableService {
     fillPresentableVersionProperty(presentables: PresentableInfo[], isLoadResourceCustomPropertyDescriptors: boolean, isLoadPresentableRewriteProperty: boolean): Promise<PresentableInfo[]>;
     fillPresentableResourceInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
     fillPresentableResourceVersionInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]>;
+    nodePresentableStatistics(nodeIds: number[]): Promise<Array<{
+        nodeId: number;
+        count: number;
+    }>>;
 }
 export interface IOutsideApiService {
     getResourceInfo(resourceIdOrName: string, options?: object): Promise<ResourceInfo>;
@@ -369,6 +373,7 @@ export interface ITageService extends IBaseService<TagInfo> {
      */
     updateOne(tagInfo: TagInfo, tagName: string): Promise<boolean>;
     deleteTag(tagInfo: TagInfo): Promise<boolean>;
+    batchDeleteTag(tagList: TagInfo[]): Promise<boolean>;
     /**
      * 设置标签自增(自减)数量.
      * @param tags

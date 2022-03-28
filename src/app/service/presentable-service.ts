@@ -56,7 +56,18 @@ export class PresentableService implements IPresentableService {
      */
     async createPresentable(options: CreatePresentableOptions) {
 
-        const {resourceInfo, resolveResources, nodeInfo, policies, presentableName, presentableTitle, version, versionId, tags, coverImages} = options;
+        const {
+            resourceInfo,
+            resolveResources,
+            nodeInfo,
+            policies,
+            presentableName,
+            presentableTitle,
+            version,
+            versionId,
+            tags,
+            coverImages
+        } = options;
 
         const model = {
             presentableName, presentableTitle, version, tags, resolveResources,
@@ -78,7 +89,10 @@ export class PresentableService implements IPresentableService {
             }
         }
 
-        const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+        const beSignSubjects = chain(resolveResources).map(({
+                                                                resourceId,
+                                                                contracts
+                                                            }) => contracts.map(({policyId}) => Object({
             subjectId: resourceId, policyId
         }))).flattenDeep().value();
 
@@ -150,7 +164,10 @@ export class PresentableService implements IPresentableService {
             if (invalidResolveResources.length) {
                 throw new ApplicationError(this.ctx.gettext('presentable-update-resolve-release-invalid-error'), {invalidResolveResources});
             }
-            const beSignSubjects = chain(options.resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+            const beSignSubjects = chain(options.resolveResources).map(({
+                                                                            resourceId,
+                                                                            contracts
+                                                                        }) => contracts.map(({policyId}) => Object({
                 subjectId: resourceId, policyId
             }))).flattenDeep().value();
             const contractMap = await this.outsideApiService.batchSignNodeContracts(presentableInfo.nodeId, beSignSubjects).then(contracts => {
@@ -374,6 +391,19 @@ export class PresentableService implements IPresentableService {
             presentableInfo.resourceVersionInfo = resourceVersionList.find(x => x.resourceId === presentableInfo.resourceInfo.resourceId);
             return presentableInfo;
         });
+    }
+
+    /**
+     * 节点创建的展品数量统计
+     * @param nodeIds
+     */
+    nodePresentableStatistics(nodeIds: number[]): Promise<Array<{ nodeId: number, count: number }>> {
+        const condition = [
+            {$match: {nodeId: {$in: nodeIds}}},
+            {$group: {_id: '$nodeId', count: {'$sum': 1}}},
+            {$project: {nodeId: '$_id', _id: 0, count: '$count'}},
+        ];
+        return this.presentableProvider.aggregate(condition);
     }
 
     /**
