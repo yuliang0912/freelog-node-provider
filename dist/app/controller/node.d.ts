@@ -24,5 +24,5 @@ export declare class NodeController {
     /**
      * 节点冻结记录
      */
-    nodeFreezeRecords(): Promise<FreelogContext>;
+    nodeFreezeRecords(): Promise<void>;
 }

@@ -124,14 +124,14 @@ export class NodeService implements INodeService {
      * @param nodeInfo
      * @param remark
      */
-    async freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean> {
+    async freezeOrDeArchiveResource(nodeInfo: NodeInfo, reason: string, remark: string): Promise<boolean> {
 
         // 已经冻结的就是做解封操作.反之亦然
         const operatorType = (nodeInfo.status & NodeStatusEnum.Freeze) === NodeStatusEnum.Freeze ? 2 : 1;
         const operatorRecordInfo = {
             operatorUserId: this.ctx.userId,
             operatorUserName: this.ctx.identityInfo.userInfo.username,
-            type: operatorType, remark: remark ?? ''
+            type: operatorType, reason: reason ?? '', remark: remark ?? ''
         };
 
         const nodeStatus = operatorType === 1 ? (nodeInfo.status | NodeStatusEnum.Freeze) : (nodeInfo.status ^ NodeStatusEnum.Freeze);
@@ -156,12 +156,17 @@ export class NodeService implements INodeService {
     }
 
     /**
-     * 查找节点冻结操作记录
-     * @param nodeId
-     * @param args
+     * 批量查找节点冻结与解封记录
+     * @param nodeIds
+     * @param operationType
+     * @param recordLimit
      */
-    async findNodeFreezeRecords(nodeId: number, ...args) {
-        return this.nodeFreezeRecordProvider.findOne({nodeId}, ...args);
+    async batchFindFreeOrRecoverRecords(nodeIds: number[], operationType?: 1 | 2, recordLimit?: number) {
+        const condition = {nodeId: {$in: nodeIds}} as any;
+        if (operationType) {
+            condition['records.type'] = operationType;
+        }
+        return this.nodeFreezeRecordProvider.find(condition, {records: {$slice: recordLimit}} as any);
     }
 
     /**

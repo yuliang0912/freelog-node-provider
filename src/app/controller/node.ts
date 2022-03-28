@@ -1,6 +1,6 @@
 import {INodeService, ITageService} from '../../interface';
 import {controller, inject, get, post, provide, put} from 'midway';
-import {isUndefined, isNumber, isArray, isString, last} from 'lodash';
+import {isUndefined, isNumber, isArray, isString} from 'lodash';
 import {IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext} from 'egg-freelog-base';
 import {isDate} from 'lodash';
 import {NodeStatusEnum} from '../../enum';
@@ -215,7 +215,8 @@ export class NodeController {
     async freezeNode() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const remark = ctx.checkBody('remark').optional().trim().value;
+        const reason = ctx.checkBody('reason').optional().len(1, 200).value;
+        const remark = ctx.checkBody('remark').optional().len(1, 200).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
         const nodeInfo = await this.nodeService.findById(nodeId);
@@ -225,7 +226,7 @@ export class NodeController {
             throw new ArgumentError('节点已被冻结,不能重复操作');
         }
 
-        await this.nodeService.freezeOrDeArchiveResource(nodeInfo, remark).then(ctx.success);
+        await this.nodeService.freezeOrDeArchiveResource(nodeInfo, reason, remark).then(ctx.success);
     }
 
     /**
@@ -236,7 +237,8 @@ export class NodeController {
     async deArchiveNode() {
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const remark = ctx.checkBody('remark').optional().trim().value;
+        const reason = ctx.checkBody('reason').optional().len(1, 200).value;
+        const remark = ctx.checkBody('remark').optional().len(1, 200).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
         const nodeInfo = await this.nodeService.findById(nodeId);
@@ -246,26 +248,24 @@ export class NodeController {
             throw new ArgumentError('节点未被冻结,无法进行解封操作');
         }
 
-        await this.nodeService.freezeOrDeArchiveResource(nodeInfo, remark).then(ctx.success);
+        await this.nodeService.freezeOrDeArchiveResource(nodeInfo, reason, remark).then(ctx.success);
     }
 
     /**
      * 节点冻结记录
      */
-    @get('/:nodeId/freezeRecords')
+    @get('/freeOrRecover/records')
     async nodeFreezeRecords() {
         const {ctx} = this;
-        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
-        const isFilterLatest = ctx.checkQuery('isFilterLatest').optional().toBoolean().default(false).value;
+        const nodeIds = ctx.checkQuery('nodeIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        const recordDesc = ctx.checkQuery('remark').optional().default(1).toInt().in([0, 1]).value;
+        const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().default(10).gt(0).le(100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const nodeInfo = await this.nodeService.findById(nodeId);
-        ctx.entityNullObjectCheck(nodeInfo);
-
-        const record = await this.nodeService.findNodeFreezeRecords(nodeId);
-        if (isFilterLatest) {
-            return ctx.success([last(record.records)]);
+        const dataList = await this.nodeService.batchFindFreeOrRecoverRecords(nodeIds.map(x => parseInt(x)), undefined, recordLimit);
+        if (recordDesc) {
+            dataList.forEach(x => x.records.reverse());
         }
-        ctx.success(record.records);
+        ctx.success(dataList);
     }
 }

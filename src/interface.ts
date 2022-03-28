@@ -353,11 +353,18 @@ export interface INodeService {
     /**
      * 冻结或解冻节点
      * @param nodeInfo
+     * @param reason
      * @param remark
      */
-    freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean>;
+    freezeOrDeArchiveResource(nodeInfo: NodeInfo, reason: string, remark?: string): Promise<boolean>;
 
-    findNodeFreezeRecords(nodeId: number, ...args): Promise<any>;
+    /**
+     * 批量查找节点冻结与解封记录
+     * @param nodeIds
+     * @param operationType
+     * @param recordLimit
+     */
+    batchFindFreeOrRecoverRecords(nodeIds: number[], operationType?: 1 | 2, recordLimit?: number): Promise<any[]>;
 }
 
 export interface IPresentableService {

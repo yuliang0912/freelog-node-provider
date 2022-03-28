@@ -31,7 +31,7 @@ let NodeFreezeRecordModel = class NodeFreezeRecordModel extends mongoose_model_b
             timestamps: { createdAt: 'createDate', updatedAt: false }
         });
         const NodeFreezeRecordSchema = new this.mongoose.Schema({
-            nodeId: { type: String, required: true },
+            nodeId: { type: Number, required: true },
             nodeName: { type: String, required: true },
             records: { type: [OperationRecordSchema], required: true }
         }, {

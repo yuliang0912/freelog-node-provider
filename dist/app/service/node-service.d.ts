@@ -23,13 +23,14 @@ export declare class NodeService implements INodeService {
      * @param nodeInfo
      * @param remark
      */
-    freezeOrDeArchiveResource(nodeInfo: NodeInfo, remark: string): Promise<boolean>;
+    freezeOrDeArchiveResource(nodeInfo: NodeInfo, reason: string, remark: string): Promise<boolean>;
     /**
-     * 查找节点冻结操作记录
-     * @param nodeId
-     * @param args
+     * 批量查找节点冻结与解封记录
+     * @param nodeIds
+     * @param operationType
+     * @param recordLimit
      */
-    findNodeFreezeRecords(nodeId: number, ...args: any[]): Promise<any>;
+    batchFindFreeOrRecoverRecords(nodeIds: number[], operationType?: 1 | 2, recordLimit?: number): Promise<any[]>;
     /**
      * 批量设置或移除节点标签
      * @param nodeIds
