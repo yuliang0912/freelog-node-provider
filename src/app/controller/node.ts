@@ -46,7 +46,7 @@ export class NodeController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
-        const status = ctx.checkQuery('status').ignoreParamWhenEmpty().in([0, 1, 2]).toInt().value;
+        const status = ctx.checkQuery('status').ignoreParamWhenEmpty().in([0, 1]).toInt().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const ownerUserId = ctx.checkQuery('ownerUserId').ignoreParamWhenEmpty().toInt().gt(0).value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().trim().value;
@@ -56,8 +56,10 @@ export class NodeController {
         ctx.validateOfficialAuditAccount().validateParams();
 
         const condition: any = {};
-        if (isNumber(status)) {
-            condition.status = status;
+        if (status === 0) {
+            condition.status = {$in: [1, 2]};
+        } else if (status === 2) {
+            condition.status = {$in: [4, 5, 6]};
         }
         if (keywords?.length) {
             const searchRegExp = new RegExp(keywords, 'i');

@@ -15,6 +15,7 @@ export class NodeFreezeRecordModel extends MongooseModelBase {
             operatorUserId: {type: Number, required: true},
             operatorUserName: {type: String, required: true},
             type: {type: Number, enum: [1, 2], required: true}, // 1:冻结 2:解冻
+            reason: {type: String, default: '', required: false},
             remark: {type: String, default: '', required: false}
         }, {
             _id: false,
