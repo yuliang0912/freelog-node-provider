@@ -22,32 +22,27 @@ export class ActionDeleteAttrHandler implements IActionHandler<ContentDeleteAttr
             return false;
         }
 
-        const propertyInfo = testRuleInfo.propertyMap.get(action.content.key);
-        if (!propertyInfo) {
-            return true;
-        }
-
         const operationAndActionRecord = {
             type: ActionOperationEnum.DeleteAttr, data: {
-                exhibitName: testRuleInfo.ruleInfo.exhibitName,
-                attrKey: action.content.key
+                exhibitName: testRuleInfo.ruleInfo.exhibitName, attrKey: action.content.key
             }
         } as any;
-        testRuleInfo.operationAndActionRecords.push(operationAndActionRecord);
 
-        // 没有操作权限
-        if ((propertyInfo.authority & 4) !== 4) {
-            operationAndActionRecord.warningMsg = action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_attribute_access_limited', action.content.key);
-            testRuleInfo.matchWarnings.push(action.warningMsg);
-            return false;
-        }
+        testRuleInfo.operationAndActionRecords.push(operationAndActionRecord);
+        const propertyInfo = testRuleInfo.propertyMap.get(action.content.key);
+
         // 删除的属性不存在
         if (!propertyInfo) {
             operationAndActionRecord.warningMsg = action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_attribute_not_exist', action.content.key);
             testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;
         }
-
+        // 没有操作权限
+        if ((propertyInfo.authority & 4) !== 4) {
+            operationAndActionRecord.warningMsg = action.warningMsg = ctx.gettext('reflect_rule_pre_excute_error_attribute_access_limited', action.content.key);
+            testRuleInfo.matchWarnings.push(action.warningMsg);
+            return false;
+        }
         testRuleInfo.propertyMap.delete(action.content.key);
         testRuleInfo.attrInfo = {source: testRuleInfo.id};
         return true;
