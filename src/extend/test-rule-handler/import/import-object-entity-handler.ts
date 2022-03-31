@@ -75,17 +75,20 @@ export class ImportObjectEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, objectInfo: ObjectStorageInfo, userId: number) {
 
         if (!objectInfo) {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_object_not_existed', matchRule.ruleInfo.candidate.name));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_object_not_existed', matchRule.ruleInfo.candidate.name);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 
         if (objectInfo.userId && objectInfo.userId !== userId) {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_access_limited', matchRule.ruleInfo.candidate.name));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_access_limited', matchRule.ruleInfo.candidate.name);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 
         if ((objectInfo.resourceType ?? '').trim() === '') {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', matchRule.ruleInfo.candidate.name));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', matchRule.ruleInfo.candidate.name);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 

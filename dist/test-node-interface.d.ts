@@ -52,13 +52,15 @@ export interface BaseTestRuleInfo {
     text: string;
     operation: TestNodeOperationEnum;
     warningMsg: string;
+    errorMsg: string;
     exhibitName?: string;
     candidate?: CandidateInfo;
     actions: Action<ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment>[];
 }
 export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
     operation: ActionOperationEnum;
-    warningMsg: string;
+    warningMsg?: string;
+    errorMsg?: string;
     content: T;
 }
 export interface ContentSetLabel extends String {

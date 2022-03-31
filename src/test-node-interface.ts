@@ -66,6 +66,7 @@ export interface BaseTestRuleInfo {
     operation: TestNodeOperationEnum;
     // 警告信息
     warningMsg: string;
+    errorMsg: string;
     // 展品名
     exhibitName?: string;
     // 标的物
@@ -76,7 +77,8 @@ export interface BaseTestRuleInfo {
 
 export interface Action<T extends ContentSetLabel[] | ContentReplace | ContentSetOnline | ContentSetTitle | ContentSetCover | ContentSetAttr | ContentDeleteAttr | ContentComment> {
     operation: ActionOperationEnum;
-    warningMsg: string;
+    warningMsg?: string;
+    errorMsg?: string;
     content: T;
 }
 

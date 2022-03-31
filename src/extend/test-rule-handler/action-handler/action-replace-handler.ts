@@ -96,8 +96,8 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             if (currDependencyInfo.id !== replacerInfo.id) {
                 const {result, deep} = this.checkCycleDependency(ctx, rootDependencies, replacerDependencyTree);
                 if (result) {
-                    const msg = ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_duplicate_rely' : 'reflect_rule_pre_excute_error_circular_rely', replacerInfo.name);
-                    testRuleInfo.matchErrors.push(msg);
+                    action.errorMsg = ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_duplicate_rely' : 'reflect_rule_pre_excute_error_circular_rely', replacerInfo.name);
+                    testRuleInfo.matchErrors.push(action.errorMsg);
                     continue;
                 }
             }
@@ -141,21 +141,24 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
         const replacerIsResource = replacer.type === TestResourceOriginType.Resource;
         const replacerInfo = await this.getReplacerInfo(ctx, replacer);
         if (!replacerInfo) {
-            const msg = ctx.gettext(replacerIsResource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
-            testRuleInfo.matchErrors.push(msg);
+            action.errorMsg = ctx.gettext(replacerIsResource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
+            testRuleInfo.matchErrors.push(action.errorMsg);
             return;
         }
         const resourceVersionInfo = replacerIsResource ? this.importResourceEntityHandler.matchResourceVersion(replacerInfo as ResourceInfo, replacer.versionRange) : null;
         if (replacerIsResource && !resourceVersionInfo) {
-            testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange));
+            action.errorMsg = ctx.gettext('reflect_rule_pre_excute_error_version_invalid', replacer.name, replacer.versionRange);
+            testRuleInfo.matchErrors.push(action.errorMsg);
             return;
         }
         if (replacerIsObject && replacerInfo.userId !== ctx.userId) {
-            testRuleInfo.matchErrors.push(ctx.gettext('reflect_rule_pre_excute_error_access_limited', replacer.name));
+            action.errorMsg = ctx.gettext('reflect_rule_pre_excute_error_access_limited', replacer.name);
+            testRuleInfo.matchErrors.push(action.errorMsg);
             return;
         }
         if (replacerIsObject && !replacerInfo.resourceType) {
-            testRuleInfo.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', replacer.name));
+            action.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', replacer.name);
+            testRuleInfo.matchErrors.push(action.errorMsg);
             return;
         }
         if (replacerIsObject) {

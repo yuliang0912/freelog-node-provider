@@ -91,7 +91,8 @@ export class ImportPresentableEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, presentableInfo: PresentableInfo, resourceInfo: ResourceInfo, presentableVersionInfo: PresentableVersionInfo) {
 
         if (!presentableInfo) {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_exhibit_not_existed', matchRule.ruleInfo.exhibitName));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_exhibit_not_existed', matchRule.ruleInfo.exhibitName);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 

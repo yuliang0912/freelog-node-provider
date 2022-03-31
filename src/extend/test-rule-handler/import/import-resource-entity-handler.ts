@@ -113,13 +113,15 @@ export class ImportResourceEntityHandler {
     _fillRuleEntityInfo(matchRule: TestRuleMatchInfo, resourceInfo: ResourceInfo): void {
 
         if (!resourceInfo) {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_resource_not_existed', matchRule.ruleInfo.candidate.name));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_resource_not_existed', matchRule.ruleInfo.candidate.name);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 
         const resourceVersion = this.matchResourceVersion(resourceInfo, matchRule.ruleInfo.candidate.versionRange);
         if (!resourceVersion) {
-            matchRule.matchErrors.push(this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', matchRule.ruleInfo.candidate.name, matchRule.ruleInfo.candidate.versionRange));
+            matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_version_invalid', matchRule.ruleInfo.candidate.name, matchRule.ruleInfo.candidate.versionRange);
+            matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;
         }
 

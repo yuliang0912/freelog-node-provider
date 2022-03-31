@@ -55,7 +55,8 @@ export class OperationActivateThemeHandler implements IOperationHandler {
                 });
                 return true;
             }
-            activeThemeRuleInfo.matchWarnings.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
+            activeThemeRuleInfo.ruleInfo.warningMsg = this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName);
+            activeThemeRuleInfo.matchWarnings.push(activeThemeRuleInfo.ruleInfo.warningMsg);
             return false;
         }
 
@@ -63,10 +64,12 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             nodeId, presentableName: new RegExp(`^${activeThemeRuleInfo.ruleInfo.exhibitName.trim()}$`, 'i')
         });
         if (!presentableInfo) {
-            activeThemeRuleInfo.matchErrors.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_existed`, activeThemeRuleInfo.ruleInfo.exhibitName));
+            activeThemeRuleInfo.ruleInfo.errorMsg = this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_existed`, activeThemeRuleInfo.ruleInfo.exhibitName);
+            activeThemeRuleInfo.matchErrors.push(activeThemeRuleInfo.ruleInfo.errorMsg);
             return false;
         } else if (presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
-            activeThemeRuleInfo.matchWarnings.push(this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName));
+            activeThemeRuleInfo.ruleInfo.warningMsg = this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName);
+            activeThemeRuleInfo.matchWarnings.push(activeThemeRuleInfo.ruleInfo.warningMsg);
             return false;
         }
         activeThemeRuleInfo.ruleInfo.candidate = {
