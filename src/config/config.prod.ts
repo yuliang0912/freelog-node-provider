@@ -13,7 +13,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-node-service',
         logLevel: 1, // logLevel.ERROR,
-        brokers: ['kafka-hs.production:9092'],
+        brokers: ['kafka-0.production:9092', 'kafka-1.production:9092', 'kafka-2.production:9092'],
         connectionTimeout: 3000,
         retry: {
             initialRetryTime: 5000,
