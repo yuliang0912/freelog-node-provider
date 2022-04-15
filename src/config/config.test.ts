@@ -13,7 +13,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-node-service',
         logLevel: 1, // logLevel.ERROR,
-        brokers: ['kafka-svc.common:9093']
+        brokers: ['kafka-0.development:9092']
     };
 
     return config;
