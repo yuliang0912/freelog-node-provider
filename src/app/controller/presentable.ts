@@ -47,7 +47,7 @@ export class PresentableController {
         const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 20).value;
         const onlineStatus = ctx.checkQuery('onlineStatus').optional().toInt().default(1).value;
-        const keywords = ctx.checkQuery('keywords').optional().type('string').len(1, 100).value;
+        const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().type('string').len(1, 100).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
