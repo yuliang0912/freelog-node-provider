@@ -102,6 +102,7 @@ export class ExhibitAuthResponseHandler {
                 throw new ArgumentError('不支持的作品类型数据流读取');
         }
         if (!response.res.statusCode.toString().startsWith('2')) {
+            console.log(response.res);
             throw new ApplicationError('文件读取失败');
         }
         this.ctx.body = response.data;
