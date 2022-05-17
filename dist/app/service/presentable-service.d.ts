@@ -4,6 +4,7 @@ import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base'
 import { PresentableCommonChecker } from '../../extend/presentable-common-checker';
 export declare class PresentableService implements IPresentableService {
     ctx: FreelogContext;
+    mongoose: any;
     nodeService: INodeService;
     outsideApiService: IOutsideApiService;
     presentableAuthService: IPresentableAuthService;

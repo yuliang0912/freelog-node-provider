@@ -116,7 +116,7 @@ export class PresentableController {
             condition.nodeId = nodeId;
         }
         if (presentableId) {
-            condition._id = presentableId;
+            condition['_id'] = presentableId;
         }
 
         const pageResult = await this.presentableService.searchIntervalList(condition, keywords, {

@@ -1,4 +1,4 @@
-import {inject, provide} from 'midway';
+import {inject, plugin, provide} from 'midway';
 import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from '../../enum';
 import {
@@ -18,6 +18,8 @@ export class PresentableService implements IPresentableService {
 
     @inject()
     ctx: FreelogContext;
+    @plugin()
+    mongoose;
     @inject()
     nodeService: INodeService;
     @inject()
@@ -244,6 +246,9 @@ export class PresentableService implements IPresentableService {
      * @param options
      */
     async searchIntervalList(condition: object, keywords?: string, options?: findOptions<PresentableInfo>) {
+        if (condition['_id']) {
+            condition['_id'] = this.mongoose.convertObjectId(condition['_id']);
+        }
         const pipeline: any = [
             {
                 $lookup: {
