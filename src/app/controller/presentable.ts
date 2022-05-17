@@ -90,6 +90,7 @@ export class PresentableController {
         const limit = ctx.checkQuery('limit').ignoreParamWhenEmpty().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const nodeId = ctx.checkQuery('nodeId').ignoreParamWhenEmpty().toInt().gt(0).value;
+        const presentableId = ctx.checkQuery('presentableId').ignoreParamWhenEmpty().isPresentableId().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().type('string').len(1, 100).value;
@@ -113,6 +114,9 @@ export class PresentableController {
         }
         if (nodeId) {
             condition.nodeId = nodeId;
+        }
+        if (presentableId) {
+            condition._id = presentableId;
         }
 
         const pageResult = await this.presentableService.searchIntervalList(condition, keywords, {
