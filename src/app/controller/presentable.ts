@@ -89,6 +89,7 @@ export class PresentableController {
         const skip = ctx.checkQuery('skip').ignoreParamWhenEmpty().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').ignoreParamWhenEmpty().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
+        const nodeId = ctx.checkQuery('nodeId').ignoreParamWhenEmpty().toInt().gt(0).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().type('string').len(1, 100).value;
@@ -109,6 +110,9 @@ export class PresentableController {
             condition.createDate = {$gte: startCreatedDate};
         } else if (isDate(endCreatedDate)) {
             condition.createDate = {$lte: endCreatedDate};
+        }
+        if (nodeId) {
+            condition.nodeId = nodeId;
         }
 
         const pageResult = await this.presentableService.searchIntervalList(condition, keywords, {

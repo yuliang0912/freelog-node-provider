@@ -49,6 +49,7 @@ export class NodeController {
         const status = ctx.checkQuery('status').ignoreParamWhenEmpty().in([0, 1]).toInt().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
         const ownerUserId = ctx.checkQuery('ownerUserId').ignoreParamWhenEmpty().toInt().gt(0).value;
+        const nodeId = ctx.checkQuery('nodeId').ignoreParamWhenEmpty().toInt().gt(0).value;
         const keywords = ctx.checkQuery('keywords').ignoreParamWhenEmpty().trim().value;
         const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
         const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
@@ -78,7 +79,9 @@ export class NodeController {
         if (ownerUserId) {
             condition.ownerUserId = ownerUserId;
         }
-
+        if (nodeId) {
+            condition.nodeId = nodeId;
+        }
         await this.nodeService.findIntervalList(condition, skip, limit, projection, sort ?? {createDate: -1}).then(ctx.success);
 
         // const tagMap = await this.tagService.find({status: 0}).then(list => {
