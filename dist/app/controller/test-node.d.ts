@@ -17,6 +17,7 @@ export declare class TestNodeController {
     testResources(): Promise<void>;
     testResourceList(): Promise<void>;
     showTestResource(): Promise<void>;
+    showTestResourceDetail(): Promise<void>;
     updateTestResource(): Promise<void>;
     searchTestResources(): Promise<FreelogContext>;
     testResourceDependencyTree(): Promise<any[]>;

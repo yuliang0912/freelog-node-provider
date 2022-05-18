@@ -1,7 +1,7 @@
 import {satisfies} from 'semver';
 import {INodeService} from '../../interface';
 import {controller, inject, get, post, put, provide} from 'midway';
-import {ITestNodeService, TestResourceOriginType} from '../../test-node-interface';
+import {ITestNodeService, TestResourceInfo, TestResourceOriginType} from '../../test-node-interface';
 import {isString, isArray, isUndefined, pick, chain, uniq, first, isEmpty} from 'lodash';
 import {
     IdentityTypeEnum, ArgumentError, FreelogContext, IJsonSchemaValidate, visitorIdentityValidator
@@ -217,6 +217,29 @@ export class TestNodeController {
         ctx.validateParams();
 
         await this.testNodeService.findOneTestResource({testResourceId}).then(ctx.success);
+    }
+
+    // 查看测试资源详情
+    @get('/testResources/detail')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async showTestResourceDetail() {
+
+        const {ctx} = this;
+        const testResourceId = ctx.checkQuery('testResourceId').ignoreParamWhenEmpty().isMd5().value;
+        const testResourceName = ctx.checkQuery('testResourceName').ignoreParamWhenEmpty().len(1, 128).value;
+        ctx.validateParams();
+
+        const condition = {} as Partial<TestResourceInfo>;
+        if (testResourceId) {
+            condition.testResourceId = testResourceId;
+        }
+        if (isString(testResourceName)) {
+            condition.testResourceName = testResourceName;
+        }
+        if (!Object.keys(condition).length) {
+            throw new ArgumentError(this.ctx.gettext('params-required-validate-failed'));
+        }
+        await this.testNodeService.findOneTestResource(condition).then(ctx.success);
     }
 
     // 解决测试资源的依赖授权
