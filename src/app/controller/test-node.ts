@@ -208,16 +208,17 @@ export class TestNodeController {
     }
 
     // 查看测试资源详情
-    @get('/testResources/detail')
+    @get('/:nodeId/testResources/detail')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async showTestResourceDetail() {
 
         const {ctx} = this;
+        const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
         const testResourceId = ctx.checkQuery('testResourceId').ignoreParamWhenEmpty().isMd5().value;
         const testResourceName = ctx.checkQuery('testResourceName').ignoreParamWhenEmpty().len(1, 128).value;
         ctx.validateParams();
 
-        const condition = {} as Partial<TestResourceInfo>;
+        const condition = {nodeId} as Partial<TestResourceInfo>;
         if (testResourceId) {
             condition.testResourceId = testResourceId;
         }
