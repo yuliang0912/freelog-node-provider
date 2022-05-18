@@ -96,7 +96,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             if (currDependencyInfo.id !== replacerInfo.id) {
                 const {result, deep} = this.checkCycleDependency(ctx, rootDependencies, replacerDependencyTree);
                 if (result) {
-                    action.errorMsg = ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_duplicate_rely' : 'reflect_rule_pre_excute_error_circular_rely', replacerInfo.name);
+                    action.errorMsg = ctx.gettext(deep == 1 ? 'reflect_rule_pre_excute_error_circular_rely' : 'reflect_rule_pre_excute_error_duplicate_rely', replacerInfo.name);
                     testRuleInfo.matchErrors.push(action.errorMsg);
                     continue;
                 }
