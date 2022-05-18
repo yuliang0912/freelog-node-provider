@@ -16,8 +16,8 @@ export declare class TestNodeController {
     rematchTestRule(): Promise<void>;
     testResources(): Promise<void>;
     testResourceList(): Promise<void>;
-    showTestResource(): Promise<void>;
     showTestResourceDetail(): Promise<void>;
+    showTestResource(): Promise<void>;
     updateTestResource(): Promise<void>;
     searchTestResources(): Promise<FreelogContext>;
     testResourceDependencyTree(): Promise<any[]>;

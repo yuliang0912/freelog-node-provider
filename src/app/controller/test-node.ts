@@ -208,18 +208,6 @@ export class TestNodeController {
     }
 
     // 查看测试资源详情
-    @get('/testResources/:testResourceId')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async showTestResource() {
-
-        const {ctx} = this;
-        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
-        ctx.validateParams();
-
-        await this.testNodeService.findOneTestResource({testResourceId}).then(ctx.success);
-    }
-
-    // 查看测试资源详情
     @get('/testResources/detail')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async showTestResourceDetail() {
@@ -240,6 +228,18 @@ export class TestNodeController {
             throw new ArgumentError(this.ctx.gettext('params-required-validate-failed'));
         }
         await this.testNodeService.findOneTestResource(condition).then(ctx.success);
+    }
+
+    // 查看测试资源详情
+    @get('/testResources/:testResourceId')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async showTestResource() {
+
+        const {ctx} = this;
+        const testResourceId = ctx.checkParams('testResourceId').exist().isMd5().value;
+        ctx.validateParams();
+
+        await this.testNodeService.findOneTestResource({testResourceId}).then(ctx.success);
     }
 
     // 解决测试资源的依赖授权
