@@ -114,6 +114,7 @@ export class PresentableAuthController {
                 presentableId: presentableInfo.presentableId,
                 presentableName: presentableInfo.presentableName,
                 referee: authResult.referee,
+                defaulterIdentityType: authResult.defaulterIdentityType,
                 authCode: authResult.authCode,
                 isAuth: authResult.isAuth,
                 error: authResult.errorMsg
