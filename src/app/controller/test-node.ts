@@ -183,7 +183,7 @@ export class TestNodeController {
         const entityType = ctx.checkQuery('entityType').optional().in([TestResourceOriginType.Resource, TestResourceOriginType.Object]).value;
         const entityIds = ctx.checkQuery('entityIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const entityNames = ctx.checkQuery('entityNames').optional().toSplitArray().len(1, 100).value;
-        const testResourceNames = ctx.request.queries['testResourceNames'];
+        const testResourceNames = ctx.checkQuery('testResourceNames').optional().toSplitArray().len(1, 100).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -204,8 +204,8 @@ export class TestNodeController {
         if (isArray(entityNames)) {
             condition['originInfo.name'] = {$in: entityNames};
         }
-        if (isArray(testResourceNames) && testResourceNames.length) {
-            condition['testResourceName'] = {$in: testResourceNames};
+        if (isArray(testResourceNames)) {
+            condition['testResourceName'] = {$in: testResourceNames.map(x => decodeURIComponent(x))};
         }
         await this.testNodeService.findTestResources(condition, projection.join(' ')).then(ctx.success);
     }
