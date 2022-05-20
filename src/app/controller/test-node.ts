@@ -187,8 +187,8 @@ export class TestNodeController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        if ([entityType, entityIds, entityNames].every(isUndefined)) {
-            throw new ArgumentError('params-required-validate-failed', 'entityType,entityIds,entityNames');
+        if ([entityType, entityIds, entityNames, testResourceNames].every(isUndefined)) {
+            throw new ArgumentError('params-required-validate-failed', 'entityType,entityIds,entityNames,testResourceNames');
         }
 
         const nodeInfo = await this.nodeService.findById(nodeId);
