@@ -295,7 +295,7 @@ export class PresentableService implements IPresentableService {
     }
 
     async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<PresentableInfo>> {
-        return this.presentableProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort ?? {createDate: -1});
+        return this.presentableProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort ?? {updateDate: -1});
     }
 
     async count(condition: object): Promise<number> {

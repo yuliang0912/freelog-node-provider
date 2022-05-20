@@ -154,6 +154,7 @@ export class ExhibitController {
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
+
         if ([testResourceIds, articleIds].every(isUndefined)) {
             throw new ArgumentError('params-required-validate-failed', 'exhibitIds,articleIds');
         }

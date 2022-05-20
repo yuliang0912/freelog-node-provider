@@ -245,7 +245,7 @@ let PresentableService = class PresentableService {
         return this.presentableProvider.find({ _id: { $in: presentableIds } }, ...args);
     }
     async findIntervalList(condition, skip, limit, projection, sort) {
-        return this.presentableProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort ?? { createDate: -1 });
+        return this.presentableProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort ?? { updateDate: -1 });
     }
     async count(condition) {
         return this.presentableProvider.count(condition);
