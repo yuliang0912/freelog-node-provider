@@ -39,6 +39,12 @@ export default (appInfo: EggAppInfo) => {
         }
     };
 
+    config.httpclient = {
+        request: {
+            timeout: 30000,
+        },
+    };
+
     config.clientCredentialInfo = {
         clientId: 1004,
         publicKey: 'c8724fd977542b155abac77664093770',
