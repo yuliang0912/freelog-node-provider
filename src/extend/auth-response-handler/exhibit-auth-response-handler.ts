@@ -52,9 +52,9 @@ export class ExhibitAuthResponseHandler {
             case 'fileStream':
                 this.exhibitAuthFailedResponseHandle(authResult, exhibitInfo);
                 if (!subArticleFilePath) {
-                    await this.fileStreamResponseHandle(realResponseArticleBaseInfo, exhibitInfo.exhibitTitle);
+                    return this.fileStreamResponseHandle(realResponseArticleBaseInfo, exhibitInfo.exhibitTitle);
                 } else {
-                    await this.articleSubFileStreamResponseHandle(realResponseArticleBaseInfo, subArticleFilePath);
+                    return this.articleSubFileStreamResponseHandle(realResponseArticleBaseInfo, subArticleFilePath);
                 }
                 break;
             default:
@@ -122,6 +122,7 @@ export class ExhibitAuthResponseHandler {
     async articleSubFileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, subArticleFilePath: string) {
 
         let response;
+        const startTime = Date.now();
         switch (realResponseArticleBaseInfo.articleType) {
             case ArticleTypeEnum.IndividualResource:
                 response = await this.outsideApiService.getSubResourceFile(realResponseArticleBaseInfo.articleId, realResponseArticleBaseInfo.version, subArticleFilePath);
@@ -143,6 +144,7 @@ export class ExhibitAuthResponseHandler {
         }
 
         this.ctx.body = response.data;
+        this.ctx.set('x-ready-time', (Date.now() - startTime).toString());
         this.ctx.set('content-disposition', response.res.headers['content-disposition']);
         this.ctx.set('content-length', response.res.headers['content-length']);
         // 代码需要放到ctx.attachment以后,否则不可控.
