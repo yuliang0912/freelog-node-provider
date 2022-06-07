@@ -26,8 +26,14 @@ export default () => {
     };
     config.gatewayUrl = 'http://api.testfreelog.com';
 
+
+    config.gatewayUrl = 'https://api.freelog.com';
+    config.mongoose = {
+        url: decodeURIComponent(`mongodb%3A%2F%2Fnode_service%3AQzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk%3D%40freelog-prod-public.mongodb.rds.aliyuncs.com%3A3717%2Cfreelog-prod-public-secondary.mongodb.rds.aliyuncs.com%3A3717%2Fprod-nodes%3FreplicaSet%3Dmgset-58730021`)
+    };
+
     config.localIdentity = {
-        userId: 50028,
+        userId: 10005,
         username: 'yuliang',
         email: 'support@freelog.com'
     };

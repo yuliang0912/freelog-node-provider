@@ -705,3 +705,11 @@ export interface IContractAuthStatusChangedEventMessage {
     afterAuthStatus: ContractAuthStatusEnum;
     contractStatus: ContractStatusEnum;
 }
+
+export interface ExhibitInsideAuthNode {
+    resourceId: string;
+    versionId: string;
+    roleType: 'node' | 'resource' // 解决授权方的角色类型
+    contractIds: string[];
+    isIgnore: boolean; // 例如虽上抛但未实际使用或者作为授权树的结束节点(没有解决任何其他资源的)
+}

@@ -533,3 +533,10 @@ export interface IContractAuthStatusChangedEventMessage {
     afterAuthStatus: ContractAuthStatusEnum;
     contractStatus: ContractStatusEnum;
 }
+export interface ExhibitInsideAuthNode {
+    resourceId: string;
+    versionId: string;
+    roleType: 'node' | 'resource';
+    contractIds: string[];
+    isIgnore: boolean;
+}
