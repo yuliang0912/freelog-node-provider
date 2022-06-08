@@ -105,7 +105,6 @@ export declare class OutsideApiService implements IOutsideApiService {
     /**
      * 获取用户与展品的合约
      * @param subjectIds
-     * @param licensorId
      * @param licenseeId
      * @param options
      */

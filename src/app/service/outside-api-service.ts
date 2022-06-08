@@ -229,15 +229,19 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 获取用户与展品的合约
      * @param subjectIds
-     * @param licensorId
      * @param licenseeId
      * @param options
      */
     async getUserPresentableContracts(subjectIds: string[], licenseeId: number, options?: object): Promise<ContractInfo[]> {
+        if (isEmpty(subjectIds)) {
+            return [];
+        }
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectIds=${subjectIds.toString()}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`).then(pageResult => {
-            return pageResult?.dataList ?? [];
+        const tasks = chunk(uniq(subjectIds), 100).map(subjectIdChunk => {
+            const url = `${this.ctx.webApi.contractInfoV2}/list?subjectIds=${subjectIdChunk.toString()}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`;
+            return this.ctx.curlIntranetApi(url);
         });
+        return Promise.all(tasks).then(results => flatten(results));
     }
 
     /**
