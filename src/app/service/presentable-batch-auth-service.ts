@@ -35,31 +35,33 @@ export class PresentableBatchAuthService {
      * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧 4:全链路授权(含C端用户)
      */
     async batchPresentableAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3 | 4) {
-        const start1 = Date.now();
         let clientAuthTask = undefined;
         let nodeAndUpstreamAuthTask = this.batchPresentableNodeSideAndUpstreamAuth(presentables, presentableAuthTreeMap, authType as any);
         if (authType === 4) {
             clientAuthTask = this.batchPresentableClientUserSideAuth(presentables, presentableAuthTreeMap);
         }
         const results = await Promise.all([clientAuthTask, nodeAndUpstreamAuthTask]);
-        const clientAuthResultMap = first<Map<string, SubjectAuthResult>>(results);
         const nodeAndUpstreamAuthResultMap = last<Map<string, SubjectAuthResult>>(results);
+        if ([1, 2, 3].includes(authType)) {
+            return new Map<string, SubjectAuthResult>(presentables.map(presentableInfo => {
+                return [presentableInfo.presentableId, nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId)];
+            }));
+        }
+
+        const clientAuthResultMap = first<Map<string, SubjectAuthResult>>(results);
         const authResultMap = new Map<string, SubjectAuthResult>();
         for (const presentableInfo of presentables) {
-            if (authType === 4) {
-                const clientAuthResult = clientAuthResultMap.get(presentableInfo.presentableId);
-                if (!clientAuthResult.isAuth) {
-                    authResultMap.set(presentableInfo.presentableId, clientAuthResult);
-                } else {
-                    const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
-                    authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
-                }
-            } else {
-                const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+            const clientAuthResult = clientAuthResultMap.get(presentableInfo.presentableId);
+            const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+            if (!clientAuthResult.isAuth && !nodeAndUpstreamAuthResult.isAuth) {
+                clientAuthResult.setDefaulterIdentityType(clientAuthResult.defaulterIdentityType | nodeAndUpstreamAuthResult.defaulterIdentityType);
+                authResultMap.set(presentableInfo.presentableId, clientAuthResult);
+            } else if (!nodeAndUpstreamAuthResult.isAuth) {
                 authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
+            } else {
+                authResultMap.set(presentableInfo.presentableId, clientAuthResult);
             }
         }
-        console.log(`total:${Date.now() - start1}`);
         return authResultMap;
     }
 
@@ -70,7 +72,6 @@ export class PresentableBatchAuthService {
      * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧
      */
     async batchPresentableNodeSideAndUpstreamAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3) {
-        const start1 = Date.now();
         const exhibitInsideAuthMap = new Map<string, ExhibitInsideAuthNode[]>();
         const presentableMap = new Map(presentables.map(x => [x.presentableId, x]));
         for (const [presentableId, authTree] of presentableAuthTreeMap) {
@@ -130,7 +131,6 @@ export class PresentableBatchAuthService {
             }
             authResultMap.set(presentableId, subjectAuthResult);
         }
-        console.log(`batchPresentableNodeSideAndUpstreamAuth:${Date.now() - start1}`);
         return authResultMap;
     }
 
@@ -140,7 +140,6 @@ export class PresentableBatchAuthService {
      * @param presentableAuthTreeMap
      */
     async batchPresentableClientUserSideAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
-        const start1 = Date.now();
         const authResultMap = new Map<string, SubjectAuthResult>();
         presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
         // 未登录用户判定一下策略中是否含有免费策略,如果有,直接走策略授权模式
@@ -185,7 +184,6 @@ export class PresentableBatchAuthService {
             }
         }
         await Promise.all(tasks);
-        console.log(`batchPresentableClientUserSideAuth:${Date.now() - start1}`);
         return authResultMap;
     }
 
