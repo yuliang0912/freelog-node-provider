@@ -286,7 +286,7 @@ export class ExhibitController {
             presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], isTranslate).then(first);
         }
         if (isLoadContract && ctx.isLoginUser()) {
-            const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, ctx.userId);
+            const contracts = await this.outsideApiService.getUserPresentableContracts([presentableInfo.presentableId], ctx.userId);
             presentableInfo = Reflect.has(presentableInfo, 'toObject') ? (<any>presentableInfo).toObject() : presentableInfo;
             presentableInfo.contracts = contracts;
         }

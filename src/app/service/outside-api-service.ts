@@ -1,4 +1,4 @@
-import {isEmpty} from 'lodash';
+import {chunk, flatten, isEmpty, uniq} from 'lodash';
 import {inject, provide} from 'midway';
 import {
     BasePolicyInfo,
@@ -74,7 +74,11 @@ export class OutsideApiService implements IOutsideApiService {
             return [];
         }
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/versions/list?versionIds=${versionIds.toString()}&${optionParams.join('&')}`);
+        const tasks = chunk(uniq(versionIds), 100).map(versionIdChunk => {
+            const url = `${this.ctx.webApi.resourceInfoV2}/versions/list?versionIds=${versionIdChunk.toString()}&${optionParams.join('&')}`;
+            return this.ctx.curlIntranetApi(url);
+        });
+        return Promise.all(tasks).then(results => flatten(results));
     }
 
     /**
@@ -224,14 +228,14 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取用户与展品的合约
-     * @param subjectId
+     * @param subjectIds
      * @param licensorId
      * @param licenseeId
      * @param options
      */
-    async getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]> {
+    async getUserPresentableContracts(subjectIds: string[], licenseeId: number, options?: object): Promise<ContractInfo[]> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectIds=${subjectId}&licensorId=${licensorId}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`).then(pageResult => {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectIds=${subjectIds.toString()}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Presentable}&${optionParams.join('&')}`).then(pageResult => {
             return pageResult?.dataList ?? [];
         });
     }
@@ -246,7 +250,11 @@ export class OutsideApiService implements IOutsideApiService {
             return [];
         }
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&${optionParams.join('&')}`);
+        const tasks = chunk(uniq(contractIds), 100).map(contractIdChunk => {
+            const url = `${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIdChunk.toString()}&${optionParams.join('&')}`;
+            return this.ctx.curlIntranetApi(url);
+        });
+        return Promise.all(tasks).then(results => flatten(results));
     }
 
     /**

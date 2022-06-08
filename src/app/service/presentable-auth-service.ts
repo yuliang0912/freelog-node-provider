@@ -197,7 +197,7 @@ export class PresentableAuthService implements IPresentableAuthService {
      */
     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
 
-        const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
+        const contracts = await this.outsideApiService.getUserPresentableContracts([presentableInfo.presentableId], userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
         if (!isEmpty(contracts)) {
             const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
             if (!contractAuthResult.isAuth) {

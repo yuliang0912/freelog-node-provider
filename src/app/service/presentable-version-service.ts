@@ -58,6 +58,8 @@ export class PresentableVersionService implements IPresentableVersionService {
             presentableRewriteProperty,
             versionProperty: this._calculatePresentableVersionProperty(presentableVersionInfo.resourceSystemProperty, presentableVersionInfo.resourceCustomPropertyDescriptors, presentableRewriteProperty)
         };
+        // 空修改是为了同步一下展品的最后修改时间,方便排序
+        this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {presentableName: presentableInfo.presentableName}).then();
         return this.presentableVersionProvider.updateOne({presentableVersionId: presentableVersionInfo.presentableVersionId}, updateModel).then(data => Boolean(data.ok));
     }
 
@@ -93,7 +95,10 @@ export class PresentableVersionService implements IPresentableVersionService {
 
         const oldPresentableVersionId = this.presentableCommonChecker.generatePresentableVersionId(presentableId, presentableInfo.version);
         const oldPresentableVersionInfo = await this.presentableVersionProvider.findOne({presentableVersionId: oldPresentableVersionId});
-        const {systemProperty, customPropertyDescriptors} = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
+        const {
+            systemProperty,
+            customPropertyDescriptors
+        } = await this.outsideApiService.getResourceVersionInfo(resourceVersionId);
         model.resourceSystemProperty = systemProperty;
         model.resourceCustomPropertyDescriptors = customPropertyDescriptors;
         // 如果新版本存在,则更新时不需要覆盖属性,否则就需要把旧的属性直接继承到新的版本上
@@ -319,7 +324,15 @@ export class PresentableVersionService implements IPresentableVersionService {
      */
     _getPresentableResolveResources(presentableInfo: PresentableInfo, rootDependency: ResourceDependencyTree): PresentableResolveResource[] {
 
-        const {resourceId, resourceName, resourceType, version, versionId, dependencies, baseUpcastResources} = rootDependency;
+        const {
+            resourceId,
+            resourceName,
+            resourceType,
+            version,
+            versionId,
+            dependencies,
+            baseUpcastResources
+        } = rootDependency;
 
         const presentableResolveResources: PresentableResolveResource[] = [{
             resourceId, resourceName, resourceType,

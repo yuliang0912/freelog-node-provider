@@ -1,4 +1,4 @@
-import { SubjectAuthResult } from './auth-interface';
+import { DefaulterIdentityTypeEnum, SubjectAuthResult } from './auth-interface';
 import { ObjectDependencyTreeInfo } from './test-node-interface';
 import { PresentableAuthStatusEnum, PresentableOnlineStatusEnum, ArticleTypeEnum } from './enum';
 import { ContractLicenseeIdentityTypeEnum, ContractStatusEnum, FreelogUserInfo, SubjectTypeEnum, PageResult } from 'egg-freelog-base';
@@ -327,7 +327,7 @@ export interface IOutsideApiService {
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[], isTranslate: boolean): Promise<BasePolicyInfo[]>;
     batchSignNodeContracts(nodeId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
-    getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
+    getUserPresentableContracts(subjectIds: string[], licenseeId: number, options?: object): Promise<ContractInfo[]>;
     signUserPresentableContract(userId: any, subjectInfo: SubjectInfo): Promise<ContractInfo>;
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceVersionAuthResults(resourceVersionIds: string[], options?: object): Promise<any[]>;
@@ -536,7 +536,7 @@ export interface IContractAuthStatusChangedEventMessage {
 export interface ExhibitInsideAuthNode {
     resourceId: string;
     versionId: string;
-    roleType: 'node' | 'resource';
+    roleType: DefaulterIdentityTypeEnum;
     contractIds: string[];
-    isIgnore: boolean;
+    resolveVersionId: string;
 }

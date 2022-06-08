@@ -1,267 +1,236 @@
-// import {inject, provide} from 'midway';
-// import {
-//     ContractInfo, ExhibitInsideAuthInfo, ExhibitInsideAuthNode,
-//     FlattenPresentableAuthTree,
-//     IOutsideApiService,
-//     PresentableInfo
-// } from '../../interface';
-// import {chain, isArray, isEmpty} from 'lodash';
-// import {
-//     ApplicationError,
-//     FreelogContext,
-//     FreelogUserInfo,
-//     SubjectAuthCodeEnum,
-//     SubjectTypeEnum
-// } from 'egg-freelog-base';
-// import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
-// import {PolicyHelper} from '../../extend/policy-helper';
-//
-// @provide()
-// export class PresentableBatchAuthService {
-//
-//     @inject()
-//     ctx: FreelogContext;
-//     @inject()
-//     policyHelper: PolicyHelper;
-//     @inject()
-//     outsideApiService: IOutsideApiService;
-//
-//
-//     /**
-//      * 多展品全链路授权
-//      * @param presentables
-//      * @param presentableAuthTreeMap
-//      */
-//     async presentableAllChainAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
-//
-//     }
-//
-//
-//     /**
-//      * 展品节点侧和上游链路授权
-//      * @param presentables
-//      * @param presentableAuthTreeMap
-//      */
-//     async presentableNodeSideAndUpstreamAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
-//         const exhibitInsideAuthMap = new Map<string, ExhibitInsideAuthNode[]>();
-//         for (const [presentableId, authTree] of presentableAuthTreeMap) {
-//             const exhibitInsideAuthNodes: ExhibitInsideAuthNode[] = [];
-//             for (const authItem of authTree) {
-//                 const roleType =
-//                 exhibitInsideAuthNodes.push({
-//                     resourceId: authItem.resourceId,
-//                     versionId: authItem.version,
-//                     roleType: authItem.deep === 1 ? 'node' : 'resource'
-//                 });
-//             }
-//             exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes);
-//         }
-//     }
-//
-//     /**
-//      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//         const clientUserSideAuthResult = await this.presentableClientUserSideAuth(presentableInfo);
-//         if (!clientUserSideAuthResult.isAuth) {
-//             return clientUserSideAuthResult;
-//         }
-//
-//         const nodeSideAuthTask = this.presentableNodeSideAuth(presentableInfo, presentableAuthTree);
-//         const upstreamResourceAuthTask = this.presentableUpstreamAuth(presentableInfo, presentableAuthTree);
-//
-//         const [nodeSideAuthResult, upstreamResourceAuthResult] = await Promise.all([nodeSideAuthTask, upstreamResourceAuthTask]);
-//
-//         return !nodeSideAuthResult.isAuth ? nodeSideAuthResult : !upstreamResourceAuthResult.isAuth ? upstreamResourceAuthResult : clientUserSideAuthResult; // clientUserSideAuthResult;
-//     }
-//
-//     /**
-//      * 展品节点侧以及上游授权结果
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableNodeSideAndUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const nodeSideAuthTask = this.presentableNodeSideAuth(presentableInfo, presentableAuthTree);
-//         const upstreamResourceAuthTask = this.presentableUpstreamAuth(presentableInfo, presentableAuthTree);
-//
-//         const [nodeSideAuthResult, upstreamResourceAuthResult] = await Promise.all([nodeSideAuthTask, upstreamResourceAuthTask]);
-//         return !nodeSideAuthResult.isAuth ? nodeSideAuthResult : upstreamResourceAuthResult;
-//     }
-//
-//     /**
-//      * 展品节点侧授权(节点自己解决的资源以及上抛的授权情况)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const startDate = new Date();
-//         const authResult = new SubjectAuthResult();
-//         try {
-//             // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.
-//             const presentableResolveResourceIdSet = new Set(presentableAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
-//             // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
-//             const toBeAuthorizedResources = presentableInfo.resolveResources.filter(x => presentableResolveResourceIdSet.has(x.resourceId));
-//
-//             const allNodeContractIds = chain(toBeAuthorizedResources).map(x => x.contracts).flattenDeep().map(x => x.contractId).value();
-//
-//             const contractMap = await this.outsideApiService.getContractByContractIds(allNodeContractIds, {
-//                 licenseeId: presentableInfo.nodeId, projection: 'contractId,subjectId,subjectType,authStatus'
-//             }).then(list => {
-//                 return new Map(list.map(x => [x.contractId, x]));
-//             });
-//
-//             const authFailedResources = toBeAuthorizedResources.filter(resolveResource => {
-//                 const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-//                 // const currentAuthTreeNode = presentableAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
-//                 // currentAuthTreeNode.authContractIds = resolveResource.contracts.map(x => x.contractId);
-//                 return !this.contractAuth(resolveResource.resourceId, contracts).isAuth;
-//             });
-//
-//             this.ctx.set('presentableNodeSideAuthTime', (new Date().getTime() - startDate.getTime()).toString());
-//             if (!isEmpty(authFailedResources)) {
-//                 return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
-//             }
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//         } catch (e) {
-//             return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
-//         }
-//     }
-//
-//     /**
-//      * 展品上游合约授权(通过授权树获取对应的合约的授权状态即可直接判定,无需调用标的物的授权API)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const authResult = new SubjectAuthResult();
-//         try {
-//             const resourceVersionIds = chain(presentableAuthTree).map(x => x.versionId).uniq().value();
-//             if (isEmpty(resourceVersionIds)) {
-//                 throw new ApplicationError('presentable data has loused');
-//             }
-//             const startDate = new Date();
-//             const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds, {authType: 'auth'});
-//             this.ctx.set('presentableUpstreamAuthTime', (new Date().getTime() - startDate.getTime()).toString());
-//             for (const resourceVersionAuthResult of resourceVersionAuthResults) {
-//                 const {versionId, resolveResourceAuthResults} = resourceVersionAuthResult;
-//                 if (isEmpty(resourceVersionAuthResults)) {
-//                     continue;
-//                 }
-//                 const nids = presentableAuthTree.filter(x => x.versionId === versionId).map(x => x.nid);
-//                 const practicalUsedResources = presentableAuthTree.filter(x => nids.includes(x.parentNid));
-//                 const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'resourceId').filter(x => !x.authResult?.isAuth).value();
-//                 if (!isEmpty(authFailedResources)) {
-//                     return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource).setErrorMsg('展品上游链路授权未通过');
-//                 }
-//             }
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//         } catch (e) {
-//             return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource);
-//         }
-//     }
-//
-//     /**
-//      *  展品C端用户侧授权(自动查找当前登录用户与展品之间的合约,如果无合约,需要根据需求做免费策略校验.然后登录用户自动签约免费策略,非登录用户直接通过授权)
-//      * @param presentableInfo
-//      */
-//     async presentableClientUserSideAuth(presentableInfo: PresentableInfo): Promise<SubjectAuthResult> {
-//         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
-//         try {
-//             if (!this.ctx.isLoginUser()) {
-//                 return this._unLoginUserPolicyAuth(presentableInfo);
-//             }
-//             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
-//         } catch (e) {
-//             return new SubjectAuthResult().setData({error: e}).setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
-//         }
-//     }
-//
-//     /**
-//      * 根据合同计算授权结果
-//      * @param subjectId
-//      * @param contracts
-//      */
-//     contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult {
-//
-//         const authResult = new SubjectAuthResult();
-//         if (!isArray(contracts) || isEmpty(contracts)) {
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound);
-//         }
-//
-//         const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
-//         if (!isEmpty(invalidContracts)) {
-//             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
-//         }
-//         if (!contracts.some(x => x.isAuth)) {
-//             return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
-//         }
-//
-//         return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//     }
-//
-//     /**
-//      * 未登录用户授权(看是否有免费策略)
-//      */
-//     _unLoginUserPolicyAuth(presentableInfo: PresentableInfo): SubjectAuthResult {
-//
-//         const hasFreePolicy = presentableInfo.policies.some(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
-//         if (hasFreePolicy) {
-//             return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(SubjectTypeEnum.Presentable);
-//         }
-//
-//         return new SubjectAuthResult().setData({
-//             presentableId: presentableInfo.presentableId,
-//             presentableName: presentableInfo.presentableName,
-//             policies: presentableInfo.policies,
-//             contracts: []
-//         }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
-//     }
-//
-//     /**
-//      * 用户合同授权
-//      * @param presentableInfo
-//      * @param userInfo
-//      */
-//     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
-//
-//         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
-//         if (!isEmpty(contracts)) {
-//             const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
-//             if (!contractAuthResult.isAuth) {
-//                 contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
-//                     presentableId: presentableInfo.presentableId,
-//                     presentableName: presentableInfo.presentableName,
-//                     policies: presentableInfo.policies, contracts
-//                 });
-//             }
-//             return contractAuthResult;
-//         }
-//         // 先屏蔽自动签约免费策略的功能,方便前端做调试
-//         return this._tryCreateFreeUserContract(presentableInfo, userInfo);
-//     }
-//
-//     /**
-//      * 尝试创建免费合同
-//      * @param presentableInfo
-//      * @param userInfo
-//      */
-//     async _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
-//         const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
-//         // 如果没有免费策略,则直接返回找不到合约即可
-//         if (!freePolicy) {
-//             return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
-//         }
-//
-//         await this.outsideApiService.signUserPresentableContract(userInfo.userId, {
-//             subjectId: presentableInfo.presentableId,
-//             policyId: freePolicy.policyId
-//         });
-//
-//         return new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//     }
-// }
+import {inject, provide} from 'midway';
+import {
+    ContractInfo,
+    ExhibitInsideAuthNode,
+    FlattenPresentableAuthTree,
+    IOutsideApiService,
+    PresentableInfo
+} from '../../interface';
+import {
+    FreelogContext, FreelogUserInfo, SubjectAuthCodeEnum, SubjectTypeEnum,
+} from 'egg-freelog-base';
+import {PolicyHelper} from '../../extend/policy-helper';
+import {first, isArray, isEmpty, last, uniq} from 'lodash';
+import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
+import {PresentableService} from './presentable-service';
+
+@provide()
+export class PresentableBatchAuthService {
+
+    @inject()
+    ctx: FreelogContext;
+    @inject()
+    policyHelper: PolicyHelper;
+    @inject()
+    presentableService: PresentableService;
+    @inject()
+    outsideApiService: IOutsideApiService;
+    start = Date.now();
+
+
+    /**
+     * 多展品全链路授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧 4:全链路授权(含C端用户)
+     */
+    async batchPresentableAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3 | 4) {
+        const start1 = Date.now();
+        let clientAuthTask = undefined;
+        let nodeAndUpstreamAuthTask = this.batchPresentableNodeSideAndUpstreamAuth(presentables, presentableAuthTreeMap, authType as any);
+        if (authType === 4) {
+            clientAuthTask = this.batchPresentableClientUserSideAuth(presentables, presentableAuthTreeMap);
+        }
+        const results = await Promise.all([clientAuthTask, nodeAndUpstreamAuthTask]);
+        const clientAuthResultMap = first<Map<string, SubjectAuthResult>>(results);
+        const nodeAndUpstreamAuthResultMap = last<Map<string, SubjectAuthResult>>(results);
+        const authResultMap = new Map<string, SubjectAuthResult>();
+        for (const presentableInfo of presentables) {
+            if (authType === 4) {
+                const clientAuthResult = clientAuthResultMap.get(presentableInfo.presentableId);
+                if (!clientAuthResult.isAuth) {
+                    authResultMap.set(presentableInfo.presentableId, clientAuthResult);
+                } else {
+                    const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+                    authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
+                }
+            } else {
+                const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+                authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
+            }
+        }
+        console.log(`total:${Date.now() - start1}`);
+        return authResultMap;
+    }
+
+    /**
+     * 展品节点侧和上游链路授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧
+     */
+    async batchPresentableNodeSideAndUpstreamAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3) {
+        const start1 = Date.now();
+        const exhibitInsideAuthMap = new Map<string, ExhibitInsideAuthNode[]>();
+        const presentableMap = new Map(presentables.map(x => [x.presentableId, x]));
+        for (const [presentableId, authTree] of presentableAuthTreeMap) {
+            const exhibitInsideAuthNodes: ExhibitInsideAuthNode[] = [];
+            const presentableInfo = presentableMap.get(presentableId);
+            for (const authItem of authTree) {
+                const isNodeResolve = authItem.deep === 1;
+                const resolveVersionId = isNodeResolve ? '' : authTree.find(x => x.nid === authItem.parentNid).versionId;
+                exhibitInsideAuthNodes.push({
+                    resourceId: authItem.resourceId,
+                    versionId: authItem.version,
+                    resolveVersionId: resolveVersionId,
+                    roleType: isNodeResolve ? DefaulterIdentityTypeEnum.Node : DefaulterIdentityTypeEnum.Resource,
+                    contractIds: isNodeResolve ? presentableInfo.resolveResources.find(x => x.resourceId === authItem.resourceId).contracts.map(x => x.contractId) : [],
+                });
+            }
+            if (authType === 1) {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes.filter(x => x.roleType === DefaulterIdentityTypeEnum.Node));
+            } else if (authType === 2) {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes.filter(x => x.roleType === DefaulterIdentityTypeEnum.Resource));
+            } else {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes);
+            }
+        }
+        const resourceAuthNodes = [...exhibitInsideAuthMap.values()].flat().filter(x => x.roleType === DefaulterIdentityTypeEnum.Resource);
+        const resourceVersionMap = await this.outsideApiService.getResourceVersionList(resourceAuthNodes.map(x => x.versionId), {projection: 'versionId,resolveResources'}).then(list => {
+            return new Map(list.map(x => [x.versionId, x.resolveResources]));
+        });
+        for (const authItem of resourceAuthNodes) {
+            const resolveVersionInfo = resourceVersionMap.get(authItem.resolveVersionId);
+            authItem.contractIds = resolveVersionInfo?.find(x => x.resourceId === authItem.resourceId).contracts.map(x => x.contractId) ?? [];
+        }
+        const allContractIds = uniq([...exhibitInsideAuthMap.values()].flat().map(x => x.contractIds).flat());
+        const authedContractSet = await this.outsideApiService.getContractByContractIds(allContractIds, {
+            authStatusList: '1,3',
+            projection: 'contractId'
+        }).then(list => {
+            return new Set(list.map(x => x.contractId));
+        });
+
+        const authResultMap = new Map<string, SubjectAuthResult>();
+        for (const [presentableId, insideAuthNode] of exhibitInsideAuthMap) {
+            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized).setReferee(SubjectTypeEnum.Presentable);
+            const authFailedNodes = insideAuthNode.filter(item => isEmpty(item.contractIds) || !item.contractIds.some(x => authedContractSet.has(x)));
+            if (!isEmpty(authFailedNodes)) {
+                const defaulterIdentityType = uniq(authFailedNodes.map(x => x.roleType)).reduce((acc, current) => {
+                    return current | acc;
+                }, 0);
+                subjectAuthResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources: authFailedNodes.map(x => x.resourceId)}).setDefaulterIdentityType(defaulterIdentityType);
+                if (defaulterIdentityType === (DefaulterIdentityTypeEnum.Node | DefaulterIdentityTypeEnum.Resource)) {
+                    subjectAuthResult.setErrorMsg('展品在节点和资源链路上的授权均不通过');
+                } else if (defaulterIdentityType === DefaulterIdentityTypeEnum.Node) {
+                    subjectAuthResult.setErrorMsg('展品在节点链路上的授权不通过');
+                } else {
+                    subjectAuthResult.setErrorMsg('展品在资源链路上的授权不通过');
+                }
+            }
+            authResultMap.set(presentableId, subjectAuthResult);
+        }
+        console.log(`batchPresentableNodeSideAndUpstreamAuth:${Date.now() - start1}`);
+        return authResultMap;
+    }
+
+    /**
+     * 批量C端消费者授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     */
+    async batchPresentableClientUserSideAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
+        const start1 = Date.now();
+        const authResultMap = new Map<string, SubjectAuthResult>();
+        presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
+        // 未登录用户判定一下策略中是否含有免费策略,如果有,直接走策略授权模式
+        if (!this.ctx.isLoginUser()) {
+            for (const presentableInfo of presentables) {
+                const authResult = new SubjectAuthResult();
+                const hasFreePolicy = presentableInfo.policies.some(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+                if (hasFreePolicy) {
+                    authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(SubjectTypeEnum.Presentable);
+                } else {
+                    authResult.setData({
+                        presentableId: presentableInfo.presentableId,
+                        presentableName: presentableInfo.presentableName,
+                        policies: presentableInfo.policies,
+                        contracts: []
+                    }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
+                }
+                authResultMap.set(presentableInfo.presentableId, authResult);
+            }
+            return authResultMap;
+        }
+        // 登录用户需要获取合约进行授权对比
+        const tasks = [];
+        const contracts = await this.outsideApiService.getUserPresentableContracts(presentables.map(x => x.presentableId), this.ctx.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
+        for (const presentableInfo of presentables) {
+            const presentableContracts = contracts.filter(x => x.subjectId === presentableInfo.presentableId);
+            if (!isEmpty(presentableContracts)) {
+                const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, presentableContracts);
+                if (!contractAuthResult.isAuth) {
+                    contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
+                        presentableId: presentableInfo.presentableId,
+                        presentableName: presentableInfo.presentableName,
+                        policies: presentableInfo.policies, contracts: presentableContracts
+                    }).setErrorMsg('消费者的合约授权不通过');
+                }
+                authResultMap.set(presentableInfo.presentableId, contractAuthResult);
+            } else {
+                // authResultMap.set(presentableInfo.presentableId, new SubjectAuthResult());
+                tasks.push(this.tryCreateFreeUserContract(presentableInfo, this.ctx.identityInfo.userInfo).then(authResult => {
+                    authResultMap.set(presentableInfo.presentableId, authResult);
+                }));
+            }
+        }
+        await Promise.all(tasks);
+        console.log(`batchPresentableClientUserSideAuth:${Date.now() - start1}`);
+        return authResultMap;
+    }
+
+    /**
+     * 尝试创建免费合同
+     * @param presentableInfo
+     * @param userInfo
+     */
+    async tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
+        const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+        // 如果没有免费策略,则直接返回找不到合约即可
+        if (!freePolicy) {
+            return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
+        }
+
+        this.outsideApiService.signUserPresentableContract(userInfo.userId, {
+            subjectId: presentableInfo.presentableId,
+            policyId: freePolicy.policyId
+        }).catch(error => {
+            // 如果签约出错,静默处理即可.无需影响业务正常流转(例如标的物已下线就不可签约)
+        });
+
+        return new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized);
+    }
+
+    /**
+     * 根据合同计算授权结果
+     * @param subjectId
+     * @param contracts
+     */
+    private contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult {
+
+        const authResult = new SubjectAuthResult();
+        if (!isArray(contracts) || isEmpty(contracts)) {
+            return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound);
+        }
+
+        const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
+        if (!isEmpty(invalidContracts)) {
+            return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
+        }
+        if (!contracts.some(x => x.isAuth)) {
+            return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
+        }
+
+        return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
+    }
+}

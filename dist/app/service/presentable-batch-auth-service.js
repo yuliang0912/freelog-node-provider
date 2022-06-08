@@ -1,269 +1,249 @@
 "use strict";
-// import {inject, provide} from 'midway';
-// import {
-//     ContractInfo, ExhibitInsideAuthInfo, ExhibitInsideAuthNode,
-//     FlattenPresentableAuthTree,
-//     IOutsideApiService,
-//     PresentableInfo
-// } from '../../interface';
-// import {chain, isArray, isEmpty} from 'lodash';
-// import {
-//     ApplicationError,
-//     FreelogContext,
-//     FreelogUserInfo,
-//     SubjectAuthCodeEnum,
-//     SubjectTypeEnum
-// } from 'egg-freelog-base';
-// import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
-// import {PolicyHelper} from '../../extend/policy-helper';
-//
-// @provide()
-// export class PresentableBatchAuthService {
-//
-//     @inject()
-//     ctx: FreelogContext;
-//     @inject()
-//     policyHelper: PolicyHelper;
-//     @inject()
-//     outsideApiService: IOutsideApiService;
-//
-//
-//     /**
-//      * 多展品全链路授权
-//      * @param presentables
-//      * @param presentableAuthTreeMap
-//      */
-//     async presentableAllChainAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
-//
-//     }
-//
-//
-//     /**
-//      * 展品节点侧和上游链路授权
-//      * @param presentables
-//      * @param presentableAuthTreeMap
-//      */
-//     async presentableNodeSideAndUpstreamAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>) {
-//         const exhibitInsideAuthMap = new Map<string, ExhibitInsideAuthNode[]>();
-//         for (const [presentableId, authTree] of presentableAuthTreeMap) {
-//             const exhibitInsideAuthNodes: ExhibitInsideAuthNode[] = [];
-//             for (const authItem of authTree) {
-//                 const roleType =
-//                 exhibitInsideAuthNodes.push({
-//                     resourceId: authItem.resourceId,
-//                     versionId: authItem.version,
-//                     roleType: authItem.deep === 1 ? 'node' : 'resource'
-//                 });
-//             }
-//             exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes);
-//         }
-//     }
-//
-//     /**
-//      * 展品授权,包括三部分(1.C端用户授权 2:节点自身合约授权 3:展品上游资源授权)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//         const clientUserSideAuthResult = await this.presentableClientUserSideAuth(presentableInfo);
-//         if (!clientUserSideAuthResult.isAuth) {
-//             return clientUserSideAuthResult;
-//         }
-//
-//         const nodeSideAuthTask = this.presentableNodeSideAuth(presentableInfo, presentableAuthTree);
-//         const upstreamResourceAuthTask = this.presentableUpstreamAuth(presentableInfo, presentableAuthTree);
-//
-//         const [nodeSideAuthResult, upstreamResourceAuthResult] = await Promise.all([nodeSideAuthTask, upstreamResourceAuthTask]);
-//
-//         return !nodeSideAuthResult.isAuth ? nodeSideAuthResult : !upstreamResourceAuthResult.isAuth ? upstreamResourceAuthResult : clientUserSideAuthResult; // clientUserSideAuthResult;
-//     }
-//
-//     /**
-//      * 展品节点侧以及上游授权结果
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableNodeSideAndUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const nodeSideAuthTask = this.presentableNodeSideAuth(presentableInfo, presentableAuthTree);
-//         const upstreamResourceAuthTask = this.presentableUpstreamAuth(presentableInfo, presentableAuthTree);
-//
-//         const [nodeSideAuthResult, upstreamResourceAuthResult] = await Promise.all([nodeSideAuthTask, upstreamResourceAuthTask]);
-//         return !nodeSideAuthResult.isAuth ? nodeSideAuthResult : upstreamResourceAuthResult;
-//     }
-//
-//     /**
-//      * 展品节点侧授权(节点自己解决的资源以及上抛的授权情况)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableNodeSideAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const startDate = new Date();
-//         const authResult = new SubjectAuthResult();
-//         try {
-//             // 授权树是指定版本的实际依赖推导出来的.所以上抛了但是实际未使用的资源不会体现在授权树分支中.
-//             const presentableResolveResourceIdSet = new Set(presentableAuthTree.filter(x => x.deep === 1).map(x => x.resourceId));
-//             // 过滤排除掉节点解决的资源,但是实际又未使用的.此部分不影响授权结果.
-//             const toBeAuthorizedResources = presentableInfo.resolveResources.filter(x => presentableResolveResourceIdSet.has(x.resourceId));
-//
-//             const allNodeContractIds = chain(toBeAuthorizedResources).map(x => x.contracts).flattenDeep().map(x => x.contractId).value();
-//
-//             const contractMap = await this.outsideApiService.getContractByContractIds(allNodeContractIds, {
-//                 licenseeId: presentableInfo.nodeId, projection: 'contractId,subjectId,subjectType,authStatus'
-//             }).then(list => {
-//                 return new Map(list.map(x => [x.contractId, x]));
-//             });
-//
-//             const authFailedResources = toBeAuthorizedResources.filter(resolveResource => {
-//                 const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-//                 // const currentAuthTreeNode = presentableAuthTree.find(x => x.deep === 1 && x.resourceId === resolveResource.resourceId);
-//                 // currentAuthTreeNode.authContractIds = resolveResource.contracts.map(x => x.contractId);
-//                 return !this.contractAuth(resolveResource.resourceId, contracts).isAuth;
-//             });
-//
-//             this.ctx.set('presentableNodeSideAuthTime', (new Date().getTime() - startDate.getTime()).toString());
-//             if (!isEmpty(authFailedResources)) {
-//                 return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('展品所解决的资源授权不通过').setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
-//             }
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//         } catch (e) {
-//             return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Node);
-//         }
-//     }
-//
-//     /**
-//      * 展品上游合约授权(通过授权树获取对应的合约的授权状态即可直接判定,无需调用标的物的授权API)
-//      * @param presentableInfo
-//      * @param presentableAuthTree
-//      */
-//     async presentableUpstreamAuth(presentableInfo: PresentableInfo, presentableAuthTree: FlattenPresentableAuthTree[]): Promise<SubjectAuthResult> {
-//
-//         const authResult = new SubjectAuthResult();
-//         try {
-//             const resourceVersionIds = chain(presentableAuthTree).map(x => x.versionId).uniq().value();
-//             if (isEmpty(resourceVersionIds)) {
-//                 throw new ApplicationError('presentable data has loused');
-//             }
-//             const startDate = new Date();
-//             const resourceVersionAuthResults = await this.outsideApiService.getResourceVersionAuthResults(resourceVersionIds, {authType: 'auth'});
-//             this.ctx.set('presentableUpstreamAuthTime', (new Date().getTime() - startDate.getTime()).toString());
-//             for (const resourceVersionAuthResult of resourceVersionAuthResults) {
-//                 const {versionId, resolveResourceAuthResults} = resourceVersionAuthResult;
-//                 if (isEmpty(resourceVersionAuthResults)) {
-//                     continue;
-//                 }
-//                 const nids = presentableAuthTree.filter(x => x.versionId === versionId).map(x => x.nid);
-//                 const practicalUsedResources = presentableAuthTree.filter(x => nids.includes(x.parentNid));
-//                 const authFailedResources = chain(resolveResourceAuthResults).intersectionBy(practicalUsedResources, 'resourceId').filter(x => !x.authResult?.isAuth).value();
-//                 if (!isEmpty(authFailedResources)) {
-//                     return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({authFailedResources}).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource).setErrorMsg('展品上游链路授权未通过');
-//                 }
-//             }
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//         } catch (e) {
-//             return authResult.setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.Resource);
-//         }
-//     }
-//
-//     /**
-//      *  展品C端用户侧授权(自动查找当前登录用户与展品之间的合约,如果无合约,需要根据需求做免费策略校验.然后登录用户自动签约免费策略,非登录用户直接通过授权)
-//      * @param presentableInfo
-//      */
-//     async presentableClientUserSideAuth(presentableInfo: PresentableInfo): Promise<SubjectAuthResult> {
-//         // return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized);
-//         try {
-//             if (!this.ctx.isLoginUser()) {
-//                 return this._unLoginUserPolicyAuth(presentableInfo);
-//             }
-//             return this._loginUserContractAuth(presentableInfo, this.ctx.identityInfo.userInfo);
-//         } catch (e) {
-//             return new SubjectAuthResult().setData({error: e}).setErrorMsg(e.toString()).setAuthCode(SubjectAuthCodeEnum.AuthApiException).setReferee(SubjectTypeEnum.Presentable);
-//         }
-//     }
-//
-//     /**
-//      * 根据合同计算授权结果
-//      * @param subjectId
-//      * @param contracts
-//      */
-//     contractAuth(subjectId: string, contracts: ContractInfo[]): SubjectAuthResult {
-//
-//         const authResult = new SubjectAuthResult();
-//         if (!isArray(contracts) || isEmpty(contracts)) {
-//             return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound);
-//         }
-//
-//         const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
-//         if (!isEmpty(invalidContracts)) {
-//             return authResult.setErrorMsg('存在无效的标的物合约').setData({invalidContracts}).setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
-//         }
-//         if (!contracts.some(x => x.isAuth)) {
-//             return authResult.setErrorMsg('合约授权未通过').setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);
-//         }
-//
-//         return authResult.setAuthCode(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//     }
-//
-//     /**
-//      * 未登录用户授权(看是否有免费策略)
-//      */
-//     _unLoginUserPolicyAuth(presentableInfo: PresentableInfo): SubjectAuthResult {
-//
-//         const hasFreePolicy = presentableInfo.policies.some(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
-//         if (hasFreePolicy) {
-//             return new SubjectAuthResult().setAuthCode(SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(SubjectTypeEnum.Presentable);
-//         }
-//
-//         return new SubjectAuthResult().setData({
-//             presentableId: presentableInfo.presentableId,
-//             presentableName: presentableInfo.presentableName,
-//             policies: presentableInfo.policies,
-//             contracts: []
-//         }).setErrorMsg('未登录的用户').setAuthCode(SubjectAuthCodeEnum.UserUnauthenticated).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
-//     }
-//
-//     /**
-//      * 用户合同授权
-//      * @param presentableInfo
-//      * @param userInfo
-//      */
-//     async _loginUserContractAuth(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo): Promise<SubjectAuthResult> {
-//
-//         const contracts = await this.outsideApiService.getUserPresentableContracts(presentableInfo.presentableId, presentableInfo.nodeId, userInfo.userId, {projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState'});
-//         if (!isEmpty(contracts)) {
-//             const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, contracts);
-//             if (!contractAuthResult.isAuth) {
-//                 contractAuthResult.setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setData({
-//                     presentableId: presentableInfo.presentableId,
-//                     presentableName: presentableInfo.presentableName,
-//                     policies: presentableInfo.policies, contracts
-//                 });
-//             }
-//             return contractAuthResult;
-//         }
-//         // 先屏蔽自动签约免费策略的功能,方便前端做调试
-//         return this._tryCreateFreeUserContract(presentableInfo, userInfo);
-//     }
-//
-//     /**
-//      * 尝试创建免费合同
-//      * @param presentableInfo
-//      * @param userInfo
-//      */
-//     async _tryCreateFreeUserContract(presentableInfo: PresentableInfo, userInfo: FreelogUserInfo) {
-//         const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
-//         // 如果没有免费策略,则直接返回找不到合约即可
-//         if (!freePolicy) {
-//             return new SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(SubjectTypeEnum.Presentable).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser);
-//         }
-//
-//         await this.outsideApiService.signUserPresentableContract(userInfo.userId, {
-//             subjectId: presentableInfo.presentableId,
-//             policyId: freePolicy.policyId
-//         });
-//
-//         return new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized);
-//     }
-// }
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicHJlc2VudGFibGUtYmF0Y2gtYXV0aC1zZXJ2aWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9zZXJ2aWNlL3ByZXNlbnRhYmxlLWJhdGNoLWF1dGgtc2VydmljZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUEsMENBQTBDO0FBQzFDLFdBQVc7QUFDWCxrRUFBa0U7QUFDbEUsa0NBQWtDO0FBQ2xDLDBCQUEwQjtBQUMxQixzQkFBc0I7QUFDdEIsNEJBQTRCO0FBQzVCLGtEQUFrRDtBQUNsRCxXQUFXO0FBQ1gsd0JBQXdCO0FBQ3hCLHNCQUFzQjtBQUN0Qix1QkFBdUI7QUFDdkIsMkJBQTJCO0FBQzNCLHNCQUFzQjtBQUN0Qiw2QkFBNkI7QUFDN0IscUZBQXFGO0FBQ3JGLDJEQUEyRDtBQUMzRCxFQUFFO0FBQ0YsYUFBYTtBQUNiLDZDQUE2QztBQUM3QyxFQUFFO0FBQ0YsZ0JBQWdCO0FBQ2hCLDJCQUEyQjtBQUMzQixnQkFBZ0I7QUFDaEIsa0NBQWtDO0FBQ2xDLGdCQUFnQjtBQUNoQiw2Q0FBNkM7QUFDN0MsRUFBRTtBQUNGLEVBQUU7QUFDRixVQUFVO0FBQ1Ysa0JBQWtCO0FBQ2xCLDZCQUE2QjtBQUM3Qix1Q0FBdUM7QUFDdkMsVUFBVTtBQUNWLDBJQUEwSTtBQUMxSSxFQUFFO0FBQ0YsUUFBUTtBQUNSLEVBQUU7QUFDRixFQUFFO0FBQ0YsVUFBVTtBQUNWLHNCQUFzQjtBQUN0Qiw2QkFBNkI7QUFDN0IsdUNBQXVDO0FBQ3ZDLFVBQVU7QUFDVixxSkFBcUo7QUFDckosbUZBQW1GO0FBQ25GLDRFQUE0RTtBQUM1RSwwRUFBMEU7QUFDMUUsaURBQWlEO0FBQ2pELG1DQUFtQztBQUNuQyxnREFBZ0Q7QUFDaEQsdURBQXVEO0FBQ3ZELG1EQUFtRDtBQUNuRCwwRUFBMEU7QUFDMUUsc0JBQXNCO0FBQ3RCLGdCQUFnQjtBQUNoQiwrRUFBK0U7QUFDL0UsWUFBWTtBQUNaLFFBQVE7QUFDUixFQUFFO0FBQ0Ys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
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PresentableBatchAuthService = void 0;
+const midway_1 = require("midway");
+const egg_freelog_base_1 = require("egg-freelog-base");
+const policy_helper_1 = require("../../extend/policy-helper");
+const lodash_1 = require("lodash");
+const auth_interface_1 = require("../../auth-interface");
+const presentable_service_1 = require("./presentable-service");
+let PresentableBatchAuthService = class PresentableBatchAuthService {
+    ctx;
+    policyHelper;
+    presentableService;
+    outsideApiService;
+    start = Date.now();
+    /**
+     * 多展品全链路授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧 4:全链路授权(含C端用户)
+     */
+    async batchPresentableAuth(presentables, presentableAuthTreeMap, authType) {
+        const start1 = Date.now();
+        let clientAuthTask = undefined;
+        let nodeAndUpstreamAuthTask = this.batchPresentableNodeSideAndUpstreamAuth(presentables, presentableAuthTreeMap, authType);
+        if (authType === 4) {
+            clientAuthTask = this.batchPresentableClientUserSideAuth(presentables, presentableAuthTreeMap);
+        }
+        const results = await Promise.all([clientAuthTask, nodeAndUpstreamAuthTask]);
+        const clientAuthResultMap = (0, lodash_1.first)(results);
+        const nodeAndUpstreamAuthResultMap = (0, lodash_1.last)(results);
+        const authResultMap = new Map();
+        for (const presentableInfo of presentables) {
+            if (authType === 4) {
+                const clientAuthResult = clientAuthResultMap.get(presentableInfo.presentableId);
+                if (!clientAuthResult.isAuth) {
+                    authResultMap.set(presentableInfo.presentableId, clientAuthResult);
+                }
+                else {
+                    const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+                    authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
+                }
+            }
+            else {
+                const nodeAndUpstreamAuthResult = nodeAndUpstreamAuthResultMap.get(presentableInfo.presentableId);
+                authResultMap.set(presentableInfo.presentableId, nodeAndUpstreamAuthResult);
+            }
+        }
+        console.log(`total:${Date.now() - start1}`);
+        return authResultMap;
+    }
+    /**
+     * 展品节点侧和上游链路授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧
+     */
+    async batchPresentableNodeSideAndUpstreamAuth(presentables, presentableAuthTreeMap, authType) {
+        const start1 = Date.now();
+        const exhibitInsideAuthMap = new Map();
+        const presentableMap = new Map(presentables.map(x => [x.presentableId, x]));
+        for (const [presentableId, authTree] of presentableAuthTreeMap) {
+            const exhibitInsideAuthNodes = [];
+            const presentableInfo = presentableMap.get(presentableId);
+            for (const authItem of authTree) {
+                const isNodeResolve = authItem.deep === 1;
+                const resolveVersionId = isNodeResolve ? '' : authTree.find(x => x.nid === authItem.parentNid).versionId;
+                exhibitInsideAuthNodes.push({
+                    resourceId: authItem.resourceId,
+                    versionId: authItem.version,
+                    resolveVersionId: resolveVersionId,
+                    roleType: isNodeResolve ? auth_interface_1.DefaulterIdentityTypeEnum.Node : auth_interface_1.DefaulterIdentityTypeEnum.Resource,
+                    contractIds: isNodeResolve ? presentableInfo.resolveResources.find(x => x.resourceId === authItem.resourceId).contracts.map(x => x.contractId) : [],
+                });
+            }
+            if (authType === 1) {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes.filter(x => x.roleType === auth_interface_1.DefaulterIdentityTypeEnum.Node));
+            }
+            else if (authType === 2) {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes.filter(x => x.roleType === auth_interface_1.DefaulterIdentityTypeEnum.Resource));
+            }
+            else {
+                exhibitInsideAuthMap.set(presentableId, exhibitInsideAuthNodes);
+            }
+        }
+        const resourceAuthNodes = [...exhibitInsideAuthMap.values()].flat().filter(x => x.roleType === auth_interface_1.DefaulterIdentityTypeEnum.Resource);
+        const resourceVersionMap = await this.outsideApiService.getResourceVersionList(resourceAuthNodes.map(x => x.versionId), { projection: 'versionId,resolveResources' }).then(list => {
+            return new Map(list.map(x => [x.versionId, x.resolveResources]));
+        });
+        for (const authItem of resourceAuthNodes) {
+            const resolveVersionInfo = resourceVersionMap.get(authItem.resolveVersionId);
+            authItem.contractIds = resolveVersionInfo?.find(x => x.resourceId === authItem.resourceId).contracts.map(x => x.contractId) ?? [];
+        }
+        const allContractIds = (0, lodash_1.uniq)([...exhibitInsideAuthMap.values()].flat().map(x => x.contractIds).flat());
+        const authedContractSet = await this.outsideApiService.getContractByContractIds(allContractIds, {
+            authStatusList: '1,3',
+            projection: 'contractId'
+        }).then(list => {
+            return new Set(list.map(x => x.contractId));
+        });
+        const authResultMap = new Map();
+        for (const [presentableId, insideAuthNode] of exhibitInsideAuthMap) {
+            const subjectAuthResult = new auth_interface_1.SubjectAuthResult(egg_freelog_base_1.SubjectAuthCodeEnum.BasedOnContractAuthorized).setReferee(egg_freelog_base_1.SubjectTypeEnum.Presentable);
+            const authFailedNodes = insideAuthNode.filter(item => (0, lodash_1.isEmpty)(item.contractIds) || !item.contractIds.some(x => authedContractSet.has(x)));
+            if (!(0, lodash_1.isEmpty)(authFailedNodes)) {
+                const defaulterIdentityType = (0, lodash_1.uniq)(authFailedNodes.map(x => x.roleType)).reduce((acc, current) => {
+                    return current | acc;
+                }, 0);
+                subjectAuthResult.setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.SubjectContractUnauthorized).setData({ authFailedResources: authFailedNodes.map(x => x.resourceId) }).setDefaulterIdentityType(defaulterIdentityType);
+                if (defaulterIdentityType === (auth_interface_1.DefaulterIdentityTypeEnum.Node | auth_interface_1.DefaulterIdentityTypeEnum.Resource)) {
+                    subjectAuthResult.setErrorMsg('展品在节点和资源链路上的授权均不通过');
+                }
+                else if (defaulterIdentityType === auth_interface_1.DefaulterIdentityTypeEnum.Node) {
+                    subjectAuthResult.setErrorMsg('展品在节点链路上的授权不通过');
+                }
+                else {
+                    subjectAuthResult.setErrorMsg('展品在资源链路上的授权不通过');
+                }
+            }
+            authResultMap.set(presentableId, subjectAuthResult);
+        }
+        console.log(`batchPresentableNodeSideAndUpstreamAuth:${Date.now() - start1}`);
+        return authResultMap;
+    }
+    /**
+     * 批量C端消费者授权
+     * @param presentables
+     * @param presentableAuthTreeMap
+     */
+    async batchPresentableClientUserSideAuth(presentables, presentableAuthTreeMap) {
+        const start1 = Date.now();
+        const authResultMap = new Map();
+        presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
+        // 未登录用户判定一下策略中是否含有免费策略,如果有,直接走策略授权模式
+        if (!this.ctx.isLoginUser()) {
+            for (const presentableInfo of presentables) {
+                const authResult = new auth_interface_1.SubjectAuthResult();
+                const hasFreePolicy = presentableInfo.policies.some(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+                if (hasFreePolicy) {
+                    authResult.setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.BasedOnNullIdentityPolicyAuthorized).setReferee(egg_freelog_base_1.SubjectTypeEnum.Presentable);
+                }
+                else {
+                    authResult.setData({
+                        presentableId: presentableInfo.presentableId,
+                        presentableName: presentableInfo.presentableName,
+                        policies: presentableInfo.policies,
+                        contracts: []
+                    }).setErrorMsg('未登录的用户').setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.UserUnauthenticated).setReferee(egg_freelog_base_1.SubjectTypeEnum.Presentable).setDefaulterIdentityType(auth_interface_1.DefaulterIdentityTypeEnum.ClientUser);
+                }
+                authResultMap.set(presentableInfo.presentableId, authResult);
+            }
+            return authResultMap;
+        }
+        // 登录用户需要获取合约进行授权对比
+        const tasks = [];
+        const contracts = await this.outsideApiService.getUserPresentableContracts(presentables.map(x => x.presentableId), this.ctx.userId, { projection: 'authStatus,status,subjectId,policyId,contractName,fsmCurrentState' });
+        for (const presentableInfo of presentables) {
+            const presentableContracts = contracts.filter(x => x.subjectId === presentableInfo.presentableId);
+            if (!(0, lodash_1.isEmpty)(presentableContracts)) {
+                const contractAuthResult = await this.contractAuth(presentableInfo.presentableId, presentableContracts);
+                if (!contractAuthResult.isAuth) {
+                    contractAuthResult.setReferee(egg_freelog_base_1.SubjectTypeEnum.Presentable).setDefaulterIdentityType(auth_interface_1.DefaulterIdentityTypeEnum.ClientUser).setData({
+                        presentableId: presentableInfo.presentableId,
+                        presentableName: presentableInfo.presentableName,
+                        policies: presentableInfo.policies, contracts: presentableContracts
+                    }).setErrorMsg('消费者的合约授权不通过');
+                }
+                authResultMap.set(presentableInfo.presentableId, contractAuthResult);
+            }
+            else {
+                // authResultMap.set(presentableInfo.presentableId, new SubjectAuthResult());
+                tasks.push(this.tryCreateFreeUserContract(presentableInfo, this.ctx.identityInfo.userInfo).then(authResult => {
+                    authResultMap.set(presentableInfo.presentableId, authResult);
+                }));
+            }
+        }
+        await Promise.all(tasks);
+        console.log(`batchPresentableClientUserSideAuth:${Date.now() - start1}`);
+        return authResultMap;
+    }
+    /**
+     * 尝试创建免费合同
+     * @param presentableInfo
+     * @param userInfo
+     */
+    async tryCreateFreeUserContract(presentableInfo, userInfo) {
+        const freePolicy = presentableInfo.policies.find(x => x.status === 1 && this.policyHelper.isFreePolicy(x));
+        // 如果没有免费策略,则直接返回找不到合约即可
+        if (!freePolicy) {
+            return new auth_interface_1.SubjectAuthResult().setErrorMsg('标的物未签约').setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.SubjectContractNotFound).setReferee(egg_freelog_base_1.SubjectTypeEnum.Presentable).setDefaulterIdentityType(auth_interface_1.DefaulterIdentityTypeEnum.ClientUser);
+        }
+        this.outsideApiService.signUserPresentableContract(userInfo.userId, {
+            subjectId: presentableInfo.presentableId,
+            policyId: freePolicy.policyId
+        }).catch(error => {
+            // 如果签约出错,静默处理即可.无需影响业务正常流转(例如标的物已下线就不可签约)
+        });
+        return new auth_interface_1.SubjectAuthResult(egg_freelog_base_1.SubjectAuthCodeEnum.BasedOnContractAuthorized);
+    }
+    /**
+     * 根据合同计算授权结果
+     * @param subjectId
+     * @param contracts
+     */
+    contractAuth(subjectId, contracts) {
+        const authResult = new auth_interface_1.SubjectAuthResult();
+        if (!(0, lodash_1.isArray)(contracts) || (0, lodash_1.isEmpty)(contracts)) {
+            return authResult.setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.SubjectContractNotFound);
+        }
+        const invalidContracts = contracts.filter(x => x.subjectId !== subjectId);
+        if (!(0, lodash_1.isEmpty)(invalidContracts)) {
+            return authResult.setErrorMsg('存在无效的标的物合约').setData({ invalidContracts }).setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.SubjectContractInvalid);
+        }
+        if (!contracts.some(x => x.isAuth)) {
+            return authResult.setErrorMsg('合约授权未通过').setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.SubjectContractUnauthorized);
+        }
+        return authResult.setAuthCode(egg_freelog_base_1.SubjectAuthCodeEnum.BasedOnContractAuthorized);
+    }
+};
+__decorate([
+    (0, midway_1.inject)(),
+    __metadata("design:type", Object)
+], PresentableBatchAuthService.prototype, "ctx", void 0);
+__decorate([
+    (0, midway_1.inject)(),
+    __metadata("design:type", policy_helper_1.PolicyHelper)
+], PresentableBatchAuthService.prototype, "policyHelper", void 0);
+__decorate([
+    (0, midway_1.inject)(),
+    __metadata("design:type", presentable_service_1.PresentableService)
+], PresentableBatchAuthService.prototype, "presentableService", void 0);
+__decorate([
+    (0, midway_1.inject)(),
+    __metadata("design:type", Object)
+], PresentableBatchAuthService.prototype, "outsideApiService", void 0);
+PresentableBatchAuthService = __decorate([
+    (0, midway_1.provide)()
+], PresentableBatchAuthService);
+exports.PresentableBatchAuthService = PresentableBatchAuthService;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicHJlc2VudGFibGUtYmF0Y2gtYXV0aC1zZXJ2aWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9zZXJ2aWNlL3ByZXNlbnRhYmxlLWJhdGNoLWF1dGgtc2VydmljZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBdUM7QUFRdkMsdURBRTBCO0FBQzFCLDhEQUF3RDtBQUN4RCxtQ0FBMkQ7QUFDM0QseURBQWtGO0FBQ2xGLCtEQUF5RDtBQUd6RCxJQUFhLDJCQUEyQixHQUF4QyxNQUFhLDJCQUEyQjtJQUdwQyxHQUFHLENBQWlCO0lBRXBCLFlBQVksQ0FBZTtJQUUzQixrQkFBa0IsQ0FBcUI7SUFFdkMsaUJBQWlCLENBQXFCO0lBQ3RDLEtBQUssR0FBRyxJQUFJLENBQUMsR0FBRyxFQUFFLENBQUM7SUFHbkI7Ozs7O09BS0c7SUFDSCxLQUFLLENBQUMsb0JBQW9CLENBQUMsWUFBK0IsRUFBRSxzQkFBaUUsRUFBRSxRQUF1QjtRQUNsSixNQUFNLE1BQU0sR0FBRyxJQUFJLENBQUMsR0FBRyxFQUFFLENBQUM7UUFDMUIsSUFBSSxjQUFjLEdBQUcsU0FBUyxDQUFDO1FBQy9CLElBQUksdUJBQXVCLEdBQUcsSUFBSSxDQUFDLHVDQUF1QyxDQUFDLFlBQVksRUFBRSxzQkFBc0IsRUFBRSxRQUFlLENBQUMsQ0FBQztRQUNsSSxJQUFJLFFBQVEsS0FBSyxDQUFDLEVBQUU7WUFDaEIsY0FBYyxHQUFHLElBQUksQ0FBQyxrQ0FBa0MsQ0FBQyxZQUFZLEVBQUUsc0JBQXNCLENBQUMsQ0FBQztTQUNsRztRQUNELE1BQU0sT0FBTyxHQUFHLE1BQU0sT0FBTyxDQUFDLEdBQUcsQ0FBQyxDQUFDLGNBQWMsRUFBRSx1QkFBdUIsQ0FBQyxDQUFDLENBQUM7UUFDN0UsTUFBTSxtQkFBbUIsR0FBRyxJQUFBLGNBQUssRUFBaUMsT0FBTyxDQUFDLENBQUM7UUFDM0UsTUFBTSw0QkFBNEIsR0FBRyxJQUFB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

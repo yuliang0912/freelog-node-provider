@@ -1,4 +1,4 @@
-import {SubjectAuthResult} from './auth-interface';
+import {DefaulterIdentityTypeEnum, SubjectAuthResult} from './auth-interface';
 import {ObjectDependencyTreeInfo} from './test-node-interface';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum, ArticleTypeEnum} from './enum';
 import {
@@ -430,7 +430,7 @@ export interface IOutsideApiService {
 
     batchSignNodeContracts(nodeId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 
-    getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
+    getUserPresentableContracts(subjectIds: string[], licenseeId: number, options?: object): Promise<ContractInfo[]>;
 
     signUserPresentableContract(userId, subjectInfo: SubjectInfo): Promise<ContractInfo>;
 
@@ -709,7 +709,9 @@ export interface IContractAuthStatusChangedEventMessage {
 export interface ExhibitInsideAuthNode {
     resourceId: string;
     versionId: string;
-    roleType: 'node' | 'resource' // 解决授权方的角色类型
+    roleType: DefaulterIdentityTypeEnum; // 解决授权方的角色类型
+    // 上游解决自身所用的合约ID集合,例如A解决B. 获取A的resolveResources.B.contractIds
     contractIds: string[];
-    isIgnore: boolean; // 例如虽上抛但未实际使用或者作为授权树的结束节点(没有解决任何其他资源的)
+    resolveVersionId: string; // 授权解决方版本ID
+    // isIgnore: boolean; // 例如虽上抛但未实际使用或者作为授权树的结束节点(没有解决任何其他资源的)
 }

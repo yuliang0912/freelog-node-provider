@@ -104,12 +104,12 @@ export declare class OutsideApiService implements IOutsideApiService {
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection?: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
     /**
      * 获取用户与展品的合约
-     * @param subjectId
+     * @param subjectIds
      * @param licensorId
      * @param licenseeId
      * @param options
      */
-    getUserPresentableContracts(subjectId: string, licensorId: number, licenseeId: number, options?: object): Promise<ContractInfo[]>;
+    getUserPresentableContracts(subjectIds: string[], licenseeId: number, options?: object): Promise<ContractInfo[]>;
     /**
      * 根据ID批量获取合同列表
      * @param contractIds

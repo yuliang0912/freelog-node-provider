@@ -3,6 +3,7 @@ import { FreelogContext } from 'egg-freelog-base';
 import { ExhibitAuthResponseHandler } from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import { PresentableAdapter } from '../../extend/exhibit-adapter/presentable-adapter';
 import { ArticleTypeEnum } from '../../enum';
+import { PresentableBatchAuthService } from '../service/presentable-batch-auth-service';
 export declare class PresentableSubjectAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
@@ -11,6 +12,7 @@ export declare class PresentableSubjectAuthController {
     presentableVersionService: IPresentableVersionService;
     presentableAdapter: PresentableAdapter;
     exhibitAuthResponseHandler: ExhibitAuthResponseHandler;
+    presentableBatchAuthService: PresentableBatchAuthService;
     /**
      * 通过展品ID获取展品
      */

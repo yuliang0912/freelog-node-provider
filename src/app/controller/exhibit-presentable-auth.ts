@@ -19,6 +19,7 @@ import {SubjectAuthResult} from '../../auth-interface';
 import {ExhibitAuthResponseHandler} from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import {PresentableAdapter} from '../../extend/exhibit-adapter/presentable-adapter';
 import {ArticleTypeEnum} from '../../enum';
+import {PresentableBatchAuthService} from '../service/presentable-batch-auth-service';
 
 @provide()
 @controller('/v2/auths/exhibits/:nodeId')
@@ -38,6 +39,8 @@ export class PresentableSubjectAuthController {
     presentableAdapter: PresentableAdapter;
     @inject()
     exhibitAuthResponseHandler: ExhibitAuthResponseHandler;
+    @inject()
+    presentableBatchAuthService: PresentableBatchAuthService;
 
     /**
      * 通过展品ID获取展品
@@ -103,7 +106,7 @@ export class PresentableSubjectAuthController {
      */
     @get('/batchAuth/results')
     async exhibitBatchAuth() {
-
+        const start = Date.now();
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         // 1:节点侧 2:上游侧 3:节点侧以及上游侧 4:全链路(包含用户)
@@ -113,7 +116,6 @@ export class PresentableSubjectAuthController {
 
         let presentables = await this.presentableService.find({nodeId, _id: {$in: exhibitIds}});
         const invalidPresentableIds = differenceWith(exhibitIds, presentables, (x: string, y) => x === y.presentableId);
-
         if (!isEmpty(invalidPresentableIds)) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setData({invalidPresentableIds}).setErrorMsg('标的物不存在,请检查参数');
             return ctx.success(subjectAuthResult);
@@ -123,20 +125,13 @@ export class PresentableSubjectAuthController {
         const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
             return new Map(list.map(x => [x.presentableId, x.authTree]));
         });
-
-        if (authType === 4) {
-            presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
-        }
-
-        const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
-            authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
-                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth :
-                    authType === 4 ? this.presentableAuthService.presentableAuth : null;
-
-        const tasks = [];
+        console.log(`ready2:${Date.now() - start}`);
         const returnResults = [];
-        for (const presentableInfo of presentables) {
-            const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+        const authResultMap = await this.presentableBatchAuthService.batchPresentableAuth(presentables, presentableAuthTreeMap, authType);
+        for (const exhibitId of exhibitIds) {
+            const presentableInfo = presentables.find(x => x.presentableId === exhibitId);
+            const authResult = authResultMap.get(exhibitId);
+            returnResults.push({
                 exhibitId: presentableInfo.presentableId,
                 exhibitName: presentableInfo.presentableName,
                 authCode: authResult.authCode,
@@ -144,11 +139,35 @@ export class PresentableSubjectAuthController {
                 defaulterIdentityType: authResult.defaulterIdentityType,
                 isAuth: authResult.isAuth,
                 errorMsg: authResult.errorMsg
-            }));
-            tasks.push(task);
+            });
         }
+        ctx.success(returnResults);
 
-        await Promise.all(tasks).then(() => ctx.success(returnResults));
+        // if (authType === 4) {
+        //     presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
+        // }
+        //
+        // const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
+        //     authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
+        //         authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth :
+        //             authType === 4 ? this.presentableAuthService.presentableAuth : null;
+        //
+        // const tasks = [];
+        // const returnResults = [];
+        // for (const presentableInfo of presentables) {
+        //     const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+        //         exhibitId: presentableInfo.presentableId,
+        //         exhibitName: presentableInfo.presentableName,
+        //         authCode: authResult.authCode,
+        //         referee: authResult.referee,
+        //         defaulterIdentityType: authResult.defaulterIdentityType,
+        //         isAuth: authResult.isAuth,
+        //         errorMsg: authResult.errorMsg
+        //     }));
+        //     tasks.push(task);
+        // }
+        //
+        // await Promise.all(tasks).then(() => ctx.success(returnResults));
     }
 
     /**
