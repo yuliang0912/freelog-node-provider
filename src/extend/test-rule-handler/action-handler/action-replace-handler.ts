@@ -139,7 +139,9 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
         const {replacer} = action.content;
         const replacerIsObject = replacer.type === TestResourceOriginType.Object;
         const replacerIsResource = replacer.type === TestResourceOriginType.Resource;
-        const replacerInfo = await this.getReplacerInfo(ctx, replacer);
+        const replacerInfo = await this.getReplacerInfo(ctx, replacer).catch(error => {
+            return undefined;
+        });
         if (!replacerInfo) {
             action.errorMsg = ctx.gettext(replacerIsResource ? 'reflect_rule_pre_excute_error_resource_not_existed' : 'reflect_rule_pre_excute_error_object_not_existed', replacer.name);
             testRuleInfo.matchErrors.push(action.errorMsg);
