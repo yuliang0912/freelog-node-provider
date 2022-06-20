@@ -82,7 +82,7 @@ export class PresentableBatchAuthService {
                 const resolveVersionId = isNodeResolve ? '' : authTree.find(x => x.nid === authItem.parentNid).versionId;
                 exhibitInsideAuthNodes.push({
                     resourceId: authItem.resourceId,
-                    versionId: authItem.version,
+                    versionId: authItem.versionId,
                     resolveVersionId: resolveVersionId,
                     roleType: isNodeResolve ? DefaulterIdentityTypeEnum.Node : DefaulterIdentityTypeEnum.Resource,
                     contractIds: isNodeResolve ? presentableInfo.resolveResources.find(x => x.resourceId === authItem.resourceId).contracts.map(x => x.contractId) : [],
@@ -97,7 +97,7 @@ export class PresentableBatchAuthService {
             }
         }
         const resourceAuthNodes = [...exhibitInsideAuthMap.values()].flat().filter(x => x.roleType === DefaulterIdentityTypeEnum.Resource);
-        const resourceVersionMap = await this.outsideApiService.getResourceVersionList(resourceAuthNodes.map(x => x.versionId), {projection: 'versionId,resolveResources'}).then(list => {
+        const resourceVersionMap = await this.outsideApiService.getResourceVersionList(resourceAuthNodes.map(x => x.resolveVersionId), {projection: 'versionId,resolveResources'}).then(list => {
             return new Map(list.map(x => [x.versionId, x.resolveResources]));
         });
         for (const authItem of resourceAuthNodes) {
