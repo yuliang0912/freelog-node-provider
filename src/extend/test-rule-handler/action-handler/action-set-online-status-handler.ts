@@ -1,4 +1,4 @@
-import {isBoolean} from 'lodash';
+import {first, isBoolean} from 'lodash';
 import {provide, scope} from 'midway';
 import {
     Action,
@@ -7,7 +7,7 @@ import {
     IActionHandler,
     TestRuleMatchInfo
 } from '../../../test-node-interface';
-import {FreelogContext, ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogContext} from 'egg-freelog-base';
 import {ScopeEnum} from 'injection';
 
 @provide()
@@ -34,7 +34,7 @@ export class ActionSetOnlineStatusHandler implements IActionHandler<ContentSetOn
         } as any;
         testRuleInfo.operationAndActionRecords.push(operationAndActionRecord);
         // 主题不允许上下线操作.只能通过激活操作
-        if (testRuleInfo.testResourceOriginInfo.resourceType === ResourceTypeEnum.THEME) {
+        if (first<string>(testRuleInfo.testResourceOriginInfo.resourceType) === '主题') {
             operationAndActionRecord.warningMsg = action.warningMsg = ctx.gettext(`reflect_rule_pre_excute_error_show_hide_unavailable_for_theme`, testRuleInfo.ruleInfo.exhibitName);
             testRuleInfo.matchWarnings.push(action.warningMsg);
             return false;

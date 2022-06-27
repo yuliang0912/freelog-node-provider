@@ -87,7 +87,7 @@ let ImportPresentableEntityHandler = class ImportPresentableEntityHandler {
             ownerUserId: resourceInfo.userId,
             name: resourceInfo.resourceName,
             type: test_node_interface_1.TestResourceOriginType.Resource,
-            resourceType: resourceInfo.resourceType ?? '',
+            resourceType: resourceInfo.resourceType ?? [],
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: presentableInfo.coverImages ?? []

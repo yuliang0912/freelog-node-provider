@@ -131,7 +131,7 @@ export class ImportResourceEntityHandler {
             versionRange: matchRule.ruleInfo.candidate.versionRange,
             name: resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,
-            resourceType: resourceInfo.resourceType ?? '',
+            resourceType: resourceInfo.resourceType ?? [],
             version: resourceVersion.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: resourceInfo.coverImages ?? [],

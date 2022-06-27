@@ -101,7 +101,7 @@ let TestResourceAdapter = TestResourceAdapter_1 = class TestResourceAdapter {
                 articleId: item.id,
                 articleName: item.name,
                 articleType: item.type === test_node_interface_1.TestResourceOriginType.Resource ? enum_1.ArticleTypeEnum.IndividualResource : enum_1.ArticleTypeEnum.StorageObject,
-                resourceType: '',
+                resourceType: [],
                 version: item.version,
                 versionId: item.versionId,
                 deep: item.deep,

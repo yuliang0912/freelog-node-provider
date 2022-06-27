@@ -27,7 +27,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             version: {type: String, required: false},
             versionId: {type: String, required: false},
             fileSha1: {type: String, required: false},
-            resourceType: {type: String, required: false},
+            resourceType: {type: [String], default: [], required: false},
             parentNid: {type: String, required: false}
             // replaced: {type: BaseReplacedInfoSchema, required: false}
         }, {_id: false});
@@ -40,7 +40,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             deep: {type: Number, required: true},
             version: {type: String, required: false},
             versionId: {type: String, required: false},
-            resourceType: {type: String, required: false},
+            // resourceType: {type: [String], required: false},
             parentNid: {type: String, required: false},
             // userId: {type: Number, required: false}, //资源需要此字段,默认规则是自己的资源可以直接使用.此外还用于筛选待解决的依赖
         }, {_id: false});
@@ -49,7 +49,7 @@ export class TestResourceTreeInfo extends MongooseModelBase {
             nodeId: {type: Number, required: true},
             testResourceId: {type: String, required: true, unique: true},
             testResourceName: {type: String, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             dependencyTree: {type: [DependencyTreeSchema], required: true},
             authTree: {type: [AuthTreeSchema], required: true},
         }, {

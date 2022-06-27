@@ -5,7 +5,7 @@ import {
 } from '../../test-node-interface';
 import {
     IdentityTypeEnum, visitorIdentityValidator, CommonRegex,
-    FreelogContext, SubjectAuthCodeEnum, ResourceTypeEnum
+    FreelogContext, SubjectAuthCodeEnum
 } from 'egg-freelog-base';
 import {differenceWith, first, isEmpty} from 'lodash';
 import {DefaulterIdentityTypeEnum, SubjectAuthResult} from '../../auth-interface';
@@ -168,7 +168,7 @@ export class TestResourceSubjectAuthController {
             exhibitId: testResource.testResourceId,
             exhibitName: testResource.testResourceName
         };
-        if (subFilePath && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(testResource.originInfo.resourceType.toLowerCase() as any)) {
+        if (subFilePath) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
         }

@@ -21,7 +21,7 @@ export class PresentableModel extends MongooseModelBase {
         const BaseResourceInfo = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             resourceOwnerId: {type: Number, required: false, default: 0}
         }, {_id: false});
 

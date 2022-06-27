@@ -8,7 +8,6 @@ export declare class PresentableBatchAuthService {
     policyHelper: PolicyHelper;
     presentableService: PresentableService;
     outsideApiService: IOutsideApiService;
-    start: number;
     /**
      * 多展品全链路授权
      * @param presentables

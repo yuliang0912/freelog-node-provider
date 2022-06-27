@@ -2,7 +2,7 @@ import {
     IOperationHandler, TestNodeOperationEnum, TestResourceOriginType, TestRuleEfficientInfo, TestRuleMatchInfo
 } from '../../../test-node-interface';
 import {inject, provide} from 'midway';
-import {FreelogContext, IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {PresentableInfo} from '../../../interface';
 import {isString} from 'lodash';
 
@@ -38,7 +38,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
                 return true;
             }
             const targetResourceType = targetRuleMatchInfo.testResourceOriginInfo.resourceType;
-            if (targetResourceType === ResourceTypeEnum.THEME) {
+            if (targetResourceType.includes('主题')) {
                 activeThemeRuleInfo.ruleInfo.candidate = {
                     name: targetRuleMatchInfo.testResourceOriginInfo.id,
                     type: targetRuleMatchInfo.testResourceOriginInfo.type
@@ -67,7 +67,7 @@ export class OperationActivateThemeHandler implements IOperationHandler {
             activeThemeRuleInfo.ruleInfo.errorMsg = this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_existed`, activeThemeRuleInfo.ruleInfo.exhibitName);
             activeThemeRuleInfo.matchErrors.push(activeThemeRuleInfo.ruleInfo.errorMsg);
             return false;
-        } else if (presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
+        } else if (!presentableInfo.resourceInfo.resourceType.includes('主题')) {
             activeThemeRuleInfo.ruleInfo.warningMsg = this.ctx.gettext(`reflect_rule_pre_excute_error_exhibit_not_theme`, activeThemeRuleInfo.ruleInfo.exhibitName);
             activeThemeRuleInfo.matchWarnings.push(activeThemeRuleInfo.ruleInfo.warningMsg);
             return false;

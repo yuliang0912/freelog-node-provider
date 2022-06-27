@@ -104,7 +104,10 @@ export class TestResourceAuthResponseHandler {
 
         this.ctx.body = response.data;
         this.ctx.attachment(realResponseEntityInfo.name);
-        if (['video', 'audio'].includes(realResponseEntityInfo.resourceType)) {
+        // if (['video', 'audio'].includes(realResponseEntityInfo.resourceType)) {
+        //     this.ctx.set('Accept-Ranges', 'bytes');
+        // }
+        if (response.res.headers['accept-ranges']) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
         this.ctx.set('content-length', response.res.headers['content-length']);

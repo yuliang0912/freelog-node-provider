@@ -173,7 +173,7 @@ export class PresentableVersionService implements IPresentableVersionService {
             presentableRelationTree.children.push({
                 resourceId: upcast.resourceId,
                 resourceName: upcast.resourceName,
-                resourceType: versionInfo.dependencyTree.find(x => x.resourceId === upcast.resourceId)?.resourceType,
+                resourceType: versionInfo.dependencyTree.find(x => x.resourceId === upcast.resourceId)?.resourceType ?? [],
                 downstreamIsAuth: upcastAuthResult.isAuth,
                 downstreamAuthContractIds: upcastAuthResult.contracts.map(x => x.contractId),
                 selfAndUpstreamIsAuth: upstreamResourceIsAuth(upcastResourceAuthTree),
@@ -220,7 +220,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                     nid: item.nid,
                     resourceId: item.resourceId,
                     resourceName: item.resourceName,
-                    resourceType: item.resourceType ?? '',
+                    resourceType: item.resourceType ?? [],
                     version: item.version,
                     versionId: item.versionId,
                     contracts: resourceResolveContracts.get(`${item.parentNid}_${item.resourceId}`) ?? [],
@@ -445,7 +445,7 @@ export class PresentableVersionService implements IPresentableVersionService {
                     const {version, versionId, resolveResources} = versionInfo;
                     treeNodes.push({
                         resourceId, resourceName,
-                        resourceType: resourceType ?? '',
+                        resourceType: resourceType ?? [],
                         version, versionId, nid,
                         parentNid, deep
                     });

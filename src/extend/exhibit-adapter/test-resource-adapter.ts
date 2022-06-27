@@ -110,7 +110,7 @@ export class TestResourceAdapter {
                 articleId: item.id,
                 articleName: item.name,
                 articleType: item.type === TestResourceOriginType.Resource ? ArticleTypeEnum.IndividualResource : ArticleTypeEnum.StorageObject,
-                resourceType: '',
+                resourceType: [],
                 version: item.version,
                 versionId: item.versionId,
                 deep: item.deep,

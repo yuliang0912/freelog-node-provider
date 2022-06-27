@@ -30,7 +30,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             id: {type: String, required: true},
             name: {type: String, required: true},
             type: {type: String, required: true},  // resource or object
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             version: {type: String, required: false, default: ''},
             versionRange: {type: String, required: false, default: ''},
             versions: {type: [String], required: false, default: []}
@@ -90,7 +90,7 @@ export class NodeTestResourceInfo extends MongooseModelBase {
             testResourceId: {type: String, required: true, unique: true},
             testResourceName: {type: String, required: true},
             associatedPresentableId: {type: String, default: '', required: false},
-            resourceType: {type: String, required: true}, //资源类型
+            resourceType: {type: [String], required: true}, //资源类型
             intro: {type: String, required: false, default: ''}, //测试资源简介
             originInfo: {type: OriginInfoSchema, required: true},
             stateInfo: {type: StateInfoSchema, required: true},

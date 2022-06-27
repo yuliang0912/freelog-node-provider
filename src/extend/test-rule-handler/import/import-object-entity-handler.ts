@@ -6,6 +6,7 @@ import {
 } from '../../../test-node-interface';
 import {FreelogContext} from 'egg-freelog-base';
 import {TestRuleChecker} from '../test-rule-checker';
+import {isEmpty} from 'lodash';
 
 @provide()
 export class ImportObjectEntityHandler {
@@ -86,7 +87,7 @@ export class ImportObjectEntityHandler {
             return;
         }
 
-        if ((objectInfo.resourceType ?? '').trim() === '') {
+        if (isEmpty(objectInfo.resourceType ?? [])) {
             matchRule.ruleInfo.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', matchRule.ruleInfo.candidate.name);
             matchRule.matchErrors.push(matchRule.ruleInfo.errorMsg);
             return;

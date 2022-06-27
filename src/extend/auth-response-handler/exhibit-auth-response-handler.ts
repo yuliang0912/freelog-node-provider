@@ -52,7 +52,7 @@ export class ExhibitAuthResponseHandler {
             case 'fileStream':
                 this.exhibitAuthFailedResponseHandle(authResult, exhibitInfo);
                 if (!subArticleFilePath) {
-                    return this.fileStreamResponseHandle(realResponseArticleBaseInfo, exhibitInfo.exhibitTitle);
+                    return this.fileStreamResponseHandle(exhibitInfo, realResponseArticleBaseInfo);
                 } else {
                     return this.articleSubFileStreamResponseHandle(realResponseArticleBaseInfo, subArticleFilePath);
                 }
@@ -85,10 +85,10 @@ export class ExhibitAuthResponseHandler {
 
     /**
      * 文件流响应处理
+     * @param exhibitInfo
      * @param realResponseArticleBaseInfo
-     * @param attachmentName
      */
-    async fileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, attachmentName: string) {
+    async fileStreamResponseHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree) {
 
         let response;
         switch (realResponseArticleBaseInfo.articleType) {
@@ -105,8 +105,9 @@ export class ExhibitAuthResponseHandler {
             throw new ApplicationError('文件读取失败');
         }
         this.ctx.body = response.data;
-        this.ctx.attachment(attachmentName);
-        if (['video', 'audio'].includes(realResponseArticleBaseInfo.resourceType)) {
+        this.ctx.attachment(exhibitInfo.exhibitTitle);
+        const mime = exhibitInfo.versionInfo?.exhibitProperty?.mime ?? '';
+        if (/audio|video/.test(mime as string)) {
             this.ctx.set('Accept-Ranges', 'bytes');
         }
         this.ctx.set('content-length', response.res.headers['content-length']);

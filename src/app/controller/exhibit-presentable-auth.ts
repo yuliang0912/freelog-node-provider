@@ -11,7 +11,6 @@ import {
     CommonRegex,
     FreelogContext,
     IdentityTypeEnum,
-    ResourceTypeEnum,
     SubjectAuthCodeEnum,
     visitorIdentityValidator
 } from 'egg-freelog-base';
@@ -187,7 +186,7 @@ export class PresentableSubjectAuthController {
             exhibitId: presentableInfo.presentableId,
             exhibitName: presentableInfo.presentableName
         };
-        if (subFilePath && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+        if (subFilePath) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
         }

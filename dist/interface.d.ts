@@ -24,7 +24,7 @@ export interface BaseResourceInfo {
     resourceId: string;
     resourceName: string;
     resourceOwnerId?: number;
-    resourceType?: string;
+    resourceType?: string[];
     versionRange?: string;
 }
 export interface ResolveResource {
@@ -166,7 +166,7 @@ export interface ObjectStorageInfo {
     sha1: string;
     objectName: string;
     bucketName: string;
-    resourceType: string;
+    resourceType: string[];
     bucketId?: string;
     systemProperty?: object;
     customPropertyDescriptors?: any[];
@@ -174,7 +174,7 @@ export interface ObjectStorageInfo {
 export interface ResourceInfo {
     resourceId?: string;
     resourceName: string;
-    resourceType: string;
+    resourceType: string[];
     userId: number;
     username: string;
     resourceVersions: any[];
@@ -191,7 +191,7 @@ export interface ResourceVersionInfo {
     userId: number;
     versionId: string;
     version: string;
-    resourceType: string;
+    resourceType: string[];
     fileSha1: string;
     description?: string;
     dependencies: BaseResourceInfo[];
@@ -207,7 +207,7 @@ export interface ResourceDependencyTree {
     version: string;
     versions: string[];
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     fileSha1: string;
     baseUpcastResources: any[];
@@ -219,7 +219,7 @@ export interface FlattenPresentableDependencyTree {
     resourceName: string;
     version: string;
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     fileSha1: string;
     deep: number;
@@ -231,7 +231,7 @@ export interface PresentableDependencyTree {
     resourceName: string;
     version: string;
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     fileSha1: string;
     dependencies: PresentableDependencyTree[];
@@ -240,7 +240,7 @@ export interface FlattenPresentableAuthTree {
     nid: string;
     resourceId: string;
     resourceName: string;
-    resourceType: string;
+    resourceType?: string[];
     version: string;
     versionId: string;
     parentNid: string;
@@ -257,7 +257,7 @@ export interface PresentableAuthTree {
 }
 export interface PresentableResolveResource {
     resourceId: string;
-    resourceType: string;
+    resourceType: string[];
     resourceName: string;
     versions: Array<{
         version: string;
@@ -440,7 +440,7 @@ export interface MountArticleInfo {
     articleType: ArticleTypeEnum;
     articleOwnerId: number;
     articleOwnerName: string;
-    resourceType: string;
+    resourceType: string[];
     otherInfo?: {
         [key: string]: any;
     };
@@ -468,7 +468,7 @@ export interface ExhibitAuthNodeInfo {
     articleId: string;
     articleName: string;
     articleType: ArticleTypeEnum;
-    resourceType: string;
+    resourceType: string[];
     version: string;
     versionId: string;
     parentNid: string;
@@ -481,7 +481,7 @@ export interface ExhibitDependencyNodeInfo {
     articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     deep: number;
     parentNid: string;
@@ -493,7 +493,7 @@ export interface ExhibitDependencyTree {
     articleType: ArticleTypeEnum;
     version: string;
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     deep: number;
     parentNid: string;

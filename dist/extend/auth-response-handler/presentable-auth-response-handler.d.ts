@@ -24,11 +24,9 @@ export declare class PresentableAuthResponseHandler implements IPresentableAuthR
     commonResponseHeaderHandle(presentableInfo: PresentableInfo, presentableVersionInfo: PresentableVersionInfo, realResponseResourceVersionInfo: PresentableDependencyTree): Promise<void>;
     /**
      * 文件流响应处理
-     * @param versionId
-     * @param resourceType
-     * @param attachmentName
+     * @param realResponseResourceVersionInfo
      */
-    fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string): Promise<void>;
+    fileStreamResponseHandle(realResponseResourceVersionInfo: PresentableDependencyTree): Promise<void>;
     /**
      * 获取子资源文件
      * @param resourceId

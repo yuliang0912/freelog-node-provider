@@ -101,7 +101,7 @@ export class ImportPresentableEntityHandler {
             ownerUserId: resourceInfo.userId,
             name: resourceInfo.resourceName,
             type: TestResourceOriginType.Resource,
-            resourceType: resourceInfo.resourceType ?? '',
+            resourceType: resourceInfo.resourceType ?? [],
             version: presentableInfo.version,
             versions: resourceInfo.resourceVersions.map(x => x.version),
             coverImages: presentableInfo.coverImages ?? []

@@ -158,7 +158,7 @@ export class ActionReplaceHandler implements IActionHandler<ContentReplace> {
             testRuleInfo.matchErrors.push(action.errorMsg);
             return;
         }
-        if (replacerIsObject && !replacerInfo.resourceType) {
+        if (replacerIsObject && isEmpty(replacerInfo.resourceType ?? [])) {
             action.errorMsg = this.ctx.gettext('reflect_rule_pre_excute_error_no_resource_type', replacer.name);
             testRuleInfo.matchErrors.push(action.errorMsg);
             return;

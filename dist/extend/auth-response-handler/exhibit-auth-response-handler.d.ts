@@ -25,10 +25,10 @@ export declare class ExhibitAuthResponseHandler {
     commonResponseHeaderHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree): Promise<void>;
     /**
      * 文件流响应处理
+     * @param exhibitInfo
      * @param realResponseArticleBaseInfo
-     * @param attachmentName
      */
-    fileStreamResponseHandle(realResponseArticleBaseInfo: ExhibitDependencyTree, attachmentName: string): Promise<void>;
+    fileStreamResponseHandle(exhibitInfo: ExhibitInfo, realResponseArticleBaseInfo: ExhibitDependencyTree): Promise<void>;
     /**
      * 获取子资源文件
      * @param realResponseArticleBaseInfo

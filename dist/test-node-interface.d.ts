@@ -34,7 +34,7 @@ export interface TestResourceOriginInfo extends BaseTestResourceOriginInfo {
     versions?: string[];
     versionRange?: string;
     coverImages?: string[];
-    resourceType: string;
+    resourceType: string[];
     ownerUserId?: number;
     versionId?: string;
 }
@@ -165,7 +165,7 @@ export interface TestResourceDependencyTree {
     type: TestResourceOriginType;
     version: string;
     versionId: string;
-    resourceType: string;
+    resourceType: string[];
     dependencies: TestResourceDependencyTree[];
     replaceRecords?: BaseReplacedInfo[];
     versions?: string[];
@@ -178,7 +178,7 @@ export interface FlattenTestResourceDependencyTree {
     type: TestResourceOriginType;
     version: string;
     versionId?: string;
-    resourceType: string;
+    resourceType: string[];
     deep: number;
     parentNid: string;
 }
@@ -190,7 +190,7 @@ export interface ObjectDependencyTreeInfo {
     versionRange?: string;
     versions?: string[];
     type: 'object' | 'resource';
-    resourceType: string;
+    resourceType: string[];
     dependencies: ObjectDependencyTreeInfo[];
 }
 /**
@@ -247,7 +247,7 @@ export interface TestResourceInfo {
     testResourceId: string;
     testResourceName: string;
     associatedPresentableId?: string;
-    resourceType: string;
+    resourceType: string[];
     originInfo: TestResourceOriginInfo;
     stateInfo: StateInfo;
     resolveResources?: ResolveResourceInfo[];
@@ -266,7 +266,7 @@ export interface TestResourceTreeInfo {
     nodeId: number;
     testResourceId: string;
     testResourceName: string;
-    resourceType: string;
+    resourceType: string[];
     systemProperty?: object;
     resourceCustomPropertyDescriptors?: any[];
     presentableRewriteProperty?: any[];

@@ -66,7 +66,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
             case 'fileStream':
                 this.subjectAuthFailedResponseHandle(authResult);
                 if (!subResourceFile) {
-                    await this.fileStreamResponseHandle(realResponseResourceVersionInfo.versionId, realResponseResourceVersionInfo.resourceType, presentableInfo.presentableTitle);
+                    await this.fileStreamResponseHandle(realResponseResourceVersionInfo);
                 } else {
                     await this.subResourceFileResponseHandle(realResponseResourceVersionInfo.resourceId, realResponseResourceVersionInfo.version, subResourceFile);
                 }
@@ -107,23 +107,19 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
 
     /**
      * 文件流响应处理
-     * @param versionId
-     * @param resourceType
-     * @param attachmentName
+     * @param realResponseResourceVersionInfo
      */
-    async fileStreamResponseHandle(versionId: string, resourceType: string, attachmentName?: string) {
+    async fileStreamResponseHandle(realResponseResourceVersionInfo: PresentableDependencyTree) {
 
-        const response = await this.outsideApiService.getResourceFileStream(versionId);
+        const response = await this.outsideApiService.getResourceFileStream(realResponseResourceVersionInfo.versionId);
         if (!response.res.statusCode.toString().startsWith('2')) {
             throw new ApplicationError('文件读取失败');
         }
         this.ctx.body = response.data;
-        if (isString(attachmentName)) {
-            this.ctx.attachment(attachmentName);
-        }
-        if (['video', 'audio'].includes(resourceType)) {
-            this.ctx.set('Accept-Ranges', 'bytes');
-        }
+        this.ctx.attachment(realResponseResourceVersionInfo.resourceName);
+        // if (['video', 'audio'].includes(resourceType)) {
+        //     this.ctx.set('Accept-Ranges', 'bytes');
+        // }
         this.ctx.set('content-length', response.res.headers['content-length']);
         // 代码需要放到ctx.attachment以后,否则不可控.
         this.ctx.set('content-type', response.res.headers['content-type']);

@@ -1,5 +1,6 @@
 import { INodeService, IOutsideApiService, IPresentableService, IPresentableVersionService } from '../../interface';
 import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
+import { ResourceTypeRepairService } from '../service/resource-type-repair-service';
 export declare class PresentableController {
     ctx: FreelogContext;
     nodeCommonChecker: any;
@@ -11,6 +12,8 @@ export declare class PresentableController {
     presentablePolicyValidator: IJsonSchemaValidate;
     presentableRewritePropertyValidator: IJsonSchemaValidate;
     presentableVersionService: IPresentableVersionService;
+    resourceTypeRepairService: ResourceTypeRepairService;
+    resourceTypeRepair(): Promise<void>;
     index(): Promise<FreelogContext>;
     indexForAdmin(): Promise<FreelogContext>;
     list(): Promise<void>;

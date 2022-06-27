@@ -9,6 +9,7 @@ import {
 import {
     IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext, IJsonSchemaValidate
 } from 'egg-freelog-base';
+import {ResourceTypeRepairService} from '../service/resource-type-repair-service';
 
 @provide()
 @controller('/v2/presentables')
@@ -34,6 +35,13 @@ export class PresentableController {
     presentableRewritePropertyValidator: IJsonSchemaValidate;
     @inject()
     presentableVersionService: IPresentableVersionService;
+    @inject()
+    resourceTypeRepairService: ResourceTypeRepairService;
+
+    @get('/resourceTypeRepair')
+    async resourceTypeRepair() {
+        await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
+    }
 
     @get('/')
     async index() {

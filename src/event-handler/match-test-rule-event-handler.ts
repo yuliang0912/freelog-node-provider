@@ -27,9 +27,9 @@ import {
     PresentableVersionInfo,
     ResourceInfo
 } from '../interface';
-import {chain, chunk, isEmpty} from 'lodash';
+import {chain, chunk, first, isEmpty} from 'lodash';
 import {NodeTestRuleMatchStatus} from '../enum';
-import {FreelogUserInfo, IMongodbOperation, ResourceTypeEnum} from 'egg-freelog-base';
+import {FreelogUserInfo, IMongodbOperation} from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../extend/presentable-common-checker';
 import {TestRuleHandler} from '../extend/test-rule-handler';
 
@@ -359,7 +359,7 @@ export class MatchTestRuleEventHandler implements IMatchTestRuleEventHandler {
 
         // 是否存在有效的激活主题规则
         const hasValidThemeRule = themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name;
-        const presentableIsActiveTheme = presentableInfo.resourceInfo.resourceType === ResourceTypeEnum.THEME && presentableInfo.onlineStatus === 1;
+        const presentableIsActiveTheme = first<string>(presentableInfo.resourceInfo.resourceType) === '主题' && presentableInfo.onlineStatus === 1;
         const isMatched = themeTestRuleMatchInfo?.isValid && themeTestRuleMatchInfo?.ruleInfo?.candidate?.name === presentableInfo.resourceInfo.resourceId;
 
         const testResourceOriginInfo = {

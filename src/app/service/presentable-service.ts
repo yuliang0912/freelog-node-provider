@@ -1,5 +1,5 @@
 import {inject, plugin, provide} from 'midway';
-import {assign, chain, differenceBy, isArray, isEmpty, pick, uniqBy} from 'lodash';
+import {assign, chain, differenceBy, first, isArray, isEmpty, pick, uniqBy} from 'lodash';
 import {PresentableAuthStatusEnum, PresentableOnlineStatusEnum} from '../../enum';
 import {
     BasePolicyInfo, CreatePresentableOptions, findOptions, INodeService,
@@ -9,7 +9,7 @@ import {
     ResourceInfo, UpdatePresentableOptions
 } from '../../interface';
 import {
-    ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum, ResourceTypeEnum
+    ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum
 } from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
 
@@ -226,7 +226,7 @@ export class PresentableService implements IPresentableService {
         }
 
         const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {onlineStatus}).then(data => Boolean(data.ok));
-        if (!isSuccessful || presentableInfo.resourceInfo.resourceType !== ResourceTypeEnum.THEME) {
+        if (!isSuccessful || first<string>(presentableInfo.resourceInfo.resourceType) !== '主题') { // ResourceTypeEnum.THEME
             return isSuccessful;
         }
 
@@ -234,7 +234,7 @@ export class PresentableService implements IPresentableService {
         await this.presentableProvider.updateMany({
             _id: {$ne: presentableInfo.presentableId},
             nodeId: presentableInfo.nodeId,
-            'resourceInfo.resourceType': ResourceTypeEnum.THEME
+            'resourceInfo.resourceType': '主题'
         }, {onlineStatus: 0});
         return isSuccessful;
     }

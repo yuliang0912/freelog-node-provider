@@ -9,8 +9,7 @@ import {
     visitorIdentityValidator,
     CommonRegex,
     FreelogContext,
-    SubjectAuthCodeEnum,
-    ResourceTypeEnum
+    SubjectAuthCodeEnum
 } from 'egg-freelog-base';
 import {SubjectAuthResult} from '../../auth-interface';
 
@@ -65,7 +64,7 @@ export class PresentableAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
             return ctx.success(subjectAuthResult);
         }
-        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+        if (subResourceFile) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
@@ -158,7 +157,7 @@ export class PresentableAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotOnline).setErrorMsg('标的物已下线');
             return ctx.success(subjectAuthResult);
         }
-        if (subResourceFile && ![ResourceTypeEnum.THEME, ResourceTypeEnum.WIDGET].includes(presentableInfo.resourceInfo.resourceType.toLowerCase() as any)) {
+        if (subResourceFile) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'subResourceFile'));
         }
 

@@ -28,7 +28,7 @@ export declare class PresentableVersionService implements IPresentableVersionSer
     getRelationTree(presentableInfo: PresentableInfo, versionInfo: PresentableVersionInfo): Promise<{
         resourceId: string;
         resourceName: string;
-        resourceType: string;
+        resourceType: string[];
         versions: string[];
         downstreamIsAuth: boolean;
         downstreamAuthContractIds: string[];

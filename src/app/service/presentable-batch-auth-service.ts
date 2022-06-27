@@ -25,8 +25,6 @@ export class PresentableBatchAuthService {
     presentableService: PresentableService;
     @inject()
     outsideApiService: IOutsideApiService;
-    start = Date.now();
-
 
     /**
      * 多展品全链路授权
