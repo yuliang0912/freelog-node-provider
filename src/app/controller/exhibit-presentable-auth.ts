@@ -1,7 +1,6 @@
 import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
-    ExhibitInfo,
     IPresentableAuthService,
     IPresentableService,
     IPresentableVersionService,
@@ -105,7 +104,6 @@ export class PresentableSubjectAuthController {
      */
     @get('/batchAuth/results')
     async exhibitBatchAuth() {
-        const start = Date.now();
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().isInt().gt(0).value;
         // 1:节点侧 2:上游侧 3:节点侧以及上游侧 4:全链路(包含用户)
@@ -124,7 +122,6 @@ export class PresentableSubjectAuthController {
         const presentableAuthTreeMap = await this.presentableVersionService.findByIds(presentableVersionIds, 'presentableId authTree').then(list => {
             return new Map(list.map(x => [x.presentableId, x.authTree]));
         });
-        console.log(`ready2:${Date.now() - start}`);
         const returnResults = [];
         const authResultMap = await this.presentableBatchAuthService.batchPresentableAuth(presentables, presentableAuthTreeMap, authType);
         for (const exhibitId of exhibitIds) {
@@ -182,14 +179,14 @@ export class PresentableSubjectAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg('展品不存在,请检查参数');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        const exhibitPartialInfo: Partial<ExhibitInfo> = {
-            exhibitId: presentableInfo.presentableId,
-            exhibitName: presentableInfo.presentableName
-        };
-        if (subFilePath) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
-            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
-        }
+        // const exhibitPartialInfo: Partial<ExhibitInfo> = {
+        //     exhibitId: presentableInfo.presentableId,
+        //     exhibitName: presentableInfo.presentableName
+        // };
+        // if (subFilePath) { // 之前校验了必须主题和插件才能传递subFilePath参数,由于资源类型的调整,暂时去掉此限制
+        //     const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
+        //     this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
+        // }
 
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
