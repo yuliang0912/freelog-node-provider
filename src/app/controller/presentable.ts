@@ -98,6 +98,7 @@ export class PresentableController {
         const limit = ctx.checkQuery('limit').ignoreParamWhenEmpty().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const nodeId = ctx.checkQuery('nodeId').ignoreParamWhenEmpty().toInt().gt(0).value;
+        const nodeName = ctx.checkQuery('nodeName').ignoreParamWhenEmpty().isNodeName().value;
         const presentableId = ctx.checkQuery('presentableId').ignoreParamWhenEmpty().isPresentableId().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().value;
@@ -126,11 +127,16 @@ export class PresentableController {
         if (presentableId) {
             condition['_id'] = presentableId;
         }
-
+        if (nodeName) {
+            const nodeInfo = await this.nodeService.findOne({nodeName});
+            if (!nodeInfo) {
+                return ctx.success({skip, limit, totalItem: 0, dataList: []});
+            }
+            condition.nodeId = nodeInfo.nodeId;
+        }
         const pageResult = await this.presentableService.searchIntervalList(condition, keywords, {
             sort: sort ?? {createDate: -1}, limit, skip
         });
-
         if (!pageResult.dataList) {
             return ctx.success(pageResult);
         }
