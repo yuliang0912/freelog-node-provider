@@ -79,7 +79,7 @@ export class ExhibitAuthResponseHandler {
         this.ctx.set('freelog-exhibit-property', encodeURIComponent(JSON.stringify(exhibitInfo.versionInfo?.exhibitProperty ?? {})));
         this.ctx.set('freelog-article-nid', realResponseArticleBaseInfo.nid);
         this.ctx.set('freelog-article-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
-        this.ctx.set('freelog-article-resource-type', realResponseArticleBaseInfo.resourceType);
+        this.ctx.set('freelog-article-resource-type', encodeURIComponent(JSON.stringify(realResponseArticleBaseInfo.resourceType)));
         this.ctx.set('Access-Control-Expose-Headers', 'freelog-exhibit-id,freelog-exhibit-name,freelog-exhibit-property,freelog-article-nid,freelog-article-sub-dependencies,freelog-article-resource-type');
     }
 

@@ -13,6 +13,8 @@ export default (appInfo: EggAppInfo) => {
 
     config.i18n = {
         enable: true,
+        queryField: 'locale',
+        cookieField: 'locale',
         defaultLocale: 'zh-CN'
     };
 

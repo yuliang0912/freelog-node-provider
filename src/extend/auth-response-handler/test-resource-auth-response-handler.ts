@@ -72,7 +72,7 @@ export class TestResourceAuthResponseHandler {
         this.ctx.set('freelog-test-resource-id', testResourceInfo.testResourceId);
         this.ctx.set('freelog-test-resource-name', encodeURIComponent(testResourceInfo.testResourceName));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseTestResourceDependencyTree.dependencies)));
-        this.ctx.set('freelog-resource-type', responseTestResourceDependencyTree.resourceType);
+        this.ctx.set('freelog-resource-type', encodeURIComponent(JSON.stringify(responseTestResourceDependencyTree.resourceType)));
         //if (responseTestResourceDependencyTree.id === testResourceInfo.originInfo.id) {
         const versionProperty = this.testNodeGenerator._calculateTestResourceProperty(testResourceInfo);
         this.ctx.set('freelog-entity-property', encodeURIComponent(JSON.stringify(versionProperty)));

@@ -93,7 +93,7 @@ export class PresentableAuthResponseHandler implements IPresentableAuthResponseH
         this.ctx.set('freelog-presentable-id', presentableInfo.presentableId);
         this.ctx.set('freelog-presentable-name', encodeURIComponent(presentableInfo.presentableName));
         this.ctx.set('freelog-sub-dependencies', encodeURIComponent(JSON.stringify(responseDependencies)));
-        this.ctx.set('freelog-resource-type', realResponseResourceVersionInfo.resourceType);
+        this.ctx.set('freelog-resource-type', encodeURIComponent(JSON.stringify(realResponseResourceVersionInfo.resourceType)));
         // // 如果加载的是子资源(依赖的资源),则需要读取依赖资源的meta信息
         // if (realResponseResourceVersionInfo.resourceId !== presentableVersionInfo.resourceId) {
         //     const subResourceProperty = await this.outsideApiService.getResourceVersionProperty(realResponseResourceVersionInfo.resourceId, realResponseResourceVersionInfo.version);
