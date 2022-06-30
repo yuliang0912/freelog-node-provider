@@ -6,5 +6,7 @@ export declare class ResourceTypeRepairService {
     presentableVersionProvider: IMongodbOperation<PresentableVersionInfo>;
     nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
     nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
+    resourceTypeMap: Map<string, string[]>;
     resourceTypeRepair(): Promise<void>;
+    private convertResourceTypes;
 }
