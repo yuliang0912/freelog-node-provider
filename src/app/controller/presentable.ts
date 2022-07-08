@@ -64,6 +64,7 @@ export class PresentableController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().default(0).in([0, 1]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceDetailInfo = ctx.checkQuery('isLoadResourceDetailInfo').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -90,6 +91,9 @@ export class PresentableController {
         }
         if (isLoadVersionProperty) {
             pageResult.dataList = await this.presentableService.fillPresentableVersionProperty(pageResult.dataList, false, false);
+        }
+        if (isLoadResourceDetailInfo) {
+            pageResult.dataList = await this.presentableService.fillPresentableResourceInfo(pageResult.dataList);
         }
         return ctx.success(pageResult);
     }
@@ -168,6 +172,7 @@ export class PresentableController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const isLoadVersionProperty = ctx.checkQuery('isLoadVersionProperty').optional().toInt().default(0).in([0, 1]).value;
+        const isLoadResourceDetailInfo = ctx.checkQuery('isLoadResourceDetailInfo').optional().toInt().default(0).in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -200,6 +205,9 @@ export class PresentableController {
         }
         if (isLoadVersionProperty) {
             presentableList = await this.presentableService.fillPresentableVersionProperty(presentableList, false, false);
+        }
+        if (isLoadResourceDetailInfo) {
+            presentableList = await this.presentableService.fillPresentableResourceInfo(presentableList);
         }
         ctx.success(presentableList);
     }

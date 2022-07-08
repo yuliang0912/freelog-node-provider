@@ -26,7 +26,7 @@ export class NodeController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
-        const status = ctx.checkQuery('status').ignoreParamWhenEmpty().default(2).in([1, 2, 5, 6]).toInt().value;
+        const status = ctx.checkQuery('status').ignoreParamWhenEmpty().toInt().in([1, 2, 5, 6]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 

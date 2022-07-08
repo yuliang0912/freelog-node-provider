@@ -367,7 +367,7 @@ export class PresentableService implements IPresentableService {
     async fillPresentableResourceInfo(presentables: PresentableInfo[]): Promise<PresentableInfo[]> {
         const resourceIds = presentables.map(x => x.resourceInfo?.resourceId).filter(x => Boolean(x));
         const resourceList = await this.outsideApiService.getResourceListByIds(resourceIds, {
-            projection: 'resourceId,resourceName,resourceType,coverImages,intro,resourceVersions,tags'
+            projection: 'resourceId,resourceName,resourceType,coverImages,intro,resourceVersions,tags,status'
         });
         if (isEmpty(resourceList)) {
             return presentables;
