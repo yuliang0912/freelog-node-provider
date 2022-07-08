@@ -179,8 +179,8 @@ export class NodeController {
         if (isString(nodeName)) {
             condition.nodeName = nodeName;
         }
-
-        await this.nodeService.findOne(condition, projection.join(' ')).then(ctx.success);
+        const nodeInfo = await this.nodeService.findOne(condition, projection.join(' '));
+        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(list => ctx.success(first(list)));
     }
 
     @get('/:nodeId')
