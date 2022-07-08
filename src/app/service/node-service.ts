@@ -204,7 +204,7 @@ export class NodeService implements INodeService {
         ];
 
         const resourceFreezeRecordMap: Map<number, string> = await this.nodeFreezeRecordProvider.aggregate(condition).then(list => {
-            return new Map(list.map(x => [x.nodeId, x.freezeInfo.reason]));
+            return new Map(list.map(x => [x.nodeId, x.freezeInfo.remark.length ? x.freezeInfo.remark : x.freezeInfo.reason]));
         });
 
         return nodes.map((item: any) => {
