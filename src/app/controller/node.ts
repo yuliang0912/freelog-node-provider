@@ -1,6 +1,6 @@
 import {INodeService, ITageService} from '../../interface';
 import {controller, inject, get, post, provide, put} from 'midway';
-import {isUndefined, isNumber, isArray, isString} from 'lodash';
+import {isUndefined, isNumber, isArray, isString, first} from 'lodash';
 import {IdentityTypeEnum, visitorIdentityValidator, ArgumentError, FreelogContext} from 'egg-freelog-base';
 import {isDate} from 'lodash';
 import {NodeStatusEnum} from '../../enum';
@@ -192,7 +192,7 @@ export class NodeController {
         ctx.validateParams();
 
         const nodeInfo = await this.nodeService.findById(nodeId, projection.join(' '));
-        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(ctx.success);
+        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(list => ctx.success(first(list)));
     }
 
     // 批量设置或移除节点标签
