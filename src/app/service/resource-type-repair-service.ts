@@ -3,9 +3,12 @@ import {IMongodbOperation} from 'egg-freelog-base';
 import {PresentableInfo, PresentableVersionInfo} from '../../interface';
 import {TestResourceInfo, TestResourceTreeInfo} from '../../test-node-interface';
 import {uniq} from 'lodash';
+import {OutsideApiService} from './outside-api-service';
+import {PresentableVersionService} from './presentable-version-service';
 
 @provide()
 export class ResourceTypeRepairService {
+
     @inject()
     presentableProvider: IMongodbOperation<PresentableInfo>;
     @inject()
@@ -14,6 +17,10 @@ export class ResourceTypeRepairService {
     nodeTestResourceProvider: IMongodbOperation<TestResourceInfo>;
     @inject()
     nodeTestResourceTreeProvider: IMongodbOperation<TestResourceTreeInfo>;
+    @inject()
+    presentableVersionService: PresentableVersionService;
+    @inject()
+    outsideApiService: OutsideApiService;
 
     resourceTypeMap = new Map<string, string[]>([
         ['theme', ['主题']],
@@ -41,6 +48,7 @@ export class ResourceTypeRepairService {
                 for (let dependencyTreeElement of model.dependencyTree) {
                     dependencyTreeElement.resourceType = this.convertResourceTypes(dependencyTreeElement.resourceType);
                 }
+
                 this.presentableVersionProvider.updateOne({presentableVersionId: model.presentableVersionId}, {
                     dependencyTree: model.dependencyTree
                 });
@@ -63,6 +71,26 @@ export class ResourceTypeRepairService {
                 }
                 this.nodeTestResourceTreeProvider.updateOne({testResourceId: model.testResourceId}, {
                     dependencyTree: model.dependencyTree
+                });
+            }
+        });
+    }
+
+    async presentableMetaRepair() {
+        this.presentableVersionProvider.find({}, 'presentableVersionId dependencyTree presentableRewriteProperty').then(list => {
+            for (let presentableVersionInfo of list) {
+                const resourceVersionId = presentableVersionInfo.dependencyTree.find(x => x.deep === 1).versionId;
+                this.outsideApiService.getResourceVersionInfo(resourceVersionId).then(resourceVersionInfo => {
+                    if (resourceVersionInfo?.systemProperty) {
+                        const versionProperty = this.presentableVersionService._calculatePresentableVersionProperty(
+                            resourceVersionInfo.systemProperty,
+                            resourceVersionInfo.customPropertyDescriptors,
+                            presentableVersionInfo.presentableRewriteProperty
+                        );
+                        this.presentableVersionProvider.updateOne({presentableVersionId: presentableVersionInfo.presentableVersionId}, {
+                            resourceSystemProperty: resourceVersionInfo?.systemProperty, versionProperty
+                        });
+                    }
                 });
             }
         });

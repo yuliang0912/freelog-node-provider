@@ -365,6 +365,12 @@ export interface INodeService {
      * @param recordLimit
      */
     batchFindFreeOrRecoverRecords(nodeIds: number[], operationType?: 1 | 2, recordLimit?: number): Promise<any[]>;
+
+    /**
+     * 填充节点冻结原因
+     * @param nodes
+     */
+    fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]>;
 }
 
 export interface IPresentableService {

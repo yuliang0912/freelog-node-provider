@@ -43,6 +43,11 @@ export class PresentableController {
         await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
     }
 
+    @get('/presentableMetaRepair')
+    async presentableMetaRepair() {
+        await this.resourceTypeRepairService.presentableMetaRepair().then(() => this.ctx.success(true));
+    }
+
     @get('/')
     async index() {
 

@@ -191,7 +191,8 @@ export class NodeController {
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        await this.nodeService.findById(nodeId, projection.join(' ')).then(ctx.success);
+        const nodeInfo = await this.nodeService.findById(nodeId, projection.join(' '));
+        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(ctx.success);
     }
 
     // 批量设置或移除节点标签

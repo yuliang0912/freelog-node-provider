@@ -8,6 +8,7 @@ import {
 } from '../../interface';
 import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 import {NodeStatusEnum} from '../../enum';
+import {isEmpty} from 'lodash';
 
 @provide()
 export class NodeService implements INodeService {
@@ -183,6 +184,34 @@ export class NodeService implements INodeService {
             updateModel.$pull = {tags: {$in: tags}};
         }
         return this.nodeProvider.updateMany({nodeId: {$in: nodeIds}}, updateModel).then(t => Boolean(t.ok));
+    }
+
+    /**
+     * 填充节点封禁原因
+     * @param nodes
+     */
+    async fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]> {
+        const freezeNodeIds = nodes.filter(x => (x?.status & 4) === 4).map(x => x.nodeId);
+        if (isEmpty(freezeNodeIds)) {
+            return nodes;
+        }
+        const condition = [
+            {$match: {nodeId: {$in: freezeNodeIds}, 'records.type': 1}},
+            {$unwind: {path: '$records'}},
+            {$match: {'records.type': 1}},
+            {$group: {_id: '$nodeId', records: {$last: '$records'}}},
+            {$project: {nodeId: '$_id', _id: false, freezeInfo: '$records'}}
+        ];
+
+        const resourceFreezeRecordMap: Map<number, string> = await this.nodeFreezeRecordProvider.aggregate(condition).then(list => {
+            return new Map(list.map(x => [x.nodeId, x.freezeInfo.reason]));
+        });
+
+        return nodes.map((item: any) => {
+            const nodeInfo = item.toObject ? item.toObject() : item;
+            nodeInfo.freezeReason = resourceFreezeRecordMap.get(nodeInfo.nodeId) ?? '';
+            return nodeInfo;
+        });
     }
 
     /**

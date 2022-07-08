@@ -38,4 +38,9 @@ export declare class NodeService implements INodeService {
      * @param setType
      */
     batchSetOrRemoveNodeTags(nodeIds: number[], tags: string[], setType: 1 | 2): Promise<boolean>;
+    /**
+     * 填充节点封禁原因
+     * @param nodes
+     */
+    fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]>;
 }
