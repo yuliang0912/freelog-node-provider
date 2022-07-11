@@ -1,7 +1,6 @@
 import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
-    IPresentableAuthService,
     IPresentableService,
     IPresentableVersionService,
     PresentableInfo
@@ -29,8 +28,6 @@ export class PresentableSubjectAuthController {
     presentableCommonChecker;
     @inject()
     presentableService: IPresentableService;
-    @inject()
-    presentableAuthService: IPresentableAuthService;
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
@@ -138,32 +135,6 @@ export class PresentableSubjectAuthController {
             });
         }
         ctx.success(returnResults);
-
-        // if (authType === 4) {
-        //     presentables = await this.presentableService.fillPresentablePolicyInfo(presentables, true);
-        // }
-        //
-        // const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
-        //     authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
-        //         authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth :
-        //             authType === 4 ? this.presentableAuthService.presentableAuth : null;
-        //
-        // const tasks = [];
-        // const returnResults = [];
-        // for (const presentableInfo of presentables) {
-        //     const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
-        //         exhibitId: presentableInfo.presentableId,
-        //         exhibitName: presentableInfo.presentableName,
-        //         authCode: authResult.authCode,
-        //         referee: authResult.referee,
-        //         defaulterIdentityType: authResult.defaulterIdentityType,
-        //         isAuth: authResult.isAuth,
-        //         errorMsg: authResult.errorMsg
-        //     }));
-        //     tasks.push(task);
-        // }
-        //
-        // await Promise.all(tasks).then(() => ctx.success(returnResults));
     }
 
     /**
@@ -190,7 +161,6 @@ export class PresentableSubjectAuthController {
 
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
-        // const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
         const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 4).then(results => {
             return results.get(presentableInfo.presentableId);
         });

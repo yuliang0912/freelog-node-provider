@@ -1,7 +1,7 @@
 import {differenceWith, first, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {
-    IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService
+    IPresentableAuthResponseHandler, IPresentableService, IPresentableVersionService
 } from '../../interface';
 import {
     ArgumentError,
@@ -12,6 +12,7 @@ import {
     SubjectAuthCodeEnum
 } from 'egg-freelog-base';
 import {SubjectAuthResult} from '../../auth-interface';
+import {PresentableBatchAuthService} from '../service/presentable-batch-auth-service';
 
 @provide()
 @controller('/v2/auths/presentables') // 统一URL v2/auths/:subjectTypes/:subjectId
@@ -24,7 +25,7 @@ export class PresentableAuthController {
     @inject()
     presentableService: IPresentableService;
     @inject()
-    presentableAuthService: IPresentableAuthService;
+    presentableBatchAuthService: PresentableBatchAuthService;
     @inject()
     presentableVersionService: IPresentableVersionService;
     @inject()
@@ -69,8 +70,10 @@ export class PresentableAuthController {
         }
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableId, presentableInfo.version, 'presentableId dependencyTree authTree versionProperty');
-        const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
 
+        const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 4).then(results => {
+            return results.get(presentableInfo.presentableId);
+        });
         await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
     }
 
@@ -101,15 +104,12 @@ export class PresentableAuthController {
             return new Map(list.map(x => [x.presentableId, x.authTree]));
         });
 
-        const authFunc = authType === 1 ? this.presentableAuthService.presentableNodeSideAuth :
-            authType === 2 ? this.presentableAuthService.presentableUpstreamAuth :
-                authType === 3 ? this.presentableAuthService.presentableNodeSideAndUpstreamAuth :
-                    authType === 4 ? this.presentableAuthService.presentableAuth : null;
-
-        const tasks = [];
         const returnResults = [];
-        for (const presentableInfo of presentables) {
-            const task = authFunc.call(this.presentableAuthService, presentableInfo, presentableAuthTreeMap.get(presentableInfo.presentableId)).then(authResult => returnResults.push({
+        const authResultMap = await this.presentableBatchAuthService.batchPresentableAuth(presentables, presentableAuthTreeMap, authType);
+        for (const presentableId of presentableIds) {
+            const presentableInfo = presentables.find(x => x.presentableId === presentableId);
+            const authResult = authResultMap.get(presentableId);
+            returnResults.push({
                 presentableId: presentableInfo.presentableId,
                 presentableName: presentableInfo.presentableName,
                 referee: authResult.referee,
@@ -117,11 +117,9 @@ export class PresentableAuthController {
                 authCode: authResult.authCode,
                 isAuth: authResult.isAuth,
                 error: authResult.errorMsg
-            }));
-            tasks.push(task);
+            });
         }
-
-        await Promise.all(tasks).then(() => ctx.success(returnResults));
+        ctx.success(returnResults);
     }
 
     /**
@@ -164,8 +162,9 @@ export class PresentableAuthController {
         presentableInfo = await this.presentableService.fillPresentablePolicyInfo([presentableInfo], true).then(first);
 
         const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'dependencyTree authTree versionProperty');
-        const presentableAuthResult = await this.presentableAuthService.presentableAuth(presentableInfo, presentableVersionInfo.authTree);
-
+        const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 4).then(results => {
+            return results.get(presentableInfo.presentableId);
+        });
         await this.presentableAuthResponseHandler.handle(presentableInfo, presentableVersionInfo, presentableAuthResult, parentNid, subResourceIdOrName, subResourceFile);
     }
 }

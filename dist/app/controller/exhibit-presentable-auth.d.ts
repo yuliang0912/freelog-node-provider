@@ -1,4 +1,4 @@
-import { IPresentableAuthService, IPresentableService, IPresentableVersionService, PresentableInfo } from '../../interface';
+import { IPresentableService, IPresentableVersionService, PresentableInfo } from '../../interface';
 import { FreelogContext } from 'egg-freelog-base';
 import { ExhibitAuthResponseHandler } from '../../extend/auth-response-handler/exhibit-auth-response-handler';
 import { PresentableAdapter } from '../../extend/exhibit-adapter/presentable-adapter';
@@ -8,7 +8,6 @@ export declare class PresentableSubjectAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
     presentableService: IPresentableService;
-    presentableAuthService: IPresentableAuthService;
     presentableVersionService: IPresentableVersionService;
     presentableAdapter: PresentableAdapter;
     exhibitAuthResponseHandler: ExhibitAuthResponseHandler;

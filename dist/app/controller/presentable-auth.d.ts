@@ -1,10 +1,11 @@
-import { IPresentableAuthResponseHandler, IPresentableAuthService, IPresentableService, IPresentableVersionService } from '../../interface';
+import { IPresentableAuthResponseHandler, IPresentableService, IPresentableVersionService } from '../../interface';
 import { FreelogContext } from 'egg-freelog-base';
+import { PresentableBatchAuthService } from '../service/presentable-batch-auth-service';
 export declare class PresentableAuthController {
     ctx: FreelogContext;
     presentableCommonChecker: any;
     presentableService: IPresentableService;
-    presentableAuthService: IPresentableAuthService;
+    presentableBatchAuthService: PresentableBatchAuthService;
     presentableVersionService: IPresentableVersionService;
     presentableAuthResponseHandler: IPresentableAuthResponseHandler;
     /**

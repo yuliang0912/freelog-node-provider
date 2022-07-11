@@ -12,7 +12,7 @@ export declare class PresentableBatchAuthService {
      * 多展品全链路授权
      * @param presentables
      * @param presentableAuthTreeMap
-     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧 4:全链路授权(含C端用户)
+     * @param authType 1:节点侧授权 2:上游侧授权 3:节点侧以及上游侧 4:全链路授权(含C端用户)
      */
     batchPresentableAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3 | 4): Promise<Map<string, SubjectAuthResult>>;
     /**

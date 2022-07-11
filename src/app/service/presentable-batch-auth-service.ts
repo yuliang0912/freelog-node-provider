@@ -30,7 +30,7 @@ export class PresentableBatchAuthService {
      * 多展品全链路授权
      * @param presentables
      * @param presentableAuthTreeMap
-     * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧 4:全链路授权(含C端用户)
+     * @param authType 1:节点侧授权 2:上游侧授权 3:节点侧以及上游侧 4:全链路授权(含C端用户)
      */
     async batchPresentableAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3 | 4) {
         let clientAuthTask = undefined;
@@ -70,9 +70,24 @@ export class PresentableBatchAuthService {
      * @param authType 1:节点侧授权 2:上游侧授权  3:节点侧以及上游侧
      */
     async batchPresentableNodeSideAndUpstreamAuth(presentables: PresentableInfo[], presentableAuthTreeMap: Map<string, FlattenPresentableAuthTree[]>, authType: 1 | 2 | 3) {
+
+        const authResultMap = new Map<string, SubjectAuthResult>();
+        const allResourceIds = [...presentableAuthTreeMap.values()].flat().map(x => x.resourceId);
+        const freezeResourceSet = await this.outsideApiService.getResourceListByIds(allResourceIds, {
+            status: '2,3',
+            projection: 'resourceId,status'
+        }).then(list => {
+            return new Set<string>(list.map(x => x.resourceId));
+        });
         const exhibitInsideAuthMap = new Map<string, ExhibitInsideAuthNode[]>();
         const presentableMap = new Map(presentables.map(x => [x.presentableId, x]));
         for (const [presentableId, authTree] of presentableAuthTreeMap) {
+            const freezeResourceIds = authTree.filter(x => freezeResourceSet.has(x.resourceId));
+            if (!isEmpty(freezeResourceIds)) {
+                authResultMap.set(presentableId, new SubjectAuthResult(SubjectAuthCodeEnum.SubjectException)
+                    .setErrorMsg('展品依赖中存在被冻结的资源').setData({freezeResourceIds}));
+                continue;
+            }
             const exhibitInsideAuthNodes: ExhibitInsideAuthNode[] = [];
             const presentableInfo = presentableMap.get(presentableId);
             for (const authItem of authTree) {
@@ -109,8 +124,6 @@ export class PresentableBatchAuthService {
         }).then(list => {
             return new Set(list.map(x => x.contractId));
         });
-
-        const authResultMap = new Map<string, SubjectAuthResult>();
         for (const [presentableId, insideAuthNode] of exhibitInsideAuthMap) {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized).setReferee(SubjectTypeEnum.Presentable);
             const authFailedNodes = insideAuthNode.filter(item => isEmpty(item.contractIds) || !item.contractIds.some(x => authedContractSet.has(x)));
