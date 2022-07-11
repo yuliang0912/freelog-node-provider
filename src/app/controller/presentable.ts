@@ -298,6 +298,7 @@ export class PresentableController {
         const {ctx} = this;
         const presentableId = ctx.checkParams('presentableId').exist().isPresentableId().value;
         const onlineStatus = ctx.checkBody('onlineStatus').exist().toInt().in([PresentableOnlineStatusEnum.Offline, PresentableOnlineStatusEnum.Online]).value;
+        const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().len(1, 100).value;
         ctx.validateParams();
 
         const presentableInfo = await this.presentableService.findById(presentableId);
@@ -305,7 +306,7 @@ export class PresentableController {
             msg: ctx.gettext('params-validate-failed', 'presentableId')
         });
 
-        await this.presentableService.updateOnlineStatus(presentableInfo, onlineStatus).then(ctx.success);
+        await this.presentableService.updateOnlineStatus(presentableInfo, onlineStatus, updatePolicies).then(ctx.success);
     }
 
     @put('/:presentableId/version')

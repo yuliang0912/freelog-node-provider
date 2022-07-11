@@ -12,6 +12,7 @@ import {
     ApplicationError, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum
 } from 'egg-freelog-base';
 import {PresentableCommonChecker} from '../../extend/presentable-common-checker';
+import {PresentableBatchAuthService} from './presentable-batch-auth-service';
 
 @provide()
 export class PresentableService implements IPresentableService {
@@ -32,6 +33,8 @@ export class PresentableService implements IPresentableService {
     presentableProvider: IMongodbOperation<PresentableInfo>;
     @inject()
     presentableCommonChecker: PresentableCommonChecker;
+    @inject()
+    presentableBatchAuthService: PresentableBatchAuthService;
 
     /**
      * 查询合约被应用于那些展品
@@ -59,16 +62,9 @@ export class PresentableService implements IPresentableService {
     async createPresentable(options: CreatePresentableOptions) {
 
         const {
-            resourceInfo,
-            resolveResources,
-            nodeInfo,
-            policies,
-            presentableName,
-            presentableTitle,
-            version,
-            versionId,
-            tags,
-            coverImages
+            resourceInfo, resolveResources, nodeInfo,
+            policies, presentableName, presentableTitle,
+            version, versionId, tags, coverImages
         } = options;
 
         const model = {
@@ -91,12 +87,10 @@ export class PresentableService implements IPresentableService {
             }
         }
 
-        const beSignSubjects = chain(resolveResources).map(({
-                                                                resourceId,
-                                                                contracts
-                                                            }) => contracts.map(({policyId}) => Object({
-            subjectId: resourceId, policyId
-        }))).flattenDeep().value();
+        const beSignSubjects = chain(resolveResources)
+            .map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+                subjectId: resourceId, policyId
+            }))).flattenDeep().value();
 
         // 批量签约,已签过的则直接返回对应的合约ID.合约需要作为创建展品的前置必要条件
         await this.outsideApiService.batchSignNodeContracts(nodeInfo.nodeId, beSignSubjects).then(contracts => {
@@ -166,12 +160,10 @@ export class PresentableService implements IPresentableService {
             if (invalidResolveResources.length) {
                 throw new ApplicationError(this.ctx.gettext('presentable-update-resolve-release-invalid-error'), {invalidResolveResources});
             }
-            const beSignSubjects = chain(options.resolveResources).map(({
-                                                                            resourceId,
-                                                                            contracts
-                                                                        }) => contracts.map(({policyId}) => Object({
-                subjectId: resourceId, policyId
-            }))).flattenDeep().value();
+            const beSignSubjects = chain(options.resolveResources)
+                .map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+                    subjectId: resourceId, policyId
+                }))).flattenDeep().value();
             const contractMap = await this.outsideApiService.batchSignNodeContracts(presentableInfo.nodeId, beSignSubjects).then(contracts => {
                 return new Map<string, string>(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
             });
@@ -203,29 +195,36 @@ export class PresentableService implements IPresentableService {
      * 更新展品上下线状态
      * @param presentableInfo
      * @param onlineStatus
+     * @param updatePolicies
      */
-    async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean> {
+    async updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum, updatePolicies?: PolicyInfo[]): Promise<boolean> {
+        const modifyModel: Partial<PresentableInfo> = {onlineStatus};
         const isOnline = onlineStatus === PresentableOnlineStatusEnum.Online;
+        if (updatePolicies) {
+            for (const policy of presentableInfo.policies) {
+                const updatePolicyInfo = updatePolicies.find(x => x.policyId === policy.policyId);
+                if (updatePolicyInfo) {
+                    policy.status = updatePolicyInfo.status;
+                }
+            }
+            modifyModel.policies = presentableInfo.policies;
+        }
         if (isOnline) {
             if (!presentableInfo.policies.some(x => x.status === 1)) {
                 throw new ApplicationError(this.ctx.gettext('presentable-online-policy-validate-error'));
             }
             const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'authTree');
-            const presentableNodeSideAuthResult = await this.presentableAuthService.presentableNodeSideAuth(presentableInfo, presentableVersionInfo.authTree);
-            if (!presentableNodeSideAuthResult.isAuth) {
+            const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 4).then(results => {
+                return results.get(presentableInfo.presentableId);
+            });
+            if (!presentableAuthResult.isAuth) {
                 throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'), {
-                    nodeSideAuthResult: presentableNodeSideAuthResult
-                });
-            }
-            const presentableUpstreamAuthResult = await this.presentableAuthService.presentableUpstreamAuth(presentableInfo, presentableVersionInfo.authTree);
-            if (!presentableUpstreamAuthResult.isAuth) {
-                throw new ApplicationError(this.ctx.gettext('presentable-online-auth-validate-error'), {
-                    upstreamAuthResult: presentableUpstreamAuthResult
+                    nodeSideAuthResult: presentableAuthResult
                 });
             }
         }
 
-        const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, {onlineStatus}).then(data => Boolean(data.ok));
+        const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, modifyModel).then(data => Boolean(data.ok));
         if (!isSuccessful || first<string>(presentableInfo.resourceInfo.resourceType) !== '主题') { // ResourceTypeEnum.THEME
             return isSuccessful;
         }

@@ -2,6 +2,7 @@ import { PresentableOnlineStatusEnum } from '../../enum';
 import { CreatePresentableOptions, findOptions, INodeService, IOutsideApiService, IPresentableAuthService, IPresentableService, IPresentableVersionService, PolicyInfo, PresentableInfo, ResolveResource, ResourceInfo, UpdatePresentableOptions } from '../../interface';
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 import { PresentableCommonChecker } from '../../extend/presentable-common-checker';
+import { PresentableBatchAuthService } from './presentable-batch-auth-service';
 export declare class PresentableService implements IPresentableService {
     ctx: FreelogContext;
     mongoose: any;
@@ -11,6 +12,7 @@ export declare class PresentableService implements IPresentableService {
     presentableVersionService: IPresentableVersionService;
     presentableProvider: IMongodbOperation<PresentableInfo>;
     presentableCommonChecker: PresentableCommonChecker;
+    presentableBatchAuthService: PresentableBatchAuthService;
     /**
      * 查询合约被应用于那些展品
      * @param nodeId
@@ -43,8 +45,9 @@ export declare class PresentableService implements IPresentableService {
      * 更新展品上下线状态
      * @param presentableInfo
      * @param onlineStatus
+     * @param updatePolicies
      */
-    updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum): Promise<boolean>;
+    updateOnlineStatus(presentableInfo: PresentableInfo, onlineStatus: PresentableOnlineStatusEnum, updatePolicies?: PolicyInfo[]): Promise<boolean>;
     /**
      * 搜索展品列表
      * @param condition
