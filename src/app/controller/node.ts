@@ -183,7 +183,7 @@ export class NodeController {
         let nodeInfo = await this.nodeService.findOne(condition, projection.join(' '));
         nodeInfo = await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(first);
         if (isLoadOwnerUserInfo) {
-            await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
+            nodeInfo = await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
         }
         ctx.success(nodeInfo);
     }
@@ -200,7 +200,7 @@ export class NodeController {
         let nodeInfo = await this.nodeService.findById(nodeId, projection.join(' '));
         nodeInfo = await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(first);
         if (isLoadOwnerUserInfo) {
-            await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
+            nodeInfo = await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
         }
         ctx.success(nodeInfo);
     }
