@@ -371,6 +371,12 @@ export interface INodeService {
      * @param nodes
      */
     fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]>;
+
+    /**
+     * 填充节点用户信息
+     * @param nodes
+     */
+    fillNodeOwnerUserInfo(nodes: NodeInfo[]): Promise<NodeInfo[]>;
 }
 
 export interface IPresentableService {
@@ -429,6 +435,8 @@ export interface IOutsideApiService {
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
 
     getUserInfo(userId: number): Promise<FreelogUserInfo>;
+
+    getUserList(userIds: number[], options?: object): Promise<FreelogUserInfo[]>;
 
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
 

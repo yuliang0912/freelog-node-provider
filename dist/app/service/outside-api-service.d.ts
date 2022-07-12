@@ -10,6 +10,12 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getUserInfo(userId: number): Promise<FreelogUserInfo>;
     /**
+     * 批量获取用户信息
+     * @param userIds
+     * @param options
+     */
+    getUserList(userIds: number[], options?: object): Promise<FreelogUserInfo[]>;
+    /**
      * 获取资源信息
      * @param resourceIdOrName
      * @param options

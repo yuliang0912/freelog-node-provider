@@ -35,6 +35,19 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 批量获取用户信息
+     * @param userIds
+     * @param options
+     */
+    async getUserList(userIds: number[], options?: object): Promise<FreelogUserInfo[]> {
+        if (isEmpty(userIds)) {
+            return [];
+        }
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.userInfoV2}/list?userIds=${userIds.toString()}&${optionParams.join('&')}`);
+    }
+
+    /**
      * 获取资源信息
      * @param resourceIdOrName
      * @param options

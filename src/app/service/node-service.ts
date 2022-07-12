@@ -2,7 +2,7 @@ import {provide, inject} from 'midway';
 import {FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
 import {
     CreateNodeOptions,
-    INodeService,
+    INodeService, IOutsideApiService,
     ITageService,
     NodeInfo
 } from '../../interface';
@@ -21,6 +21,8 @@ export class NodeService implements INodeService {
     tagService: ITageService;
     @inject()
     nodeProvider: IMongodbOperation<NodeInfo>;
+    @inject()
+    outsideApiService: IOutsideApiService;
     @inject()
     nodeFreezeRecordProvider: IMongodbOperation<any>;
     @inject()
@@ -210,6 +212,21 @@ export class NodeService implements INodeService {
         return nodes.map((item: any) => {
             const nodeInfo = item.toObject ? item.toObject() : item;
             nodeInfo.freezeReason = resourceFreezeRecordMap.get(nodeInfo.nodeId) ?? '';
+            return nodeInfo;
+        });
+    }
+
+    /**
+     * 填充节点所有者信息
+     * @param nodes
+     */
+    async fillNodeOwnerUserInfo(nodes: NodeInfo[]): Promise<NodeInfo[]> {
+        const userStatusMap: Map<number, number> = await this.outsideApiService.getUserList(nodes.map(x => x.ownerUserId), {projection: 'userId,status'}).then(list => {
+            return new Map<number, number>(list.map(x => [x.userId, x.status]));
+        });
+        return nodes.map((item: any) => {
+            const nodeInfo = item.toObject ? item.toObject() : item;
+            nodeInfo.ownerUserStatus = userStatusMap.get(nodeInfo.userId) ?? 0;
             return nodeInfo;
         });
     }

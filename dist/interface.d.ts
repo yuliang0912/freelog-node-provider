@@ -296,6 +296,11 @@ export interface INodeService {
      * @param nodes
      */
     fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]>;
+    /**
+     * 填充节点用户信息
+     * @param nodes
+     */
+    fillNodeOwnerUserInfo(nodes: NodeInfo[]): Promise<NodeInfo[]>;
 }
 export interface IPresentableService {
     contractAppliedPresentable(nodeId: number, contractIds: string[]): Promise<any[]>;
@@ -329,6 +334,7 @@ export interface IOutsideApiService {
     getObjectListByObjectIds(objectIds: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getObjectListByFullNames(objectNames: string[], options?: object): Promise<ObjectStorageInfo[]>;
     getUserInfo(userId: number): Promise<FreelogUserInfo>;
+    getUserList(userIds: number[], options?: object): Promise<FreelogUserInfo[]>;
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
     getPolicies(policyIds: string[], subjectType: SubjectTypeEnum, projection: string[], isTranslate: boolean): Promise<BasePolicyInfo[]>;
     batchSignNodeContracts(nodeId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;

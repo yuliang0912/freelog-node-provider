@@ -165,6 +165,7 @@ export class NodeController {
         const {ctx} = this;
         const nodeDomain = ctx.checkQuery('nodeDomain').optional().isNodeDomain().toLowercase().value;
         const nodeName = ctx.checkQuery('nodeName').optional().isNodeName().value;
+        const isLoadOwnerUserInfo = ctx.checkQuery('isLoadOwnerUserInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -179,8 +180,12 @@ export class NodeController {
         if (isString(nodeName)) {
             condition.nodeName = nodeName;
         }
-        const nodeInfo = await this.nodeService.findOne(condition, projection.join(' '));
-        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(list => ctx.success(first(list)));
+        let nodeInfo = await this.nodeService.findOne(condition, projection.join(' '));
+        nodeInfo = await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(first);
+        if (isLoadOwnerUserInfo) {
+            await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
+        }
+        ctx.success(nodeInfo);
     }
 
     @get('/:nodeId')
@@ -188,11 +193,16 @@ export class NodeController {
 
         const {ctx} = this;
         const nodeId = ctx.checkParams('nodeId').exist().toInt().gt(0).value;
+        const isLoadOwnerUserInfo = ctx.checkQuery('isLoadOwnerUserInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const nodeInfo = await this.nodeService.findById(nodeId, projection.join(' '));
-        await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(list => ctx.success(first(list)));
+        let nodeInfo = await this.nodeService.findById(nodeId, projection.join(' '));
+        nodeInfo = await this.nodeService.fillNodeFreezeReason([nodeInfo]).then(first);
+        if (isLoadOwnerUserInfo) {
+            await this.nodeService.fillNodeOwnerUserInfo([nodeInfo]).then(first);
+        }
+        ctx.success(nodeInfo);
     }
 
     // 批量设置或移除节点标签

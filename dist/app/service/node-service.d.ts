@@ -1,11 +1,12 @@
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
-import { CreateNodeOptions, INodeService, ITageService, NodeInfo } from '../../interface';
+import { CreateNodeOptions, INodeService, IOutsideApiService, ITageService, NodeInfo } from '../../interface';
 import AutoIncrementRecordProvider from '../data-provider/auto-increment-record-provider';
 export declare class NodeService implements INodeService {
     ctx: FreelogContext;
     nodeCommonChecker: any;
     tagService: ITageService;
     nodeProvider: IMongodbOperation<NodeInfo>;
+    outsideApiService: IOutsideApiService;
     nodeFreezeRecordProvider: IMongodbOperation<any>;
     autoIncrementRecordProvider: AutoIncrementRecordProvider;
     updateNodeInfo(nodeId: number, model: object): Promise<boolean>;
@@ -43,4 +44,9 @@ export declare class NodeService implements INodeService {
      * @param nodes
      */
     fillNodeFreezeReason(nodes: NodeInfo[]): Promise<NodeInfo[]>;
+    /**
+     * 填充节点所有者信息
+     * @param nodes
+     */
+    fillNodeOwnerUserInfo(nodes: NodeInfo[]): Promise<NodeInfo[]>;
 }
