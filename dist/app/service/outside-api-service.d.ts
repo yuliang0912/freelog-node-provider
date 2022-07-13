@@ -150,4 +150,10 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param subObjectFile
      */
     getSubObjectFile(objectId: string, subObjectFile: string): Promise<any>;
+    /**
+     * 发送运营活动事件
+     * @param taskConfigCode
+     * @param userId
+     */
+    sendActivityEvent(taskConfigCode: string, userId: number): Promise<void>;
 }

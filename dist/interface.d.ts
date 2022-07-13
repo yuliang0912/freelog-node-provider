@@ -349,6 +349,7 @@ export interface IOutsideApiService {
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTree[]>;
     getObjectDependencyTree(objectIdOrName: string, options?: object): Promise<ObjectDependencyTreeInfo[]>;
     getResourceVersionProperty(resourceId: string, version: string): Promise<object>;
+    sendActivityEvent(taskConfigCode: string, userId: number): Promise<any>;
 }
 export interface IPresentableAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[]): SubjectAuthResult;

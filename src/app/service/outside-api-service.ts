@@ -321,4 +321,21 @@ export class OutsideApiService implements IOutsideApiService {
     getSubObjectFile(objectId: string, subObjectFile: string) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceDecompressionV2}/getObjectFile?objectId=${objectId}&tarPath=${subObjectFile}`, null, CurlResFormatEnum.Original);
     }
+
+    /**
+     * 发送运营活动事件
+     * @param taskConfigCode
+     * @param userId
+     */
+    async sendActivityEvent(taskConfigCode: string, userId: number) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.baseUrl}/client/v2/activities/task/records/complete4TaskConfigCode`, {
+            method: 'post', contentType: 'json', data: {
+                taskConfigCode, userId
+            }
+        }, CurlResFormatEnum.Original).then(response => {
+            if (response.status >= 400) {
+                console.error(`运营活动调用失败,taskCode:${taskConfigCode}, userId:${userId}`);
+            }
+        });
+    }
 }

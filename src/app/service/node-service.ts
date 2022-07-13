@@ -47,7 +47,9 @@ export class NodeService implements INodeService {
             uniqueKey: this.nodeCommonChecker.generateNodeUniqueKey(options.nodeDomain)
         };
 
-        return this.nodeProvider.create(nodeInfo);
+        const node = this.nodeProvider.create(nodeInfo);
+        this.outsideApiService.sendActivityEvent('TS000031', nodeInfo.ownerUserId).catch(console.error);
+        return node;
     }
 
     async findById(nodeId: number, ...args): Promise<NodeInfo> {

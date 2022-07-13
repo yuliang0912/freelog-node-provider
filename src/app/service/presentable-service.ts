@@ -225,7 +225,11 @@ export class PresentableService implements IPresentableService {
         }
 
         const isSuccessful = await this.presentableProvider.updateOne({_id: presentableInfo.presentableId}, modifyModel).then(data => Boolean(data.ok));
-        if (!isSuccessful || first<string>(presentableInfo.resourceInfo.resourceType) !== '主题') { // ResourceTypeEnum.THEME
+        const isTheme = first<string>(presentableInfo.resourceInfo.resourceType) === '主题';
+        if (isSuccessful && isOnline) {
+            this.outsideApiService.sendActivityEvent(isTheme ? 'TS000033' : 'TS000032', presentableInfo.userId).catch(console.error);
+        }
+        if (!isSuccessful || !isTheme) { // ResourceTypeEnum.THEME
             return isSuccessful;
         }
 
