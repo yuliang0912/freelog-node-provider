@@ -214,7 +214,7 @@ export class PresentableService implements IPresentableService {
                 throw new ApplicationError(this.ctx.gettext('presentable-online-policy-validate-error'));
             }
             const presentableVersionInfo = await this.presentableVersionService.findById(presentableInfo.presentableId, presentableInfo.version, 'authTree');
-            const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 4).then(results => {
+            const presentableAuthResult = await this.presentableBatchAuthService.batchPresentableAuth([presentableInfo], new Map([[presentableInfo.presentableId, presentableVersionInfo.authTree]]), 3).then(results => {
                 return results.get(presentableInfo.presentableId);
             });
             if (!presentableAuthResult.isAuth) {
