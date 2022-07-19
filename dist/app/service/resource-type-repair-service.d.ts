@@ -13,5 +13,6 @@ export declare class ResourceTypeRepairService {
     resourceTypeMap: Map<string, string[]>;
     resourceTypeRepair(): Promise<void>;
     presentableMetaRepair(): Promise<void>;
+    presentableExpiredContractClear(): Promise<void>;
     private convertResourceTypes;
 }

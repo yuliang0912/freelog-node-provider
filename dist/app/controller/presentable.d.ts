@@ -15,6 +15,7 @@ export declare class PresentableController {
     resourceTypeRepairService: ResourceTypeRepairService;
     resourceTypeRepair(): Promise<void>;
     presentableMetaRepair(): Promise<void>;
+    expiredContractRepair(): Promise<void>;
     index(): Promise<FreelogContext>;
     indexForAdmin(): Promise<FreelogContext>;
     list(): Promise<void>;

@@ -1,4 +1,3 @@
-import {ExhibitInfo} from '../../interface';
 import {controller, get, inject, priority, provide} from 'midway';
 import {
     ITestNodeService, ITestResourceAuthService, TestResourceInfo
@@ -164,15 +163,7 @@ export class TestResourceSubjectAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setErrorMsg('当前用户没有测试权限');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        const exhibitPartialInfo: Partial<ExhibitInfo> = {
-            exhibitId: testResource.testResourceId,
-            exhibitName: testResource.testResourceName
-        };
-        if (subFilePath) {
-            const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError).setErrorMsg('参数subFilePath校验失败');
-            this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult, exhibitPartialInfo);
-        }
-
+        
         const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId: testResource.testResourceId}, 'authTree dependencyTree');
         const testResourceAuthResult = await this.testResourceAuthService.testResourceAuth(testResource, testResourceTreeInfo.authTree);
 

@@ -48,6 +48,11 @@ export class PresentableController {
         await this.resourceTypeRepairService.presentableMetaRepair().then(() => this.ctx.success(true));
     }
 
+    @get('/expiredContractRepair')
+    async expiredContractRepair() {
+        await this.resourceTypeRepairService.presentableExpiredContractClear().then(() => this.ctx.success(true));
+    }
+
     @get('/')
     async index() {
 

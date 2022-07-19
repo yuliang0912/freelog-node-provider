@@ -95,6 +95,28 @@ export class ResourceTypeRepairService {
             }
         });
     }
+    
+    async presentableExpiredContractClear() {
+        const presentables = await this.presentableProvider.find({}, 'resolveResources');
+        for (let presentable of presentables) {
+            const contractIds = presentable.resolveResources.map(x => x.contracts).flat().map(x => x.contractId);
+            const expiredContractSet = await this.outsideApiService.getContractByContractIds(contractIds, {
+                projection: 'contractId,status'
+            }).then(list => {
+                return new Set(list.filter(x => x.status === 1).map(x => x.contractId));
+            });
+            if (!expiredContractSet.size) {
+                continue;
+            }
+            console.log(presentable.presentableId, [...expiredContractSet.values()]);
+            for (let resolveResource of presentable.resolveResources) {
+                resolveResource.contracts = resolveResource.contracts.filter(x => !expiredContractSet.has(x.contractId));
+            }
+            this.presentableProvider.updateOne({_id: presentable.presentableId}, {
+                resolveResources: presentable.resolveResources
+            }).catch(console.error);
+        }
+    }
 
     private convertResourceTypes(resourceType: string[]): string[] {
         if (!Array.isArray(resourceType)) {
