@@ -163,7 +163,7 @@ export class TestResourceSubjectAuthController {
             const subjectAuthResult = new SubjectAuthResult(SubjectAuthCodeEnum.LoginUserUnauthorized).setDefaulterIdentityType(DefaulterIdentityTypeEnum.ClientUser).setErrorMsg('当前用户没有测试权限');
             this.exhibitAuthResponseHandler.exhibitAuthFailedResponseHandle(subjectAuthResult);
         }
-        
+
         const testResourceTreeInfo = await this.testNodeService.findOneTestResourceTreeInfo({testResourceId: testResource.testResourceId}, 'authTree dependencyTree');
         const testResourceAuthResult = await this.testResourceAuthService.testResourceAuth(testResource, testResourceTreeInfo.authTree);
 
